@@ -71,7 +71,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LibraryPath>deps\bgfx\.build\win64_vs2022\bin;deps\glfw\build\src\Debug;$(LibraryPath)</LibraryPath>
+    <LibraryPath>deps\bgfx\.build\win64_vs2022\bin;deps\glfw\lib-vc2022;$(LibraryPath)</LibraryPath>
     <IncludePath>deps\bx\include\compat\msvc;deps\bx\include;deps\bgfx\include;deps\glfw\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">

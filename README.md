@@ -21,13 +21,17 @@ cd .\deps\bgfx
 
 Open solution in visual studio and build bgfx, bx and bimg
 
+### GLFW
+
+glfw has precompiled binaries, download them from the official website and copy the folder to deps/glfw
+
 ### VS options
 
 1. Add `/Zc:__cplusplus` in *Configuration Properties > C/C++ > Command Line*
-2. Use `Multi-threaded Debug DLL (/MDd)` in *Configuration Properties > C/C++ > Code Generation > Runtime Library* (bgfx generates a different one than glfw)
+2. Use the same config for Runtime Library in *Configuration Properties > C/C++ > Code Generation > Runtime Library*
 3. Link libraries:
 ```
-glfw3.lib
+glfw3.lib or glfw3_mt.lib
 bgfxDebug.lib
 bxDebug.lib
 bimgDebug.lib
