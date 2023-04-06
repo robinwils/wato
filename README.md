@@ -36,3 +36,12 @@ bgfxDebug.lib
 bxDebug.lib
 bimgDebug.lib
 ```
+
+## Shaders
+
+Shaders are compiled using a makefile, they are kept in the same place as bgfx shader files
+
+```
+$ cd shaders/
+$ make
+```

@@ -5,6 +5,7 @@
 #include <bx/allocator.h>
 #include <bx/file.h>
 #include <bx/debug.h>
+#include <bx/timer.h>
 #include <bgfx/bgfx.h>
 #include <bgfx/platform.h>
 #if BX_PLATFORM_LINUX
@@ -102,30 +103,36 @@ static bgfx::ShaderHandle loadShader(bx::FileReaderI* _reader, const char* _name
 {
     char filePath[512];
 
-    const char* shaderPath = "???";
+    const char* renderer = "???";
+
+    bx::strCopy(filePath, BX_COUNTOF(filePath), "shaders/");
+    bx::strCat(filePath, BX_COUNTOF(filePath), _name);
+
+#if BX_PLATFORM_WINDOWS
+    bx::strCat(filePath, BX_COUNTOF(filePath), "_windows");
+#endif
 
     switch (bgfx::getRendererType())
     {
     case bgfx::RendererType::Noop:
-    case bgfx::RendererType::Direct3D9:  shaderPath = "shaders/dx9/";   break;
+    case bgfx::RendererType::Direct3D9:  renderer = "_dx9";   break;
     case bgfx::RendererType::Direct3D11:
-    case bgfx::RendererType::Direct3D12: shaderPath = "shaders/dx11/";  break;
+    case bgfx::RendererType::Direct3D12: renderer = "_dx11";  break;
     case bgfx::RendererType::Agc:
-    case bgfx::RendererType::Gnm:        shaderPath = "shaders/pssl/";  break;
-    case bgfx::RendererType::Metal:      shaderPath = "shaders/metal/"; break;
-    case bgfx::RendererType::Nvn:        shaderPath = "shaders/nvn/";   break;
-    case bgfx::RendererType::OpenGL:     shaderPath = "shaders/glsl/";  break;
-    case bgfx::RendererType::OpenGLES:   shaderPath = "shaders/essl/";  break;
-    case bgfx::RendererType::Vulkan:     shaderPath = "shaders/spirv/"; break;
-    case bgfx::RendererType::WebGPU:     shaderPath = "shaders/spirv/"; break;
+    case bgfx::RendererType::Gnm:        renderer = "_pssl";  break;
+    case bgfx::RendererType::Metal:      renderer = "_metal"; break;
+    case bgfx::RendererType::Nvn:        renderer = "_nvn";   break;
+    case bgfx::RendererType::OpenGL:     renderer = "_glsl";  break;
+    case bgfx::RendererType::OpenGLES:   renderer = "_essl";  break;
+    case bgfx::RendererType::Vulkan:
+    case bgfx::RendererType::WebGPU:     renderer = "_spirv"; break;
 
     case bgfx::RendererType::Count:
         BX_ASSERT(false, "You should not be here!");
         break;
     }
 
-    bx::strCopy(filePath, BX_COUNTOF(filePath), shaderPath);
-    bx::strCat(filePath, BX_COUNTOF(filePath), _name);
+    bx::strCat(filePath, BX_COUNTOF(filePath), renderer);
     bx::strCat(filePath, BX_COUNTOF(filePath), ".bin");
 
     bgfx::ShaderHandle handle = bgfx::createShader(loadMem(_reader, filePath));
@@ -182,6 +189,8 @@ int main()
     init.platformData.nwh = glfwGetWin32Window(window);
 #endif
 
+    init.type = bgfx::RendererType::Vulkan;
+
     int width, height;
     glfwGetWindowSize(window, &width, &height);
     init.resolution.width = (uint32_t)width;
@@ -226,6 +235,9 @@ int main()
 
     bgfx::ProgramHandle program = loadProgram("vs_cubes", "fs_cubes");
 
+    int64_t m_timeOffset = bx::getHPCounter();
+
+    //imguiCreate();
 
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
@@ -247,6 +259,7 @@ int main()
         const bgfx::Stats* stats = bgfx::getStats();
         bgfx::dbgTextPrintf(0, 2, 0x0f, "Backbuffer %dW x %dH in pixels, debug text %dW x %dH in characters.", stats->width, stats->height, stats->textWidth, stats->textHeight);
 
+        float time = (float)((bx::getHPCounter() - m_timeOffset) / double(bx::getHPFrequency()));
 
         const bx::Vec3 at = { 0.0f, 0.0f,   0.0f };
         const bx::Vec3 eye = { 0.0f, 0.0f, -35.0f };
@@ -263,6 +276,47 @@ int main()
 
             // Set view 0 default viewport.
             bgfx::setViewRect(0, 0, 0, uint16_t(width), uint16_t(height));
+        }
+        // This dummy draw call is here to make sure that view 0 is cleared
+// if no other draw calls are submitted to view 0.
+        bgfx::touch(0);
+
+        uint64_t state = 0
+            | BGFX_STATE_WRITE_R
+            | BGFX_STATE_WRITE_G
+            | BGFX_STATE_WRITE_B
+            | BGFX_STATE_WRITE_A
+            | BGFX_STATE_WRITE_Z
+            | BGFX_STATE_DEPTH_TEST_LESS
+            | BGFX_STATE_CULL_CW
+            | BGFX_STATE_MSAA
+            | BGFX_STATE_PT_TRISTRIP
+            ;
+
+        // Submit 11x11 cubes.
+        for (uint32_t yy = 0; yy < 11; ++yy)
+        {
+            for (uint32_t xx = 0; xx < 11; ++xx)
+            {
+                float mtx[16];
+                bx::mtxRotateXY(mtx, time + xx * 0.21f, time + yy * 0.37f);
+                mtx[12] = -15.0f + float(xx) * 3.0f;
+                mtx[13] = -15.0f + float(yy) * 3.0f;
+                mtx[14] = 35.0f;
+
+                // Set model matrix for rendering.
+                bgfx::setTransform(mtx);
+
+                // Set vertex and index buffer.
+                bgfx::setVertexBuffer(0, vbh);
+                bgfx::setIndexBuffer(ibh);
+
+                // Set render states.
+                bgfx::setState(state);
+
+                // Submit primitive for rendering to view 0.
+                bgfx::submit(0, program);
+            }
         }
 
         // Advance to next frame. Process submitted rendering primitives.
