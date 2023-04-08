@@ -19,7 +19,27 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="deps\imgui\imgui.cpp" />
+    <ClCompile Include="deps\imgui\imgui_draw.cpp" />
+    <ClCompile Include="deps\imgui\imgui_tables.cpp" />
+    <ClCompile Include="deps\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="src\bgfx_utils.cpp" />
+    <ClCompile Include="src\imgui\imgui_helper.cpp" />
+    <ClCompile Include="src\input\input.cpp" />
     <ClCompile Include="src\main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\bgfx_utils.h" />
+    <ClInclude Include="src\imgui\fs_imgui_image.bin.h" />
+    <ClInclude Include="src\imgui\fs_ocornut_imgui.bin.h" />
+    <ClInclude Include="src\imgui\imgui_helper.h" />
+    <ClInclude Include="src\imgui\imgui_user.h" />
+    <ClInclude Include="src\imgui\robotomono_regular.ttf.h" />
+    <ClInclude Include="src\imgui\roboto_regular.ttf.h" />
+    <ClInclude Include="src\imgui\vs_imgui_image.bin.h" />
+    <ClInclude Include="src\imgui\vs_ocornut_imgui.bin.h" />
+    <ClInclude Include="src\imgui\wato_imgui_config.h" />
+    <ClInclude Include="src\input\input.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
@@ -75,7 +95,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LibraryPath>deps\bgfx\.build\win64_vs2022\bin;deps\glfw\lib-vc2022;$(LibraryPath)</LibraryPath>
-    <IncludePath>deps\bx\include\compat\msvc;deps\bx\include;deps\bgfx\include;deps\glfw\include;$(IncludePath)</IncludePath>
+    <IncludePath>deps\bimg\include;src;deps\bx\include\compat\msvc;deps\bx\include;deps\bgfx\include;deps\glfw\include;deps\imgui;src\imgui;deps\iconfontcppheaders;deps\glm;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

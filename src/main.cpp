@@ -8,6 +8,7 @@
 #include <bx/timer.h>
 #include <bgfx/bgfx.h>
 #include <bgfx/platform.h>
+
 #if BX_PLATFORM_LINUX
 #define GLFW_EXPOSE_NATIVE_X11
 #elif BX_PLATFORM_WINDOWS
@@ -17,16 +18,18 @@
 #endif
 #include <GLFW/glfw3native.h>
 
-#define DBG_STRINGIZE(_x) DBG_STRINGIZE_(_x)
-#define DBG_STRINGIZE_(_x) #_x
-#define DBG_FILE_LINE_LITERAL "" __FILE__ "(" DBG_STRINGIZE(__LINE__) "): "
-#define DBG(_format, ...) bx::debugPrintf(DBG_FILE_LINE_LITERAL "" _format "\n", ##__VA_ARGS__)
+#include "imgui_helper.h"
+#include "bgfx_utils.h"
+#include <input/input.h>
 
 static void glfw_keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
  //   if (key == GLFW_KEY_F1 && action == GLFW_RELEASE)
    //     s_showStats = !s_showStats;
 }
+
+
+BxFactory g_bxFactory;
 
 struct PosColorVertex
 {
@@ -76,12 +79,6 @@ static const uint16_t s_cubeTriList[] =
     2, 3, 6, // 10
     6, 3, 7,
 };
-
-bx::DefaultAllocator g_allocator;
-
-bx::FileReaderI* g_fileReader;
-bx::FileWriterI* g_fileWriter;
-
 
 static const bgfx::Memory* loadMem(bx::FileReaderI* _reader, const char* _filePath)
 {
@@ -144,11 +141,11 @@ static bgfx::ShaderHandle loadShader(bx::FileReaderI* _reader, const char* _name
 
 bgfx::ProgramHandle loadProgram(const char* _vsName, const char* _fsName)
 {
-    bgfx::ShaderHandle vsh = loadShader(g_fileReader, _vsName);
+    bgfx::ShaderHandle vsh = loadShader(g_bxFactory.getDefaultFileReader(), _vsName);
     bgfx::ShaderHandle fsh = BGFX_INVALID_HANDLE;
     if (NULL != _fsName)
     {
-        fsh = loadShader(g_fileReader, _fsName);
+        fsh = loadShader(g_bxFactory.getDefaultFileReader(), _fsName);
     }
 
     return bgfx::createProgram(vsh, fsh, true /* destroy shaders when program is destroyed */);
@@ -230,15 +227,16 @@ int main()
         bgfx::makeRef(s_cubeTriList, sizeof(s_cubeTriList))
     );
 
-    g_fileReader = BX_NEW(&g_allocator, bx::FileReader);
-    g_fileWriter = BX_NEW(&g_allocator, bx::FileWriter);
-
     bgfx::ProgramHandle program = loadProgram("vs_cubes", "fs_cubes");
 
     int64_t m_timeOffset = bx::getHPCounter();
 
-    //imguiCreate();
+    imguiCreate();
+    Input input(window);
+    input.init();
+    glfwSetWindowUserPointer(window, &input);
 
+    float m_fourteen = 0.0f;
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
         // Handle window resize.
@@ -258,6 +256,56 @@ int main()
         bgfx::dbgTextPrintf(80, 2, 0x0f, "\x1b[;8m    \x1b[;9m    \x1b[;10m    \x1b[;11m    \x1b[;12m    \x1b[;13m    \x1b[;14m    \x1b[;15m    \x1b[0m");
         const bgfx::Stats* stats = bgfx::getStats();
         bgfx::dbgTextPrintf(0, 2, 0x0f, "Backbuffer %dW x %dH in pixels, debug text %dW x %dH in characters.", stats->width, stats->height, stats->textWidth, stats->textHeight);
+
+        double xpos, ypos;
+        glfwGetCursorPos(window, &xpos, &ypos);
+
+        /*imguiBeginFrame(xpos
+            , ypos
+            , (m_mouseState.m_buttons[entry::MouseButton::Left] ? IMGUI_MBUT_LEFT : 0)
+            | (m_mouseState.m_buttons[entry::MouseButton::Right] ? IMGUI_MBUT_RIGHT : 0)
+            | (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
+            , m_mouseState.m_mz
+            , uint16_t(width)
+            , uint16_t(height)
+        );*/
+
+
+        imguiBeginFrame(input, uint16_t(width), uint16_t(height));
+
+        showStatsDialog(nullptr);
+        showInputDebug(input);
+
+        ImGui::SetNextWindowPos(
+            ImVec2(width - width / 5.0f - 10.0f, 10.0f)
+            , ImGuiCond_FirstUseEver
+        );
+        ImGui::SetNextWindowSize(
+            ImVec2(width / 5.0f, height / 3.5f)
+            , ImGuiCond_FirstUseEver
+        );
+        ImGui::Begin("Settings"
+            , NULL
+            , 0
+        );
+
+        ImGui::SliderFloat("float", &m_fourteen, 0.0f, 100.0f);
+
+        /*
+        ImGui::Checkbox("Write R", &m_r);
+        ImGui::Checkbox("Write G", &m_g);
+        ImGui::Checkbox("Write B", &m_b);
+        ImGui::Checkbox("Write A", &m_a);
+        
+
+        ImGui::Text("Primitive topology:");
+        ImGui::Combo("##topology", (int*)&m_pt, s_ptNames, BX_COUNTOF(s_ptNames));
+        */
+
+        ImGui::End();
+
+        imguiEndFrame();
+
 
         float time = (float)((bx::getHPCounter() - m_timeOffset) / double(bx::getHPFrequency()));
 
@@ -302,7 +350,7 @@ int main()
                 bx::mtxRotateXY(mtx, time + xx * 0.21f, time + yy * 0.37f);
                 mtx[12] = -15.0f + float(xx) * 3.0f;
                 mtx[13] = -15.0f + float(yy) * 3.0f;
-                mtx[14] = 35.0f;
+                mtx[14] = m_fourteen;
 
                 // Set model matrix for rendering.
                 bgfx::setTransform(mtx);
