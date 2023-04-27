@@ -197,8 +197,6 @@ int main()
         return 1;
     // Set view 0 to the same dimensions as the window and to clear the color buffer.
     const bgfx::ViewId kClearView = 0;
-    bgfx::setViewClear(kClearView, BGFX_CLEAR_COLOR);
-    bgfx::setViewRect(kClearView, 0, 0, bgfx::BackbufferRatio::Equal);
     
     // Enable stats or debug text.
     bgfx::setDebug(BGFX_DEBUG_TEXT);
@@ -260,17 +258,6 @@ int main()
         double xpos, ypos;
         glfwGetCursorPos(window, &xpos, &ypos);
 
-        /*imguiBeginFrame(xpos
-            , ypos
-            , (m_mouseState.m_buttons[entry::MouseButton::Left] ? IMGUI_MBUT_LEFT : 0)
-            | (m_mouseState.m_buttons[entry::MouseButton::Right] ? IMGUI_MBUT_RIGHT : 0)
-            | (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
-            , m_mouseState.m_mz
-            , uint16_t(width)
-            , uint16_t(height)
-        );*/
-
-
         imguiBeginFrame(input, uint16_t(width), uint16_t(height));
 
         showStatsDialog(nullptr);
@@ -305,7 +292,6 @@ int main()
         ImGui::End();
 
         imguiEndFrame();
-
 
         float time = (float)((bx::getHPCounter() - m_timeOffset) / double(bx::getHPFrequency()));
 
