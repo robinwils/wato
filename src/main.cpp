@@ -324,7 +324,6 @@ int main()
             | BGFX_STATE_DEPTH_TEST_LESS
             | BGFX_STATE_CULL_CW
             | BGFX_STATE_MSAA
-            | BGFX_STATE_PT_TRISTRIP
             ;
 
         // Submit 11x11 cubes.
