@@ -15,7 +15,8 @@
 
 #include <IconsKenney.h>
 #include <IconsFontAwesome6.h>
-#include <input/input.h>
+#include <input/input.hpp>
+#include <camera.hpp>
 
 #define IMGUI_MBUT_LEFT   0x01
 #define IMGUI_MBUT_RIGHT  0x02
@@ -40,8 +41,9 @@ void imguiBeginFrame(Input _input, uint16_t _width, uint16_t _height, int _input
 
 void imguiEndFrame();
 
-void showStatsDialog(const char* _errorText = NULL);
-void showInputDebug(Input _input);
+void showImguiDialogs(Camera& _cam, const Input& _input, float _width, float _height);
+void showStatsDialog(const Input& _input, const char* _errorText = NULL);
+void showSettingsDialog(Camera& _cam, float _width, float _height);
 
 
 namespace ImGui
