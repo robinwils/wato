@@ -1,5 +1,6 @@
-#include "input.h"
+#include "input.hpp"
 #include <string.h>
+#include <imgui.h>
 
 void MouseState::clear()
 {
@@ -25,7 +26,7 @@ Mouse::Button toMouseButton(int32_t _button)
 	}
 }
 
-Button::Action toMouseAction(int32_t _action)
+Button::Action toAction(int32_t _action)
 {
 	switch (_action)
 	{
@@ -38,6 +39,289 @@ Button::Action toMouseAction(int32_t _action)
 	default:
 		return Button::Action::Unknown;
 	}
+}
+
+Keyboard::Key toKey(int32_t key)
+{
+	switch (key)
+	{
+	case GLFW_KEY_SPACE:
+		return Keyboard::Key::Space;
+	case GLFW_KEY_APOSTROPHE:
+		return Keyboard::Key::Apostrophe;
+	case GLFW_KEY_COMMA:
+		return Keyboard::Key::Comma;
+	case GLFW_KEY_MINUS:
+		return Keyboard::Key::Minus;
+	case GLFW_KEY_PERIOD:
+		return Keyboard::Key::Period;
+	case GLFW_KEY_SLASH:
+		return Keyboard::Key::Slash;
+	case GLFW_KEY_0:
+		return Keyboard::Key::Num0;
+	case GLFW_KEY_1:
+		return Keyboard::Key::Num1;
+	case GLFW_KEY_2:
+		return Keyboard::Key::Num2;
+	case GLFW_KEY_3:
+		return Keyboard::Key::Num3;
+	case GLFW_KEY_4:
+		return Keyboard::Key::Num4;
+	case GLFW_KEY_5:
+		return Keyboard::Key::Num5;
+	case GLFW_KEY_6:
+		return Keyboard::Key::Num6;
+	case GLFW_KEY_7:
+		return Keyboard::Key::Num7;
+	case GLFW_KEY_8:
+		return Keyboard::Key::Num8;
+	case GLFW_KEY_9:
+		return Keyboard::Key::Num9;
+	case GLFW_KEY_SEMICOLON:
+		return Keyboard::Key::Semicolon;
+	case GLFW_KEY_EQUAL:
+		return Keyboard::Key::Equal;
+	case GLFW_KEY_A:
+		return Keyboard::Key::A;
+	case GLFW_KEY_B:
+		return Keyboard::Key::B;
+	case GLFW_KEY_C:
+		return Keyboard::Key::C;
+	case GLFW_KEY_D:
+		return Keyboard::Key::D;
+	case GLFW_KEY_E:
+		return Keyboard::Key::E;
+	case GLFW_KEY_F:
+		return Keyboard::Key::F;
+	case GLFW_KEY_G:
+		return Keyboard::Key::G;
+	case GLFW_KEY_H:
+		return Keyboard::Key::H;
+	case GLFW_KEY_I:
+		return Keyboard::Key::I;
+	case GLFW_KEY_J:
+		return Keyboard::Key::J;
+	case GLFW_KEY_K:
+		return Keyboard::Key::K;
+	case GLFW_KEY_L:
+		return Keyboard::Key::L;
+	case GLFW_KEY_M:
+		return Keyboard::Key::M;
+	case GLFW_KEY_N:
+		return Keyboard::Key::N;
+	case GLFW_KEY_O:
+		return Keyboard::Key::O;
+	case GLFW_KEY_P:
+		return Keyboard::Key::P;
+	case GLFW_KEY_Q:
+		return Keyboard::Key::Q;
+	case GLFW_KEY_R:
+		return Keyboard::Key::R;
+	case GLFW_KEY_S:
+		return Keyboard::Key::S;
+	case GLFW_KEY_T:
+		return Keyboard::Key::T;
+	case GLFW_KEY_U:
+		return Keyboard::Key::U;
+	case GLFW_KEY_V:
+		return Keyboard::Key::V;
+	case GLFW_KEY_W:
+		return Keyboard::Key::W;
+	case GLFW_KEY_X:
+		return Keyboard::Key::X;
+	case GLFW_KEY_Y:
+		return Keyboard::Key::Y;
+	case GLFW_KEY_Z:
+		return Keyboard::Key::Z;
+	case GLFW_KEY_LEFT_BRACKET:
+		return Keyboard::Key::LeftBracket;
+	case GLFW_KEY_BACKSLASH:
+		return Keyboard::Key::Backslash;
+	case GLFW_KEY_RIGHT_BRACKET:
+		return Keyboard::Key::RightBracket;
+	case GLFW_KEY_GRAVE_ACCENT:
+		return Keyboard::Key::GraveAccent;
+	case GLFW_KEY_WORLD_1:
+		return Keyboard::Key::World1;
+	case GLFW_KEY_WORLD_2:
+		return Keyboard::Key::World2;
+	case GLFW_KEY_ESCAPE:
+		return Keyboard::Key::Escape;
+	case GLFW_KEY_ENTER:
+		return Keyboard::Key::Enter;
+	case GLFW_KEY_TAB:
+		return Keyboard::Key::Tab;
+	case GLFW_KEY_BACKSPACE:
+		return Keyboard::Key::Backspace;
+	case GLFW_KEY_INSERT:
+		return Keyboard::Key::Insert;
+	case GLFW_KEY_DELETE:
+		return Keyboard::Key::Delete;
+	case GLFW_KEY_RIGHT:
+		return Keyboard::Key::Right;
+	case GLFW_KEY_LEFT:
+		return Keyboard::Key::Left;
+	case GLFW_KEY_DOWN:
+		return Keyboard::Key::Down;
+	case GLFW_KEY_UP:
+		return Keyboard::Key::Up;
+	case GLFW_KEY_PAGE_UP:
+		return Keyboard::Key::PageUp;
+	case GLFW_KEY_PAGE_DOWN:
+		return Keyboard::Key::PageDown;
+	case GLFW_KEY_HOME:
+		return Keyboard::Key::Home;
+	case GLFW_KEY_END:
+		return Keyboard::Key::End;
+	case GLFW_KEY_CAPS_LOCK:
+		return Keyboard::Key::CapsLock;
+	case GLFW_KEY_SCROLL_LOCK:
+		return Keyboard::Key::ScrollLock;
+	case GLFW_KEY_NUM_LOCK:
+		return Keyboard::Key::NumLock;
+	case GLFW_KEY_PRINT_SCREEN:
+		return Keyboard::Key::PrintScreen;
+	case GLFW_KEY_PAUSE:
+		return Keyboard::Key::Pause;
+	case GLFW_KEY_F1:
+		return Keyboard::Key::F1;
+	case GLFW_KEY_F2:
+		return Keyboard::Key::F2;
+	case GLFW_KEY_F3:
+		return Keyboard::Key::F3;
+	case GLFW_KEY_F4:
+		return Keyboard::Key::F4;
+	case GLFW_KEY_F5:
+		return Keyboard::Key::F5;
+	case GLFW_KEY_F6:
+		return Keyboard::Key::F6;
+	case GLFW_KEY_F7:
+		return Keyboard::Key::F7;
+	case GLFW_KEY_F8:
+		return Keyboard::Key::F8;
+	case GLFW_KEY_F9:
+		return Keyboard::Key::F9;
+	case GLFW_KEY_F10:
+		return Keyboard::Key::F10;
+	case GLFW_KEY_F11:
+		return Keyboard::Key::F11;
+	case GLFW_KEY_F12:
+		return Keyboard::Key::F12;
+	case GLFW_KEY_F13:
+		return Keyboard::Key::F13;
+	case GLFW_KEY_F14:
+		return Keyboard::Key::F14;
+	case GLFW_KEY_F15:
+		return Keyboard::Key::F15;
+	case GLFW_KEY_F16:
+		return Keyboard::Key::F16;
+	case GLFW_KEY_F17:
+		return Keyboard::Key::F17;
+	case GLFW_KEY_F18:
+		return Keyboard::Key::F18;
+	case GLFW_KEY_F19:
+		return Keyboard::Key::F19;
+	case GLFW_KEY_F20:
+		return Keyboard::Key::F20;
+	case GLFW_KEY_F21:
+		return Keyboard::Key::F21;
+	case GLFW_KEY_F22:
+		return Keyboard::Key::F22;
+	case GLFW_KEY_F23:
+		return Keyboard::Key::F23;
+	case GLFW_KEY_F24:
+		return Keyboard::Key::F24;
+	case GLFW_KEY_F25:
+		return Keyboard::Key::F25;
+	case GLFW_KEY_KP_0:
+		return Keyboard::Key::Kp0;
+	case GLFW_KEY_KP_1:
+		return Keyboard::Key::Kp1;
+	case GLFW_KEY_KP_2:
+		return Keyboard::Key::Kp2;
+	case GLFW_KEY_KP_3:
+		return Keyboard::Key::Kp3;
+	case GLFW_KEY_KP_4:
+		return Keyboard::Key::Kp4;
+	case GLFW_KEY_KP_5:
+		return Keyboard::Key::Kp5;
+	case GLFW_KEY_KP_6:
+		return Keyboard::Key::Kp6;
+	case GLFW_KEY_KP_7:
+		return Keyboard::Key::Kp7;
+	case GLFW_KEY_KP_8:
+		return Keyboard::Key::Kp8;
+	case GLFW_KEY_KP_9:
+		return Keyboard::Key::Kp9;
+	case GLFW_KEY_KP_DECIMAL:
+		return Keyboard::Key::KpDecimal;
+	case GLFW_KEY_KP_DIVIDE:
+		return Keyboard::Key::KpDivide;
+	case GLFW_KEY_KP_MULTIPLY:
+		return Keyboard::Key::KpMultiply;
+	case GLFW_KEY_KP_SUBTRACT:
+		return Keyboard::Key::KpSubtract;
+	case GLFW_KEY_KP_ADD:
+		return Keyboard::Key::KpAdd;
+	case GLFW_KEY_KP_ENTER:
+		return Keyboard::Key::KpEnter;
+	case GLFW_KEY_KP_EQUAL:
+		return Keyboard::Key::KpEqual;
+	case GLFW_KEY_LEFT_SHIFT:
+		return Keyboard::Key::LeftShift;
+	case GLFW_KEY_LEFT_CONTROL:
+		return Keyboard::Key::LeftControl;
+	case GLFW_KEY_LEFT_ALT:
+		return Keyboard::Key::LeftAlt;
+	case GLFW_KEY_LEFT_SUPER:
+		return Keyboard::Key::LeftSuper;
+	case GLFW_KEY_RIGHT_SHIFT:
+		return Keyboard::Key::RightShift;
+	case GLFW_KEY_RIGHT_CONTROL:
+		return Keyboard::Key::RightControl;
+	case GLFW_KEY_RIGHT_ALT:
+		return Keyboard::Key::RightAlt;
+	case GLFW_KEY_RIGHT_SUPER:
+		return Keyboard::Key::RightSuper;
+	case GLFW_KEY_MENU:
+		return Keyboard::Key::Menu;
+	default:
+		return Keyboard::Key::Count;
+	}
+}
+
+void keyCb(GLFWwindow* _window, int32_t _key, int32_t _scancode, int32_t _action, int32_t _mods)
+{
+	Input* input = static_cast<Input*>(glfwGetWindowUserPointer(_window));
+	Keyboard::Key key = toKey(_key);
+
+	input->setKey(key, toAction(_action));
+
+	if (_mods & GLFW_MOD_SHIFT)
+	{
+		input->setKeyModifier(key, ModifierKey::Shift);
+	}
+	if (_mods & GLFW_MOD_CONTROL)
+	{
+		input->setKeyModifier(key, ModifierKey::Ctrl);
+	}
+	if (_mods & GLFW_MOD_ALT)
+	{
+		input->setKeyModifier(key, ModifierKey::Alt);
+	}
+	if (_mods & GLFW_MOD_SUPER)
+	{
+		input->setKeyModifier(key, ModifierKey::Super);
+	}
+	if (_mods & GLFW_MOD_CAPS_LOCK)
+	{
+		input->setKeyModifier(key, ModifierKey::CapsLock);
+	}
+	if (_mods & GLFW_MOD_NUM_LOCK)
+	{
+		input->setKeyModifier(key, ModifierKey::NumLock);
+	}
+
 }
 
 static void cursorPosCb(GLFWwindow* _window, double _xpos, double _ypos)
@@ -53,12 +337,33 @@ static void mouseButtonCb(GLFWwindow* _window, int32_t _button, int32_t _action,
 	Input* input = static_cast<Input*>(glfwGetWindowUserPointer(_window));
 	Mouse::Button button = toMouseButton(_button);
 
-	input->setMouseButtonPressed(button, toMouseAction(_action));
+	input->setMouseButtonPressed(button, toAction(_action));
 
+	if (_mods & GLFW_MOD_SHIFT)
+	{
+		input->setMouseButtonModifier(button, ModifierKey::Shift);
+	}
+	if (_mods & GLFW_MOD_CONTROL)
+	{
+		input->setMouseButtonModifier(button, ModifierKey::Ctrl);
+	}
 	if (_mods & GLFW_MOD_ALT)
 	{
 		input->setMouseButtonModifier(button, ModifierKey::Alt);
 	}
+	if (_mods & GLFW_MOD_SUPER)
+	{
+		input->setMouseButtonModifier(button, ModifierKey::Super);
+	}
+	if (_mods & GLFW_MOD_CAPS_LOCK)
+	{
+		input->setMouseButtonModifier(button, ModifierKey::CapsLock);
+	}
+	if (_mods & GLFW_MOD_NUM_LOCK)
+	{
+		input->setMouseButtonModifier(button, ModifierKey::NumLock);
+	}
+
 }
 
 static void scrollCb(GLFWwindow* _window, double _xoffset, double _yoffset)
@@ -67,14 +372,14 @@ static void scrollCb(GLFWwindow* _window, double _xoffset, double _yoffset)
 }
 
 
-Input::Input(GLFWwindow *_window)
+Input::Input(GLFWwindow* _window)
 	: mouseState(), m_window(_window)
 {
 }
 
 void Input::init()
 {
-	//glfwSetKeyCallback(m_window[0], keyCb);
+	glfwSetKeyCallback(m_window, keyCb);
 	//glfwSetCharCallback(m_window[0], charCb);
 	glfwSetScrollCallback(m_window, scrollCb);
 	glfwSetCursorPosCallback(m_window, cursorPosCb);
@@ -106,9 +411,19 @@ void Input::setMouseScroll(double _xoffset, double _yoffset)
 	mouseState.scroll.y = _yoffset;
 }
 
-bool Input::isMouseButtonPressed(Mouse::Button _button)
+void Input::setKey(Keyboard::Key _key, Button::Action _action)
 {
-	return mouseState.buttons[_button].action == Button::Press;
+	keyboardState.keys[_key].action = _action;
+}
+
+void Input::setKeyModifier(Keyboard::Key _key, ModifierKey _mod)
+{
+	keyboardState.keys[_key].modifiers[_mod] = true;
+}
+
+void Input::drawImgui() const
+{
+	ImGui::Text("Mouse (x, y): (%f, %f)", mouseState.pos.x, mouseState.pos.y);
 }
 
 void Input::clear()
