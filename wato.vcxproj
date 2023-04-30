@@ -24,12 +24,16 @@
     <ClCompile Include="deps\imgui\imgui_tables.cpp" />
     <ClCompile Include="deps\imgui\imgui_widgets.cpp" />
     <ClCompile Include="src\bgfx_utils.cpp" />
+    <ClCompile Include="src\camera.cpp" />
     <ClCompile Include="src\imgui\imgui_helper.cpp" />
     <ClCompile Include="src\input\input.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\primitive\plane.cpp" />
+    <ClCompile Include="src\primitive\primitive.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\bgfx_utils.h" />
+    <ClInclude Include="src\camera.hpp" />
     <ClInclude Include="src\imgui\fs_imgui_image.bin.h" />
     <ClInclude Include="src\imgui\fs_ocornut_imgui.bin.h" />
     <ClInclude Include="src\imgui\imgui_helper.h" />
@@ -40,6 +44,8 @@
     <ClInclude Include="src\imgui\vs_ocornut_imgui.bin.h" />
     <ClInclude Include="src\imgui\wato_imgui_config.h" />
     <ClInclude Include="src\input\input.h" />
+    <ClInclude Include="src\primitive\plane.hpp" />
+    <ClInclude Include="src\primitive\primitive.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

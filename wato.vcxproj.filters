@@ -25,6 +25,9 @@
     <Filter Include="Source Files\deps\imgui">
       <UniqueIdentifier>{b3823f94-4bab-43ea-b1dc-c2f0c698518e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\primitive">
+      <UniqueIdentifier>{064282e0-02bb-4209-a230-0ed1aba52247}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -50,6 +53,15 @@
     </ClCompile>
     <ClCompile Include="deps\imgui\imgui_widgets.cpp">
       <Filter>Source Files\deps\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\primitive\plane.cpp">
+      <Filter>Source Files\primitive</Filter>
+    </ClCompile>
+    <ClCompile Include="src\primitive\primitive.cpp">
+      <Filter>Source Files\primitive</Filter>
+    </ClCompile>
+    <ClCompile Include="src\camera.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -84,6 +96,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\input\input.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\primitive\plane.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\primitive\primitive.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\camera.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
