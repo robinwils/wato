@@ -22,6 +22,7 @@
 #include "robotomono_regular.ttf.h"
 #include "IconsKenney.h_kenney-icon-font.ttf.h"
 #include "IconsFontAwesome4.h_fontawesome-webfont.ttf.h"
+#include <camera.hpp>
 
 static const bgfx::EmbeddedShader s_embeddedShaders[] =
 {
@@ -477,7 +478,7 @@ struct OcornutImguiContext
 	bgfx::UniformHandle u_imageLodEnabled;
 	ImFont* m_font[ImGui::Font::Count];
 	int64_t m_last;
-	int32_t m_lastScroll;
+	double m_lastScroll;
 	bgfx::ViewId m_viewId;
 #if USE_ENTRY
 	ImGuiKey m_keyMap[(int)entry::Key::Count];
@@ -628,28 +629,34 @@ static void resourceBar(const char* _name, const char* _tooltip, uint32_t _num, 
 	}
 }
 
+void showImguiDialogs(Camera& _cam, const Input& _input, float _width, float _height)
+{
+	showStatsDialog(_input);
+	showSettingsDialog(_cam, _width, _height);
+}
 
-void showInputDebug(Input _input)
+void showSettingsDialog(Camera& _cam, float _width, float _height)
 {
 	ImGui::SetNextWindowPos(
-		ImVec2(10.0f, 100.0f)
+		ImVec2(_width - _width / 5.0f - 10.0f, 10.0f)
 		, ImGuiCond_FirstUseEver
 	);
 	ImGui::SetNextWindowSize(
-		ImVec2(300.0f, 210.0f)
+		ImVec2(_width / 5.0f, _height / 3.5f)
 		, ImGuiCond_FirstUseEver
 	);
+	ImGui::Begin("Settings"
+		, NULL
+		, 0
+	);
 
-	ImGui::Begin("input");
-	ImGui::Separator();
-
-	ImGui::Text("Mouse (x, y): (%f, %f)", _input.mouseState.pos.x, _input.mouseState.pos.y);
+	_cam.drawImgui();
 
 	ImGui::End();
 }
 
 
-void showStatsDialog(const char* _errorText)
+void showStatsDialog(const Input& _input, const char* _errorText)
 {
 	ImGui::SetNextWindowPos(
 		ImVec2(10.0f, 50.0f)
@@ -884,6 +891,8 @@ void showStatsDialog(const char* _errorText)
 		}
 		ImGui::End();
 	}
+
+	_input.drawImgui();
 
 	ImGui::End();
 }

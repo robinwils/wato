@@ -260,36 +260,7 @@ int main()
 
         imguiBeginFrame(input, uint16_t(width), uint16_t(height));
 
-        showStatsDialog(nullptr);
-        showInputDebug(input);
-
-        ImGui::SetNextWindowPos(
-            ImVec2(width - width / 5.0f - 10.0f, 10.0f)
-            , ImGuiCond_FirstUseEver
-        );
-        ImGui::SetNextWindowSize(
-            ImVec2(width / 5.0f, height / 3.5f)
-            , ImGuiCond_FirstUseEver
-        );
-        ImGui::Begin("Settings"
-            , NULL
-            , 0
-        );
-
-        ImGui::SliderFloat("float", &m_fourteen, 0.0f, 100.0f);
-
-        /*
-        ImGui::Checkbox("Write R", &m_r);
-        ImGui::Checkbox("Write G", &m_g);
-        ImGui::Checkbox("Write B", &m_b);
-        ImGui::Checkbox("Write A", &m_a);
-        
-
-        ImGui::Text("Primitive topology:");
-        ImGui::Combo("##topology", (int*)&m_pt, s_ptNames, BX_COUNTOF(s_ptNames));
-        */
-
-        ImGui::End();
+        showImguiDialogs(camera, input, width, height);
 
         imguiEndFrame();
 
