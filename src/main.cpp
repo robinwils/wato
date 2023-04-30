@@ -20,7 +20,12 @@
 
 #include "imgui_helper.h"
 #include "bgfx_utils.h"
-#include <input/input.h>
+#include <input/input.hpp>
+
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <camera.hpp>
+#include <primitive/plane.hpp>
 
 static void glfw_keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
@@ -227,14 +232,14 @@ int main()
 
     bgfx::ProgramHandle program = loadProgram("vs_cubes", "fs_cubes");
 
-    int64_t m_timeOffset = bx::getHPCounter();
-
     imguiCreate();
     Input input(window);
     input.init();
     glfwSetWindowUserPointer(window, &input);
+    Camera camera;
+    PlanePrimitive plane;
+    double prevTime = glfwGetTime();
 
-    float m_fourteen = 0.0f;
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
         // Handle window resize.
@@ -255,33 +260,24 @@ int main()
         const bgfx::Stats* stats = bgfx::getStats();
         bgfx::dbgTextPrintf(0, 2, 0x0f, "Backbuffer %dW x %dH in pixels, debug text %dW x %dH in characters.", stats->width, stats->height, stats->textWidth, stats->textHeight);
 
-        double xpos, ypos;
-        glfwGetCursorPos(window, &xpos, &ypos);
-
         imguiBeginFrame(input, uint16_t(width), uint16_t(height));
 
         showImguiDialogs(camera, input, width, height);
 
         imguiEndFrame();
 
-        float time = (float)((bx::getHPCounter() - m_timeOffset) / double(bx::getHPFrequency()));
+        auto t = glfwGetTime();
+        auto dt = t - prevTime;
+        prevTime = t;
 
-        const bx::Vec3 at = { 0.0f, 0.0f,   0.0f };
-        const bx::Vec3 eye = { 0.0f, 0.0f, -35.0f };
 
+        camera.update(input, dt);
+        const glm::mat4 view = camera.view();
+        const glm::mat4 proj = camera.projection(float(width) / float(height));
 
-        // Set view and projection matrix for view 0.
-        {
-            float view[16];
-            bx::mtxLookAt(view, eye, at);
+        bgfx::setViewTransform(0, glm::value_ptr(view), glm::value_ptr(proj));
+        bgfx::setViewRect(0, 0, 0, uint16_t(width), uint16_t(height));
 
-            float proj[16];
-            bx::mtxProj(proj, 60.0f, float(width) / float(height), 0.1f, 100.0f, bgfx::getCaps()->homogeneousDepth);
-            bgfx::setViewTransform(0, view, proj);
-
-            // Set view 0 default viewport.
-            bgfx::setViewRect(0, 0, 0, uint16_t(width), uint16_t(height));
-        }
         // This dummy draw call is here to make sure that view 0 is cleared
 // if no other draw calls are submitted to view 0.
         bgfx::touch(0);
@@ -297,19 +293,24 @@ int main()
             | BGFX_STATE_MSAA
             ;
 
+        glm::mat4 plane_mtx = glm::mat4(1.0f) * glm::mat4(1.0f) * 4.0f * glm::scale(glm::mat4(1.0f), glm::vec3(4.0f));
+        bgfx::setTransform(glm::value_ptr(plane_mtx));
+
+        plane.submitPrimitive(program);
+
         // Submit 11x11 cubes.
-        for (uint32_t yy = 0; yy < 11; ++yy)
+        for (uint32_t yy = 0; yy < 1; ++yy)
         {
-            for (uint32_t xx = 0; xx < 11; ++xx)
+            for (uint32_t xx = 0; xx < 1; ++xx)
             {
-                float mtx[16];
-                bx::mtxRotateXY(mtx, time + xx * 0.21f, time + yy * 0.37f);
-                mtx[12] = -15.0f + float(xx) * 3.0f;
-                mtx[13] = -15.0f + float(yy) * 3.0f;
-                mtx[14] = m_fourteen;
+                glm::mat4 scale_mtx = glm::mat4(1.0f);
+                glm::mat4 translate_mtx = glm::translate(glm::mat4(1.0f),
+                                                         glm::vec3(float(xx) * 3.0f, float(yy) * 3.0f, 0.0f));
+                glm::mat4 rotate_mtx = glm::rotate(glm::mat4(1.0), (float) t, glm::vec3(xx, yy, 1.0f));
+                glm::mat4 mtx = translate_mtx * rotate_mtx * scale_mtx;
 
                 // Set model matrix for rendering.
-                bgfx::setTransform(mtx);
+                bgfx::setTransform(glm::value_ptr(mtx));
 
                 // Set vertex and index buffer.
                 bgfx::setVertexBuffer(0, vbh);
