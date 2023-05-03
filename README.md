@@ -37,9 +37,37 @@ bxDebug.lib
 bimgDebug.lib
 ```
 
+## Icon fonts
+
+`TODO: Automate this`
+
+Go in the iconfontheaders, apply this patch:
+```
+diff --git a/GenerateIconFontCppHeaders.py b/GenerateIconFontCppHeaders.py
+index c721a0d..6fef4f6 100644
+--- a/GenerateIconFontCppHeaders.py
++++ b/GenerateIconFontCppHeaders.py
+@@ -708,7 +708,7 @@ class LanguageGo( Language ):
+
+ fonts = [ FontFA4, FontFA5, FontFA5Brands, FontFA5Pro, FontFA5ProBrands, FontFA6, FontFA6Brands, FontFK, FontMD, FontKI, FontFAD, FontCI ]
+ languages = [ LanguageC, LanguageCSharp, LanguagePython, LanguageGo ]
+-ttf2headerC = False # convert ttf files to C and C++ headers
++ttf2headerC = True # convert ttf files to C and C++ headers
+
+ logging.basicConfig( format='%(levelname)s : %(message)s', level = logging.INFO )
+```
+
+Install PyYAML and generate fonts
+```
+$ pip install PyYAML
+$ python .\GenerateIconFontCppHeaders.py
+```
+
 ## Shaders
 
 Shaders are compiled using a makefile, they are kept in the same place as bgfx shader files
+
+You need to compile shaderc binary from the bgfx solution (tools > shaderc > shaderc) in release mode
 
 ```
 $ cd shaders/
