@@ -28,6 +28,7 @@
 #include <primitive/plane.hpp>
 
 #include <entt/entt.hpp>
+#include <registry.hpp>
 
 BxFactory g_bxFactory;
 
@@ -208,6 +209,8 @@ int main()
         , 0
     );
 
+    Registry registry;
+
     // Create vertex stream declaration.
     PosColorVertex::init();
 
@@ -287,7 +290,7 @@ int main()
             | BGFX_STATE_MSAA
             ;
 
-        glm::mat4 plane_mtx = glm::mat4(1.0f) * glm::mat4(1.0f) * 4.0f * glm::scale(glm::mat4(1.0f), glm::vec3(4.0f));
+        glm::mat4 plane_mtx = glm::mat4(1.0f) * glm::mat4(1.0f) * glm::scale(glm::mat4(1.0f), glm::vec3(4.0f));
         bgfx::setTransform(glm::value_ptr(plane_mtx));
 
         plane.submitPrimitive(program);
