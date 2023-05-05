@@ -27,12 +27,6 @@
 #include <camera.hpp>
 #include <primitive/plane.hpp>
 
-static void glfw_keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
-{
- //   if (key == GLFW_KEY_F1 && action == GLFW_RELEASE)
-   //     s_showStats = !s_showStats;
-}
-
 #include <entt/entt.hpp>
 
 BxFactory g_bxFactory;
@@ -175,7 +169,6 @@ int main()
         glfwTerminate();
         return -1;
     }
-    glfwSetKeyCallback(window, glfw_keyCallback);
     glfwMakeContextCurrent(window);
 
     // Call bgfx::renderFrame before bgfx::init to signal to bgfx not to create a render thread.
