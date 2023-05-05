@@ -101,7 +101,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LibraryPath>deps\bgfx\.build\win64_vs2022\bin;deps\glfw\lib-vc2022;$(LibraryPath)</LibraryPath>
-    <IncludePath>deps\bimg\include;src;deps\bx\include\compat\msvc;deps\bx\include;deps\bgfx\include;deps\glfw\include;deps\imgui;src\imgui;deps\iconfontcppheaders;deps\glm;$(IncludePath)</IncludePath>
+    <IncludePath>deps\bimg\include;src;deps\bx\include\compat\msvc;deps\bx\include;deps\bgfx\include;deps\glfw\include;deps\imgui;src\imgui;deps\iconfontcppheaders;deps\entt\src;deps\glm;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

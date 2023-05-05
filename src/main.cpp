@@ -33,6 +33,7 @@ static void glfw_keyCallback(GLFWwindow* window, int key, int scancode, int acti
    //     s_showStats = !s_showStats;
 }
 
+#include <entt/entt.hpp>
 
 BxFactory g_bxFactory;
 
