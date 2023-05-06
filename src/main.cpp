@@ -19,139 +19,16 @@
 #include <GLFW/glfw3native.h>
 
 #include "imgui_helper.h"
-#include "bgfx_utils.h"
+#include <renderer/bgfx_utils.hpp>
 #include <input/input.hpp>
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <camera.hpp>
-#include <primitive/plane.hpp>
+#include <core/camera.hpp>
+#include <renderer/plane.hpp>
 
-#include <entt/entt.hpp>
-#include <registry.hpp>
-
-BxFactory g_bxFactory;
-
-struct PosColorVertex
-{
-    float m_x;
-    float m_y;
-    float m_z;
-    uint32_t m_abgr;
-
-    static void init()
-    {
-        ms_layout
-            .begin()
-            .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
-            .add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
-            .end();
-    };
-
-    static bgfx::VertexLayout ms_layout;
-};
-
-bgfx::VertexLayout PosColorVertex::ms_layout;
-
-static PosColorVertex s_cubeVertices[] =
-{
-    {-1.0f,  1.0f,  1.0f, 0xff000000 },
-    { 1.0f,  1.0f,  1.0f, 0xff0000ff },
-    {-1.0f, -1.0f,  1.0f, 0xff00ff00 },
-    { 1.0f, -1.0f,  1.0f, 0xff00ffff },
-    {-1.0f,  1.0f, -1.0f, 0xffff0000 },
-    { 1.0f,  1.0f, -1.0f, 0xffff00ff },
-    {-1.0f, -1.0f, -1.0f, 0xffffff00 },
-    { 1.0f, -1.0f, -1.0f, 0xffffffff },
-};
-
-static const uint16_t s_cubeTriList[] =
-{
-    0, 1, 2, // 0
-    1, 3, 2,
-    4, 6, 5, // 2
-    5, 6, 7,
-    0, 2, 4, // 4
-    4, 2, 6,
-    1, 5, 3, // 6
-    5, 7, 3,
-    0, 4, 1, // 8
-    4, 5, 1,
-    2, 3, 6, // 10
-    6, 3, 7,
-};
-
-static const bgfx::Memory* loadMem(bx::FileReaderI* _reader, const char* _filePath)
-{
-    if (bx::open(_reader, _filePath))
-    {
-        uint32_t size = (uint32_t)bx::getSize(_reader);
-        const bgfx::Memory* mem = bgfx::alloc(size + 1);
-        bx::read(_reader, mem->data, size, bx::ErrorAssert{});
-        bx::close(_reader);
-        mem->data[mem->size - 1] = '\0';
-        return mem;
-    }
-
-    DBG("Failed to load %s.", _filePath);
-    return NULL;
-}
-
-static bgfx::ShaderHandle loadShader(bx::FileReaderI* _reader, const char* _name)
-{
-    char filePath[512];
-
-    const char* renderer = "???";
-
-    bx::strCopy(filePath, BX_COUNTOF(filePath), "shaders/");
-    bx::strCat(filePath, BX_COUNTOF(filePath), _name);
-
-#if BX_PLATFORM_WINDOWS
-    bx::strCat(filePath, BX_COUNTOF(filePath), "_windows");
-#endif
-
-    switch (bgfx::getRendererType())
-    {
-    case bgfx::RendererType::Noop:
-    case bgfx::RendererType::Direct3D9:  renderer = "_dx9";   break;
-    case bgfx::RendererType::Direct3D11:
-    case bgfx::RendererType::Direct3D12: renderer = "_dx11";  break;
-    case bgfx::RendererType::Agc:
-    case bgfx::RendererType::Gnm:        renderer = "_pssl";  break;
-    case bgfx::RendererType::Metal:      renderer = "_metal"; break;
-    case bgfx::RendererType::Nvn:        renderer = "_nvn";   break;
-    case bgfx::RendererType::OpenGL:     renderer = "_glsl";  break;
-    case bgfx::RendererType::OpenGLES:   renderer = "_essl";  break;
-    case bgfx::RendererType::Vulkan:
-    case bgfx::RendererType::WebGPU:     renderer = "_spirv"; break;
-
-    case bgfx::RendererType::Count:
-        BX_ASSERT(false, "You should not be here!");
-        break;
-    }
-
-    bx::strCat(filePath, BX_COUNTOF(filePath), renderer);
-    bx::strCat(filePath, BX_COUNTOF(filePath), ".bin");
-
-    bgfx::ShaderHandle handle = bgfx::createShader(loadMem(_reader, filePath));
-    bgfx::setName(handle, _name);
-
-    return handle;
-}
-
-
-bgfx::ProgramHandle loadProgram(const char* _vsName, const char* _fsName)
-{
-    bgfx::ShaderHandle vsh = loadShader(g_bxFactory.getDefaultFileReader(), _vsName);
-    bgfx::ShaderHandle fsh = BGFX_INVALID_HANDLE;
-    if (NULL != _fsName)
-    {
-        fsh = loadShader(g_bxFactory.getDefaultFileReader(), _fsName);
-    }
-
-    return bgfx::createProgram(vsh, fsh, true /* destroy shaders when program is destroyed */);
-
-}
+#include <core/registry.hpp>
+#include <systems/render.hpp>
 
 int main()
 {
@@ -211,6 +88,7 @@ int main()
 
     Registry registry;
 
+    /*
     // Create vertex stream declaration.
     PosColorVertex::init();
 
@@ -226,15 +104,15 @@ int main()
         // Static data can be passed with bgfx::makeRef
         bgfx::makeRef(s_cubeTriList, sizeof(s_cubeTriList))
     );
-
-    bgfx::ProgramHandle program = loadProgram("vs_cubes", "fs_cubes");
+    */
 
     imguiCreate();
     Input input(window);
     input.init();
     glfwSetWindowUserPointer(window, &input);
     Camera camera;
-    PlanePrimitive plane;
+
+    registry.spawnPlane();
     double prevTime = glfwGetTime();
 
     while (!glfwWindowShouldClose(window)) {
@@ -290,12 +168,10 @@ int main()
             | BGFX_STATE_MSAA
             ;
 
-        glm::mat4 plane_mtx = glm::mat4(1.0f) * glm::mat4(1.0f) * glm::scale(glm::mat4(1.0f), glm::vec3(4.0f));
-        bgfx::setTransform(glm::value_ptr(plane_mtx));
-
-        plane.submitPrimitive(program);
+        renderScenObjects(registry);
 
         // Submit 11x11 cubes.
+        /*
         for (uint32_t yy = 0; yy < 1; ++yy)
         {
             for (uint32_t xx = 0; xx < 1; ++xx)
@@ -320,6 +196,7 @@ int main()
                 bgfx::submit(0, program);
             }
         }
+        */
 
         // Advance to next frame. Process submitted rendering primitives.
         bgfx::frame();

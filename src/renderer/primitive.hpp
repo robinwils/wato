@@ -5,6 +5,8 @@
 #include <glm/ext/vector_float2.hpp>
 #include <vector>
 
+#include <renderer/material.hpp>
+
 struct PositionNormalUvVertex
 {
     glm::vec3 position;
@@ -29,14 +31,14 @@ public:
     Primitive() : m_is_initialized(false) {}
     virtual ~Primitive() { destroyPrimitive(); }
 
-    virtual void submitPrimitive(bgfx::ProgramHandle program, bool preserve_state = false) const
+    virtual void submitPrimitive(const Material& material, bool preserve_state = false) const
     {
         assert(m_is_initialized);
 
         bgfx::setVertexBuffer(0, m_vertex_buffer_handle);
         bgfx::setIndexBuffer(m_index_buffer_handle);
 
-        bgfx::submit(0, program, bgfx::ViewMode::Default, preserve_state);
+        bgfx::submit(0, material.program, bgfx::ViewMode::Default, preserve_state);
     }
 
 protected:

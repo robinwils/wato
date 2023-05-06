@@ -17,11 +17,6 @@
 #include <tinystl/vector.h>
 namespace stl = tinystl;
 
-#define DBG_STRINGIZE(_x) DBG_STRINGIZE_(_x)
-#define DBG_STRINGIZE_(_x) #_x
-#define DBG_FILE_LINE_LITERAL "" __FILE__ "(" DBG_STRINGIZE(__LINE__) "): "
-#define DBG(_format, ...) bx::debugPrintf(DBG_FILE_LINE_LITERAL "" _format "\n", ##__VA_ARGS__)
-
 struct BxFactory {
 	bx::FileReader* getDefaultFileReader();
 	bx::FileWriter* getDefaultFileWriter();
@@ -29,8 +24,8 @@ struct BxFactory {
 
 private:
 	bx::DefaultAllocator allocator;
-	bx::FileReader* fr;
-	bx::FileWriter* fw;
+	bx::FileReader* fr = nullptr;
+	bx::FileWriter* fw = nullptr;
 };
 
 ///
@@ -38,15 +33,6 @@ void* load(const char* _filePath, uint32_t* _size = NULL);
 
 ///
 void unload(void* _ptr);
-
-///
-bgfx::ShaderHandle loadShader(const char* _name);
-
-///
-bgfx::ProgramHandle loadProgram(const char* _vsName, const char* _fsName);
-
-///
-bgfx::TextureHandle loadTexture(const char* _name, uint64_t _flags = BGFX_TEXTURE_NONE|BGFX_SAMPLER_NONE, uint8_t _skip = 0, bgfx::TextureInfo* _info = NULL, bimg::Orientation::Enum* _orientation = NULL);
 
 ///
 bimg::ImageContainer* imageLoad(const char* _filePath, bgfx::TextureFormat::Enum _dstFormat);

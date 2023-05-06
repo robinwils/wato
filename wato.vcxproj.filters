@@ -25,11 +25,32 @@
     <Filter Include="Source Files\deps\imgui">
       <UniqueIdentifier>{b3823f94-4bab-43ea-b1dc-c2f0c698518e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\primitive">
-      <UniqueIdentifier>{064282e0-02bb-4209-a230-0ed1aba52247}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\components">
       <UniqueIdentifier>{8784257e-fe26-403e-a4a6-eda25b956167}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\systems">
+      <UniqueIdentifier>{b039c6ff-7b2b-4f28-b74e-e98ce7671079}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\systems">
+      <UniqueIdentifier>{554aeb71-662c-4f1e-a235-5db80c9298e9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\renderer">
+      <UniqueIdentifier>{f5fa2aad-acfc-4878-b6f2-5f195ee1742b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\imgui">
+      <UniqueIdentifier>{cbd79892-5b28-4579-af30-612b3f76dee7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\core">
+      <UniqueIdentifier>{6b6e6622-7181-4eb7-9ba6-02d40592eaff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\core">
+      <UniqueIdentifier>{138e416a-0884-4329-b7b5-1fb7bad38ab3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\input">
+      <UniqueIdentifier>{9fafa250-e8a2-4245-83ab-9d1d5826ca14}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\renderer">
+      <UniqueIdentifier>{0e35a652-82b3-42f8-a551-7295e2902dcd}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -38,9 +59,6 @@
     </ClCompile>
     <ClCompile Include="src\imgui\imgui_helper.cpp">
       <Filter>Source Files\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="src\bgfx_utils.cpp">
-      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\input\input.cpp">
       <Filter>Source Files\input</Filter>
@@ -57,62 +75,26 @@
     <ClCompile Include="deps\imgui\imgui_widgets.cpp">
       <Filter>Source Files\deps\imgui</Filter>
     </ClCompile>
-    <ClCompile Include="src\primitive\plane.cpp">
-      <Filter>Source Files\primitive</Filter>
+    <ClCompile Include="src\systems\render.cpp">
+      <Filter>Source Files\systems</Filter>
     </ClCompile>
-    <ClCompile Include="src\primitive\primitive.cpp">
-      <Filter>Source Files\primitive</Filter>
+    <ClCompile Include="src\core\registry.cpp">
+      <Filter>Source Files\core</Filter>
     </ClCompile>
-    <ClCompile Include="src\camera.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="src\core\camera.cpp">
+      <Filter>Source Files\core</Filter>
     </ClCompile>
-    <ClCompile Include="src\registry.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="src\renderer\bgfx_utils.cpp">
+      <Filter>Source Files\renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\sys.cpp">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\renderer\material.cpp">
+      <Filter>Source Files\renderer</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\imgui\imgui_helper.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\imgui\vs_imgui_image.bin.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\imgui\vs_ocornut_imgui.bin.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\imgui\fs_imgui_image.bin.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\imgui\fs_ocornut_imgui.bin.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\bgfx_utils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\imgui\roboto_regular.ttf.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\imgui\robotomono_regular.ttf.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\imgui\imgui_user.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\imgui\wato_imgui_config.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\input\input.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\primitive\plane.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\primitive\primitive.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\camera.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\components\position.hpp">
       <Filter>Header Files\components</Filter>
     </ClInclude>
@@ -122,8 +104,65 @@
     <ClInclude Include="src\components\scale.hpp">
       <Filter>Header Files\components</Filter>
     </ClInclude>
-    <ClInclude Include="src\registry.hpp">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="src\systems\render.hpp">
+      <Filter>Header Files\systems</Filter>
+    </ClInclude>
+    <ClInclude Include="src\imgui\fs_imgui_image.bin.h">
+      <Filter>Header Files\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\imgui\fs_ocornut_imgui.bin.h">
+      <Filter>Header Files\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\imgui\imgui_helper.h">
+      <Filter>Header Files\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\imgui\imgui_user.h">
+      <Filter>Header Files\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\imgui\roboto_regular.ttf.h">
+      <Filter>Header Files\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\imgui\robotomono_regular.ttf.h">
+      <Filter>Header Files\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\imgui\vs_imgui_image.bin.h">
+      <Filter>Header Files\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\imgui\vs_ocornut_imgui.bin.h">
+      <Filter>Header Files\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\imgui\wato_imgui_config.h">
+      <Filter>Header Files\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\renderer\bgfx_utils.hpp">
+      <Filter>Header Files\renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\input\input.hpp">
+      <Filter>Header Files\input</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\camera.hpp">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\registry.hpp">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\renderer\material.hpp">
+      <Filter>Header Files\renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\renderer\primitive.hpp">
+      <Filter>Header Files\renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\components\scene_object.hpp">
+      <Filter>Header Files\components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\renderer\plane.hpp">
+      <Filter>Header Files\renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\sys.hpp">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\renderer\cube.hpp">
+      <Filter>Header Files\renderer</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

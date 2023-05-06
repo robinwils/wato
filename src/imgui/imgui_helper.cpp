@@ -11,18 +11,18 @@
 
 #include "imgui_helper.h"
 
-#include "bgfx_utils.h"
+#include <renderer/bgfx_utils.hpp>
 
-#include "vs_ocornut_imgui.bin.h"
-#include "fs_ocornut_imgui.bin.h"
-#include "vs_imgui_image.bin.h"
-#include "fs_imgui_image.bin.h"
+#include <imgui/vs_ocornut_imgui.bin.h>
+#include <imgui/fs_ocornut_imgui.bin.h>
+#include <imgui/vs_imgui_image.bin.h>
+#include <imgui/fs_imgui_image.bin.h>
 
-#include "roboto_regular.ttf.h"
-#include "robotomono_regular.ttf.h"
-#include "IconsKenney.h_kenney-icon-font.ttf.h"
-#include "IconsFontAwesome4.h_fontawesome-webfont.ttf.h"
-#include <camera.hpp>
+#include <imgui/roboto_regular.ttf.h>
+#include <imgui/robotomono_regular.ttf.h>
+#include <IconsKenney.h_kenney-icon-font.ttf.h>
+#include <IconsFontAwesome4.h_fontawesome-webfont.ttf.h>
+#include <core/camera.hpp>
 
 static const bgfx::EmbeddedShader s_embeddedShaders[] =
 {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "primitive.hpp"
+#include <renderer/primitive.hpp>
 
 class PlanePrimitive : public Primitive
 {

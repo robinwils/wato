@@ -16,7 +16,7 @@
 #include <IconsKenney.h>
 #include <IconsFontAwesome6.h>
 #include <input/input.hpp>
-#include <camera.hpp>
+#include <core/camera.hpp>
 
 #define IMGUI_MBUT_LEFT   0x01
 #define IMGUI_MBUT_RIGHT  0x02

@@ -23,19 +23,26 @@
     <ClCompile Include="deps\imgui\imgui_draw.cpp" />
     <ClCompile Include="deps\imgui\imgui_tables.cpp" />
     <ClCompile Include="deps\imgui\imgui_widgets.cpp" />
-    <ClCompile Include="src\bgfx_utils.cpp" />
-    <ClCompile Include="src\camera.cpp" />
-    <ClCompile Include="src\registry.cpp" />
+    <ClCompile Include="src\core\sys.cpp" />
+    <ClCompile Include="src\renderer\material.cpp" />
+    <ClCompile Include="src\systems\render.cpp" />
+    <ClCompile Include="src\renderer\bgfx_utils.cpp" />
+    <ClCompile Include="src\core\camera.cpp" />
+    <ClCompile Include="src\core\registry.cpp" />
     <ClCompile Include="src\imgui\imgui_helper.cpp" />
     <ClCompile Include="src\input\input.cpp" />
     <ClCompile Include="src\main.cpp" />
-    <ClCompile Include="src\primitive\plane.cpp" />
-    <ClCompile Include="src\primitive\primitive.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\bgfx_utils.h" />
-    <ClInclude Include="src\camera.hpp" />
+    <ClInclude Include="src\components\scene_object.hpp" />
+    <ClInclude Include="src\core\sys.hpp" />
+    <ClInclude Include="src\renderer\cube.hpp" />
+    <ClInclude Include="src\renderer\material.hpp" />
+    <ClInclude Include="src\systems\render.hpp" />
+    <ClInclude Include="src\renderer\bgfx_utils.hpp" />
+    <ClInclude Include="src\core\camera.hpp" />
     <ClInclude Include="src\components\position.hpp" />
+    <ClInclude Include="src\renderer\primitive.hpp" />
     <ClInclude Include="src\components\rotation.hpp" />
     <ClInclude Include="src\components\scale.hpp" />
     <ClInclude Include="src\imgui\fs_imgui_image.bin.h" />
@@ -47,10 +54,9 @@
     <ClInclude Include="src\imgui\vs_imgui_image.bin.h" />
     <ClInclude Include="src\imgui\vs_ocornut_imgui.bin.h" />
     <ClInclude Include="src\imgui\wato_imgui_config.h" />
-    <ClInclude Include="src\input\input.h" />
-    <ClInclude Include="src\primitive\plane.hpp" />
-    <ClInclude Include="src\primitive\primitive.hpp" />
-    <ClInclude Include="src\registry.hpp" />
+    <ClInclude Include="src\input\input.hpp" />
+    <ClInclude Include="src\renderer\plane.hpp" />
+    <ClInclude Include="src\core\registry.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
