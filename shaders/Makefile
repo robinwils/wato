@@ -7,7 +7,7 @@ else
 SHADERC=SHADERC
 endif
 
-SHADERS=vs_cubes.sc fs_cubes.sc
+SHADERS=$(wildcard vs_*.sc) $(wildcard fs_*.sc) $(wildcard cs_*.sc)
 SHADERC_INCLUDE=-i $(THISDIR)../deps/bgfx/src/ -i $(THISDIR)../deps/bgfx/examples/
 
 define SHADER_TARGET =
