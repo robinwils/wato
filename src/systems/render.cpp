@@ -36,6 +36,7 @@ void renderScenObjects(Registry& registry)
 
 		// Set render states.
 		bgfx::setState(state);
+		obj.material.submit();
 
 		obj.primitive->submitPrimitive(obj.material);
 	}
