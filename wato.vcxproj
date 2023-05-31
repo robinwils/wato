@@ -34,6 +34,8 @@
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\core\cache.hpp" />
+    <ClInclude Include="src\components\map.hpp" />
     <ClInclude Include="src\components\scene_object.hpp" />
     <ClInclude Include="src\core\sys.hpp" />
     <ClInclude Include="src\renderer\cube.hpp" />
@@ -57,6 +59,7 @@
     <ClInclude Include="src\input\input.hpp" />
     <ClInclude Include="src\renderer\plane.hpp" />
     <ClInclude Include="src\core\registry.hpp" />
+    <ClInclude Include="src\core\tile.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

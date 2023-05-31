@@ -17,31 +17,23 @@
 #include <tinystl/vector.h>
 namespace stl = tinystl;
 
-struct BxFactory {
-	static BxFactory& getInstance() {
-		static BxFactory instance;
+struct BxSingleton {
+	static BxSingleton& getInstance() {
+		static BxSingleton instance;
 
 		return instance;
 	}
 
-	BxFactory(BxFactory const&) = delete;
-	void operator=(BxFactory const&) = delete;
+	BxSingleton(BxSingleton const&) = delete;
+	void operator=(BxSingleton const&) = delete;
 
 	bx::DefaultAllocator allocator;
 	bx::FileReader reader;
 	bx::FileWriter writer;
 
 private:
-		BxFactory() {};
+		BxSingleton() {};
 };
-
-///
-void* load(const char* _filePath, uint32_t* _size = NULL);
-
-void imageReleaseCb(void* _ptr, void* _userData);
-
-bgfx::TextureHandle loadTexture(const char* _name, uint64_t _flags = BGFX_TEXTURE_NONE | BGFX_SAMPLER_NONE, uint8_t _skip = 0, bgfx::TextureInfo* _info = NULL, bimg::Orientation::Enum* _orientation = NULL);
-
 
 ///
 void unload(void* _ptr);

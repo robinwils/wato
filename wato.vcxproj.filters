@@ -164,5 +164,15 @@
     <ClInclude Include="src\renderer\cube.hpp">
       <Filter>Header Files\renderer</Filter>
     </ClInclude>
+    <ClInclude Include="src\components\map.hpp">
+      <Filter>Header Files\components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\tile.hpp">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\cache.hpp">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+  </ItemGroup>
   </ItemGroup>
 </Project>
