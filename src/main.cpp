@@ -139,8 +139,6 @@ int main()
 
         showImguiDialogs(camera, input, width, height);
 
-        imguiEndFrame();
-
         auto t = glfwGetTime();
         auto dt = t - prevTime;
         prevTime = t;
@@ -186,7 +184,7 @@ int main()
             }
         }
         */
-
+        imguiEndFrame();
         // Advance to next frame. Process submitted rendering primitives.
         bgfx::frame();
     }

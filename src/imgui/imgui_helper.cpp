@@ -446,24 +446,12 @@ struct OcornutImguiContext
 		io.AddMouseWheelEvent(0.0f, (float)(_input.mouseState.scroll.y  - m_lastScroll) );
 		m_lastScroll = _input.mouseState.scroll.y;
 
-#if USE_ENTRY
-		uint8_t modifiers = inputGetModifiersState();
-		io.AddKeyEvent(ImGuiKey_ModShift, 0 != (modifiers & (entry::Modifier::LeftShift | entry::Modifier::RightShift) ) );
-		io.AddKeyEvent(ImGuiKey_ModCtrl,  0 != (modifiers & (entry::Modifier::LeftCtrl  | entry::Modifier::RightCtrl ) ) );
-		io.AddKeyEvent(ImGuiKey_ModAlt,   0 != (modifiers & (entry::Modifier::LeftAlt   | entry::Modifier::RightAlt  ) ) );
-		io.AddKeyEvent(ImGuiKey_ModSuper, 0 != (modifiers & (entry::Modifier::LeftMeta  | entry::Modifier::RightMeta ) ) );
-		for (int32_t ii = 0; ii < (int32_t)entry::Key::Count; ++ii)
-		{
-			io.AddKeyEvent(m_keyMap[ii], inputGetKeyState(entry::Key::Enum(ii) ) );
-			io.SetKeyEventNativeData(m_keyMap[ii], 0, 0, ii);
-		}
-#endif // USE_ENTRY
-
 		ImGui::NewFrame();
 	}
 
 	void endFrame()
 	{
+		ImGui::End();
 		ImGui::Render();
 		render(ImGui::GetDrawData() );
 	}
@@ -651,13 +639,12 @@ void showSettingsDialog(Camera& _cam, float _width, float _height)
 	);
 
 	_cam.drawImgui();
-
-	ImGui::End();
 }
 
 
 void showStatsDialog(const Input& _input, const char* _errorText)
 {
+	/*
 	ImGui::SetNextWindowPos(
 		ImVec2(10.0f, 50.0f)
 		, ImGuiCond_FirstUseEver
@@ -668,6 +655,7 @@ void showStatsDialog(const Input& _input, const char* _errorText)
 	);
 
 	ImGui::Begin("wato");
+	*/
 
 	ImGui::Separator();
 
@@ -893,8 +881,6 @@ void showStatsDialog(const Input& _input, const char* _errorText)
 	}
 
 	_input.drawImgui();
-
-	ImGui::End();
 }
 
 namespace ImGui
