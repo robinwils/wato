@@ -25,12 +25,6 @@ namespace stl = tinystl;
 
 #include <bimg/decode.h>
 
-
-void unload(void* _ptr)
-{
-	BX_FREE(&BxSingleton::getInstance().allocator, _ptr);
-}
-
 void calcTangents(void* _vertices, uint16_t _numVertices, bgfx::VertexLayout _layout, const uint16_t* _indices, uint32_t _numIndices)
 {
 	struct PosTexcoord

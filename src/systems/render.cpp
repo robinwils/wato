@@ -8,9 +8,11 @@
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <bgfx/bgfx.h>
+#include <components/direction.hpp>
+#include <components/color.hpp>
 
 
-void renderScenObjects(Registry& registry)
+void renderSceneObjects(Registry& registry)
 {
 	uint64_t state = 0
 		| BGFX_STATE_WRITE_R
@@ -23,7 +25,15 @@ void renderScenObjects(Registry& registry)
 		| BGFX_STATE_MSAA
 		;
 
-	for (auto&& [entity, pos, rot, scale, obj] : registry.group<Position, Rotation, Scale, SceneObject>().each()) { 
+	// light
+	auto view = registry.view<Direction, Color>();
+	auto lightEntity = view.front();
+	assert(lightEntity != entt::null);
+	//bgfx::setUniform(registry.get<Direction, glm::value_ptr(glm::vec4(m_lightDir, 0.0f)));
+	//bgfx::setUniform(u_lightCol, glm::value_ptr(glm::vec4(m_lightCol, 0.0f)));
+
+
+	for (auto&& [entity, pos, rot, scale, obj] : registry.view<Position, Rotation, Scale, SceneObject>().each()) { 
 		auto model = glm::mat4(1.0f);
 		model = glm::translate(model, pos.position);
 		model = glm::rotate(model, rot.rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));

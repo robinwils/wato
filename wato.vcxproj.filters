@@ -1,178 +1,47 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
-    </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
-    <Filter Include="Source Files\imgui">
-      <UniqueIdentifier>{4aa6d9fd-17aa-440f-9578-3a47c195bbc1}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\input">
-      <UniqueIdentifier>{598a2f1b-335d-445a-8ed3-f3cc01870b81}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\deps">
-      <UniqueIdentifier>{a3f6c1a2-6ba0-40ae-b1e0-fb7412fbeb3b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\deps\imgui">
-      <UniqueIdentifier>{b3823f94-4bab-43ea-b1dc-c2f0c698518e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\components">
-      <UniqueIdentifier>{8784257e-fe26-403e-a4a6-eda25b956167}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\systems">
-      <UniqueIdentifier>{b039c6ff-7b2b-4f28-b74e-e98ce7671079}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\systems">
-      <UniqueIdentifier>{554aeb71-662c-4f1e-a235-5db80c9298e9}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\renderer">
-      <UniqueIdentifier>{f5fa2aad-acfc-4878-b6f2-5f195ee1742b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\imgui">
-      <UniqueIdentifier>{cbd79892-5b28-4579-af30-612b3f76dee7}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\core">
-      <UniqueIdentifier>{6b6e6622-7181-4eb7-9ba6-02d40592eaff}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\core">
-      <UniqueIdentifier>{138e416a-0884-4329-b7b5-1fb7bad38ab3}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\input">
-      <UniqueIdentifier>{9fafa250-e8a2-4245-83ab-9d1d5826ca14}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\renderer">
-      <UniqueIdentifier>{0e35a652-82b3-42f8-a551-7295e2902dcd}</UniqueIdentifier>
-    </Filter>
+    <ClCompile Include="deps\imgui\imgui.cpp" />
+    <ClCompile Include="deps\imgui\imgui_draw.cpp" />
+    <ClCompile Include="deps\imgui\imgui_tables.cpp" />
+    <ClCompile Include="deps\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="src\core\sys.cpp" />
+    <ClCompile Include="src\renderer\material.cpp" />
+    <ClCompile Include="src\systems\render.cpp" />
+    <ClCompile Include="src\renderer\bgfx_utils.cpp" />
+    <ClCompile Include="src\core\camera.cpp" />
+    <ClCompile Include="src\core\registry.cpp" />
+    <ClCompile Include="src\imgui\imgui_helper.cpp" />
+    <ClCompile Include="src\input\input.cpp" />
+    <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\imgui\imgui_helper.cpp">
-      <Filter>Source Files\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="src\input\input.cpp">
-      <Filter>Source Files\input</Filter>
-    </ClCompile>
-    <ClCompile Include="deps\imgui\imgui.cpp">
-      <Filter>Source Files\deps\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="deps\imgui\imgui_draw.cpp">
-      <Filter>Source Files\deps\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="deps\imgui\imgui_tables.cpp">
-      <Filter>Source Files\deps\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="deps\imgui\imgui_widgets.cpp">
-      <Filter>Source Files\deps\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="src\systems\render.cpp">
-      <Filter>Source Files\systems</Filter>
-    </ClCompile>
-    <ClCompile Include="src\core\registry.cpp">
-      <Filter>Source Files\core</Filter>
-    </ClCompile>
-    <ClCompile Include="src\core\camera.cpp">
-      <Filter>Source Files\core</Filter>
-    </ClCompile>
-    <ClCompile Include="src\renderer\bgfx_utils.cpp">
-      <Filter>Source Files\renderer</Filter>
-    </ClCompile>
-    <ClCompile Include="src\core\sys.cpp">
-      <Filter>Source Files\core</Filter>
-    </ClCompile>
-    <ClCompile Include="src\renderer\material.cpp">
-      <Filter>Source Files\renderer</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="src\components\position.hpp">
-      <Filter>Header Files\components</Filter>
-    </ClInclude>
-    <ClInclude Include="src\components\rotation.hpp">
-      <Filter>Header Files\components</Filter>
-    </ClInclude>
-    <ClInclude Include="src\components\scale.hpp">
-      <Filter>Header Files\components</Filter>
-    </ClInclude>
-    <ClInclude Include="src\systems\render.hpp">
-      <Filter>Header Files\systems</Filter>
-    </ClInclude>
-    <ClInclude Include="src\imgui\fs_imgui_image.bin.h">
-      <Filter>Header Files\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="src\imgui\fs_ocornut_imgui.bin.h">
-      <Filter>Header Files\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="src\imgui\imgui_helper.h">
-      <Filter>Header Files\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="src\imgui\imgui_user.h">
-      <Filter>Header Files\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="src\imgui\roboto_regular.ttf.h">
-      <Filter>Header Files\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="src\imgui\robotomono_regular.ttf.h">
-      <Filter>Header Files\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="src\imgui\vs_imgui_image.bin.h">
-      <Filter>Header Files\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="src\imgui\vs_ocornut_imgui.bin.h">
-      <Filter>Header Files\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="src\imgui\wato_imgui_config.h">
-      <Filter>Header Files\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="src\renderer\bgfx_utils.hpp">
-      <Filter>Header Files\renderer</Filter>
-    </ClInclude>
-    <ClInclude Include="src\input\input.hpp">
-      <Filter>Header Files\input</Filter>
-    </ClInclude>
-    <ClInclude Include="src\core\camera.hpp">
-      <Filter>Header Files\core</Filter>
-    </ClInclude>
-    <ClInclude Include="src\core\registry.hpp">
-      <Filter>Header Files\core</Filter>
-    </ClInclude>
-    <ClInclude Include="src\renderer\material.hpp">
-      <Filter>Header Files\renderer</Filter>
-    </ClInclude>
-    <ClInclude Include="src\renderer\primitive.hpp">
-      <Filter>Header Files\renderer</Filter>
-    </ClInclude>
-    <ClInclude Include="src\components\scene_object.hpp">
-      <Filter>Header Files\components</Filter>
-    </ClInclude>
-    <ClInclude Include="src\renderer\plane.hpp">
-      <Filter>Header Files\renderer</Filter>
-    </ClInclude>
-    <ClInclude Include="src\core\sys.hpp">
-      <Filter>Header Files\core</Filter>
-    </ClInclude>
-    <ClInclude Include="src\renderer\cube.hpp">
-      <Filter>Header Files\renderer</Filter>
-    </ClInclude>
-    <ClInclude Include="src\components\map.hpp">
-      <Filter>Header Files\components</Filter>
-    </ClInclude>
-    <ClInclude Include="src\core\tile.hpp">
-      <Filter>Header Files\core</Filter>
-    </ClInclude>
-    <ClInclude Include="src\core\cache.hpp">
-      <Filter>Header Files\core</Filter>
-    </ClInclude>
-  </ItemGroup>
+    <ClInclude Include="src\core\cache.hpp" />
+    <ClInclude Include="src\components\scene_object.hpp" />
+    <ClInclude Include="src\core\sys.hpp" />
+    <ClInclude Include="src\renderer\cube.hpp" />
+    <ClInclude Include="src\renderer\material.hpp" />
+    <ClInclude Include="src\systems\render.hpp" />
+    <ClInclude Include="src\renderer\bgfx_utils.hpp" />
+    <ClInclude Include="src\core\camera.hpp" />
+    <ClInclude Include="src\components\position.hpp" />
+    <ClInclude Include="src\renderer\primitive.hpp" />
+    <ClInclude Include="src\components\rotation.hpp" />
+    <ClInclude Include="src\components\scale.hpp" />
+    <ClInclude Include="src\imgui\fs_imgui_image.bin.h" />
+    <ClInclude Include="src\imgui\fs_ocornut_imgui.bin.h" />
+    <ClInclude Include="src\imgui\imgui_helper.h" />
+    <ClInclude Include="src\imgui\imgui_user.h" />
+    <ClInclude Include="src\imgui\robotomono_regular.ttf.h" />
+    <ClInclude Include="src\imgui\roboto_regular.ttf.h" />
+    <ClInclude Include="src\imgui\vs_imgui_image.bin.h" />
+    <ClInclude Include="src\imgui\vs_ocornut_imgui.bin.h" />
+    <ClInclude Include="src\imgui\wato_imgui_config.h" />
+    <ClInclude Include="src\input\input.hpp" />
+    <ClInclude Include="src\renderer\plane.hpp" />
+    <ClInclude Include="src\core\registry.hpp" />
+    <ClInclude Include="src\core\tile.hpp" />
+    <ClInclude Include="src\components\color.hpp" />
+    <ClInclude Include="src\components\direction.hpp" />
   </ItemGroup>
 </Project>

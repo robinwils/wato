@@ -112,6 +112,8 @@ int main()
     glfwSetWindowUserPointer(window, &input);
     Camera camera;
 
+    registry.spawnLight();
+    //registry.spawnMap(1, 1);
     registry.spawnPlane();
     double prevTime = glfwGetTime();
 
@@ -155,7 +157,7 @@ int main()
 // if no other draw calls are submitted to view 0.
         bgfx::touch(0);
 
-        renderScenObjects(registry);
+        renderSceneObjects(registry);
 
         // Submit 11x11 cubes.
         /*
