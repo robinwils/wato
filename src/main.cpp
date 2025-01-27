@@ -113,8 +113,8 @@ int main()
     Camera camera;
 
     registry.spawnLight();
-    //registry.spawnMap(1, 1);
-    registry.spawnPlane();
+    registry.spawnMap(20, 20);
+    //registry.spawnPlane();
     double prevTime = glfwGetTime();
 
     while (!glfwWindowShouldClose(window)) {
@@ -154,38 +154,11 @@ int main()
         bgfx::setViewRect(0, 0, 0, uint16_t(width), uint16_t(height));
 
         // This dummy draw call is here to make sure that view 0 is cleared
-// if no other draw calls are submitted to view 0.
+        // if no other draw calls are submitted to view 0.
         bgfx::touch(0);
 
         renderSceneObjects(registry);
 
-        // Submit 11x11 cubes.
-        /*
-        for (uint32_t yy = 0; yy < 1; ++yy)
-        {
-            for (uint32_t xx = 0; xx < 1; ++xx)
-            {
-                glm::mat4 scale_mtx = glm::mat4(1.0f);
-                glm::mat4 translate_mtx = glm::translate(glm::mat4(1.0f),
-                                                         glm::vec3(float(xx) * 3.0f, float(yy) * 3.0f, 0.0f));
-                glm::mat4 rotate_mtx = glm::rotate(glm::mat4(1.0), (float) t, glm::vec3(xx, yy, 1.0f));
-                glm::mat4 mtx = translate_mtx * rotate_mtx * scale_mtx;
-
-                // Set model matrix for rendering.
-                bgfx::setTransform(glm::value_ptr(mtx));
-
-                // Set vertex and index buffer.
-                bgfx::setVertexBuffer(0, vbh);
-                bgfx::setIndexBuffer(ibh);
-
-                // Set render states.
-                bgfx::setState(state);
-
-                // Submit primitive for rendering to view 0.
-                bgfx::submit(0, program);
-            }
-        }
-        */
         imguiEndFrame();
         // Advance to next frame. Process submitted rendering primitives.
         bgfx::frame();
