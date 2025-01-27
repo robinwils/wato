@@ -17,7 +17,6 @@ bgfx::ShaderHandle loadShader(bx::FileReaderI* _reader, const char* _name)
     switch (bgfx::getRendererType())
     {
     case bgfx::RendererType::Noop:
-    case bgfx::RendererType::Direct3D9:  renderer = "_dx9";   break;
     case bgfx::RendererType::Direct3D11:
     case bgfx::RendererType::Direct3D12: renderer = "_dx11";  break;
     case bgfx::RendererType::Agc:
@@ -26,9 +25,7 @@ bgfx::ShaderHandle loadShader(bx::FileReaderI* _reader, const char* _name)
     case bgfx::RendererType::Nvn:        renderer = "_nvn";   break;
     case bgfx::RendererType::OpenGL:     renderer = "_glsl";  break;
     case bgfx::RendererType::OpenGLES:   renderer = "_essl";  break;
-    case bgfx::RendererType::Vulkan:
-    case bgfx::RendererType::WebGPU:     renderer = "_spirv"; break;
-
+    case bgfx::RendererType::Vulkan:     renderer = "_spirv"; break;
     case bgfx::RendererType::Count:
         BX_ASSERT(false, "You should not be here!");
         break;

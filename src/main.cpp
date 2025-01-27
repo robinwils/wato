@@ -88,24 +88,6 @@ int main()
 
     Registry registry;
 
-    /*
-    // Create vertex stream declaration.
-    PosColorVertex::init();
-
-    // Create static vertex buffer.
-    bgfx::VertexBufferHandle vbh = bgfx::createVertexBuffer(
-        // Static data can be passed with bgfx::makeRef
-        bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices))
-        , PosColorVertex::ms_layout
-    );
-
-    // Create static index buffer for triangle list rendering.
-    bgfx::IndexBufferHandle ibh = bgfx::createIndexBuffer(
-        // Static data can be passed with bgfx::makeRef
-        bgfx::makeRef(s_cubeTriList, sizeof(s_cubeTriList))
-    );
-    */
-
     imguiCreate();
     Input input(window);
     input.init();

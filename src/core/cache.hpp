@@ -37,7 +37,7 @@ struct TextureLoader final {
 					, imageReleaseCb
 					, imageContainer
 				);
-				BX_FREE(&allocator, data);
+				bx::free(&allocator, data);
 
 				if (imageContainer->m_cubeMap)
 				{

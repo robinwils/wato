@@ -37,7 +37,7 @@ bgfx::TextureHandle loadTexture(const char* _filePath, uint64_t _flags, uint8_t 
 				, imageReleaseCb
 				, imageContainer
 			);
-			BX_FREE(&BxSingleton::getInstance().allocator, data);
+			bx::free(&BxSingleton::getInstance().allocator, data);
 			
 
 			if (imageContainer->m_cubeMap)
