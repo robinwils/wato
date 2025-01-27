@@ -103,19 +103,21 @@ bgfx::TextureHandle loadTexture(const char* _filePath, uint64_t _flags, uint8_t 
 void Registry::spawnPlane()
 {
 	//bgfx::ProgramHandle program = loadProgram(&BxFactory::getInstance().reader, "vs_cubes", "fs_cubes");
-	bgfx::ProgramHandle program = loadProgram(&BxSingleton::getInstance().reader, "vs_blinnphong", "fs_blinnphong");
+	auto [bp, pLoaded] = PROGRAM_CACHE.load("blinnphong"_hs, "vs_blinnphong", "fs_blinnphong");
 
 	// TODO: verbose mode using second element of pair
-	TextureCache textureCache;
+	auto [ loadedDiffuseTexture, dLoaded ] = TEXTURE_CACHE.load("grass/diffuse"_hs, "assets/textures/TreeTop_COLOR.png");
+	auto [ loadedSpecularTexture, sLoaded ] = TEXTURE_CACHE.load("grass/specular"_hs, "assets/textures/TreeTop_SPEC.png");
 
+	// FIXME: Cannot use the return of the cache's load function, it crashes, the operator[] does almost the same thing as load, invetigate
+	auto diffuse = TEXTURE_CACHE["grass/diffuse"_hs];
+	auto specular = TEXTURE_CACHE["grass/specular"_hs];
 
-	auto loadedDiffuseTexture = textureCache.load("grass/diffuse"_hs, "assets/textures/TreeTop_COLOR.png");
-	auto loadedSpecularTexture = textureCache.load("grass/specular"_hs, "assets/textures/TreeTop_SPEC.png");
-	entt::resource<bgfx::TextureHandle> diffuse = loadedDiffuseTexture.first->second;
-	entt::resource<bgfx::TextureHandle> specular = loadedSpecularTexture.first->second;
+	// TODO: check validity
+	// auto dv = bgfx::isValid(diffuse);
+	// auto sv = bgfx::isValid(specular);
 
-	//bgfx::TextureHandle diffuse = loadTexture("assets/textures/TreeTop_COLOR.png");
-	//bgfx::TextureHandle specular = loadTexture("assets/textures/TreeTop_SPEC.png");
+	auto program = PROGRAM_CACHE["blinnphong"_hs];
 
 	auto plane = create();
 	emplace<Position>(plane, glm::vec3(0.0f));
@@ -126,24 +128,22 @@ void Registry::spawnPlane()
 
 void Registry::spawnMap(uint32_t _w, uint32_t _h)
 {
-	//bgfx::ProgramHandle program = loadProgram(&BxSingleton::getInstance().reader, "vs_blinnphong", "fs_blinnphong");
+	auto [bp, pLoaded] = PROGRAM_CACHE.load("blinnphong"_hs, "vs_blinnphong", "fs_blinnphong");
+	auto[diff, diffLoaded] = TEXTURE_CACHE.load("grass/diffuse"_hs, "assets/textures/TreeTop_COLOR.png");
+	auto [sp, sLoaded] = TEXTURE_CACHE.load("grass/specular"_hs, "assets/textures/TreeTop_SPEC.png");
 
-	std::pair<ProgramCache::iterator, bool> blinnphongProgram = PROGRAM_CACHE.load("blinnphong"_hs, "vs_blinnphong", "fs_blinnphong");
-	std::pair<TextureCache::iterator, bool> loadedDiffuseTexture = TEXTURE_CACHE.load("texture_diffuse"_hs, "assets/textures/TreeTop_COLOR.png");
-	std::pair<TextureCache::iterator, bool> loadedSpecularTexture = TEXTURE_CACHE.load("texture_specular"_hs, "assets/textures/TreeTop_SPEC.png");
-
-	entt::resource<bgfx::ProgramHandle> program = blinnphongProgram.first->second;
-	entt::resource<bgfx::TextureHandle> diffuse = loadedDiffuseTexture.first->second;
-	entt::resource<bgfx::TextureHandle> specular = loadedSpecularTexture.first->second;
+	auto program = PROGRAM_CACHE["blinnphong"_hs];
+	auto diffuse = TEXTURE_CACHE["grass/diffuse"_hs];
+	auto specular = TEXTURE_CACHE["grass/specular"_hs];
 
 
 	Material m(program, diffuse, specular);
 
 	for (uint32_t i = 0; i < _w; ++i) {
-		for (uint32_t i = 0; i < _h; ++i) {
+		for (uint32_t j = 0; j < _h; ++j) {
 			auto tile = create();
-			emplace<Position>(tile, glm::vec3(0.0f));
-			emplace<Rotation>(tile, glm::vec3(0.0f));
+			emplace<Position>(tile, glm::vec3(i, 0, j));
+			emplace<Rotation>(tile, glm::vec3(0, 0, 0));
 			emplace<Scale>(tile, glm::vec3(1.0f));
 			emplace<SceneObject>(tile, new PlanePrimitive(), m);
 		}
