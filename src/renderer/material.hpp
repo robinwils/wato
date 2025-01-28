@@ -3,7 +3,9 @@
 #include <bx/file.h>
 #include <glm/ext/vector_float4.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <imgui.h>
+#ifndef IMGUI_VERSION
+#include "imgui_helper.h"
+#endif
 
 bgfx::ShaderHandle loadShader(bx::FileReaderI* _reader, const char* _name);
 bgfx::ProgramHandle loadProgram(bx::FileReader* fr, const char* _vsName, const char* _fsName);

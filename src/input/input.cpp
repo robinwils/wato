@@ -1,6 +1,9 @@
 #include "input.hpp"
 #include <string.h>
-#include <imgui.h>
+
+#ifndef IMGUI_VERSION
+#include "imgui_helper.h"
+#endif
 
 void MouseState::clear()
 {

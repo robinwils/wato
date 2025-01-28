@@ -1,7 +1,8 @@
 #include "camera.hpp"
 
 #include <glm/gtc/type_ptr.hpp>
-#include <imgui.h>
+
+#include "imgui_helper.h"
 
 void Camera::drawImgui()
 {
