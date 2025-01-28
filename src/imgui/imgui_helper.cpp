@@ -405,7 +405,6 @@ struct OcornutImguiContext
 
 	void endFrame()
 	{
-		ImGui::End();
 		ImGui::Render();
 		render(ImGui::GetDrawData());
 	}
@@ -592,13 +591,14 @@ void showSettingsDialog(Camera& _cam, float _width, float _height)
 	);
 
 	_cam.drawImgui();
+	ImGui::End();
 }
 
 
 void showStatsDialog(const Input& _input, const char* _errorText)
 {
 	char temp[1024];
-	bx::snprintf(temp, BX_COUNTOF(temp), "WaTo");
+	bx::snprintf(temp, BX_COUNTOF(temp), "Stats");
 
 	ImGui::SetNextWindowPos(
 		ImVec2(10.0f, 50.0f)
@@ -819,6 +819,7 @@ void showStatsDialog(const Input& _input, const char* _errorText)
 		}
 		ImGui::End();
 	}
+	_input.drawImgui();
 	ImGui::End();
 }
 
