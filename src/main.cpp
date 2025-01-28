@@ -96,7 +96,6 @@ int main()
 
     registry.spawnLight();
     registry.spawnMap(20, 20);
-    //registry.spawnPlane();
     double prevTime = glfwGetTime();
 
     while (!glfwWindowShouldClose(window)) {
@@ -121,7 +120,25 @@ int main()
 
         imguiBeginFrame(input, uint16_t(width), uint16_t(height));
 
-        showImguiDialogs(camera, input, width, height);
+        ImGui::SetNextWindowPos(
+            ImVec2(width - width / 5.0f - 10.0f, 10.0f)
+            , ImGuiCond_FirstUseEver
+        );
+        ImGui::SetNextWindowSize(
+            ImVec2(width / 5.0f, height / 3.5f)
+            , ImGuiCond_FirstUseEver
+        );
+        ImGui::Begin("Settings"
+            , NULL
+            , 0
+        );
+
+        input.drawImgui();
+        camera.drawImgui();
+
+        ImGui::End();
+
+        //showImguiDialogs(camera, input, width, height);
 
         auto t = glfwGetTime();
         auto dt = t - prevTime;
@@ -140,7 +157,7 @@ int main()
         bgfx::touch(0);
 
         renderSceneObjects(registry);
-
+        
         imguiEndFrame();
         // Advance to next frame. Process submitted rendering primitives.
         bgfx::frame();

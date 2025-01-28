@@ -121,32 +121,10 @@ struct OcornutImguiContext
 						| BGFX_STATE_WRITE_RGB
 						| BGFX_STATE_WRITE_A
 						| BGFX_STATE_MSAA
-						;
+						| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA);
 
 					bgfx::TextureHandle th = m_texture;
-					bgfx::ProgramHandle program = m_program;
-
-					if (ImU64(0) != cmd->TextureId)
-					{
-						union { ImTextureID ptr; struct { bgfx::TextureHandle handle; uint8_t flags; uint8_t mip; } s; } texture = { cmd->TextureId };
-
-						state |= 0 != (IMGUI_FLAGS_ALPHA_BLEND & texture.s.flags)
-							? BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
-							: BGFX_STATE_NONE
-							;
-						th = texture.s.handle;
-
-						if (0 != texture.s.mip)
-						{
-							const float lodEnabled[4] = { float(texture.s.mip), 1.0f, 0.0f, 0.0f };
-							bgfx::setUniform(u_imageLodEnabled, lodEnabled);
-							program = m_imageProgram;
-						}
-					}
-					else
-					{
-						state |= BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA);
-					}
+					bgfx::ProgramHandle program = m_program;					
 
 					// Project scissor/clipping rectangles into framebuffer space
 					ImVec4 clipRect;
@@ -459,6 +437,7 @@ void imguiEndFrame()
 {
 	s_ctx.endFrame();
 }
+
 struct SampleData
 {
 	static constexpr uint32_t kNumSamples = 100;
