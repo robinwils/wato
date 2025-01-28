@@ -1,9 +1,9 @@
 #
-# Copyright 2011-2023 Branimir Karadzic. All rights reserved.
+# Copyright 2011-2025 Branimir Karadzic. All rights reserved.
 # License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
 #
 
-include ../../deps/bgfx/scripts/shader-embeded.mk
+include ../../../scripts/shader-embeded.mk
 
 droidsans.ttf.h: ../../runtime/font/droidsans.ttf
 	@bin2c -f $(<) -o $(@) -n s_droidSansTtf

@@ -10,7 +10,6 @@
 
 #include <bgfx/bgfx.h>
 
-#include <imgui.h>
 #include <imgui_internal.h>
 
 #include <IconsKenney.h>
