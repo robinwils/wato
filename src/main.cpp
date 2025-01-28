@@ -85,7 +85,7 @@ int main()
     // Set view 0 clear state.
     bgfx::setViewClear(0
         , BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH
-        , 0x303030ff
+        , 0x0090cfff
         , 1.0f
         , 0
     );
