@@ -25,6 +25,14 @@ Open solution in visual studio and build bgfx, bx and bimg
 
 glfw has precompiled binaries, download them from the official website and copy the folder to deps/glfw
 
+### Assimp
+there is a WIP CMakeLists.txt that will generate assimp files
+
+```bash
+cmake -B 'Build' .
+cmake --build .
+```
+
 ### VS options
 
 1. Add `/Zc:__cplusplus` in *Configuration Properties > C/C++ > Command Line*
@@ -73,3 +81,4 @@ You need to compile shaderc binary from the bgfx solution (tools > shaderc > sha
 $ cd shaders/
 $ make
 ```
+

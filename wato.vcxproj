@@ -115,8 +115,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LibraryPath>deps\bgfx\.build\win64_vs2022\bin;deps\glfw\lib-vc2022;$(LibraryPath)</LibraryPath>
-    <IncludePath>deps\bimg\include;src;deps\bx\include\compat\msvc;deps\bx\include;deps\bgfx\include;deps\glfw\include;deps\imgui;src\imgui;deps\iconfontcppheaders;deps\entt\src;deps\glm;$(IncludePath)</IncludePath>
+    <LibraryPath>deps\bgfx\.build\win64_vs2022\bin;deps\glfw\lib-vc2022;Builds\_deps\assimp-build\lib\Debug\;$(LibraryPath)</LibraryPath>
+    <IncludePath>deps\bimg\include;src;deps\bx\include\compat\msvc;deps\bx\include;deps\bgfx\include;deps\glfw\include;deps\imgui;src\imgui;deps\iconfontcppheaders;deps\entt\src;deps\glm;E:\Projects\watosimple\Builds\_deps\assimp-src\include;E:\Projects\watosimple\Builds\_deps\assimp-build\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -160,7 +160,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>glfw3_mt.lib;bgfxDebug.lib;bxDebug.lib;bimgDebug.lib;bimg_decodeDebug.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glfw3_mt.lib;bgfxDebug.lib;bxDebug.lib;bimgDebug.lib;bimg_decodeDebug.lib;assimp-vc143-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
