@@ -29,7 +29,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <core/camera.hpp>
-#include <renderer/plane.hpp>
+#include <renderer/plane_primitive.hpp>
 
 #include <core/registry.hpp>
 #include <systems/render.hpp>
