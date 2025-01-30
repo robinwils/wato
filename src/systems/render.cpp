@@ -53,7 +53,5 @@ void renderSceneObjects(Registry& registry)
 		obj.material.submit();
 
 		obj.primitive->submitPrimitive(obj.material);
-
-		bgfx::submit(0, obj.material.program);
 	}
 }

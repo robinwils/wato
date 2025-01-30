@@ -31,14 +31,14 @@ public:
     Primitive() : m_is_initialized(false) {}
     virtual ~Primitive() { destroyPrimitive(); }
 
-    virtual void submitPrimitive(const Material& material, bool preserve_state = false) const
+    virtual void submitPrimitive(const Material& material, uint8_t discard_states = BGFX_DISCARD_ALL) const
     {
         assert(m_is_initialized);
 
         bgfx::setVertexBuffer(0, m_vertex_buffer_handle);
         bgfx::setIndexBuffer(m_index_buffer_handle);
 
-        bgfx::submit(0, material.program, bgfx::ViewMode::Default, preserve_state);
+        bgfx::submit(0, material.program, bgfx::ViewMode::Default, discard_states);
     }
 
 protected:
