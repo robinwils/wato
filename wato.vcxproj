@@ -34,6 +34,8 @@
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\components\model.hpp" />
+    <ClInclude Include="src\renderer\mesh_primitive.hpp" />
     <ClInclude Include="src\components\color.hpp" />
     <ClInclude Include="src\components\direction.hpp" />
     <ClInclude Include="src\core\cache.hpp" />

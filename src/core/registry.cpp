@@ -5,7 +5,7 @@
 #include <components/rotation.hpp>
 #include <components/scale.hpp>
 #include <components/scene_object.hpp>
-#include <renderer/plane.hpp>
+#include <renderer/plane_primitive.hpp>
 #include <core/sys.hpp>
 #include <core/cache.hpp>
 #include <entt/core/hashed_string.hpp>
@@ -165,4 +165,9 @@ void Registry::spawnLight()
 	auto light = create();
 	emplace<Direction>(light, glm::vec3(-1.0f, -1.0f, 0.0f));
 	emplace<Color>(light, glm::vec3(0.5f));
+}
+
+void Registry::spawnModel()
+{
+	auto model = create();
 }

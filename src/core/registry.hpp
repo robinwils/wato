@@ -11,4 +11,5 @@ struct Registry : public entt::basic_registry<entt::entity>
 	void spawnPlane();
 	void spawnMap(uint32_t _w, uint32_t _h);
 	void spawnLight();
+	void spawnModel();
 };
