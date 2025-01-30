@@ -1,6 +1,6 @@
 #pragma once
 
-#include <renderer/plane.hpp>
+#include <renderer/plane_primitive.hpp>
 #include <memory>
 
 struct Tile
