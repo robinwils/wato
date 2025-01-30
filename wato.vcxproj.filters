@@ -43,5 +43,7 @@
     <ClInclude Include="src\core\tile.hpp" />
     <ClInclude Include="src\components\color.hpp" />
     <ClInclude Include="src\components\direction.hpp" />
+    <ClInclude Include="src\renderer\mesh_primitive.hpp" />
+    <ClInclude Include="src\components\model.hpp" />
   </ItemGroup>
 </Project>
