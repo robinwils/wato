@@ -45,6 +45,29 @@ bxDebug.lib
 bimgDebug.lib
 ```
 
+## Linux
+
+### Dependencies
+
+- GLFW
+- lib X11
+- lib vulkan
+
+on debian
+```bash
+sudo apt install libglfw3-dev libx11-dev libvulkan-dev
+```
+
+### Build
+
+Build is done using cmake:
+
+```bash
+cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=1 .
+```
+
+`CMAKE_EXPORT_COMPILE_COMMANDS` is used for generating the compile json DB for LSP usage (clangd)
+
 ## Icon fonts
 
 `TODO: Automate this`
