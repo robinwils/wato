@@ -126,7 +126,7 @@ namespace ImGui
 			|| ImGui::IsAnyItemActive()
 			|| ImGui::IsAnyItemHovered()
 			|| ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow)
-//			|| ImGuizmo::IsOver()
+	//		|| ImGuizmo::IsOver()
 			;
 	}
 

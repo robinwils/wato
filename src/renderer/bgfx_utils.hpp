@@ -15,7 +15,6 @@
 
 #include <tinystl/allocator.h>
 #include <tinystl/vector.h>
-namespace stl = tinystl;
 
 struct BxSingleton {
 	static BxSingleton& getInstance() {
@@ -32,7 +31,7 @@ struct BxSingleton {
 	bx::FileWriter writer;
 
 private:
-		BxSingleton() {};
+	BxSingleton() {};
 };
 
 ///
