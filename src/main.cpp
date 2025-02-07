@@ -18,7 +18,11 @@
 #endif
 #include <GLFW/glfw3native.h>
 
-#include "imgui_helper.h"
+#if defined(None) // X11 defines this...
+#	undef None
+#endif // defined(None)
+
+#include <imgui_helper.h>
 #include <renderer/bgfx_utils.hpp>
 #include <input/input.hpp>
 
