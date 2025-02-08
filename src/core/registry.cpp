@@ -1,4 +1,5 @@
 #include "registry.hpp"
+#include "bgfx/bgfx.h"
 #include <glm/ext/vector_float3.hpp>
 #include <components/position.hpp>
 #include <components/rotation.hpp>
@@ -129,13 +130,22 @@ void Registry::spawnPlane()
 void Registry::spawnMap(uint32_t _w, uint32_t _h)
 {
 	auto [bp, pLoaded] = PROGRAM_CACHE.load("blinnphong"_hs, "vs_blinnphong", "fs_blinnphong");
-	auto[diff, diffLoaded] = TEXTURE_CACHE.load("grass/diffuse"_hs, "assets/textures/TreeTop_COLOR.png");
+	auto [diff, dLoaded] = TEXTURE_CACHE.load("grass/diffuse"_hs, "assets/textures/TreeTop_COLOR.png");
 	auto [sp, sLoaded] = TEXTURE_CACHE.load("grass/specular"_hs, "assets/textures/TreeTop_SPEC.png");
 
 	auto program = PROGRAM_CACHE["blinnphong"_hs];
 	auto diffuse = TEXTURE_CACHE["grass/diffuse"_hs];
 	auto specular = TEXTURE_CACHE["grass/specular"_hs];
 
+	if (!bgfx::isValid(program)) {
+		throw std::runtime_error("could not load blinnphong program, invalid handle");
+	}
+	if (!bgfx::isValid(diffuse)) {
+		throw std::runtime_error("could not load grass/diffuse texture, invalid handle");
+	}
+	if (!bgfx::isValid(specular)) {
+		throw std::runtime_error("could not load grass/specular texture, invalid handle");
+	}
 
 	Material m(program, diffuse, specular);
 
