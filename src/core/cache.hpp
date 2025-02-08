@@ -1,6 +1,11 @@
 #pragma once
+
+#include <bimg/bimg.h>
 #include <entt/resource/cache.hpp>
+
 #include <renderer/bgfx_utils.hpp>
+#include <renderer/material.hpp>
+#include <core/sys.hpp>
 
 static void imageReleaseCb(void* _ptr, void* _userData)
 {
