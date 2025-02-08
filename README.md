@@ -1,10 +1,15 @@
 # Build
 
 first clone repo and submodules:
-```
+```bash
 git clone git@github.com:robinwils/wato.git
 cd wato
 git submodule update --init --recursive
+```
+
+Then fetch assets with Git LFS (install git lfs first):
+```bash
+git lfs pull
 ```
 
 ## Windows
