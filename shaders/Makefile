@@ -1,11 +1,19 @@
 THISDIR:=$(dir $(lastword $(MAKEFILE_LIST)))
 ifeq ($(OS),Windows_NT)
-SLN_CFG=Release
+BUILD_TYPE=Release
 BGFX_TARGET=win64_vs2022
-SHADERC=$(THISDIR)../deps/bgfx/.build/$(BGFX_TARGET)/bin/shaderc$(SLN_CFG).exe
+EXT=".exe"
 else
-SHADERC=SHADERC
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Linux)
+BUILD_TYPE=Debug
+BGFX_TARGET=linux64_gcc
+else ifeq ($(UNAME_S),Darwin)
+BUILD_TYPE=Debug
+BGFX_TARGET=osx64_gcc
 endif
+endif
+SHADERC=$(THISDIR)../deps/bgfx/.build/$(BGFX_TARGET)/bin/shaderc$(BUILD_TYPE)$(EXT)
 
 SHADERS=$(wildcard vs_*.sc) $(wildcard fs_*.sc) $(wildcard cs_*.sc)
 SHADERC_INCLUDE=-i $(THISDIR)../deps/bgfx/src/ -i $(THISDIR)../deps/bgfx/examples/
@@ -29,10 +37,15 @@ cs_%_$(1)_$(2).bin: cs_%.sc
 endef
 
 $(eval $(call SHADER_TARGET,windows,spirv))
+$(eval $(call SHADER_TARGET,linux,spirv))
+$(eval $(call SHADER_TARGET,osx,metal))
 
-all: $(windows_spirv_SHADERS)
+windows-shaders: $(windows_spirv_SHADERS)
+linux-shaders: $(linux_spirv_SHADERS)
+osx-shaders: $(osx_metal_SHADERS)
+all: windows-shaders linux-shaders osx-shaders
 
 clean:
-	$(RM) $(windows_spirv_SHADERS) *.bin.d
+	$(RM) $(windows_spirv_SHADERS) $(linux_spirv_SHADERS) $(osx_metal_SHADERS) *.bin.d
 
 .PHONY: clean

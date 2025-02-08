@@ -12,6 +12,10 @@ bgfx::ShaderHandle loadShader(bx::FileReaderI* _reader, const char* _name)
 
 #if BX_PLATFORM_WINDOWS
     bx::strCat(filePath, BX_COUNTOF(filePath), "_windows");
+#elif BX_PLATFORM_LINUX
+    bx::strCat(filePath, BX_COUNTOF(filePath), "_linux");
+#elif BX_PLATFORM_OSX
+    bx::strCat(filePath, BX_COUNTOF(filePath), "_osx");
 #endif
 
     switch (bgfx::getRendererType())
