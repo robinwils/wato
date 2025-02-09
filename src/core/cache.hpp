@@ -1,6 +1,6 @@
 #pragma once
 
-#include <bimg/bimg.h>
+#include <bimg/decode.h>
 
 #include <core/model_loader.hpp>
 #include <core/sys.hpp>
