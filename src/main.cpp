@@ -112,6 +112,7 @@ int main()
 
     registry.spawnLight();
     registry.spawnMap(20, 20);
+    registry.spawnModel();
     // registry.spawnPlane();
     double prevTime = glfwGetTime();
 
