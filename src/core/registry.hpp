@@ -1,15 +1,12 @@
 #pragma once
-#include <entt/entity/registry.hpp>
-#include <bimg/decode.h>
 #include <bgfx/bgfx.h>
+#include <bimg/decode.h>
 
+#include <entt/entity/registry.hpp>
 
-bgfx::TextureHandle loadTexture(const char* _name, uint64_t _flags = BGFX_TEXTURE_NONE | BGFX_SAMPLER_NONE, uint8_t _skip = 0, bgfx::TextureInfo* _info = NULL, bimg::Orientation::Enum* _orientation = NULL);
-
-struct Registry : public entt::basic_registry<entt::entity>
-{
-	void spawnPlane();
-	void spawnMap(uint32_t _w, uint32_t _h);
-	void spawnLight();
-	void spawnModel();
+struct Registry : public entt::basic_registry<entt::entity> {
+    void spawnPlane();
+    void spawnMap(uint32_t _w, uint32_t _h);
+    void spawnLight();
+    void spawnModel();
 };

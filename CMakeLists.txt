@@ -57,8 +57,6 @@ elseif(UNIX)
 	)
 	link_directories(
 		deps/bgfx/.build/linux64_gcc/bin
-		#deps/bx/.build/linux64_gcc/bin/
-		#deps/bimg/.build/linux64_gcc/bin/
 	)
 endif()
 
@@ -73,6 +71,7 @@ set(SOURCES
 	src/systems/render.cpp
 	src/renderer/bgfx_utils.cpp
 	src/core/camera.cpp
+	src/core/model_loader.cpp
 	src/core/registry.cpp
 	src/imgui/imgui_helper.cpp
 	src/input/input.cpp
