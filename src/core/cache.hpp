@@ -76,6 +76,7 @@ struct TextureLoader final {
                 }
 
                 if (bgfx::isValid(handle)) {
+                    DBG("Loaded texture %s", _name);
                     bgfx::setName(handle, _name);
                 }
 
