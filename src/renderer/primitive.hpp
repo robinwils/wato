@@ -1,14 +1,17 @@
 #pragma once
 
 #include <bgfx/bgfx.h>
-#include <glm/ext/vector_float3.hpp>
+
+#include <algorithm>
 #include <glm/ext/vector_float2.hpp>
+#include <glm/ext/vector_float3.hpp>
+#include <renderer/material.hpp>
+#include <utility>
 #include <vector>
 
-#include <renderer/material.hpp>
+#include "glm/fwd.hpp"
 
-struct PositionNormalUvVertex
-{
+struct PositionNormalUvVertex {
     glm::vec3 position;
     glm::vec3 normal;
     glm::vec2 uv;
@@ -27,8 +30,12 @@ struct PositionNormalUvVertex
 
 class Primitive
 {
-public:
+   public:
     Primitive() : m_is_initialized(false) {}
+    Primitive(std::vector<PositionNormalUvVertex> vertices, std::vector<uint16_t> indices)
+        : m_vertices(std::move(vertices)), m_indices(std::move(indices))
+    {
+    }
     virtual ~Primitive() { destroyPrimitive(); }
 
     virtual void submitPrimitive(const Material& material, uint8_t discard_states = BGFX_DISCARD_ALL) const
@@ -41,9 +48,9 @@ public:
         bgfx::submit(0, material.program, bgfx::ViewMode::Default, discard_states);
     }
 
-protected:
+   protected:
     std::vector<PositionNormalUvVertex> m_vertices;
-    std::vector<uint16_t>               m_triangle_list;
+    std::vector<uint16_t>               m_indices;
 
     bool m_is_initialized;
 
@@ -53,20 +60,20 @@ protected:
     virtual void initializePrimitive()
     {
         assert(!m_vertices.empty());
-        assert(!m_triangle_list.empty());
+        assert(!m_indices.empty());
 
         const bgfx::VertexLayout vertex_layout = PositionNormalUvVertex::getVertexLayout();
 
         m_vertex_buffer_handle = bgfx::createVertexBuffer(
             bgfx::makeRef(m_vertices.data(), sizeof(PositionNormalUvVertex) * m_vertices.size()),
             vertex_layout);
-        m_index_buffer_handle = bgfx::createIndexBuffer(
-            bgfx::makeRef(m_triangle_list.data(), sizeof(uint16_t) * m_triangle_list.size()));
+        m_index_buffer_handle =
+            bgfx::createIndexBuffer(bgfx::makeRef(m_indices.data(), sizeof(uint16_t) * m_indices.size()));
 
         m_is_initialized = true;
     }
 
-private:
+   private:
     virtual void destroyPrimitive()
     {
         assert(m_is_initialized);
@@ -75,4 +82,3 @@ private:
         bgfx::destroy(m_index_buffer_handle);
     }
 };
-

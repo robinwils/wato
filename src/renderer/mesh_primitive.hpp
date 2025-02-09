@@ -1,18 +1,17 @@
 #pragma once
 
-#include<vector>
 #include <renderer/primitive.hpp>
-
+#include <vector>
 
 class MeshPrimitive : public Primitive
 {
-public:
-	std::vector<Material> materials;
+   public:
+    std::vector<Material> materials;
 
-	MeshPrimitive(std::vector<Material> materials)
-	: materials(materials)
-	{
-		initializePrimitive();
-	};
+    MeshPrimitive() : Primitive() {}
+    MeshPrimitive(std::vector<PositionNormalUvVertex> vertices, std::vector<uint16_t> indices)
+        : Primitive(vertices, indices)
+    {
+    }
+    MeshPrimitive(std::vector<Material> materials) : materials(materials) { initializePrimitive(); };
 };
-

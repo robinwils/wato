@@ -1,10 +1,8 @@
 #pragma once
 
-#include <vector>
 #include <renderer/mesh_primitive.hpp>
+#include <vector>
 
-struct Model
-{
-	std::vector<MeshPrimitive> meshes;
+struct Model {
+    std::vector<MeshPrimitive> meshes;
 };
-
