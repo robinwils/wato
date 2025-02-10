@@ -2,13 +2,13 @@
 
 #include <bgfx/bgfx.h>
 
-#include <algorithm>
 #include <glm/ext/vector_float2.hpp>
 #include <glm/ext/vector_float3.hpp>
 #include <renderer/material.hpp>
 #include <utility>
 #include <vector>
 
+#include "core/sys.hpp"
 #include "glm/fwd.hpp"
 
 struct PositionNormalUvVertex {
@@ -33,8 +33,44 @@ class Primitive
    public:
     Primitive() : m_is_initialized(false) {}
     Primitive(std::vector<PositionNormalUvVertex> vertices, std::vector<uint16_t> indices)
-        : m_vertices(std::move(vertices)), m_indices(std::move(indices))
+        : m_vertices(vertices), m_indices(indices)
     {
+    }
+    Primitive(Primitive& other) noexcept
+        : m_vertex_buffer_handle(other.m_vertex_buffer_handle),
+          m_index_buffer_handle(other.m_index_buffer_handle),
+          m_vertices(other.m_vertices),
+          m_indices(other.m_indices),
+          m_is_initialized(other.m_is_initialized)
+    {
+    }
+    Primitive(Primitive&& other) noexcept
+        : m_vertex_buffer_handle(other.m_vertex_buffer_handle),
+          m_index_buffer_handle(other.m_index_buffer_handle),
+          m_vertices(std::move(other.m_vertices)),
+          m_indices(std::move(other.m_indices)),
+          m_is_initialized(other.m_is_initialized)
+    {
+        other.m_vertex_buffer_handle.idx = bgfx::kInvalidHandle;
+        other.m_index_buffer_handle.idx  = bgfx::kInvalidHandle;
+        other.m_is_initialized           = false;
+    }
+
+    Primitive& operator=(Primitive& other)
+    {
+        m_vertex_buffer_handle = other.m_vertex_buffer_handle;
+        m_index_buffer_handle  = other.m_index_buffer_handle;
+        m_vertices             = std::move(other.m_vertices);
+        m_indices              = std::move(other.m_indices);
+        return *this;
+    }
+    Primitive& operator=(Primitive&& other)
+    {
+        m_vertex_buffer_handle = other.m_vertex_buffer_handle;
+        m_index_buffer_handle  = other.m_index_buffer_handle;
+        m_vertices             = std::move(other.m_vertices);
+        m_indices              = std::move(other.m_indices);
+        return *this;
     }
     virtual ~Primitive() { destroyPrimitive(); }
 
@@ -76,9 +112,12 @@ class Primitive
    private:
     virtual void destroyPrimitive()
     {
-        assert(m_is_initialized);
-
-        bgfx::destroy(m_vertex_buffer_handle);
-        bgfx::destroy(m_index_buffer_handle);
+        if (m_is_initialized) {
+            DBG("destroying vertex buffer %d and index buffer %d",
+                m_vertex_buffer_handle.idx,
+                m_index_buffer_handle.idx);
+            bgfx::destroy(m_vertex_buffer_handle);
+            bgfx::destroy(m_index_buffer_handle);
+        }
     }
 };
