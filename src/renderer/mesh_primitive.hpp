@@ -6,12 +6,12 @@
 class MeshPrimitive : public Primitive
 {
    public:
-    std::vector<Material> materials;
-
-    MeshPrimitive() : Primitive() {}
-    MeshPrimitive(std::vector<PositionNormalUvVertex> vertices, std::vector<uint16_t> indices)
-        : Primitive(vertices, indices)
+    MeshPrimitive(std::vector<PositionNormalUvVertex> vertices, std::vector<uint16_t> indices, const Material& _mat)
+        : Primitive(vertices, indices), material(_mat)
     {
         initializePrimitive();
     }
+
+   protected:
+    Material material;
 };

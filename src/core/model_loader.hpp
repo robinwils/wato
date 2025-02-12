@@ -30,6 +30,10 @@ struct ModelLoader final {
             DBG("could not load %s", _name);
             return std::make_shared<std::vector<Primitive *>>();
         }
+        DBG("scene %s has:", scene->mName);
+        DBG("  %d meshes", scene->mNumMeshes);
+        DBG("  %d textures", scene->mNumTextures);
+        DBG("  %d materials", scene->mNumMaterials);
 
         auto meshes = processNode(scene->mRootNode, scene);
 

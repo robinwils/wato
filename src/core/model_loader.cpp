@@ -11,6 +11,8 @@
 #include "renderer/mesh_primitive.hpp"
 #include "renderer/primitive.hpp"
 
+using namespace entt::literals;
+
 std::vector<entt::hashed_string> processMaterialTextures(const aiMaterial *material, aiTextureType type, aiString *path)
 {
     std::vector<entt::hashed_string> textures;
@@ -61,6 +63,7 @@ Primitive *processMesh(const aiMesh *mesh, const aiScene *scene)
         }
     }
 
+    MeshPrimitive *mp;
     if (mesh->mMaterialIndex >= 0) {
         auto        diffuse_path  = aiString("texture_diffuse");
         auto        specular_path = aiString("texture_specular");
@@ -69,23 +72,38 @@ Primitive *processMesh(const aiMesh *mesh, const aiScene *scene)
         auto textures      = processMaterialTextures(material, aiTextureType_DIFFUSE, &diffuse_path);
         auto spec_textures = processMaterialTextures(material, aiTextureType_SPECULAR, &specular_path);
 
-        textures.reserve(textures.size() + spec_textures.size());
-        textures.insert(textures.end(), spec_textures.begin(), spec_textures.end());
+        if (textures.size() > 0 || spec_textures.size() > 0) {
+            DBG("mesh %s has %d material textures", mesh->mName.C_Str(), textures.size());
+            textures.reserve(textures.size() + spec_textures.size());
+            textures.insert(textures.end(), spec_textures.begin(), spec_textures.end());
+        } else {
+            // no material textures, get material info via properties
+            DBG("parsing material properties for mesh %s", mesh->mName.C_Str());
+            for (unsigned int pIdx = 0; pIdx < material->mNumProperties; ++pIdx) {
+                auto *matProp = material->mProperties[pIdx];
+                DBG("  %s: len=%d type=%d", matProp->mKey.C_Str(), matProp->mDataLength, matProp->mType);
+            }
+            aiColor3D diffuse;
+            if (material->Get(AI_MATKEY_COLOR_DIFFUSE, diffuse) != AI_SUCCESS) {
+                DBG("failed to get diffuse color for mesh %s", mesh->mName.C_Str());
+            }
+            aiColor3D specular;
+            if (material->Get(AI_MATKEY_COLOR_SPECULAR, specular) != AI_SUCCESS) {
+                DBG("failed to get specular color for mesh %s", mesh->mName.C_Str());
+            }
 
-        // auto [it, loaded] = TEXTURE_CACHE.load(hs, path->C_Str());
-        // auto diffuse      = TEXTURE_CACHE[hs];
-        //
-        // if (!bgfx::isValid(diffuse)) {
-        //     throw std::runtime_error("could not load model material texture, invalid handle");
-        // }
-        //
-        // auto program = PROGRAM_CACHE["blinnphong"_hs];
-        //
-        // Material material(program, diffuse, specular);
+            auto     program = PROGRAM_CACHE["blinnphong"_hs];
+            Material m(program,
+                glm::vec3(diffuse.r, diffuse.g, diffuse.b),
+                glm::vec3(specular.r, specular.g, specular.b));
+            mp = new MeshPrimitive(std::move(vertices), std::move(indices), m);
+        }
+        DBG("creating mesh with %d vertices and %d indices", vertices.size(), indices.size());
+    } else {
+        DBG("no material in mesh %s", mesh->mName.C_Str());
+        throw std::runtime_error("no material in mesh");
     }
-    DBG("creating mesh with %d vertices and %d indices", vertices.size(), indices.size());
-
-    return new MeshPrimitive(std::move(vertices), std::move(indices));
+    return mp;
 }
 
 std::vector<Primitive *> processNode(const aiNode *node, const aiScene *scene)
