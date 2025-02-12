@@ -36,7 +36,7 @@ class Primitive
         : m_vertices(vertices), m_indices(indices)
     {
     }
-    Primitive(Primitive& other) noexcept
+    Primitive(const Primitive& other) noexcept
         : m_vertex_buffer_handle(other.m_vertex_buffer_handle),
           m_index_buffer_handle(other.m_index_buffer_handle),
           m_vertices(other.m_vertices),
