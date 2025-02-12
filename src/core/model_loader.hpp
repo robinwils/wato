@@ -40,4 +40,11 @@ struct ModelLoader final {
         DBG("done loading model");
         return std::make_shared<std::vector<Primitive *>>(meshes);
     }
+
+    template <typename... Args>
+    result_type operator()(Primitive *primitive)
+    {
+        auto meshes = std::vector({primitive});
+        return std::make_shared<std::vector<Primitive *>>(meshes);
+    }
 };
