@@ -7,12 +7,12 @@
 
 #include "core/sys.hpp"
 #include "renderer/material.hpp"
-#include "renderer/mesh_primitive.hpp"
+#include "renderer/primitive.hpp"
 
-std::vector<MeshPrimitive> processNode(const aiNode *node, const aiScene *scene);
+std::vector<Primitive *> processNode(const aiNode *node, const aiScene *scene);
 
 struct ModelLoader final {
-    using result_type = std::vector<MeshPrimitive>;
+    using result_type = std::shared_ptr<std::vector<Primitive *>>;
 
     template <typename... Args>
     result_type operator()(const char *_name)
@@ -28,11 +28,12 @@ struct ModelLoader final {
         if (nullptr == scene) {
             // TODO: handle error
             DBG("could not load %s", _name);
+            return std::make_shared<std::vector<Primitive *>>();
         }
 
         auto meshes = processNode(scene->mRootNode, scene);
 
         DBG("done loading model");
-        return meshes;
+        return std::make_shared<std::vector<Primitive *>>(meshes);
     }
 };

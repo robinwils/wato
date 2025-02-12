@@ -33,7 +33,7 @@ std::vector<entt::hashed_string> processMaterialTextures(const aiMaterial *mater
     return textures;
 }
 
-MeshPrimitive processMesh(const aiMesh *mesh, const aiScene *scene)
+Primitive *processMesh(const aiMesh *mesh, const aiScene *scene)
 {
     std::vector<PositionNormalUvVertex> vertices;
     for (unsigned int i = 0; i < mesh->mNumVertices; ++i) {
@@ -85,17 +85,16 @@ MeshPrimitive processMesh(const aiMesh *mesh, const aiScene *scene)
     }
     DBG("creating mesh with %d vertices and %d indices", vertices.size(), indices.size());
 
-    MeshPrimitive mesh_primitive(std::move(vertices), std::move(indices));
-
-    return mesh_primitive;
+    return new MeshPrimitive(std::move(vertices), std::move(indices));
 }
 
-std::vector<MeshPrimitive> processNode(const aiNode *node, const aiScene *scene)
+std::vector<Primitive *> processNode(const aiNode *node, const aiScene *scene)
 {
     DBG("processing node")
-    std::vector<MeshPrimitive> meshes;
+    std::vector<Primitive *> meshes;
     for (unsigned int i = 0; i < node->mNumMeshes; ++i) {
-        meshes.push_back(processMesh(scene->mMeshes[node->mMeshes[i]], scene));
+        auto *mesh = processMesh(scene->mMeshes[node->mMeshes[i]], scene);
+        meshes.push_back(mesh);
     }
     for (unsigned int i = 0; i < node->mNumChildren; i++) {
         auto child_meshes = processNode(node->mChildren[i], scene);

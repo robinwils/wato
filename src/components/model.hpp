@@ -1,8 +1,8 @@
 #pragma once
 
+#include <entt/core/hashed_string.hpp>
 #include <renderer/mesh_primitive.hpp>
-#include <vector>
 
 struct Model {
-    std::vector<MeshPrimitive> meshes;
+    entt::hashed_string model_hash;
 };

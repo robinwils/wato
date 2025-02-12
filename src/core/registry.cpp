@@ -13,6 +13,7 @@
 #include <renderer/plane_primitive.hpp>
 
 #include "bgfx/bgfx.h"
+#include "components/model.hpp"
 
 using namespace entt::literals;
 
@@ -58,6 +59,11 @@ void Registry::spawnLight()
 
 void Registry::spawnModel()
 {
-    auto model         = create();
-    auto [bp, pLoaded] = MODEL_CACHE.load("tower_model"_hs, "assets/models/tower.fbx");
+    const auto [bp, pLoaded] = MODEL_CACHE.load("tower_model"_hs, "assets/models/tower.fbx");
+
+    auto model = create();
+    emplace<Model>(model, Model("tower_model"_hs));
+    emplace<Position>(model, glm::vec3(0, 0, 0));
+    emplace<Rotation>(model, glm::vec3(0, 0, 0));
+    emplace<Scale>(model, glm::vec3(1.0f));
 }

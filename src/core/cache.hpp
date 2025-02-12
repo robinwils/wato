@@ -120,7 +120,7 @@ struct ProgramLoader final {
 
 using TextureCache = entt::resource_cache<bgfx::TextureHandle, TextureLoader>;
 using ProgramCache = entt::resource_cache<bgfx::ProgramHandle, ProgramLoader>;
-using ModelCache   = entt::resource_cache<MeshPrimitive, ModelLoader>;
+using ModelCache   = entt::resource_cache<std::vector<Primitive*>, ModelLoader>;
 
 struct ResourceCache {
     static ResourceCache& instance()
