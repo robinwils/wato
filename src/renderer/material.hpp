@@ -7,6 +7,7 @@
 #include <glm/ext/vector_float4.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "core/sys.hpp"
 #include "glm/ext/vector_float3.hpp"
 
 bgfx::ShaderHandle  loadShader(bx::FileReaderI* _reader, const char* _name);
@@ -26,12 +27,16 @@ struct Material {
     }
 
     Material(entt::resource<bgfx::ProgramHandle> _program, glm::vec3 _diffuse, glm::vec3 _specular)
-        : program(_program), m_diffuse(_diffuse), m_specular(_specular)
+        : program(_program),
+          m_diffuse(_diffuse),
+          m_specular(_specular),
+          m_useDiffuseTexture(false),
+          m_useSpecularTexture(false)
     {
         init_uniforms();
     }
 
-    void submit()
+    void submit() const
     {
         bgfx::setUniform(u_lightDir, glm::value_ptr(glm::vec4(m_lightDir, 0.0f)));
         bgfx::setUniform(u_lightCol, glm::value_ptr(glm::vec4(m_lightCol, 0.0f)));

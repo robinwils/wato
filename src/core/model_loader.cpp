@@ -76,13 +76,9 @@ Primitive *processMesh(const aiMesh *mesh, const aiScene *scene)
             DBG("mesh %s has %d material textures", mesh->mName.C_Str(), textures.size());
             textures.reserve(textures.size() + spec_textures.size());
             textures.insert(textures.end(), spec_textures.begin(), spec_textures.end());
+            throw std::runtime_error("not implemented");
         } else {
             // no material textures, get material info via properties
-            DBG("parsing material properties for mesh %s", mesh->mName.C_Str());
-            for (unsigned int pIdx = 0; pIdx < material->mNumProperties; ++pIdx) {
-                auto *matProp = material->mProperties[pIdx];
-                DBG("  %s: len=%d type=%d", matProp->mKey.C_Str(), matProp->mDataLength, matProp->mType);
-            }
             aiColor3D diffuse;
             if (material->Get(AI_MATKEY_COLOR_DIFFUSE, diffuse) != AI_SUCCESS) {
                 DBG("failed to get diffuse color for mesh %s", mesh->mName.C_Str());
@@ -91,14 +87,18 @@ Primitive *processMesh(const aiMesh *mesh, const aiScene *scene)
             if (material->Get(AI_MATKEY_COLOR_SPECULAR, specular) != AI_SUCCESS) {
                 DBG("failed to get specular color for mesh %s", mesh->mName.C_Str());
             }
+            aiColor3D shininess;
+            if (material->Get(AI_MATKEY_SHININESS, specular) != AI_SUCCESS) {
+                DBG("failed to get specular color for mesh %s", mesh->mName.C_Str());
+            }
 
+            DBG("creating mesh with %d vertices and %d indices", vertices.size(), indices.size());
             auto     program = PROGRAM_CACHE["blinnphong"_hs];
             Material m(program,
                 glm::vec3(diffuse.r, diffuse.g, diffuse.b),
                 glm::vec3(specular.r, specular.g, specular.b));
             mp = new MeshPrimitive(std::move(vertices), std::move(indices), m);
         }
-        DBG("creating mesh with %d vertices and %d indices", vertices.size(), indices.size());
     } else {
         DBG("no material in mesh %s", mesh->mName.C_Str());
         throw std::runtime_error("no material in mesh");
@@ -108,7 +108,6 @@ Primitive *processMesh(const aiMesh *mesh, const aiScene *scene)
 
 std::vector<Primitive *> processNode(const aiNode *node, const aiScene *scene)
 {
-    DBG("processing node")
     std::vector<Primitive *> meshes;
     for (unsigned int i = 0; i < node->mNumMeshes; ++i) {
         auto *mesh = processMesh(scene->mMeshes[node->mMeshes[i]], scene);

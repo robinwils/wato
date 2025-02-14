@@ -8,14 +8,11 @@
 #include <components/scene_object.hpp>
 #include <core/cache.hpp>
 #include <core/sys.hpp>
-#include <entt/core/hashed_string.hpp>
 #include <glm/ext/vector_float3.hpp>
 #include <renderer/plane_primitive.hpp>
 
 #include "bgfx/bgfx.h"
-#include "components/model.hpp"
-
-using namespace entt::literals;
+#include "glm/trigonometric.hpp"
 
 void Registry::spawnMap(uint32_t _w, uint32_t _h)
 {
@@ -37,7 +34,7 @@ void Registry::spawnMap(uint32_t _w, uint32_t _h)
         throw std::runtime_error("could not load grass/specular texture, invalid handle");
     }
 
-    Material m(program, diffuse, specular);
+    MODEL_CACHE.load("grass_tile"_hs, new PlanePrimitive(Material(program, diffuse, specular)));
 
     for (uint32_t i = 0; i < _w; ++i) {
         for (uint32_t j = 0; j < _h; ++j) {
@@ -45,7 +42,7 @@ void Registry::spawnMap(uint32_t _w, uint32_t _h)
             emplace<Position>(tile, glm::vec3(i, 0, j));
             emplace<Rotation>(tile, glm::vec3(0, 0, 0));
             emplace<Scale>(tile, glm::vec3(1.0f));
-            emplace<SceneObject>(tile, new PlanePrimitive(), m);
+            emplace<SceneObject>(tile, "grass_tile"_hs);
         }
     }
 }
@@ -59,11 +56,18 @@ void Registry::spawnLight()
 
 void Registry::spawnModel()
 {
-    const auto [bp, pLoaded] = MODEL_CACHE.load("tower_model"_hs, "assets/models/tower.fbx");
+    MODEL_CACHE.load("tower_model"_hs, "assets/models/tower.fbx");
+    MODEL_CACHE.load("backpack"_hs, "assets/models/backpack/backpack.obj");
 
-    auto model = create();
-    emplace<Model>(model, Model("tower_model"_hs));
-    emplace<Position>(model, glm::vec3(0, 0, 0));
-    emplace<Rotation>(model, glm::vec3(0, 0, 0));
-    emplace<Scale>(model, glm::vec3(1.0f));
+    auto tower = create();
+    emplace<Position>(tower, glm::vec3(0, 0, 0));
+    emplace<Rotation>(tower, glm::vec3(glm::radians(90.0f)));
+    emplace<Scale>(tower, glm::vec3(0.1f));
+    emplace<SceneObject>(tower, "tower_model"_hs);
+
+    auto backpack = create();
+    emplace<Position>(backpack, glm::vec3(0, 0, 0));
+    emplace<Rotation>(backpack, glm::vec3(glm::radians(90.0f)));
+    emplace<Scale>(backpack, glm::vec3(0.1f));
+    emplace<SceneObject>(backpack, "backpack"_hs);
 }

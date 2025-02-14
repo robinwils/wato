@@ -114,7 +114,8 @@ int main()
     registry.spawnMap(20, 20);
     registry.spawnModel();
     // registry.spawnPlane();
-    double prevTime = glfwGetTime();
+    double  prevTime     = glfwGetTime();
+    int64_t m_timeOffset = bx::getHPCounter();
 
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
@@ -162,9 +163,10 @@ int main()
 
         showImguiDialogs(camera, input, width, height);
 
-        auto t   = glfwGetTime();
-        auto dt  = t - prevTime;
-        prevTime = t;
+        auto t      = glfwGetTime();
+        auto dt     = t - prevTime;
+        prevTime    = t;
+        double time = ((bx::getHPCounter() - m_timeOffset) / double(bx::getHPFrequency()));
 
         camera.update(input, dt);
         const glm::mat4 view = camera.view();
@@ -177,7 +179,7 @@ int main()
         // if no other draw calls are submitted to view 0.
         bgfx::touch(0);
 
-        renderSceneObjects(registry);
+        renderSceneObjects(registry, time);
 
         imguiEndFrame();
         // Advance to next frame. Process submitted rendering primitives.

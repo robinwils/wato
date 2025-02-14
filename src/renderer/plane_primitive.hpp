@@ -5,7 +5,7 @@
 class PlanePrimitive : public Primitive
 {
    public:
-    PlanePrimitive()
+    PlanePrimitive(const Material& _material) : Primitive(_material)
     {
         m_vertices = {
             {{+0.5f, +0.0f, -0.5f}, {0.0f, +1.0f, 0.0f}, {0.0f, 1.0f}},

@@ -4,9 +4,11 @@
 
 #include <core/model_loader.hpp>
 #include <core/sys.hpp>
+#include <entt/core/hashed_string.hpp>
 #include <entt/resource/cache.hpp>
 #include <renderer/bgfx_utils.hpp>
 #include <renderer/material.hpp>
+using namespace entt::literals;
 
 #define TEXTURE_CACHE (ResourceCache::instance().textureCache)
 #define PROGRAM_CACHE (ResourceCache::instance().programCache)

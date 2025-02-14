@@ -31,24 +31,27 @@ struct PositionNormalUvVertex {
 class Primitive
 {
    public:
-    Primitive() : m_is_initialized(false) {}
-    Primitive(std::vector<PositionNormalUvVertex> vertices, std::vector<uint16_t> indices)
-        : m_vertices(vertices), m_indices(indices)
+    Primitive(const Material& _material) : m_material(_material), m_is_initialized(false) {}
+    Primitive(const Material& _material, std::vector<PositionNormalUvVertex> vertices, std::vector<uint16_t> indices)
+        : m_vertices(vertices), m_indices(indices), m_material(_material)
     {
     }
     Primitive(const Primitive& other) noexcept
-        : m_vertex_buffer_handle(other.m_vertex_buffer_handle),
-          m_index_buffer_handle(other.m_index_buffer_handle),
-          m_vertices(other.m_vertices),
+        : m_vertices(other.m_vertices),
           m_indices(other.m_indices),
-          m_is_initialized(other.m_is_initialized)
+          m_material(other.m_material),
+          m_is_initialized(other.m_is_initialized),
+          m_vertex_buffer_handle(other.m_vertex_buffer_handle),
+          m_index_buffer_handle(other.m_index_buffer_handle)
     {
     }
     Primitive(Primitive&& other) noexcept
-        : m_vertex_buffer_handle(other.m_vertex_buffer_handle),
-          m_index_buffer_handle(other.m_index_buffer_handle),
-          m_vertices(std::move(other.m_vertices)),
+        : m_vertices(std::move(other.m_vertices)),
           m_indices(std::move(other.m_indices)),
+          m_material(std::move(other.m_material)),
+          m_vertex_buffer_handle(other.m_vertex_buffer_handle),
+          m_index_buffer_handle(other.m_index_buffer_handle),
+
           m_is_initialized(other.m_is_initialized)
     {
         other.m_vertex_buffer_handle.idx = bgfx::kInvalidHandle;
@@ -74,19 +77,21 @@ class Primitive
     }
     virtual ~Primitive() { destroyPrimitive(); }
 
-    virtual void submitPrimitive(const Material& material, uint8_t discard_states = BGFX_DISCARD_ALL) const
+    virtual void submit(uint8_t discard_states = BGFX_DISCARD_ALL) const
     {
+        m_material.submit();
         assert(m_is_initialized);
 
         bgfx::setVertexBuffer(0, m_vertex_buffer_handle);
         bgfx::setIndexBuffer(m_index_buffer_handle);
 
-        bgfx::submit(0, material.program, bgfx::ViewMode::Default, discard_states);
+        bgfx::submit(0, m_material.program, bgfx::ViewMode::Default, discard_states);
     }
 
    protected:
     std::vector<PositionNormalUvVertex> m_vertices;
     std::vector<uint16_t>               m_indices;
+    Material                            m_material;
 
     bool m_is_initialized;
 
