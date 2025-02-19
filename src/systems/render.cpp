@@ -28,17 +28,17 @@ void renderSceneObjects(Registry& registry, const float dt)
     for (auto&& [entity, pos, rot, scale, obj] : registry.view<Position, Rotation, Scale, SceneObject>().each()) {
         auto model = glm::mat4(1.0f);
         model      = glm::translate(model, pos.position);
-        model      = glm::rotate(model, dt * rot.rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
-        model      = glm::rotate(model, dt * rot.rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
-        model      = glm::rotate(model, dt * rot.rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
+        model      = glm::rotate(model, rot.rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
+        model      = glm::rotate(model, rot.rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
+        model      = glm::rotate(model, rot.rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
         model      = glm::scale(model, scale.scale);
 
         for (const auto* p : *MODEL_CACHE[obj.model_hash]) {
             // Set model matrix for rendering.
             bgfx::setTransform(glm::value_ptr(model));
 
-        // kinda awkward place to put that...
-        obj.material.drawImgui();
+            // kinda awkward place to put that...
+            // obj.material.drawImgui();
 
             // Set render states.
             bgfx::setState(state);

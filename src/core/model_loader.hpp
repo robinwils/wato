@@ -20,7 +20,7 @@ struct ModelLoader final {
 
         // flags are used for post processing (the more, the slower)
         const aiScene *scene = importer.ReadFile(_name,
-            aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_JoinIdenticalVertices);
+            aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_PreTransformVertices | aiProcess_GlobalScale);
 
         // If the import failed, report it
         if (nullptr == scene) {
@@ -32,6 +32,7 @@ struct ModelLoader final {
         DBG("  %d meshes", scene->mNumMeshes);
         DBG("  %d textures", scene->mNumTextures);
         DBG("  %d materials", scene->mNumMaterials);
+        DBG("  %d animations", scene->mNumAnimations);
 
         auto meshes = processNode(scene->mRootNode, scene);
 

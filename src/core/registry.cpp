@@ -57,17 +57,10 @@ void Registry::spawnLight()
 void Registry::spawnModel()
 {
     MODEL_CACHE.load("tower_model"_hs, "assets/models/tower.fbx");
-    MODEL_CACHE.load("backpack"_hs, "assets/models/backpack/backpack.obj");
 
     auto tower = create();
     emplace<Position>(tower, glm::vec3(0, 0, 0));
-    emplace<Rotation>(tower, glm::vec3(glm::radians(90.0f)));
+    emplace<Rotation>(tower, glm::vec3(0));
     emplace<Scale>(tower, glm::vec3(0.1f));
     emplace<SceneObject>(tower, "tower_model"_hs);
-
-    auto backpack = create();
-    emplace<Position>(backpack, glm::vec3(0, 0, 0));
-    emplace<Rotation>(backpack, glm::vec3(glm::radians(90.0f)));
-    emplace<Scale>(backpack, glm::vec3(0.1f));
-    emplace<SceneObject>(backpack, "backpack"_hs);
 }
