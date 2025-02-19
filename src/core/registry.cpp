@@ -1,7 +1,4 @@
 #include "registry.hpp"
-#include "bgfx/bgfx.h"
-#include <glm/ext/vector_float3.hpp>
-#include <glm/ext/vector_float3.hpp>
 
 #include <components/color.hpp>
 #include <components/direction.hpp>
