@@ -56,7 +56,9 @@ void Registry::spawnLight()
 
 void Registry::spawnModel()
 {
-    MODEL_CACHE.load("tower_model"_hs, "assets/models/tower.fbx");
+    MODEL_CACHE.load("tower_model"_hs,
+        "assets/models/tower.fbx",
+        aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_PreTransformVertices | aiProcess_GlobalScale);
 
     auto tower = create();
     emplace<Position>(tower, glm::vec3(0, 0, 0));

@@ -14,13 +14,19 @@ struct ModelLoader final {
     using result_type = std::shared_ptr<std::vector<Primitive *>>;
 
     template <typename... Args>
-    result_type operator()(const char *_name)
+    result_type operator()(const char *_name, unsigned int postProcessFlags)
     {
         Assimp::Importer importer;
 
         // flags are used for post processing (the more, the slower)
-        const aiScene *scene = importer.ReadFile(_name,
-            aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_PreTransformVertices | aiProcess_GlobalScale);
+        // const aiScene *scene = importer.ReadFile(_name,
+        //     aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_PreTransformVertices | aiProcess_GlobalScale);
+        //
+        // const aiScene *scene = importer.ReadFile(_name,
+        //     aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs |
+        //     aiProcess_JoinIdenticalVertices);
+
+        const aiScene *scene = importer.ReadFile(_name, postProcessFlags);
 
         // If the import failed, report it
         if (nullptr == scene) {
