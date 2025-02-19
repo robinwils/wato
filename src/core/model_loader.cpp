@@ -108,6 +108,59 @@ Primitive *processMesh(const aiMesh *mesh, const aiScene *scene)
     return mp;
 }
 
+void processMetaData(const aiNode *node, const aiScene *scene)
+{
+    if (!node->mMetaData) {
+        DBG("node %s metadata is null", node->mName.C_Str());
+        return;
+    }
+    DBG("node %s has %d metadata", node->mName.C_Str(), node->mMetaData->mNumProperties);
+    auto *mdata = node->mMetaData;
+    for (unsigned int prop_idx = 0; prop_idx < mdata->mNumProperties; ++prop_idx) {
+        auto &key = mdata->mKeys[prop_idx];
+        auto &val = mdata->mValues[prop_idx];
+
+        switch (val.mType) {
+            case AI_BOOL:
+                DBG("%s: bool", key.C_Str());
+                break;
+            case AI_INT32:
+                DBG("%s: int32", key.C_Str());
+                break;
+            case AI_UINT64:
+                DBG("%s: uint64", key.C_Str());
+                break;
+            case AI_FLOAT:
+                DBG("%s: float", key.C_Str());
+                break;
+            case AI_DOUBLE:
+                DBG("%s: double", key.C_Str());
+                break;
+            case AI_AISTRING:
+                DBG("%s: aistring", key.C_Str());
+                break;
+            case AI_AIVECTOR3D:
+                DBG("%s: vector3", key.C_Str());
+                break;
+            case AI_AIMETADATA:
+                DBG("%s: mdata", key.C_Str());
+                break;
+            case AI_INT64:
+                DBG("%s: int64", key.C_Str());
+                break;
+            case AI_UINT32:
+                DBG("%s: uint32", key.C_Str());
+                break;
+            case AI_META_MAX:
+                DBG("%s: meta max", key.C_Str());
+                break;
+            case FORCE_32BIT:
+                DBG("%s: force 32bit", key.C_Str());
+                break;
+        }
+    }
+}
+
 std::vector<Primitive *> processNode(const aiNode *node, const aiScene *scene)
 {
     auto t         = node->mTransformation;
@@ -119,6 +172,8 @@ std::vector<Primitive *> processNode(const aiNode *node, const aiScene *scene)
     } else {
         DBG("node %s has identity transform", node->mName.C_Str());
     }
+
+    processMetaData(node, scene);
     std::vector<Primitive *> meshes;
     for (unsigned int i = 0; i < node->mNumMeshes; ++i) {
         auto *mesh = processMesh(scene->mMeshes[node->mMeshes[i]], scene);
