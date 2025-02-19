@@ -8,15 +8,14 @@
 
 #define IMGUI_USER_CONFIG "wato_imgui_config.h"
 
+#include <IconsFontAwesome6.h>
+#include <IconsKenney.h>
 #include <bgfx/bgfx.h>
-
 #include <imgui.h>
 #include <imgui_internal.h>
 
-#include <IconsKenney.h>
-#include <IconsFontAwesome6.h>
-#include <input/input.hpp>
 #include <core/camera.hpp>
+#include <input/input.hpp>
 
 #define IMGUI_MBUT_LEFT   0x01
 #define IMGUI_MBUT_RIGHT  0x02
@@ -24,15 +23,13 @@
 
 inline uint32_t imguiRGBA(uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a = 255)
 {
-	return 0
-		| (uint32_t(_r) <<  0)
-		| (uint32_t(_g) <<  8)
-		| (uint32_t(_b) << 16)
-		| (uint32_t(_a) << 24)
-		;
+    return 0 | (uint32_t(_r) << 0) | (uint32_t(_g) << 8) | (uint32_t(_b) << 16) | (uint32_t(_a) << 24);
 }
 
-namespace bx { struct AllocatorI; }
+namespace bx
+{
+struct AllocatorI;
+}
 
 void imguiCreate(float _fontSize = 18.0f, bx::AllocatorI* _allocator = NULL);
 void imguiDestroy();
@@ -45,97 +42,94 @@ void showImguiDialogs(Camera& _cam, const Input& _input, float _width, float _he
 void showStatsDialog(const Input& _input, const char* _errorText = NULL);
 void showSettingsDialog(Camera& _cam, float _width, float _height);
 
-
 namespace ImGui
 {
 #define IMGUI_FLAGS_NONE        UINT8_C(0x00)
 #define IMGUI_FLAGS_ALPHA_BLEND UINT8_C(0x01)
 
-	///
-	inline ImTextureID toId(bgfx::TextureHandle _handle, uint8_t _flags, uint8_t _mip)
-	{
-		union { struct { bgfx::TextureHandle handle; uint8_t flags; uint8_t mip; } s; ImTextureID id; } tex;
-		tex.s.handle = _handle;
-		tex.s.flags  = _flags;
-		tex.s.mip    = _mip;
-		return tex.id;
-	}
+///
+inline ImTextureID toId(bgfx::TextureHandle _handle, uint8_t _flags, uint8_t _mip)
+{
+    union {
+        struct {
+            bgfx::TextureHandle handle;
+            uint8_t             flags;
+            uint8_t             mip;
+        } s;
+        ImTextureID id;
+    } tex;
+    tex.s.handle = _handle;
+    tex.s.flags  = _flags;
+    tex.s.mip    = _mip;
+    return tex.id;
+}
 
-	// Helper function for passing bgfx::TextureHandle to ImGui::Image.
-	inline void Image(bgfx::TextureHandle _handle
-		, uint8_t _flags
-		, uint8_t _mip
-		, const ImVec2& _size
-		, const ImVec2& _uv0       = ImVec2(0.0f, 0.0f)
-		, const ImVec2& _uv1       = ImVec2(1.0f, 1.0f)
-		, const ImVec4& _tintCol   = ImVec4(1.0f, 1.0f, 1.0f, 1.0f)
-		, const ImVec4& _borderCol = ImVec4(0.0f, 0.0f, 0.0f, 0.0f)
-		)
-	{
-		Image(toId(_handle, _flags, _mip), _size, _uv0, _uv1, _tintCol, _borderCol);
-	}
+// Helper function for passing bgfx::TextureHandle to ImGui::Image.
+inline void Image(bgfx::TextureHandle _handle,
+    uint8_t                           _flags,
+    uint8_t                           _mip,
+    const ImVec2&                     _size,
+    const ImVec2&                     _uv0       = ImVec2(0.0f, 0.0f),
+    const ImVec2&                     _uv1       = ImVec2(1.0f, 1.0f),
+    const ImVec4&                     _tintCol   = ImVec4(1.0f, 1.0f, 1.0f, 1.0f),
+    const ImVec4&                     _borderCol = ImVec4(0.0f, 0.0f, 0.0f, 0.0f))
+{
+    Image(toId(_handle, _flags, _mip), _size, _uv0, _uv1, _tintCol, _borderCol);
+}
 
-	// Helper function for passing bgfx::TextureHandle to ImGui::Image.
-	inline void Image(bgfx::TextureHandle _handle
-		, const ImVec2& _size
-		, const ImVec2& _uv0       = ImVec2(0.0f, 0.0f)
-		, const ImVec2& _uv1       = ImVec2(1.0f, 1.0f)
-		, const ImVec4& _tintCol   = ImVec4(1.0f, 1.0f, 1.0f, 1.0f)
-		, const ImVec4& _borderCol = ImVec4(0.0f, 0.0f, 0.0f, 0.0f)
-		)
-	{
-		Image(_handle, IMGUI_FLAGS_ALPHA_BLEND, 0, _size, _uv0, _uv1, _tintCol, _borderCol);
-	}
+// Helper function for passing bgfx::TextureHandle to ImGui::Image.
+inline void Image(bgfx::TextureHandle _handle,
+    const ImVec2&                     _size,
+    const ImVec2&                     _uv0       = ImVec2(0.0f, 0.0f),
+    const ImVec2&                     _uv1       = ImVec2(1.0f, 1.0f),
+    const ImVec4&                     _tintCol   = ImVec4(1.0f, 1.0f, 1.0f, 1.0f),
+    const ImVec4&                     _borderCol = ImVec4(0.0f, 0.0f, 0.0f, 0.0f))
+{
+    Image(_handle, IMGUI_FLAGS_ALPHA_BLEND, 0, _size, _uv0, _uv1, _tintCol, _borderCol);
+}
 
-	// Helper function for passing bgfx::TextureHandle to ImGui::ImageButton.
-	inline bool ImageButton(bgfx::TextureHandle _handle
-		, uint8_t _flags
-		, uint8_t _mip
-		, const ImVec2& _size
-		, const ImVec2& _uv0     = ImVec2(0.0f, 0.0f)
-		, const ImVec2& _uv1     = ImVec2(1.0f, 1.0f)
-		, const ImVec4& _bgCol   = ImVec4(0.0f, 0.0f, 0.0f, 0.0f)
-		, const ImVec4& _tintCol = ImVec4(1.0f, 1.0f, 1.0f, 1.0f)
-		)
-	{
-		return ImageButton("image", toId(_handle, _flags, _mip), _size, _uv0, _uv1, _bgCol, _tintCol);
-	}
+// Helper function for passing bgfx::TextureHandle to ImGui::ImageButton.
+inline bool ImageButton(bgfx::TextureHandle _handle,
+    uint8_t                                 _flags,
+    uint8_t                                 _mip,
+    const ImVec2&                           _size,
+    const ImVec2&                           _uv0     = ImVec2(0.0f, 0.0f),
+    const ImVec2&                           _uv1     = ImVec2(1.0f, 1.0f),
+    const ImVec4&                           _bgCol   = ImVec4(0.0f, 0.0f, 0.0f, 0.0f),
+    const ImVec4&                           _tintCol = ImVec4(1.0f, 1.0f, 1.0f, 1.0f))
+{
+    return ImageButton("image", toId(_handle, _flags, _mip), _size, _uv0, _uv1, _bgCol, _tintCol);
+}
 
-	// Helper function for passing bgfx::TextureHandle to ImGui::ImageButton.
-	inline bool ImageButton(bgfx::TextureHandle _handle
-		, const ImVec2& _size
-		, const ImVec2& _uv0     = ImVec2(0.0f, 0.0f)
-		, const ImVec2& _uv1     = ImVec2(1.0f, 1.0f)
-		, const ImVec4& _bgCol   = ImVec4(0.0f, 0.0f, 0.0f, 0.0f)
-		, const ImVec4& _tintCol = ImVec4(1.0f, 1.0f, 1.0f, 1.0f)
-		)
-	{
-		return ImageButton(_handle, IMGUI_FLAGS_ALPHA_BLEND, 0, _size, _uv0, _uv1, _bgCol, _tintCol);
-	}
+// Helper function for passing bgfx::TextureHandle to ImGui::ImageButton.
+inline bool ImageButton(bgfx::TextureHandle _handle,
+    const ImVec2&                           _size,
+    const ImVec2&                           _uv0     = ImVec2(0.0f, 0.0f),
+    const ImVec2&                           _uv1     = ImVec2(1.0f, 1.0f),
+    const ImVec4&                           _bgCol   = ImVec4(0.0f, 0.0f, 0.0f, 0.0f),
+    const ImVec4&                           _tintCol = ImVec4(1.0f, 1.0f, 1.0f, 1.0f))
+{
+    return ImageButton(_handle, IMGUI_FLAGS_ALPHA_BLEND, 0, _size, _uv0, _uv1, _bgCol, _tintCol);
+}
 
-	///
-	inline void NextLine()
-	{
-		SetCursorPosY(GetCursorPosY() + GetTextLineHeightWithSpacing() );
-	}
+///
+inline void NextLine() { SetCursorPosY(GetCursorPosY() + GetTextLineHeightWithSpacing()); }
 
-	///
-	inline bool MouseOverArea()
-	{
-		return false
-			|| ImGui::IsAnyItemActive()
-			|| ImGui::IsAnyItemHovered()
-			|| ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow)
-	//		|| ImGuizmo::IsOver()
-			;
-	}
+///
+inline bool MouseOverArea()
+{
+    return false || ImGui::IsAnyItemActive() || ImGui::IsAnyItemHovered()
+           || ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow)
+        //		|| ImGuizmo::IsOver()
+        ;
+}
 
-	///
-	void PushEnabled(bool _enabled);
+///
+void PushEnabled(bool _enabled);
 
-	///
-	void PopEnabled();
+///
+void PopEnabled();
 
-} // namespace ImGui
+}  // namespace ImGui
 
-#endif // IMGUI_H_HEADER_GUARD
+#endif  // IMGUI_H_HEADER_GUARD

@@ -4,8 +4,8 @@
 
 class PlanePrimitive : public Primitive
 {
-public:
-    PlanePrimitive()
+   public:
+    PlanePrimitive(const Material& _material) : Primitive(_material)
     {
         m_vertices = {
             {{+0.5f, +0.0f, -0.5f}, {0.0f, +1.0f, 0.0f}, {0.0f, 1.0f}},
@@ -14,14 +14,14 @@ public:
             {{+0.5f, +0.0f, +0.5f}, {0.0f, +1.0f, 0.0f}, {1.0f, 1.0f}},
         };
 
-        m_triangle_list = {
+        m_indices = {
             0,
             1,
-            2, //
+            2,  //
 
             0,
             2,
-            3, //
+            3,  //
         };
 
         Primitive::initializePrimitive();

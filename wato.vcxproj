@@ -34,6 +34,8 @@
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\components\model.hpp" />
+    <ClInclude Include="src\renderer\mesh_primitive.hpp" />
     <ClInclude Include="src\components\color.hpp" />
     <ClInclude Include="src\components\direction.hpp" />
     <ClInclude Include="src\core\cache.hpp" />
@@ -58,7 +60,7 @@
     <ClInclude Include="src\imgui\vs_ocornut_imgui.bin.h" />
     <ClInclude Include="src\imgui\wato_imgui_config.h" />
     <ClInclude Include="src\input\input.hpp" />
-    <ClInclude Include="src\renderer\plane.hpp" />
+    <ClInclude Include="src\renderer\plane_primitive.hpp" />
     <ClInclude Include="src\core\registry.hpp" />
     <ClInclude Include="src\core\tile.hpp" />
   </ItemGroup>
@@ -155,7 +157,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>Default</LanguageStandard_C>
       <AdditionalOptions> /Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
-      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

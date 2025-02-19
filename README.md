@@ -106,8 +106,8 @@ Shaders are compiled using a makefile, they are kept in the same place as bgfx s
 You need to compile shaderc binary from the bgfx solution (tools > shaderc > shaderc) in release mode
 
 ```
-$ make -C shaders linux
-$ make -C shaders windows
-$ make -C shaders osx
+$ make -C shaders linux-shaders
+$ make -C shaders windows-shaders
+$ make -C shaders osx-shaders
 ```
 
