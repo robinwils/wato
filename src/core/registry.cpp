@@ -13,6 +13,7 @@
 
 #include "bgfx/bgfx.h"
 #include "components/camera.hpp"
+#include "components/imgui.hpp"
 #include "components/transform3d.hpp"
 #include "glm/trigonometric.hpp"
 
@@ -86,4 +87,5 @@ void Registry::spawnPlayerAndCamera()
         100.0f);
     // pos, rot, scale
     emplace<Transform3D>(camera, glm::vec3(0.0f, 2.0f, 1.5f), glm::vec3(1.0f), glm::vec3(1.0f));
+    emplace<ImguiDrawable>(camera);
 }

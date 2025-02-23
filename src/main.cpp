@@ -25,7 +25,6 @@
 
 #include <imgui_helper.h>
 
-#include <core/camera.hpp>
 #include <core/registry.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -34,6 +33,7 @@
 #include <renderer/plane_primitive.hpp>
 #include <systems/systems.hpp>
 
+#include "entt/signal/dispatcher.hpp"
 
 int main()
 {
@@ -105,16 +105,24 @@ int main()
     );
     */
 
+    entt::dispatcher event_dispatcher;
+    registry.ctx().emplace<entt::dispatcher&>(event_dispatcher);
+
     imguiCreate();
     Input input(window);
     input.init();
-    glfwSetWindowUserPointer(window, &input);
-    Camera camera;
+    glfwSetWindowUserPointer(window, &registry);
+    registry.ctx().emplace<Input&>(input);
+
+    ActionSystem action_system(registry);
+    action_system.init_listeners();
 
     registry.spawnLight();
     registry.spawnMap(20, 20);
     registry.spawnModel();
+    registry.spawnPlayerAndCamera();
     // registry.spawnPlane();
+
     double  prevTime     = glfwGetTime();
     int64_t m_timeOffset = bx::getHPCounter();
 
@@ -160,21 +168,15 @@ int main()
             stats->textWidth,
             stats->textHeight);
 
-        imguiBeginFrame(input, uint16_t(width), uint16_t(height));
-
-        showImguiDialogs(camera, input, width, height);
+        renderImgui(registry, width, height);
 
         auto t      = glfwGetTime();
         auto dt     = t - prevTime;
         prevTime    = t;
         double time = ((bx::getHPCounter() - m_timeOffset) / double(bx::getHPFrequency()));
 
-        camera.update(input, dt);
-        const glm::mat4 view = camera.view();
-        const glm::mat4 proj = camera.projection(float(width) / float(height));
-
-        bgfx::setViewTransform(0, glm::value_ptr(view), glm::value_ptr(proj));
-        bgfx::setViewRect(0, 0, 0, uint16_t(width), uint16_t(height));
+        processInputs(registry, dt);
+        cameraSystem(registry, float(width), float(height));
 
         // This dummy draw call is here to make sure that view 0 is cleared
         // if no other draw calls are submitted to view 0.
@@ -182,7 +184,6 @@ int main()
 
         renderSceneObjects(registry, time);
 
-        imguiEndFrame();
         // Advance to next frame. Process submitted rendering primitives.
         bgfx::frame();
     }

@@ -3,6 +3,7 @@
 #include <GLFW/glfw3.h>
 
 #include <glm/glm.hpp>
+#include <string>
 
 struct Keyboard {
     enum Key {
@@ -179,6 +180,8 @@ struct MouseState {
     glm::dvec2    pos, scroll;
     Button::State buttons[3];
 };
+
+std::string key_string(const Keyboard::Key& k);
 
 class Input
 {

@@ -19,7 +19,6 @@
 #include <imgui/vs_imgui_image.bin.h>
 #include <imgui/vs_ocornut_imgui.bin.h>
 
-#include <core/camera.hpp>
 #include <renderer/bgfx_utils.hpp>
 
 static const bgfx::EmbeddedShader s_embeddedShaders[] = {BGFX_EMBEDDED_SHADER(vs_ocornut_imgui),
@@ -381,7 +380,7 @@ struct OcornutImguiContext {
         style.WindowBorderSize = 0.0f;
     }
 
-    void beginFrame(Input _input, int _width, int _height, int _inputChar, bgfx::ViewId _viewId)
+    void beginFrame(const Input& _input, int _width, int _height, int _inputChar, bgfx::ViewId _viewId)
     {
         m_viewId = _viewId;
 
@@ -451,7 +450,7 @@ void imguiCreate(float _fontSize, bx::AllocatorI* _allocator) { s_ctx.create(_fo
 
 void imguiDestroy() { s_ctx.destroy(); }
 
-void imguiBeginFrame(Input _input, uint16_t _width, uint16_t _height, int _inputChar, bgfx::ViewId _viewId)
+void imguiBeginFrame(const Input& _input, uint16_t _width, uint16_t _height, int _inputChar, bgfx::ViewId _viewId)
 {
     s_ctx.beginFrame(_input, _width, _height, _inputChar, _viewId);
 }
@@ -560,19 +559,17 @@ static void resourceBar(const char* _name,
     }
 }
 
-void showImguiDialogs(Camera& _cam, const Input& _input, float _width, float _height)
+void showImguiDialogs(const Input& _input, float _width, float _height)
 {
     showStatsDialog(_input);
-    showSettingsDialog(_cam, _width, _height);
+    showSettingsDialog(_width, _height);
 }
 
-void showSettingsDialog(Camera& _cam, float _width, float _height)
+void showSettingsDialog(float _width, float _height)
 {
     ImGui::SetNextWindowPos(ImVec2(_width - _width / 5.0f - 10.0f, 10.0f), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize(ImVec2(_width / 5.0f, _height / 3.5f), ImGuiCond_FirstUseEver);
     ImGui::Begin("Settings", NULL, 0);
-
-    _cam.drawImgui();
 }
 
 void showStatsDialog(const Input& _input, const char* _errorText)

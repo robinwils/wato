@@ -3,6 +3,8 @@
 #include <imgui.h>
 #include <string.h>
 
+#include "core/registry.hpp"
+
 void MouseState::clear()
 {
     pos.x    = -1.0f;
@@ -12,7 +14,7 @@ void MouseState::clear()
     memset(buttons, 0, sizeof(buttons));
 }
 
-Mouse::Button toMouseButton(int32_t _button)
+Mouse::Button to_mouse_button(int32_t _button)
 {
     switch (_button) {
         case GLFW_MOUSE_BUTTON_LEFT:
@@ -26,7 +28,7 @@ Mouse::Button toMouseButton(int32_t _button)
     }
 }
 
-Button::Action toAction(int32_t _action)
+Button::Action to_action(int32_t _action)
 {
     switch (_action) {
         case GLFW_PRESS:
@@ -40,7 +42,7 @@ Button::Action toAction(int32_t _action)
     }
 }
 
-Keyboard::Key toKey(int32_t key)
+Keyboard::Key to_key(int32_t key)
 {
     switch (key) {
         case GLFW_KEY_SPACE:
@@ -288,70 +290,324 @@ Keyboard::Key toKey(int32_t key)
     }
 }
 
+std::string key_string(const Keyboard::Key& k)
+{
+    switch (k) {
+        case Keyboard::Space:
+            return "Space";
+        case Keyboard::Apostrophe:
+            return "Apostrophe";
+        case Keyboard::Comma:
+            return "Comma";
+        case Keyboard::Minus:
+            return "Minus";
+        case Keyboard::Period:
+            return "Period";
+        case Keyboard::Slash:
+            return "Slash";
+        case Keyboard::Num0:
+            return "Num0";
+        case Keyboard::Num1:
+            return "Num1";
+        case Keyboard::Num2:
+            return "Num2";
+        case Keyboard::Num3:
+            return "Num3";
+        case Keyboard::Num4:
+            return "Num4";
+        case Keyboard::Num5:
+            return "Num5";
+        case Keyboard::Num6:
+            return "Num6";
+        case Keyboard::Num7:
+            return "Num7";
+        case Keyboard::Num8:
+            return "Num8";
+        case Keyboard::Num9:
+            return "Num9";
+        case Keyboard::Semicolon:
+            return "Semicolon";
+        case Keyboard::Equal:
+            return "Equal";
+        case Keyboard::A:
+            return "A";
+        case Keyboard::B:
+            return "B";
+        case Keyboard::C:
+            return "C";
+        case Keyboard::D:
+            return "D";
+        case Keyboard::E:
+            return "E";
+        case Keyboard::F:
+            return "F";
+        case Keyboard::G:
+            return "G";
+        case Keyboard::H:
+            return "H";
+        case Keyboard::I:
+            return "I";
+        case Keyboard::J:
+            return "J";
+        case Keyboard::K:
+            return "K";
+        case Keyboard::L:
+            return "L";
+        case Keyboard::M:
+            return "M";
+        case Keyboard::N:
+            return "N";
+        case Keyboard::O:
+            return "O";
+        case Keyboard::P:
+            return "P";
+        case Keyboard::Q:
+            return "Q";
+        case Keyboard::R:
+            return "R";
+        case Keyboard::S:
+            return "S";
+        case Keyboard::T:
+            return "T";
+        case Keyboard::U:
+            return "U";
+        case Keyboard::V:
+            return "V";
+        case Keyboard::W:
+            return "W";
+        case Keyboard::X:
+            return "X";
+        case Keyboard::Y:
+            return "Y";
+        case Keyboard::Z:
+            return "Z";
+        case Keyboard::LeftBracket:
+            return "LeftBracket";
+        case Keyboard::Backslash:
+            return "Backslash";
+        case Keyboard::RightBracket:
+            return "RightBracket";
+        case Keyboard::GraveAccent:
+            return "GraveAccent";
+        case Keyboard::World1:
+            return "World1";
+        case Keyboard::World2:
+            return "World2";
+        case Keyboard::Escape:
+            return "Escape";
+        case Keyboard::Enter:
+            return "Enter";
+        case Keyboard::Tab:
+            return "Tab";
+        case Keyboard::Backspace:
+            return "Backspace";
+        case Keyboard::Insert:
+            return "Insert";
+        case Keyboard::Delete:
+            return "Delete";
+        case Keyboard::Right:
+            return "Right";
+        case Keyboard::Left:
+            return "Left";
+        case Keyboard::Down:
+            return "Down";
+        case Keyboard::Up:
+            return "Up";
+        case Keyboard::PageUp:
+            return "PageUp";
+        case Keyboard::PageDown:
+            return "PageDown";
+        case Keyboard::Home:
+            return "Home";
+        case Keyboard::End:
+            return "End";
+        case Keyboard::CapsLock:
+            return "CapsLock";
+        case Keyboard::ScrollLock:
+            return "ScrollLock";
+        case Keyboard::NumLock:
+            return "NumLock";
+        case Keyboard::PrintScreen:
+            return "PrintScreen";
+        case Keyboard::Pause:
+            return "Pause";
+        case Keyboard::F1:
+            return "F1";
+        case Keyboard::F2:
+            return "F2";
+        case Keyboard::F3:
+            return "F3";
+        case Keyboard::F4:
+            return "F4";
+        case Keyboard::F5:
+            return "F5";
+        case Keyboard::F6:
+            return "F6";
+        case Keyboard::F7:
+            return "F7";
+        case Keyboard::F8:
+            return "F8";
+        case Keyboard::F9:
+            return "F9";
+        case Keyboard::F10:
+            return "F10";
+        case Keyboard::F11:
+            return "F11";
+        case Keyboard::F12:
+            return "F12";
+        case Keyboard::F13:
+            return "F13";
+        case Keyboard::F14:
+            return "F14";
+        case Keyboard::F15:
+            return "F15";
+        case Keyboard::F16:
+            return "F16";
+        case Keyboard::F17:
+            return "F17";
+        case Keyboard::F18:
+            return "F18";
+        case Keyboard::F19:
+            return "F19";
+        case Keyboard::F20:
+            return "F20";
+        case Keyboard::F21:
+            return "F21";
+        case Keyboard::F22:
+            return "F22";
+        case Keyboard::F23:
+            return "F23";
+        case Keyboard::F24:
+            return "F24";
+        case Keyboard::F25:
+            return "F25";
+        case Keyboard::Kp0:
+            return "Kp0";
+        case Keyboard::Kp1:
+            return "Kp1";
+        case Keyboard::Kp2:
+            return "Kp2";
+        case Keyboard::Kp3:
+            return "Kp3";
+        case Keyboard::Kp4:
+            return "Kp4";
+        case Keyboard::Kp5:
+            return "Kp5";
+        case Keyboard::Kp6:
+            return "Kp6";
+        case Keyboard::Kp7:
+            return "Kp7";
+        case Keyboard::Kp8:
+            return "Kp8";
+        case Keyboard::Kp9:
+            return "Kp9";
+        case Keyboard::KpDecimal:
+            return "KpDecimal";
+        case Keyboard::KpDivide:
+            return "KpDivide";
+        case Keyboard::KpMultiply:
+            return "KpMultiply";
+        case Keyboard::KpSubtract:
+            return "KpSubtract";
+        case Keyboard::KpAdd:
+            return "KpAdd";
+        case Keyboard::KpEnter:
+            return "KpEnter";
+        case Keyboard::KpEqual:
+            return "KpEqual";
+        case Keyboard::LeftShift:
+            return "LeftShift";
+        case Keyboard::LeftControl:
+            return "LeftControl";
+        case Keyboard::LeftAlt:
+            return "LeftAlt";
+        case Keyboard::LeftSuper:
+            return "LeftSuper";
+        case Keyboard::RightShift:
+            return "RightShift";
+        case Keyboard::RightControl:
+            return "RightControl";
+        case Keyboard::RightAlt:
+            return "RightAlt";
+        case Keyboard::RightSuper:
+            return "RightSuper";
+        case Keyboard::Menu:
+            return "Menu";
+        case Keyboard::Count:
+            return "Unknown";
+    }
+}
+
 void keyCb(GLFWwindow* _window, int32_t _key, int32_t _scancode, int32_t _action, int32_t _mods)
 {
-    Input*        input = static_cast<Input*>(glfwGetWindowUserPointer(_window));
-    Keyboard::Key key   = toKey(_key);
+    Registry*     registry = static_cast<Registry*>(glfwGetWindowUserPointer(_window));
+    Input&        input    = registry->ctx().get<Input&>();
+    Keyboard::Key key      = to_key(_key);
 
-    input->setKey(key, toAction(_action));
+    input.setKey(key, to_action(_action));
 
     if (_mods & GLFW_MOD_SHIFT) {
-        input->setKeyModifier(key, ModifierKey::Shift);
+        input.setKeyModifier(key, ModifierKey::Shift);
     }
     if (_mods & GLFW_MOD_CONTROL) {
-        input->setKeyModifier(key, ModifierKey::Ctrl);
+        input.setKeyModifier(key, ModifierKey::Ctrl);
     }
     if (_mods & GLFW_MOD_ALT) {
-        input->setKeyModifier(key, ModifierKey::Alt);
+        input.setKeyModifier(key, ModifierKey::Alt);
     }
     if (_mods & GLFW_MOD_SUPER) {
-        input->setKeyModifier(key, ModifierKey::Super);
+        input.setKeyModifier(key, ModifierKey::Super);
     }
     if (_mods & GLFW_MOD_CAPS_LOCK) {
-        input->setKeyModifier(key, ModifierKey::CapsLock);
+        input.setKeyModifier(key, ModifierKey::CapsLock);
     }
     if (_mods & GLFW_MOD_NUM_LOCK) {
-        input->setKeyModifier(key, ModifierKey::NumLock);
+        input.setKeyModifier(key, ModifierKey::NumLock);
     }
 }
 
 static void cursorPosCb(GLFWwindow* _window, double _xpos, double _ypos)
 {
-    Input* input = static_cast<Input*>(glfwGetWindowUserPointer(_window));
+    Registry* registry = static_cast<Registry*>(glfwGetWindowUserPointer(_window));
+    Input&    input    = registry->ctx().get<Input&>();
 
-    input->setMousePos(_xpos, _ypos);
+    input.setMousePos(_xpos, _ypos);
 }
 
 static void mouseButtonCb(GLFWwindow* _window, int32_t _button, int32_t _action, int32_t _mods)
 {
-    Input*        input  = static_cast<Input*>(glfwGetWindowUserPointer(_window));
-    Mouse::Button button = toMouseButton(_button);
+    Registry*     registry = static_cast<Registry*>(glfwGetWindowUserPointer(_window));
+    Input&        input    = registry->ctx().get<Input&>();
+    Mouse::Button button   = to_mouse_button(_button);
 
-    input->setMouseButtonPressed(button, toAction(_action));
+    input.setMouseButtonPressed(button, to_action(_action));
 
     if (_mods & GLFW_MOD_SHIFT) {
-        input->setMouseButtonModifier(button, ModifierKey::Shift);
+        input.setMouseButtonModifier(button, ModifierKey::Shift);
     }
     if (_mods & GLFW_MOD_CONTROL) {
-        input->setMouseButtonModifier(button, ModifierKey::Ctrl);
+        input.setMouseButtonModifier(button, ModifierKey::Ctrl);
     }
     if (_mods & GLFW_MOD_ALT) {
-        input->setMouseButtonModifier(button, ModifierKey::Alt);
+        input.setMouseButtonModifier(button, ModifierKey::Alt);
     }
     if (_mods & GLFW_MOD_SUPER) {
-        input->setMouseButtonModifier(button, ModifierKey::Super);
+        input.setMouseButtonModifier(button, ModifierKey::Super);
     }
     if (_mods & GLFW_MOD_CAPS_LOCK) {
-        input->setMouseButtonModifier(button, ModifierKey::CapsLock);
+        input.setMouseButtonModifier(button, ModifierKey::CapsLock);
     }
     if (_mods & GLFW_MOD_NUM_LOCK) {
-        input->setMouseButtonModifier(button, ModifierKey::NumLock);
+        input.setMouseButtonModifier(button, ModifierKey::NumLock);
     }
 }
 
 static void scrollCb(GLFWwindow* _window, double _xoffset, double _yoffset)
 {
-    static_cast<Input*>(glfwGetWindowUserPointer(_window))->setMouseScroll(_xoffset, _yoffset);
+    Registry* registry = static_cast<Registry*>(glfwGetWindowUserPointer(_window));
+    Input&    input    = registry->ctx().get<Input&>();
+
+    input.setMouseScroll(_xoffset, _yoffset);
 }
 
 Input::Input(GLFWwindow* _window) : mouseState(), m_window(_window) {}
