@@ -43,7 +43,7 @@
     <ClInclude Include="src\core\sys.hpp" />
     <ClInclude Include="src\renderer\cube.hpp" />
     <ClInclude Include="src\renderer\material.hpp" />
-    <ClInclude Include="src\systems\render.hpp" />
+    <ClInclude Include="src\systems\systems.hpp" />
     <ClInclude Include="src\renderer\bgfx_utils.hpp" />
     <ClInclude Include="src\core\camera.hpp" />
     <ClInclude Include="src\components\position.hpp" />

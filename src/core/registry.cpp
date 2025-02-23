@@ -12,6 +12,8 @@
 #include <renderer/plane_primitive.hpp>
 
 #include "bgfx/bgfx.h"
+#include "components/camera.hpp"
+#include "components/transform3d.hpp"
 #include "glm/trigonometric.hpp"
 
 void Registry::spawnMap(uint32_t _w, uint32_t _h)
@@ -65,4 +67,23 @@ void Registry::spawnModel()
     emplace<Rotation>(tower, glm::vec3(0));
     emplace<Scale>(tower, glm::vec3(0.1f));
     emplace<SceneObject>(tower, "tower_model"_hs);
+}
+
+void Registry::spawnPlayerAndCamera()
+{
+    auto player = create();
+
+    auto camera = create();
+    emplace<Camera>(camera,
+        // up, front, dir
+        glm::vec3(0.0f, 1.0f, 0.0f),
+        glm::vec3(0.0f, 0.0f, -1.0f),
+        glm::vec3(0.0f, -1.0f, -1.0f),
+        // speed, fov, near, far
+        2.5f,
+        60.0f,
+        0.1f,
+        100.0f);
+    // pos, rot, scale
+    emplace<Transform3D>(camera, glm::vec3(0.0f, 2.0f, 1.5f), glm::vec3(1.0f), glm::vec3(1.0f));
 }

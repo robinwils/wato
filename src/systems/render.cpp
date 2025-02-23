@@ -1,5 +1,3 @@
-#include "render.hpp"
-
 #include <bgfx/bgfx.h>
 
 #include <components/color.hpp>
@@ -12,6 +10,8 @@
 #include <glm/ext/matrix_float4x4.hpp>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+
+#include "systems.hpp"
 
 void renderSceneObjects(Registry& registry, const float dt)
 {

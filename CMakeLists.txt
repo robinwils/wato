@@ -69,6 +69,7 @@ set(SOURCES
 	src/core/sys.cpp
 	src/renderer/material.cpp
 	src/systems/render.cpp
+	src/systems/camera.cpp
 	src/renderer/bgfx_utils.cpp
 	src/core/camera.cpp
 	src/core/model_loader.cpp

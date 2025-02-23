@@ -32,7 +32,8 @@
 #include <input/input.hpp>
 #include <renderer/bgfx_utils.hpp>
 #include <renderer/plane_primitive.hpp>
-#include <systems/render.hpp>
+#include <systems/systems.hpp>
+
 
 int main()
 {
