@@ -1,16 +1,14 @@
 #include <bgfx/bgfx.h>
 
-#include <components/color.hpp>
-#include <components/direction.hpp>
-#include <components/position.hpp>
-#include <components/rotation.hpp>
-#include <components/scale.hpp>
-#include <components/scene_object.hpp>
-#include <core/cache.hpp>
 #include <glm/ext/matrix_float4x4.hpp>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "components/color.hpp"
+#include "components/direction.hpp"
+#include "components/scene_object.hpp"
+#include "components/transform3d.hpp"
+#include "core/cache.hpp"
 #include "systems.hpp"
 
 void renderSceneObjects(Registry& registry, const float dt)
@@ -25,13 +23,13 @@ void renderSceneObjects(Registry& registry, const float dt)
     // bgfx::setUniform(registry.get<Direction, glm::value_ptr(glm::vec4(m_lightDir, 0.0f)));
     // bgfx::setUniform(u_lightCol, glm::value_ptr(glm::vec4(m_lightCol, 0.0f)));
 
-    for (auto&& [entity, pos, rot, scale, obj] : registry.view<Position, Rotation, Scale, SceneObject>().each()) {
+    for (auto&& [entity, obj, t] : registry.view<SceneObject, Transform3D>().each()) {
         auto model = glm::mat4(1.0f);
-        model      = glm::translate(model, pos.position);
-        model      = glm::rotate(model, rot.rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
-        model      = glm::rotate(model, rot.rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
-        model      = glm::rotate(model, rot.rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
-        model      = glm::scale(model, scale.scale);
+        model      = glm::translate(model, t.position);
+        model      = glm::rotate(model, t.rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
+        model      = glm::rotate(model, t.rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
+        model      = glm::rotate(model, t.rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
+        model      = glm::scale(model, t.scale);
 
         for (const auto* p : *MODEL_CACHE[obj.model_hash]) {
             // Set model matrix for rendering.

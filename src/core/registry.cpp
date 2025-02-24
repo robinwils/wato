@@ -1,21 +1,17 @@
 #include "registry.hpp"
 
-#include <components/color.hpp>
-#include <components/direction.hpp>
-#include <components/position.hpp>
-#include <components/rotation.hpp>
-#include <components/scale.hpp>
-#include <components/scene_object.hpp>
-#include <core/cache.hpp>
-#include <core/sys.hpp>
-#include <glm/ext/vector_float3.hpp>
-#include <renderer/plane_primitive.hpp>
+#include <bgfx/bgfx.h>
 
-#include "bgfx/bgfx.h"
+#include <glm/ext/vector_float3.hpp>
+
 #include "components/camera.hpp"
+#include "components/color.hpp"
+#include "components/direction.hpp"
 #include "components/imgui.hpp"
+#include "components/scene_object.hpp"
 #include "components/transform3d.hpp"
-#include "glm/trigonometric.hpp"
+#include "core/cache.hpp"
+#include "renderer/plane_primitive.hpp"
 
 void Registry::spawnMap(uint32_t _w, uint32_t _h)
 {
@@ -42,9 +38,7 @@ void Registry::spawnMap(uint32_t _w, uint32_t _h)
     for (uint32_t i = 0; i < _w; ++i) {
         for (uint32_t j = 0; j < _h; ++j) {
             auto tile = create();
-            emplace<Position>(tile, glm::vec3(i, 0, j));
-            emplace<Rotation>(tile, glm::vec3(0, 0, 0));
-            emplace<Scale>(tile, glm::vec3(1.0f));
+            emplace<Transform3D>(tile, glm::vec3(i, 0.0f, j), glm::vec3(0.0f), glm::vec3(1.0f));
             emplace<SceneObject>(tile, "grass_tile"_hs);
         }
     }
@@ -64,9 +58,7 @@ void Registry::spawnModel()
         aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_PreTransformVertices | aiProcess_GlobalScale);
 
     auto tower = create();
-    emplace<Position>(tower, glm::vec3(0, 0, 0));
-    emplace<Rotation>(tower, glm::vec3(0));
-    emplace<Scale>(tower, glm::vec3(0.1f));
+    emplace<Transform3D>(tower, glm::vec3(0.0f), glm::vec3(0.0f), glm::vec3(0.1f));
     emplace<SceneObject>(tower, "tower_model"_hs);
 }
 
