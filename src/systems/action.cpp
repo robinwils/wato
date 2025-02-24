@@ -18,16 +18,16 @@ void ActionSystem::camera_movement(CameraMovement _cm)
     for (auto&& [entity, cam, t] : m_registry.view<Camera, Transform3D>().each()) {
         float speed = cam.speed * _cm.time_delta;
         switch (_cm.action) {
-            case CameraForward:
+            case CameraMovement::CameraForward:
                 t.position += speed * cam.front;
                 break;
-            case CameraLeft:
+            case CameraMovement::CameraLeft:
                 t.position += speed * cam.right();
                 break;
-            case CameraBack:
+            case CameraMovement::CameraBack:
                 t.position -= speed * cam.front;
                 break;
-            case CameraRight:
+            case CameraMovement::CameraRight:
                 t.position -= speed * cam.right();
                 break;
             default:

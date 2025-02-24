@@ -1,11 +1,15 @@
 #pragma once
 
-enum Action {
-    CameraLeft,
-    CameraRight,
-    CameraForward,
-    CameraBack,
-    BuildTower,
+struct CameraMovement {
+    enum CameraAction {
+        CameraLeft,
+        CameraRight,
+        CameraForward,
+        CameraBack,
+    };
+
+    CameraAction action;
+    double       time_delta;
 };
 
 struct CameraMovement {
