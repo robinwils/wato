@@ -3,6 +3,8 @@
 #include <imgui.h>
 #include <string.h>
 
+#include "components/camera.hpp"
+#include "core/ray.hpp"
 #include "core/registry.hpp"
 
 void MouseState::clear()
@@ -651,6 +653,11 @@ void Input::setKey(Keyboard::Key _key, Button::Action _action) { keyboardState.k
 
 void Input::setKeyModifier(Keyboard::Key _key, ModifierKey _mod) { keyboardState.keys[_key].modifiers[_mod] = true; }
 
-void Input::drawImgui() const { ImGui::Text("Mouse (x, y): (%f, %f)", mouseState.pos.x, mouseState.pos.y); }
+void Input::drawImgui(const Camera& cam, float w, float h, glm::dvec2 point) const
+{
+    auto ray = ray_cast(cam, w, h, point);
+    ImGui::Text("Mouse (x, y): (%f, %f)", mouseState.pos.x, mouseState.pos.y);
+    ImGui::Text("Ray cast (x, y, z, w): (%f, %f, %f , %f)", ray.x, ray.y, ray.z, ray.w);
+}
 
 void Input::clear() { mouseState.clear(); }

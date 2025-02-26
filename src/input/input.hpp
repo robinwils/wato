@@ -5,6 +5,8 @@
 #include <glm/glm.hpp>
 #include <string>
 
+#include "components/camera.hpp"
+
 struct Keyboard {
     enum Key {
         Space,
@@ -210,7 +212,7 @@ class Input
     bool isPrevKeyReleased(Keyboard::Key _key) const { return prevKeyboardState.keys[_key].action == Button::Release; }
     bool isPrevKeyUnknown(Keyboard::Key _key) const { return prevKeyboardState.keys[_key].action == Button::Unknown; }
 
-    void drawImgui() const;
+    void drawImgui(const Camera& cam, float w, float h, glm::dvec2 point) const;
 
     void clear();
 

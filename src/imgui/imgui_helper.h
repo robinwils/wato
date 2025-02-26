@@ -41,8 +41,12 @@ void imguiBeginFrame(const Input& _input,
 
 void imguiEndFrame();
 
-void showImguiDialogs(const Input& _input, float _width, float _height);
-void showStatsDialog(const Input& _input, const char* _errorText = NULL);
+void showImguiDialogs(const Input& _input, const Camera& _camera, float _width, float _height);
+void showStatsDialog(const Input& _input,
+    const Camera&                 _camera,
+    float                         _width,
+    float                         _height,
+    const char*                   _errorText = NULL);
 void showSettingsDialog(float _width, float _height);
 
 namespace ImGui
