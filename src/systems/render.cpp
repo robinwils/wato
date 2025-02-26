@@ -6,6 +6,7 @@
 
 #include "components/color.hpp"
 #include "components/direction.hpp"
+#include "components/placement_mode.hpp"
 #include "components/scene_object.hpp"
 #include "components/transform3d.hpp"
 #include "core/cache.hpp"
@@ -22,25 +23,33 @@ void renderSceneObjects(Registry& registry, const float dt)
     assert(lightEntity != entt::null);
     // bgfx::setUniform(registry.get<Direction, glm::value_ptr(glm::vec4(m_lightDir, 0.0f)));
     // bgfx::setUniform(u_lightCol, glm::value_ptr(glm::vec4(m_lightCol, 0.0f)));
+    auto group = registry.group<SceneObject>(entt::get<Transform3D>);
+    auto check = registry.view<PlacementMode>();
 
-    for (auto&& [entity, obj, t] : registry.view<SceneObject, Transform3D>().each()) {
+    for (auto&& [entity, obj, t] : group.each()) {
         auto model = glm::mat4(1.0f);
         model      = glm::translate(model, t.position);
-        model      = glm::rotate(model, t.rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
-        model      = glm::rotate(model, t.rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
-        model      = glm::rotate(model, t.rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
+        model      = glm::rotate(model, glm::radians(t.rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
+        model      = glm::rotate(model, glm::radians(t.rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
+        model      = glm::rotate(model, glm::radians(t.rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
         model      = glm::scale(model, t.scale);
 
-        for (const auto* p : *MODEL_CACHE[obj.model_hash]) {
-            // Set model matrix for rendering.
-            bgfx::setTransform(glm::value_ptr(model));
+        if (check.contains(entity)) {
+            // DBG("GOT Placement mode entity!")
+        }
 
-            // kinda awkward place to put that...
-            // obj.material.drawImgui();
+        if (auto primitives = MODEL_CACHE[obj.model_hash]; primitives) {
+            for (const auto* p : *primitives) {
+                // Set model matrix for rendering.
+                bgfx::setTransform(glm::value_ptr(model));
 
-            // Set render states.
-            bgfx::setState(state);
-            p->submit();
+                // kinda awkward place to put that...
+                // obj.material.drawImgui();
+
+                // Set render states.
+                bgfx::setState(state);
+                p->submit();
+            }
         }
     }
 }

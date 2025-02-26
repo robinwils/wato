@@ -114,7 +114,7 @@ int main()
     glfwSetWindowUserPointer(window, &registry);
     registry.ctx().emplace<Input&>(input);
 
-    ActionSystem action_system(registry);
+    ActionSystem action_system(registry, width, height);
     action_system.init_listeners();
 
     registry.spawnLight();
@@ -134,6 +134,7 @@ int main()
         if (width != oldWidth || height != oldHeight) {
             bgfx::reset((uint32_t)width, (uint32_t)height, BGFX_RESET_VSYNC);
             bgfx::setViewRect(kClearView, 0, 0, bgfx::BackbufferRatio::Equal);
+            action_system.udpate_win_size(width, height);
         }
         bgfx::touch(kClearView);
         // Use debug font to print information about this example.

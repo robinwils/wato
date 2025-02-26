@@ -544,6 +544,8 @@ void keyCb(GLFWwindow* _window, int32_t _key, int32_t _scancode, int32_t _action
     Input&        input    = registry->ctx().get<Input&>();
     Keyboard::Key key      = to_key(_key);
 
+    // don't reset current state, it will discard input and make movement choppy
+    input.prevKeyboardState = input.keyboardState;
     input.setKey(key, to_action(_action));
 
     if (_mods & GLFW_MOD_SHIFT) {

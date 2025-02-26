@@ -9,9 +9,8 @@
 void cameraSystem(Registry& registry, float width, float height)
 {
     for (auto&& [entity, camera, transform] : registry.view<Camera, Transform3D>().each()) {
-        const auto& viewMat = glm::lookAt(transform.position, transform.position + camera.dir, camera.up);
-        const auto& proj =
-            glm::perspective(glm::radians(camera.fov), width / height, camera.near_clip, camera.far_clip);
+        const auto& viewMat = camera.view(transform.position);
+        const auto& proj    = camera.proj(width, height);
         bgfx::setViewTransform(0, glm::value_ptr(viewMat), glm::value_ptr(proj));
         bgfx::setViewRect(0, 0, 0, uint16_t(width), uint16_t(height));
 

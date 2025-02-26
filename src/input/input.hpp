@@ -193,9 +193,7 @@ class Input
     void setMouseButtonModifier(Mouse::Button _button, ModifierKey _mod);
     void setMousePos(double _x, double _y);
     void setMouseScroll(double _xoffset, double _yoffset);
-
     void setKey(Keyboard::Key _key, Button::Action _state);
-
     void setKeyModifier(Keyboard::Key _key, ModifierKey _mod);
 
     bool isMouseButtonPressed(Mouse::Button _button) const
@@ -205,13 +203,20 @@ class Input
     bool isKeyPressed(Keyboard::Key _key) const { return keyboardState.keys[_key].action == Button::Press; }
     bool isKeyRepeat(Keyboard::Key _key) const { return keyboardState.keys[_key].action == Button::Repeat; }
     bool isKeyReleased(Keyboard::Key _key) const { return keyboardState.keys[_key].action == Button::Release; }
+    bool isKeyUnknown(Keyboard::Key _key) const { return keyboardState.keys[_key].action == Button::Unknown; }
+
+    bool isPrevKeyPressed(Keyboard::Key _key) const { return prevKeyboardState.keys[_key].action == Button::Press; }
+    bool isPrevKeyRepeat(Keyboard::Key _key) const { return prevKeyboardState.keys[_key].action == Button::Repeat; }
+    bool isPrevKeyReleased(Keyboard::Key _key) const { return prevKeyboardState.keys[_key].action == Button::Release; }
+    bool isPrevKeyUnknown(Keyboard::Key _key) const { return prevKeyboardState.keys[_key].action == Button::Unknown; }
 
     void drawImgui() const;
 
     void clear();
 
     MouseState    mouseState;
-    KeyboardState keyboardState;
+    KeyboardState keyboardState, prevKeyboardState;
+    bool          m_tower_placement_mode;
 
    private:
     GLFWwindow* m_window;

@@ -67,6 +67,7 @@ set(SOURCES
 	deps/imgui/imgui_tables.cpp
 	deps/imgui/imgui_widgets.cpp
 	src/core/sys.cpp
+	src/core/ray.cpp
 	src/renderer/material.cpp
 	src/systems/render.cpp
 	src/systems/imgui.cpp

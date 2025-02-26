@@ -1,5 +1,7 @@
 #pragma once
 
+#include <glm/glm.hpp>
+
 struct CameraMovement {
     enum CameraAction {
         CameraLeft,
@@ -12,7 +14,10 @@ struct CameraMovement {
     double       time_delta;
 };
 
-struct CameraMovement {
-    Action action;
-    double time_delta;
+struct BuildTower {
+};
+
+struct TowerPlacementMode {
+    bool       enable;
+    glm::dvec2 mousePos;
 };
