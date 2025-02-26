@@ -58,7 +58,7 @@ void Registry::spawnModel()
         aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_PreTransformVertices | aiProcess_GlobalScale);
 
     auto tower = create();
-    emplace<Transform3D>(tower, glm::vec3(0.0f), glm::vec3(0.0f), glm::vec3(0.1f));
+    emplace<Transform3D>(tower, glm::vec3(5.0f, 0.0f, 5.0f), glm::vec3(0.0f), glm::vec3(0.1f));
     emplace<SceneObject>(tower, "tower_model"_hs);
 }
 

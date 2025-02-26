@@ -16,7 +16,7 @@ void renderImgui(Registry& registry, float width, float height)
 
     showImguiDialogs(input, width, height);
 
-    for (auto&& [entity] : registry.view<ImguiDrawable>().each()) {
+    for (auto&& entity : registry.view<ImguiDrawable>()) {
         auto [camera, transform] = registry.try_get<Camera, Transform3D>(entity);
         if (camera && transform) {
             ImGui::Text("Camera Setting");
