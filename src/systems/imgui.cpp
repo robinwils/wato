@@ -17,7 +17,7 @@ void renderImgui(Registry& registry, float width, float height)
     for (auto&& entity : registry.view<ImguiDrawable>()) {
         auto [camera, transform] = registry.try_get<Camera, Transform3D>(entity);
         if (camera && transform) {
-            showImguiDialogs(input, *camera, width, height);
+            showImguiDialogs(input, *camera, transform->position, width, height);
             ImGui::Text("Camera Setting");
             ImGui::DragFloat3("Position", glm::value_ptr(transform->position), 0.1f, 5.0f);
             ImGui::DragFloat3("Direction", glm::value_ptr(camera->dir), 0.1f, 2.0f);

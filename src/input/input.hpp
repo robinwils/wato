@@ -212,7 +212,7 @@ class Input
     bool isPrevKeyReleased(Keyboard::Key _key) const { return prevKeyboardState.keys[_key].action == Button::Release; }
     bool isPrevKeyUnknown(Keyboard::Key _key) const { return prevKeyboardState.keys[_key].action == Button::Unknown; }
 
-    void drawImgui(const Camera& cam, float w, float h, glm::dvec2 point) const;
+    void drawImgui(const Camera& cam, glm::vec3 cam_pos, float w, float h) const;
 
     void clear();
 

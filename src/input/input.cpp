@@ -653,11 +653,13 @@ void Input::setKey(Keyboard::Key _key, Button::Action _action) { keyboardState.k
 
 void Input::setKeyModifier(Keyboard::Key _key, ModifierKey _mod) { keyboardState.keys[_key].modifiers[_mod] = true; }
 
-void Input::drawImgui(const Camera& cam, float w, float h, glm::dvec2 point) const
+void Input::drawImgui(const Camera& cam, glm::vec3 cam_pos, float w, float h) const
 {
-    auto ray = ray_cast(cam, w, h, point);
+    auto ray    = Ray(cam, cam_pos, mouseState.pos);
+    auto r_cast = ray.word_cast(w, h);
+    // auto ray = ray_cast(cam, w, h, mouseState.pos);
     ImGui::Text("Mouse (x, y): (%f, %f)", mouseState.pos.x, mouseState.pos.y);
-    ImGui::Text("Ray cast (x, y, z, w): (%f, %f, %f , %f)", ray.x, ray.y, ray.z, ray.w);
+    ImGui::Text("Ray cast (x, y, z, w): (%f, %f, %f , %f)", r_cast.x, r_cast.y, r_cast.z, r_cast.w);
 }
 
 void Input::clear() { mouseState.clear(); }
