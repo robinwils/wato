@@ -21,6 +21,8 @@
 
 #include <renderer/bgfx_utils.hpp>
 
+#include "core/ray.hpp"
+
 static const bgfx::EmbeddedShader s_embeddedShaders[] = {BGFX_EMBEDDED_SHADER(vs_ocornut_imgui),
     BGFX_EMBEDDED_SHADER(fs_ocornut_imgui),
     BGFX_EMBEDDED_SHADER(vs_imgui_image),
@@ -559,9 +561,9 @@ static void resourceBar(const char* _name,
     }
 }
 
-void showImguiDialogs(const Input& _input, const Camera& _camera, float _width, float _height)
+void showImguiDialogs(const Input& _input, const Camera& _camera, glm::vec3 _cam_pos, float _width, float _height)
 {
-    showStatsDialog(_input, _camera, _width, _height);
+    showStatsDialog(_input, _camera, _cam_pos, _width, _height);
     showSettingsDialog(_width, _height);
 }
 
@@ -572,7 +574,12 @@ void showSettingsDialog(float _width, float _height)
     ImGui::Begin("Settings", NULL, 0);
 }
 
-void showStatsDialog(const Input& _input, const Camera& cam, float _w, float _h, const char* _errorText)
+void showStatsDialog(const Input& _input,
+    const Camera&                 _camera,
+    glm::vec3                     _cam_pos,
+    float                         _w,
+    float                         _h,
+    const char*                   _errorText)
 {
     /*
     ImGui::SetNextWindowPos(
@@ -817,7 +824,7 @@ void showStatsDialog(const Input& _input, const Camera& cam, float _w, float _h,
         ImGui::End();
     }
 
-    _input.drawImgui(cam, _w, _h, _input.mouseState.pos);
+    _input.drawImgui(_camera, _cam_pos, _w, _h);
 }
 
 namespace ImGui

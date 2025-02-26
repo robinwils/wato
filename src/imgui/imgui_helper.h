@@ -41,11 +41,12 @@ void imguiBeginFrame(const Input& _input,
 
 void imguiEndFrame();
 
-void showImguiDialogs(const Input& _input, const Camera& _camera, float _width, float _height);
+void showImguiDialogs(const Input& _input, const Camera& _camera, glm::vec3 _cam_pos, float _width, float _height);
 void showStatsDialog(const Input& _input,
-    const Camera&                 _camera,
-    float                         _width,
-    float                         _height,
+    const Camera&                 camera,
+    glm::vec3                     cam_pos,
+    float                         _w,
+    float                         _h,
     const char*                   _errorText = NULL);
 void showSettingsDialog(float _width, float _height);
 

@@ -54,9 +54,10 @@ void ActionSystem::camera_movement(CameraMovement _cm)
 void ActionSystem::build_tower(BuildTower bt) {}
 void ActionSystem::tower_placement_mode(TowerPlacementMode m)
 {
-    glm::vec4 ray;
+    glm::vec4 r_cast;
     for (auto&& [entity, cam, t] : m_registry.view<Camera, Transform3D>().each()) {
-        ray = ray_cast(cam, m_win_width, m_win_height, m.mousePos);
+        auto ray = Ray(cam, t.position, m.mousePos);
+        r_cast   = ray.word_cast(m_win_width, m_win_height);
 
         break;
     }
@@ -69,9 +70,9 @@ void ActionSystem::tower_placement_mode(TowerPlacementMode m)
             return;
         }
         DBG("valid entity, patching ghost tower");
-        m_registry.patch<Transform3D>(m_ghost_tower, [ray](auto& t) {
-            t.position.x = ray.x;
-            t.position.z = ray.y;
+        m_registry.patch<Transform3D>(m_ghost_tower, [r_cast](auto& t) {
+            t.position.x = r_cast.x;
+            t.position.z = r_cast.y;
         });
     } else if (m.enable) {
         DBG("invalid entity, creating ghost tower");
