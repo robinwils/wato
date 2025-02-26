@@ -31,6 +31,10 @@ void processInputs(Registry& registry, double time_delta)
         dispatcher.trigger(TowerPlacementMode{input.m_tower_placement_mode, input.mouseState.pos});
     }
 
+    if (input.m_tower_placement_mode) {
+        dispatcher.trigger(TowerPlacementMode{input.m_tower_placement_mode, input.mouseState.pos});
+    }
+
     if (input.isKeyPressed(Keyboard::Escape)) {
         if (input.m_tower_placement_mode) input.m_tower_placement_mode = false;
         dispatcher.trigger(TowerPlacementMode{input.m_tower_placement_mode});
