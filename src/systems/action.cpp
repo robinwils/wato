@@ -2,13 +2,18 @@
 
 #include <stdexcept>
 
+#include "bx/bx.h"
 #include "components/camera.hpp"
 #include "components/placement_mode.hpp"
 #include "components/scene_object.hpp"
+#include "components/tile.hpp"
 #include "components/transform3d.hpp"
+#include "core/cache.hpp"
 #include "core/ray.hpp"
 #include "core/sys.hpp"
 #include "entt/signal/dispatcher.hpp"
+#include "glm/geometric.hpp"
+#include "renderer/plane_primitive.hpp"
 #include "systems/systems.hpp"
 
 using namespace entt::literals;
@@ -55,10 +60,21 @@ void ActionSystem::build_tower(BuildTower bt) {}
 void ActionSystem::tower_placement_mode(TowerPlacementMode m)
 {
     glm::vec4 r_cast;
-    for (auto&& [entity, cam, t] : m_registry.view<Camera, Transform3D>().each()) {
-        auto ray = Ray(cam, t.position, m.mousePos);
+    float     distance = 0.0f;
+    for (auto&& [entity, cam, tcam] : m_registry.view<Camera, Transform3D>().each()) {
+        auto ray = Ray(cam, tcam.position, m.mousePos);
         r_cast   = ray.word_cast(m_win_width, m_win_height);
 
+        // intersect with plane
+        for (auto&& [entity, t, obj] : m_registry.view<Transform3D, SceneObject, Tile>().each()) {
+            const auto& primitives = MODEL_CACHE[obj.model_hash];
+            BX_ASSERT(primitives->size() == 1, "plane should have 1 primitive");
+
+            const auto* plane        = static_cast<PlanePrimitive*>(primitives->back());
+            const auto& plane_normal = plane->normal(t.rotation);
+            distance = glm::dot(tcam.position, plane_normal) / glm::dot(glm::vec3(r_cast), plane_normal);
+            break;
+        }
         break;
     }
 
@@ -70,9 +86,10 @@ void ActionSystem::tower_placement_mode(TowerPlacementMode m)
             return;
         }
         DBG("valid entity, patching ghost tower");
-        m_registry.patch<Transform3D>(m_ghost_tower, [r_cast](auto& t) {
-            t.position.x = r_cast.x;
-            t.position.z = r_cast.y;
+        const auto& intersect = r_cast * distance;
+        m_registry.patch<Transform3D>(m_ghost_tower, [intersect](auto& t) {
+            t.position.x = intersect.x;
+            t.position.z = intersect.z;
         });
     } else if (m.enable) {
         DBG("invalid entity, creating ghost tower");
