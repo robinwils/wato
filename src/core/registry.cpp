@@ -9,6 +9,7 @@
 #include "components/direction.hpp"
 #include "components/imgui.hpp"
 #include "components/scene_object.hpp"
+#include "components/tile.hpp"
 #include "components/transform3d.hpp"
 #include "core/cache.hpp"
 #include "renderer/plane_primitive.hpp"
@@ -40,6 +41,7 @@ void Registry::spawnMap(uint32_t _w, uint32_t _h)
             auto tile = create();
             emplace<Transform3D>(tile, glm::vec3(i, 0.0f, j), glm::vec3(0.0f), glm::vec3(1.0f));
             emplace<SceneObject>(tile, "grass_tile"_hs);
+            emplace<Tile>(tile);
         }
     }
 }
