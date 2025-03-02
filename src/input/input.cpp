@@ -655,8 +655,8 @@ void Input::setKeyModifier(Keyboard::Key _key, ModifierKey _mod) { keyboardState
 
 void Input::drawImgui(const Camera& cam, glm::vec3 cam_pos, float w, float h) const
 {
-    auto ray    = Ray(cam, cam_pos, mouseState.pos);
-    auto r_cast = ray.word_cast(w, h);
+    auto ray    = Ray(cam_pos, mouseState.pos);
+    auto r_cast = ray.word_cast(cam, w, h);
     // auto ray = ray_cast(cam, w, h, mouseState.pos);
     ImGui::Text("Mouse (x, y): (%f, %f)", mouseState.pos.x, mouseState.pos.y);
     ImGui::Text("Ray cast (x, y, z, w): (%f, %f, %f , %f)", r_cast.x, r_cast.y, r_cast.z, r_cast.w);

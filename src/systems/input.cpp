@@ -36,7 +36,9 @@ void processInputs(Registry& registry, double time_delta)
     }
 
     if (input.isKeyPressed(Keyboard::Escape)) {
-        if (input.m_tower_placement_mode) input.m_tower_placement_mode = false;
-        dispatcher.trigger(TowerPlacementMode{input.m_tower_placement_mode});
+        if (input.m_tower_placement_mode) {
+            input.m_tower_placement_mode = false;
+            dispatcher.trigger(TowerPlacementMode{input.m_tower_placement_mode});
+        }
     }
 }
