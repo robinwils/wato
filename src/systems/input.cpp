@@ -28,11 +28,11 @@ void processInputs(Registry& registry, double time_delta)
     // Build
     if (input.isKeyPressed(Keyboard::B) && !input.isPrevKeyPressed(Keyboard::B)) {
         if (!input.m_tower_placement_mode) input.m_tower_placement_mode = true;
-        dispatcher.trigger(TowerPlacementMode{input.m_tower_placement_mode, input.mouseState.pos});
+        dispatcher.trigger(TowerPlacementMode{input.m_tower_placement_mode});
     }
 
     if (input.m_tower_placement_mode) {
-        dispatcher.trigger(TowerPlacementMode{input.m_tower_placement_mode, input.mouseState.pos});
+        dispatcher.trigger(TowerPlacementMode{input.m_tower_placement_mode});
     }
 
     if (input.isKeyPressed(Keyboard::Escape)) {

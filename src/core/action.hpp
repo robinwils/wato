@@ -18,6 +18,5 @@ struct BuildTower {
 };
 
 struct TowerPlacementMode {
-    bool       enable;
-    glm::dvec2 mousePos;
+    bool enable;
 };
