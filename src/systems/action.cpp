@@ -75,8 +75,7 @@ void ActionSystem::tower_placement_mode(TowerPlacementMode m)
             BX_ASSERT(primitives->size() == 1, "plane should have 1 primitive");
             const auto* plane = static_cast<PlanePrimitive*>(primitives->back());
 
-            float d = ray.intersect_plane(plane->normal(t.rotation));
-
+            float d   = ray.intersect_plane(plane->normal(t.rotation));
             intersect = ray.orig + d * ray.dir;
             break;
         }

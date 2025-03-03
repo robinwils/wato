@@ -666,15 +666,16 @@ void Input::drawImgui(const Camera& cam, const glm::vec3& cam_pos, const float w
 glm::vec3 Input::worldMousePos(const Camera& cam, const glm::vec3& cam_pos, const float w, const float h) const
 {
     // viewport -> NDC
-    float x_ndc = 1.0f - 2.0 * mouseState.pos.x / w;
-    float y_ndc = 2.0f * mouseState.pos.y / h - 1.0f;
+    float x_ndc = 1.0f - 2.0f * mouseState.pos.x / w;
+    float y_ndc = 1.0f - 2.0f * mouseState.pos.y / h;
 
     // NDC -> view
     const auto& inv_proj = glm::inverse(cam.proj(w, h));
     glm::vec4   ray_ndc(x_ndc, y_ndc, 1.0f, 1.0f);
-    glm::vec4   ray_view = inv_proj * ray_ndc;
+    glm::vec4   ray_view = ray_ndc * inv_proj;
 
     // view -> world
     const auto& inv_view = glm::inverse(cam.view(cam_pos));
-    return glm::normalize(inv_view * ray_view);
+    ray_view             = glm::vec4(ray_view.x, ray_view.y, 1.0f, 0.0f);
+    return glm::normalize(ray_view * inv_view);
 }
