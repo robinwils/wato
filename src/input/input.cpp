@@ -6,6 +6,7 @@
 #include "components/camera.hpp"
 #include "core/ray.hpp"
 #include "core/registry.hpp"
+#include "glm/gtx/string_cast.hpp"
 
 void MouseState::clear()
 {
@@ -653,14 +654,27 @@ void Input::setKey(Keyboard::Key _key, Button::Action _action) { keyboardState.k
 
 void Input::setKeyModifier(Keyboard::Key _key, ModifierKey _mod) { keyboardState.keys[_key].modifiers[_mod] = true; }
 
-void Input::drawImgui(const Camera& cam, glm::vec3 cam_pos, float w, float h) const
+void Input::drawImgui(const Camera& cam, const glm::vec3& cam_pos, const float w, const float h) const
 {
-    auto ray    = Ray(cam_pos, mouseState.pos);
-    auto r_cast = ray.word_cast(cam, w, h);
-    // auto ray = ray_cast(cam, w, h, mouseState.pos);
+    auto dir = worldMousePos(cam, cam_pos, w, h);
+
     ImGui::Text("Input Information");
-    ImGui::Text("Mouse (x, y): (%f, %f)", mouseState.pos.x, mouseState.pos.y);
-    ImGui::Text("Ray cast (x, y, z, w): (%f, %f, %f , %f)", r_cast.x, r_cast.y, r_cast.z, r_cast.w);
+    ImGui::Text("Mouse: %s", glm::to_string(mouseState.pos).c_str());
+    ImGui::Text("Ray cast: %s", glm::to_string(dir).c_str());
 }
 
-void Input::clear() { mouseState.clear(); }
+glm::vec3 Input::worldMousePos(const Camera& cam, const glm::vec3& cam_pos, const float w, const float h) const
+{
+    // viewport -> NDC
+    float x_ndc = 1.0f - 2.0 * mouseState.pos.x / w;
+    float y_ndc = 2.0f * mouseState.pos.y / h - 1.0f;
+
+    // NDC -> view
+    const auto& inv_proj = glm::inverse(cam.proj(w, h));
+    glm::vec4   ray_ndc(x_ndc, y_ndc, 1.0f, 1.0f);
+    glm::vec4   ray_view = inv_proj * ray_ndc;
+
+    // view -> world
+    const auto& inv_view = glm::inverse(cam.view(cam_pos));
+    return glm::normalize(inv_view * ray_view);
+}

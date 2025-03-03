@@ -1,13 +1,15 @@
 #pragma once
 
-#include "components/camera.hpp"
-#include "glm/fwd.hpp"
+#include "glm/ext/vector_float3.hpp"
+#include "glm/geometric.hpp"
 
 struct Ray {
-    Ray(glm::vec3 o, glm::dvec2 p) : orig(o), point(p) {}
-    glm::vec3  orig;
-    glm::dvec2 point;
+    Ray(glm::vec3 o, glm::vec3 d) : orig(o), dir(d) {}
+    glm::vec3 orig;
+    glm::vec3 dir;
 
-    glm::vec4 word_cast(const Camera& c, float w, float h);
-    glm::vec3 intersect_plane(const Camera& c, float w, float h, glm::vec3 p_normal);
+    float intersect_plane(const glm::vec3& p_normal) const
+    {
+        return glm::dot(orig, p_normal) / glm::dot(dir, p_normal);
+    }
 };

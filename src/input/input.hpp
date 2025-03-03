@@ -212,9 +212,19 @@ class Input
     bool isPrevKeyReleased(Keyboard::Key _key) const { return prevKeyboardState.keys[_key].action == Button::Release; }
     bool isPrevKeyUnknown(Keyboard::Key _key) const { return prevKeyboardState.keys[_key].action == Button::Unknown; }
 
-    void drawImgui(const Camera& cam, glm::vec3 cam_pos, float w, float h) const;
+    void drawImgui(const Camera& cam, const glm::vec3& cam_pos, const float w, const float h) const;
 
-    void clear();
+    /**
+     * @brief unproject mouse screen coordinates to world view
+     *
+     * @param cam camera component
+     * @param cam_pos camera position
+     * @param w screen width
+     * @param h screen height
+     */
+    glm::vec3 worldMousePos(const Camera& cam, const glm::vec3& cam_pos, const float w, const float h) const;
+
+    void clear() { mouseState.clear(); }
 
     MouseState    mouseState;
     KeyboardState keyboardState, prevKeyboardState;

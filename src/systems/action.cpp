@@ -15,6 +15,7 @@
 #include "entt/signal/dispatcher.hpp"
 #include "glm/geometric.hpp"
 #include "glm/gtx/string_cast.hpp"
+#include "input/input.hpp"
 #include "renderer/plane_primitive.hpp"
 #include "systems/systems.hpp"
 
@@ -61,18 +62,22 @@ void ActionSystem::camera_movement(CameraMovement _cm)
 void ActionSystem::build_tower(BuildTower bt) {}
 void ActionSystem::tower_placement_mode(TowerPlacementMode m)
 {
+    const auto& input = m_registry.ctx().get<Input&>();
+
     glm::vec3 intersect;
     glm::vec3 cam_pos;
     for (auto&& [entity, cam, tcam] : m_registry.view<Camera, Transform3D>().each()) {
         for (auto&& [entity, t, obj] : m_registry.view<Transform3D, SceneObject, Tile>().each()) {
             cam_pos  = tcam.position;
-            auto ray = Ray(cam_pos, m.mousePos);
+            auto ray = Ray(cam_pos, input.worldMousePos(cam, tcam.position, m_win_width, m_win_height));
 
             const auto& primitives = MODEL_CACHE[obj.model_hash];
             BX_ASSERT(primitives->size() == 1, "plane should have 1 primitive");
             const auto* plane = static_cast<PlanePrimitive*>(primitives->back());
 
-            intersect = ray.intersect_plane(cam, m_win_width, m_win_height, plane->normal(t.rotation));
+            float d = ray.intersect_plane(plane->normal(t.rotation));
+
+            intersect = ray.orig + d * ray.dir;
             break;
         }
         break;
