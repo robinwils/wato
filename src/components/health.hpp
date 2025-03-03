@@ -1,0 +1,3 @@
+struct Health {
+    float health;
+};

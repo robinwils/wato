@@ -4,6 +4,7 @@
 
 #include "bx/bx.h"
 #include "components/camera.hpp"
+#include "components/health.hpp"
 #include "components/imgui.hpp"
 #include "components/placement_mode.hpp"
 #include "components/scene_object.hpp"
@@ -59,28 +60,46 @@ void ActionSystem::camera_movement(CameraMovement _cm)
     }
 }
 
-void ActionSystem::build_tower(BuildTower bt) {}
-void ActionSystem::tower_placement_mode(TowerPlacementMode m)
+glm::vec3 ActionSystem::get_mouse_ray() const
 {
     const auto& input = m_registry.ctx().get<Input&>();
+    glm::vec3   intersect;
 
-    glm::vec3 intersect;
-    glm::vec3 cam_pos;
     for (auto&& [entity, cam, tcam] : m_registry.view<Camera, Transform3D>().each()) {
         for (auto&& [entity, t, obj] : m_registry.view<Transform3D, SceneObject, Tile>().each()) {
-            cam_pos  = tcam.position;
-            auto ray = Ray(cam_pos, input.worldMousePos(cam, tcam.position, m_win_width, m_win_height));
+            auto ray = Ray(tcam.position,
+                input.worldMousePos(cam, tcam.position, m_win_width, m_win_height));
 
             const auto& primitives = MODEL_CACHE[obj.model_hash];
             BX_ASSERT(primitives->size() == 1, "plane should have 1 primitive");
             const auto* plane = static_cast<PlanePrimitive*>(primitives->back());
 
-            float d   = ray.intersect_plane(plane->normal(t.rotation));
-            intersect = ray.orig + d * ray.dir;
-            break;
+            float d = ray.intersect_plane(plane->normal(t.rotation));
+            return ray.orig + d * ray.dir;
         }
-        break;
     }
+    throw std::runtime_error("should not be here, no terrain or camera was instanced");
+}
+
+void ActionSystem::build_tower(BuildTower bt)
+{
+    auto tower = m_ghost_tower;
+    if (!m_registry.valid(tower)) {
+        DBG("invalid ghost tower, creating tower");
+        tower = m_registry.create();
+        m_registry.emplace<SceneObject>(tower, "tower_model"_hs);
+        m_registry.emplace<Transform3D>(tower, glm::vec3(0.0f), glm::vec3(0.0f), glm::vec3(0.1f));
+    } else {
+        m_registry.remove<PlacementMode>(tower);
+        m_registry.remove<ImguiDrawable>(tower);
+    }
+    m_registry.emplace<Health>(tower, 100.0f);
+    m_ghost_tower = entt::null;
+}
+
+void ActionSystem::tower_placement_mode(TowerPlacementMode m)
+{
+    auto intersect = get_mouse_ray();
 
     if (m_registry.valid(m_ghost_tower)) {
         if (!m.enable) {
@@ -96,7 +115,10 @@ void ActionSystem::tower_placement_mode(TowerPlacementMode m)
     } else if (m.enable) {
         m_ghost_tower = m_registry.create();
         m_registry.emplace<SceneObject>(m_ghost_tower, "tower_model"_hs);
-        m_registry.emplace<Transform3D>(m_ghost_tower, glm::vec3(0.0f), glm::vec3(0.0f), glm::vec3(0.1f));
+        m_registry.emplace<Transform3D>(m_ghost_tower,
+            glm::vec3(0.0f),
+            glm::vec3(0.0f),
+            glm::vec3(0.1f));
         m_registry.emplace<PlacementMode>(m_ghost_tower);
         m_registry.emplace<ImguiDrawable>(m_ghost_tower, "Ghost Tower");
     }
