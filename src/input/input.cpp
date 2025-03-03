@@ -535,7 +535,7 @@ std::string key_string(const Keyboard::Key& k)
             return "RightSuper";
         case Keyboard::Menu:
             return "Menu";
-        case Keyboard::Count:
+        default:
             return "Unknown";
     }
 }
