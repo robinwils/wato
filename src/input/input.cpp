@@ -614,7 +614,7 @@ static void scrollCb(GLFWwindow* _window, double _xoffset, double _yoffset)
     input.setMouseScroll(_xoffset, _yoffset);
 }
 
-Input::Input(GLFWwindow* _window) : mouseState(), m_window(_window) {}
+Input::Input(GLFWwindow* _window) : mouseState(), m_window(_window), m_tower_placement_mode(false) {}
 
 void Input::init()
 {
