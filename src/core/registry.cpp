@@ -16,9 +16,11 @@
 
 void Registry::spawnMap(uint32_t _w, uint32_t _h)
 {
-    auto [bp, pLoaded]   = PROGRAM_CACHE.load("blinnphong"_hs, "vs_blinnphong", "fs_blinnphong");
-    auto [diff, dLoaded] = TEXTURE_CACHE.load("grass/diffuse"_hs, "assets/textures/TreeTop_COLOR.png");
-    auto [sp, sLoaded]   = TEXTURE_CACHE.load("grass/specular"_hs, "assets/textures/TreeTop_SPEC.png");
+    auto [bp, pLoaded] = PROGRAM_CACHE.load("blinnphong"_hs, "vs_blinnphong", "fs_blinnphong");
+    auto [diff, dLoaded] =
+        TEXTURE_CACHE.load("grass/diffuse"_hs, "assets/textures/TreeTop_COLOR.png");
+    auto [sp, sLoaded] =
+        TEXTURE_CACHE.load("grass/specular"_hs, "assets/textures/TreeTop_SPEC.png");
 
     auto program  = PROGRAM_CACHE["blinnphong"_hs];
     auto diffuse  = TEXTURE_CACHE["grass/diffuse"_hs];
@@ -53,15 +55,12 @@ void Registry::spawnLight()
     emplace<Color>(light, glm::vec3(0.5f));
 }
 
-void Registry::spawnModel()
+void Registry::loadModels()
 {
     MODEL_CACHE.load("tower_model"_hs,
         "assets/models/tower.fbx",
-        aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_PreTransformVertices | aiProcess_GlobalScale);
-
-    auto tower = create();
-    emplace<Transform3D>(tower, glm::vec3(5.0f, 0.0f, 5.0f), glm::vec3(0.0f), glm::vec3(0.1f));
-    emplace<SceneObject>(tower, "tower_model"_hs);
+        aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_PreTransformVertices
+            | aiProcess_GlobalScale);
 }
 
 void Registry::spawnPlayerAndCamera()
