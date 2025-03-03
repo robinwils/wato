@@ -4,6 +4,7 @@
 
 #include "bx/bx.h"
 #include "components/camera.hpp"
+#include "components/imgui.hpp"
 #include "components/placement_mode.hpp"
 #include "components/scene_object.hpp"
 #include "components/tile.hpp"
@@ -79,22 +80,20 @@ void ActionSystem::tower_placement_mode(TowerPlacementMode m)
 
     if (m_registry.valid(m_ghost_tower)) {
         if (!m.enable) {
-            DBG("valid entity, exiting placement mode");
             m_registry.destroy(m_ghost_tower);
             m_ghost_tower = entt::null;
             return;
         }
 
-        DBG("valid entity, patching ghost tower, cam = %s", glm::to_string(intersect).c_str());
         m_registry.patch<Transform3D>(m_ghost_tower, [intersect](auto& t) {
             t.position.x = intersect.x;
             t.position.z = intersect.z;
         });
     } else if (m.enable) {
-        DBG("invalid entity, creating ghost tower");
         m_ghost_tower = m_registry.create();
         m_registry.emplace<SceneObject>(m_ghost_tower, "tower_model"_hs);
         m_registry.emplace<Transform3D>(m_ghost_tower, glm::vec3(0.0f), glm::vec3(0.0f), glm::vec3(0.1f));
         m_registry.emplace<PlacementMode>(m_ghost_tower);
+        m_registry.emplace<ImguiDrawable>(m_ghost_tower, "Ghost Tower");
     }
 }

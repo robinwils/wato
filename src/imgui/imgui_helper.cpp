@@ -21,8 +21,6 @@
 
 #include <renderer/bgfx_utils.hpp>
 
-#include "core/ray.hpp"
-
 static const bgfx::EmbeddedShader s_embeddedShaders[] = {BGFX_EMBEDDED_SHADER(vs_ocornut_imgui),
     BGFX_EMBEDDED_SHADER(fs_ocornut_imgui),
     BGFX_EMBEDDED_SHADER(vs_imgui_image),
@@ -561,38 +559,25 @@ static void resourceBar(const char* _name,
     }
 }
 
-void showImguiDialogs(const Input& _input, const Camera& _camera, glm::vec3 _cam_pos, float _width, float _height)
+void showImguiDialogs(float _width, float _height)
 {
-    showStatsDialog(_input, _camera, _cam_pos, _width, _height);
+    showStatsDialog(_width, _height);
     showSettingsDialog(_width, _height);
 }
 
 void showSettingsDialog(float _width, float _height)
 {
-    ImGui::SetNextWindowPos(ImVec2(_width - _width / 5.0f - 10.0f, 10.0f), ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(_width / 5.0f, _height / 3.5f), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowPos(ImVec2(_width - _width / 3.0f - 10.0f, 50.0f), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(_width / 3.0f, _height / 3.5f), ImGuiCond_FirstUseEver);
     ImGui::Begin("Settings", NULL, 0);
 }
 
-void showStatsDialog(const Input& _input,
-    const Camera&                 _camera,
-    glm::vec3                     _cam_pos,
-    float                         _w,
-    float                         _h,
-    const char*                   _errorText)
+void showStatsDialog(float _w, float _h, const char* _errorText)
 {
-    /*
-    ImGui::SetNextWindowPos(
-            ImVec2(10.0f, 50.0f)
-            , ImGuiCond_FirstUseEver
-    );
-    ImGui::SetNextWindowSize(
-            ImVec2(300.0f, 210.0f)
-            , ImGuiCond_FirstUseEver
-    );
+    ImGui::SetNextWindowPos(ImVec2(10.0f, 50.0f), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(300.0f, 210.0f), ImGuiCond_FirstUseEver);
 
     ImGui::Begin("wato");
-    */
 
     ImGui::Separator();
 
@@ -823,8 +808,7 @@ void showStatsDialog(const Input& _input,
         }
         ImGui::End();
     }
-
-    _input.drawImgui(_camera, _cam_pos, _w, _h);
+    ImGui::End();
 }
 
 namespace ImGui
