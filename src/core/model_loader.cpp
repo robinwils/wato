@@ -15,7 +15,9 @@
 
 using namespace entt::literals;
 
-std::vector<entt::hashed_string> processMaterialTextures(const aiMaterial *material, aiTextureType type, aiString *path)
+std::vector<entt::hashed_string> processMaterialTextures(const aiMaterial *material,
+    aiTextureType                                                          type,
+    aiString                                                              *path)
 {
     std::vector<entt::hashed_string> textures;
     for (unsigned int i = 0; i < material->GetTextureCount(type); ++i) {
@@ -71,8 +73,9 @@ Primitive *processMesh(const aiMesh *mesh, const aiScene *scene)
         auto        specular_path = aiString("texture_specular");
         const auto *material      = scene->mMaterials[mesh->mMaterialIndex];
 
-        auto textures      = processMaterialTextures(material, aiTextureType_DIFFUSE, &diffuse_path);
-        auto spec_textures = processMaterialTextures(material, aiTextureType_SPECULAR, &specular_path);
+        auto textures = processMaterialTextures(material, aiTextureType_DIFFUSE, &diffuse_path);
+        auto spec_textures =
+            processMaterialTextures(material, aiTextureType_SPECULAR, &specular_path);
 
         if (textures.size() > 0 || spec_textures.size() > 0) {
             DBG("mesh %s has %d material textures", mesh->mName.C_Str(), textures.size());
@@ -166,9 +169,25 @@ std::vector<Primitive *> processNode(const aiNode *node, const aiScene *scene)
     auto t         = node->mTransformation;
     auto transform = glm::identity<glm::mat4>();
     if (!node->mTransformation.IsIdentity()) {
-        transform =
-            glm::mat4(t.a1, t.a2, t.a3, t.a4, t.b1, t.b2, t.b3, t.b4, t.c1, t.c2, t.c3, t.c4, t.d1, t.d2, t.d3, t.d4);
-        DBG("node %s has transformation %s", node->mName.C_Str(), glm::to_string(transform).c_str());
+        transform = glm::mat4(t.a1,
+            t.a2,
+            t.a3,
+            t.a4,
+            t.b1,
+            t.b2,
+            t.b3,
+            t.b4,
+            t.c1,
+            t.c2,
+            t.c3,
+            t.c4,
+            t.d1,
+            t.d2,
+            t.d3,
+            t.d4);
+        DBG("node %s has transformation %s",
+            node->mName.C_Str(),
+            glm::to_string(transform).c_str());
     } else {
         DBG("node %s has identity transform", node->mName.C_Str());
     }

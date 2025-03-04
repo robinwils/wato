@@ -615,7 +615,9 @@ static void scrollCb(GLFWwindow* _window, double _xoffset, double _yoffset)
     input.setMouseScroll(_xoffset, _yoffset);
 }
 
-Input::Input(GLFWwindow* _window) : mouseState(), m_window(_window), m_tower_placement_mode(false) {}
+Input::Input(GLFWwindow* _window) : mouseState(), m_window(_window), m_tower_placement_mode(false)
+{
+}
 
 void Input::init()
 {
@@ -650,11 +652,20 @@ void Input::setMouseScroll(double _xoffset, double _yoffset)
     mouseState.scroll.y = _yoffset;
 }
 
-void Input::setKey(Keyboard::Key _key, Button::Action _action) { keyboardState.keys[_key].action = _action; }
+void Input::setKey(Keyboard::Key _key, Button::Action _action)
+{
+    keyboardState.keys[_key].action = _action;
+}
 
-void Input::setKeyModifier(Keyboard::Key _key, ModifierKey _mod) { keyboardState.keys[_key].modifiers[_mod] = true; }
+void Input::setKeyModifier(Keyboard::Key _key, ModifierKey _mod)
+{
+    keyboardState.keys[_key].modifiers[_mod] = true;
+}
 
-void Input::drawImgui(const Camera& cam, const glm::vec3& cam_pos, const float w, const float h) const
+void Input::drawImgui(const Camera& cam,
+    const glm::vec3&                cam_pos,
+    const float                     w,
+    const float                     h) const
 {
     auto dir = worldMousePos(cam, cam_pos, w, h);
 
@@ -663,7 +674,10 @@ void Input::drawImgui(const Camera& cam, const glm::vec3& cam_pos, const float w
     ImGui::Text("Ray cast: %s", glm::to_string(dir).c_str());
 }
 
-glm::vec3 Input::worldMousePos(const Camera& cam, const glm::vec3& cam_pos, const float w, const float h) const
+glm::vec3 Input::worldMousePos(const Camera& cam,
+    const glm::vec3&                         cam_pos,
+    const float                              w,
+    const float                              h) const
 {
     // viewport -> NDC
     float x_ndc = 1.0f - 2.0f * mouseState.pos.x / w;

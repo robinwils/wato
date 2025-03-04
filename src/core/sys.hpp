@@ -11,4 +11,7 @@
     BX_MACRO_BLOCK_END
 
 const bgfx::Memory* loadMem(bx::FileReaderI* _reader, const char* _filePath);
-void* load(bx::FileReaderI* _reader, bx::AllocatorI* _allocator, const char* _filePath, uint32_t* _size = NULL);
+void*               load(bx::FileReaderI* _reader,
+                  bx::AllocatorI*         _allocator,
+                  const char*             _filePath,
+                  uint32_t*               _size = NULL);

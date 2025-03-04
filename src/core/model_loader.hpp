@@ -20,7 +20,8 @@ struct ModelLoader final {
 
         // flags are used for post processing (the more, the slower)
         // const aiScene *scene = importer.ReadFile(_name,
-        //     aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_PreTransformVertices | aiProcess_GlobalScale);
+        //     aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_PreTransformVertices |
+        //     aiProcess_GlobalScale);
         //
         // const aiScene *scene = importer.ReadFile(_name,
         //     aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs |

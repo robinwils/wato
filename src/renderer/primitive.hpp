@@ -32,7 +32,9 @@ class Primitive
 {
    public:
     Primitive(const Material& _material) : m_material(_material), m_is_initialized(false) {}
-    Primitive(const Material& _material, std::vector<PositionNormalUvVertex> vertices, std::vector<uint16_t> indices)
+    Primitive(const Material&               _material,
+        std::vector<PositionNormalUvVertex> vertices,
+        std::vector<uint16_t>               indices)
         : m_vertices(vertices), m_indices(indices), m_material(_material)
     {
     }
@@ -108,8 +110,8 @@ class Primitive
         m_vertex_buffer_handle = bgfx::createVertexBuffer(
             bgfx::makeRef(m_vertices.data(), sizeof(PositionNormalUvVertex) * m_vertices.size()),
             vertex_layout);
-        m_index_buffer_handle =
-            bgfx::createIndexBuffer(bgfx::makeRef(m_indices.data(), sizeof(uint16_t) * m_indices.size()));
+        m_index_buffer_handle = bgfx::createIndexBuffer(
+            bgfx::makeRef(m_indices.data(), sizeof(uint16_t) * m_indices.size()));
 
         m_is_initialized = true;
     }

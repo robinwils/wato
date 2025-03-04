@@ -167,7 +167,8 @@ bgfx::RendererType::Enum getType(const bx::StringView& _name)
     return bgfx::RendererType::Count;
 }
 
-Args::Args(int _argc, const char* const* _argv) : m_type(bgfx::RendererType::Count), m_pciId(BGFX_PCI_ID_NONE)
+Args::Args(int _argc, const char* const* _argv)
+    : m_type(bgfx::RendererType::Count), m_pciId(BGFX_PCI_ID_NONE)
 {
     bx::CommandLine cmdLine(_argc, (const char**)_argv);
 

@@ -6,7 +6,6 @@
 #include <core/sys.hpp>
 #include <entt/core/hashed_string.hpp>
 #include <entt/resource/cache.hpp>
-
 #include <renderer/bgfx_utils.hpp>
 #include <renderer/material.hpp>
 using namespace entt::literals;
@@ -45,8 +44,10 @@ struct TextureLoader final {
                     *_orientation = imageContainer->m_orientation;
                 }
 
-                const bgfx::Memory* mem =
-                    bgfx::makeRef(imageContainer->m_data, imageContainer->m_size, imageReleaseCb, imageContainer);
+                const bgfx::Memory* mem = bgfx::makeRef(imageContainer->m_data,
+                    imageContainer->m_size,
+                    imageReleaseCb,
+                    imageContainer);
                 BX_FREE(&allocator, data);
 
                 if (imageContainer->m_cubeMap) {

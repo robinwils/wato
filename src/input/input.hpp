@@ -202,15 +202,39 @@ class Input
     {
         return mouseState.buttons[_button].action == Button::Press;
     }
-    bool isKeyPressed(Keyboard::Key _key) const { return keyboardState.keys[_key].action == Button::Press; }
-    bool isKeyRepeat(Keyboard::Key _key) const { return keyboardState.keys[_key].action == Button::Repeat; }
-    bool isKeyReleased(Keyboard::Key _key) const { return keyboardState.keys[_key].action == Button::Release; }
-    bool isKeyUnknown(Keyboard::Key _key) const { return keyboardState.keys[_key].action == Button::Unknown; }
+    bool isKeyPressed(Keyboard::Key _key) const
+    {
+        return keyboardState.keys[_key].action == Button::Press;
+    }
+    bool isKeyRepeat(Keyboard::Key _key) const
+    {
+        return keyboardState.keys[_key].action == Button::Repeat;
+    }
+    bool isKeyReleased(Keyboard::Key _key) const
+    {
+        return keyboardState.keys[_key].action == Button::Release;
+    }
+    bool isKeyUnknown(Keyboard::Key _key) const
+    {
+        return keyboardState.keys[_key].action == Button::Unknown;
+    }
 
-    bool isPrevKeyPressed(Keyboard::Key _key) const { return prevKeyboardState.keys[_key].action == Button::Press; }
-    bool isPrevKeyRepeat(Keyboard::Key _key) const { return prevKeyboardState.keys[_key].action == Button::Repeat; }
-    bool isPrevKeyReleased(Keyboard::Key _key) const { return prevKeyboardState.keys[_key].action == Button::Release; }
-    bool isPrevKeyUnknown(Keyboard::Key _key) const { return prevKeyboardState.keys[_key].action == Button::Unknown; }
+    bool isPrevKeyPressed(Keyboard::Key _key) const
+    {
+        return prevKeyboardState.keys[_key].action == Button::Press;
+    }
+    bool isPrevKeyRepeat(Keyboard::Key _key) const
+    {
+        return prevKeyboardState.keys[_key].action == Button::Repeat;
+    }
+    bool isPrevKeyReleased(Keyboard::Key _key) const
+    {
+        return prevKeyboardState.keys[_key].action == Button::Release;
+    }
+    bool isPrevKeyUnknown(Keyboard::Key _key) const
+    {
+        return prevKeyboardState.keys[_key].action == Button::Unknown;
+    }
 
     void drawImgui(const Camera& cam, const glm::vec3& cam_pos, const float w, const float h) const;
 
@@ -222,7 +246,10 @@ class Input
      * @param w screen width
      * @param h screen height
      */
-    glm::vec3 worldMousePos(const Camera& cam, const glm::vec3& cam_pos, const float w, const float h) const;
+    glm::vec3 worldMousePos(const Camera& cam,
+        const glm::vec3&                  cam_pos,
+        const float                       w,
+        const float                       h) const;
 
     void clear() { mouseState.clear(); }
 
