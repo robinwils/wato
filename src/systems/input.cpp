@@ -22,7 +22,8 @@ void processCameraInputs(Input& input, entt::dispatcher& dispatcher, const doubl
 
 void processBuildInputs(Input& input, entt::dispatcher& dispatcher)
 {
-    if (input.isKeyPressed(Keyboard::B) && !input.isPrevKeyPressed(Keyboard::B)) {
+    if (input.isKeyPressed(Keyboard::B) && !input.isPrevKeyPressed(Keyboard::B)
+        && !input.isMouseButtonPressed(Mouse::Left)) {
         if (!input.m_tower_placement_mode) input.m_tower_placement_mode = true;
         dispatcher.trigger(TowerPlacementMode{true});
     }
