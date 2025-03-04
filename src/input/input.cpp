@@ -6,6 +6,7 @@
 #include "components/camera.hpp"
 #include "core/ray.hpp"
 #include "core/registry.hpp"
+#include "core/sys.hpp"
 #include "glm/gtx/string_cast.hpp"
 
 void MouseState::clear()

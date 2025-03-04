@@ -18,6 +18,11 @@ void processCameraInputs(Input& input, entt::dispatcher& dispatcher, const doubl
     if (input.isKeyPressed(Keyboard::D) || input.isKeyRepeat(Keyboard::D)) {
         dispatcher.trigger(CameraMovement{CameraMovement::CameraRight, time_delta});
     }
+    if (input.mouseState.scroll.y != 0) {
+        dispatcher.trigger(CameraMovement{CameraMovement::CameraZoom,
+            (input.mouseState.scroll.y) * 5.0f * time_delta});
+        input.mouseState.scroll.y = 0;
+    }
 }
 
 void processBuildInputs(Input& input, entt::dispatcher& dispatcher)
@@ -50,8 +55,6 @@ void processInputs(Registry& registry, const double time_delta)
     auto& input      = registry.ctx().get<Input&>();
     auto& dispatcher = registry.ctx().get<entt::dispatcher&>();
 
-    // Camera
-    // Preview
     processCameraInputs(input, dispatcher, time_delta);
     processBuildInputs(input, dispatcher);
 }

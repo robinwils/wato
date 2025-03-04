@@ -39,7 +39,7 @@ void ActionSystem::udpate_win_size(int _w, int _h)
 void ActionSystem::camera_movement(CameraMovement _cm)
 {
     for (auto&& [entity, cam, t] : m_registry.view<Camera, Transform3D>().each()) {
-        float speed = cam.speed * _cm.time_delta;
+        float speed = cam.speed * _cm.delta;
         switch (_cm.action) {
             case CameraMovement::CameraForward:
                 t.position += speed * cam.front;
@@ -52,6 +52,12 @@ void ActionSystem::camera_movement(CameraMovement _cm)
                 break;
             case CameraMovement::CameraRight:
                 t.position -= speed * cam.right();
+                break;
+            case CameraMovement::CameraZoom:
+                if ((t.position.y >= 1.0f && speed > 0.0f)
+                    || (t.position.y <= 10.0f && speed < 0.0f)) {
+                    t.position -= speed * cam.up;
+                }
                 break;
             default:
                 throw std::runtime_error("wrong action for camera movement");

@@ -8,10 +8,11 @@ struct CameraMovement {
         CameraRight,
         CameraForward,
         CameraBack,
+        CameraZoom,
     };
 
     CameraAction action;
-    double       time_delta;
+    double       delta;
 };
 
 struct BuildTower {
