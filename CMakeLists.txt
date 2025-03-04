@@ -85,6 +85,38 @@ set(SOURCES
 # Add executable
 add_executable(wato ${SOURCES})
 
+target_sources(wato
+PUBLIC FILE_SET HEADERS
+    BASE_DIRS src
+    FILES
+	src/components/color.hpp
+	src/components/direction.hpp
+	src/components/position.hpp
+	src/components/rotation.hpp
+	src/components/scale.hpp
+	src/components/scene_object.hpp
+	src/components/transform3d.hpp
+	src/components/placement_mode.hpp
+	src/components/tile.hpp
+	src/components/imgui.hpp
+	src/components/camera.hpp
+	src/components/health.hpp
+	src/core/model_loader.hpp
+	src/core/tile.hpp
+	src/core/cache.hpp
+	src/core/sys.hpp
+	src/core/ray.hpp
+	src/core/action.hpp
+	src/core/registry.hpp
+	src/input/input.hpp
+	src/renderer/bgfx_utils.hpp
+	src/renderer/material.hpp
+	src/renderer/mesh_primitive.hpp
+	src/renderer/primitive.hpp
+	src/renderer/plane_primitive.hpp
+	src/systems/systems.hpp
+)
+
 # Link libraries
 target_link_libraries(wato
 	bgfxDebug
@@ -109,3 +141,10 @@ elseif(UNIX)
 		ZLIB::ZLIB
 	)
 endif()
+
+add_custom_target(format-sources
+	COMMAND clang-format -style=file -i $<TARGET_PROPERTY:wato,SOURCES>
+		$<TARGET_PROPERTY:wato,HEADER_SET>
+	COMMAND_EXPAND_LISTS
+	WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
