@@ -52,7 +52,7 @@ struct TextureLoader final {
                     imageContainer->m_size,
                     imageReleaseCb,
                     imageContainer);
-                BX_FREE(&allocator, data);
+                bx::free(&allocator, data);
 
                 if (imageContainer->m_cubeMap) {
                     handle = bgfx::createTextureCube(uint16_t(imageContainer->m_width),

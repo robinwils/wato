@@ -22,7 +22,7 @@ void* load(bx::FileReaderI* _reader,
 {
     if (bx::open(_reader, _filePath)) {
         uint32_t size = (uint32_t)bx::getSize(_reader);
-        void*    data = BX_ALLOC(_allocator, size);
+        void*    data = bx::alloc(_allocator, size);
         bx::read(_reader, data, size, bx::ErrorAssert{});
         bx::close(_reader);
         if (NULL != _size) {
