@@ -87,7 +87,7 @@ class Primitive
         bgfx::setVertexBuffer(0, m_vertex_buffer_handle);
         bgfx::setIndexBuffer(m_index_buffer_handle);
 
-        bgfx::submit(0, m_material.program, bgfx::ViewMode::Default, discard_states);
+        bgfx::submit(0, m_material.shader->program(), bgfx::ViewMode::Default, discard_states);
     }
 
    protected:

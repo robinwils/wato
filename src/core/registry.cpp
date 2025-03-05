@@ -15,17 +15,28 @@
 
 void Registry::spawnMap(uint32_t _w, uint32_t _h)
 {
-    auto [bp, pLoaded] = PROGRAM_CACHE.load("blinnphong"_hs, "vs_blinnphong", "fs_blinnphong");
+    auto [bp, pLoaded] = PROGRAM_CACHE.load("blinnphong"_hs,
+        "vs_blinnphong",
+        "fs_blinnphong",
+        std::unordered_map<std::string, bgfx::UniformType::Enum>{
+            {"s_diffuseTex",  bgfx::UniformType::Sampler},
+            {"s_specularTex", bgfx::UniformType::Sampler},
+            {"u_diffuse",     bgfx::UniformType::Vec4   },
+            {"u_specular",    bgfx::UniformType::Vec4   },
+            {"u_lightDir",    bgfx::UniformType::Vec4   },
+            {"u_lightCol",    bgfx::UniformType::Vec4   }
+    });
+
     auto [diff, dLoaded] =
         TEXTURE_CACHE.load("grass/diffuse"_hs, "assets/textures/TreeTop_COLOR.png");
     auto [sp, sLoaded] =
         TEXTURE_CACHE.load("grass/specular"_hs, "assets/textures/TreeTop_SPEC.png");
 
-    auto program  = PROGRAM_CACHE["blinnphong"_hs];
+    auto shader   = PROGRAM_CACHE["blinnphong"_hs];
     auto diffuse  = TEXTURE_CACHE["grass/diffuse"_hs];
     auto specular = TEXTURE_CACHE["grass/specular"_hs];
 
-    if (!bgfx::isValid(program)) {
+    if (!bgfx::isValid(shader->program())) {
         throw std::runtime_error("could not load blinnphong program, invalid handle");
     }
     if (!bgfx::isValid(diffuse)) {
@@ -35,7 +46,7 @@ void Registry::spawnMap(uint32_t _w, uint32_t _h)
         throw std::runtime_error("could not load grass/specular texture, invalid handle");
     }
 
-    MODEL_CACHE.load("grass_tile"_hs, new PlanePrimitive(Material(program, diffuse, specular)));
+    MODEL_CACHE.load("grass_tile"_hs, new PlanePrimitive(Material(shader, diffuse, specular)));
 
     for (uint32_t i = 0; i < _w; ++i) {
         for (uint32_t j = 0; j < _h; ++j) {

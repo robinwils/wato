@@ -8,6 +8,10 @@
 #include <entt/resource/cache.hpp>
 #include <renderer/bgfx_utils.hpp>
 #include <renderer/material.hpp>
+#include <renderer/shader.hpp>
+
+#include "bgfx/bgfx.h"
+
 using namespace entt::literals;
 
 #define TEXTURE_CACHE (ResourceCache::instance().textureCache)
@@ -98,10 +102,6 @@ struct TextureLoader final {
         }
 
         return std::make_shared<bgfx::TextureHandle>(handle);
-        // TODO default loader uses std::make_ref as a return type, should it be
-        // bgfx::makeRef(loadTexture...) here ? Or smth else
-        // return std::make_shared<bgfx::TextureHandle>(loadTexture(_name, _flags, _skip, _info,
-        // _orientation));
     }
 
    private:
@@ -110,12 +110,22 @@ struct TextureLoader final {
 };
 
 struct ProgramLoader final {
-    using result_type = std::shared_ptr<bgfx::ProgramHandle>;
+    using result_type = std::shared_ptr<Shader>;
 
     template <typename... Args>
-    result_type operator()(const char* _vsName, const char* _fsName)
+    result_type operator()(const char*                           _vsName,
+        const char*                                              _fsName,
+        std::unordered_map<std::string, bgfx::UniformType::Enum> _uniforms)
     {
-        return std::make_shared<bgfx::ProgramHandle>(loadProgram(&fr, _vsName, _fsName));
+        auto handle = loadProgram(&fr, _vsName, _fsName);
+
+        auto uniform_handles = std::unordered_map<std::string, bgfx::UniformHandle>();
+        for (auto&& [name, type] : _uniforms) {
+            DBG("creating uniform '%s'", name.c_str());
+            uniform_handles[name] = bgfx::createUniform(name.c_str(), type);
+        }
+
+        return std::make_shared<Shader>(handle, uniform_handles);
     }
 
    private:
@@ -123,7 +133,7 @@ struct ProgramLoader final {
 };
 
 using TextureCache = entt::resource_cache<bgfx::TextureHandle, TextureLoader>;
-using ProgramCache = entt::resource_cache<bgfx::ProgramHandle, ProgramLoader>;
+using ProgramCache = entt::resource_cache<Shader, ProgramLoader>;
 using ModelCache   = entt::resource_cache<std::vector<Primitive*>, ModelLoader>;
 
 struct ResourceCache {
