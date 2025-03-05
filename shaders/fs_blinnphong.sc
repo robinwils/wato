@@ -32,9 +32,15 @@ void main()
   vec3 halfwayDir = normalize(lightDir + viewDir);
 
   // specular
-  float spec = pow(max(dot(v_normal, halfwayDir), 0.0), 0.8);
+  float spec = pow(max(dot(v_normal, halfwayDir), 0.0), 16.0);
+  vec3 specular = 0.0;
+  if (u_useSpecularTex) {
+    specular = spec * u_lightCol.xyz * texture2D(s_specularTex, v_texcoord0).rgb;
+  } else {
+    specular = spec * u_lightCol.xyz * u_specular.xyz;
+  }
 
-  gl_FragColor.xyz = diffuse;
+  gl_FragColor.xyz = diffuse + specular;
   gl_FragColor.w = 1.0;
   gl_FragColor = toGamma(gl_FragColor);
 }
