@@ -21,9 +21,6 @@ bgfx::ShaderHandle loadShader(bx::FileReaderI* _reader, const char* _name)
 
     switch (bgfx::getRendererType()) {
         case bgfx::RendererType::Noop:
-        case bgfx::RendererType::Direct3D9:
-            renderer = "_dx9";
-            break;
         case bgfx::RendererType::Direct3D11:
         case bgfx::RendererType::Direct3D12:
             renderer = "_dx11";
@@ -45,7 +42,6 @@ bgfx::ShaderHandle loadShader(bx::FileReaderI* _reader, const char* _name)
             renderer = "_essl";
             break;
         case bgfx::RendererType::Vulkan:
-        case bgfx::RendererType::WebGPU:
             renderer = "_spirv";
             break;
 
