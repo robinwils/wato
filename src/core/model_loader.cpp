@@ -92,10 +92,6 @@ Primitive *processMesh(const aiMesh *mesh, const aiScene *scene)
             if (material->Get(AI_MATKEY_COLOR_SPECULAR, specular) != AI_SUCCESS) {
                 DBG("failed to get specular color for mesh %s", mesh->mName.C_Str());
             }
-            aiColor3D shininess;
-            if (material->Get(AI_MATKEY_SHININESS, specular) != AI_SUCCESS) {
-                DBG("failed to get specular color for mesh %s", mesh->mName.C_Str());
-            }
 
             DBG("creating mesh with %d vertices and %d indices", vertices.size(), indices.size());
             auto     program = PROGRAM_CACHE["blinnphong"_hs];
