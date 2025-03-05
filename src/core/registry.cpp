@@ -5,9 +5,8 @@
 #include <glm/ext/vector_float3.hpp>
 
 #include "components/camera.hpp"
-#include "components/color.hpp"
-#include "components/direction.hpp"
 #include "components/imgui.hpp"
+#include "components/light_source.hpp"
 #include "components/scene_object.hpp"
 #include "components/tile.hpp"
 #include "components/transform3d.hpp"
@@ -51,8 +50,8 @@ void Registry::spawnMap(uint32_t _w, uint32_t _h)
 void Registry::spawnLight()
 {
     auto light = create();
-    emplace<Direction>(light, glm::vec3(-1.0f, -1.0f, 0.0f));
-    emplace<Color>(light, glm::vec3(0.5f));
+    emplace<LightSource>(light, glm::vec3(-1.0f, -1.0f, 0.0f), glm::vec3(0.5f));
+    emplace<ImguiDrawable>(light, "Directional Light");
 }
 
 void Registry::loadModels()

@@ -4,8 +4,7 @@
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "components/color.hpp"
-#include "components/direction.hpp"
+#include "components/light_source.hpp"
 #include "components/placement_mode.hpp"
 #include "components/scene_object.hpp"
 #include "components/transform3d.hpp"
@@ -18,12 +17,14 @@ void renderSceneObjects(Registry& registry, const float dt)
                      | BGFX_STATE_WRITE_A | BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LESS
                      | BGFX_STATE_CULL_CW | BGFX_STATE_MSAA;
 
+    auto bp_shader = PROGRAM_CACHE["blinnphong"_hs];
     // light
-    auto view        = registry.view<Direction, Color>();
-    auto lightEntity = view.front();
-    assert(lightEntity != entt::null);
-    // bgfx::setUniform(registry.get<Direction, glm::value_ptr(glm::vec4(m_lightDir, 0.0f)));
-    // bgfx::setUniform(u_lightCol, glm::value_ptr(glm::vec4(m_lightCol, 0.0f)));
+    for (auto&& [light, source] : registry.view<LightSource>().each()) {
+        bgfx::setUniform(bp_shader->uniform("u_lightDir"),
+            glm::value_ptr(glm::vec4(source.direction, 0.0f)));
+        bgfx::setUniform(bp_shader->uniform("u_lightCol"),
+            glm::value_ptr(glm::vec4(source.color, 0.0f)));
+    }
     auto group = registry.group<SceneObject>(entt::get<Transform3D>);
     auto check = registry.view<PlacementMode>();
 
