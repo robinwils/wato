@@ -53,8 +53,20 @@ include_directories(
 	src/imgui
 	deps/iconfontcppheaders
 	${glm_SOURCE_DIR}
+)
+
+if(DEFINED glfw3_SOURCE_DIR)
+include_directories(
+	${glfw3_SOURCE_DIR}/include
+)
+endif()
+
+if(DEFINED entt_SOURCE_DIR)
+include_directories(
 	${entt_SOURCE_DIR}/src
 )
+endif()
+
 
 if(WIN32)
 	include_directories(
