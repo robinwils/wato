@@ -19,13 +19,20 @@ FetchContent_Declare(
 	GIT_TAG 3.4
 	FIND_PACKAGE_ARGS NAMES glfw3
 )
+FetchContent_Declare(
+	entt
+	GIT_REPOSITORY https://github.com/skypjack/entt
+	GIT_TAG v3.14.0
+	FIND_PACKAGE_ARGS NAMES entt
+)
 
 FetchContent_MakeAvailable(assimp)
 FetchContent_MakeAvailable(glfw3)
+FetchContent_MakeAvailable(entt)
 
 message(STATUS "assimp directories '${assimp_INCLUDE_DIR}' '${assimp_BINARY_DIR}', populated: ${assimp_POPULATED}")
 message(STATUS "GLFW directories '${glfw3_INCLUDE_DIR}' '${glfw3_BINARY_DIR}', populated: ${glfw3_POPULATED}")
-
+message(STATUS "entt directories '${entt_SOURCE_DIR}' '${entt_BINARY_DIR}', populated: ${entt_POPULATED}")
 
 set(CMAKE_CXX_FLAGS_DEBUG "-DBX_CONFIG_DEBUG")
 
@@ -37,10 +44,8 @@ include_directories(
 	deps/imgui
 	src/imgui
 	deps/iconfontcppheaders
-	deps/entt/src
 	deps/glm
-	${assimp_INCLUDE_DIR}/include
-	${assimp_SOURCE_DIR}/include
+	${entt_SOURCE_DIR}/src
 )
 
 if(WIN32)
