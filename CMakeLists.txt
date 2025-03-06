@@ -25,14 +25,22 @@ FetchContent_Declare(
 	GIT_TAG v3.14.0
 	FIND_PACKAGE_ARGS NAMES entt
 )
+FetchContent_Declare(
+	glm
+	GIT_REPOSITORY https://github.com/g-truc/glm
+	GIT_TAG 0.9.9.8
+	FIND_PACKAGE_ARGS NAMES glm
+)
 
 FetchContent_MakeAvailable(assimp)
 FetchContent_MakeAvailable(glfw3)
 FetchContent_MakeAvailable(entt)
+FetchContent_MakeAvailable(glm)
 
 message(STATUS "assimp directories '${assimp_INCLUDE_DIR}' '${assimp_BINARY_DIR}', populated: ${assimp_POPULATED}")
 message(STATUS "GLFW directories '${glfw3_INCLUDE_DIR}' '${glfw3_BINARY_DIR}', populated: ${glfw3_POPULATED}")
 message(STATUS "entt directories '${entt_SOURCE_DIR}' '${entt_BINARY_DIR}', populated: ${entt_POPULATED}")
+message(STATUS "glm directories '${glm_SOURCE_DIR}' '${glm_BINARY_DIR}', populated: ${glm_POPULATED}")
 
 set(CMAKE_CXX_FLAGS_DEBUG "-DBX_CONFIG_DEBUG")
 
@@ -44,7 +52,7 @@ include_directories(
 	deps/imgui
 	src/imgui
 	deps/iconfontcppheaders
-	deps/glm
+	${glm_SOURCE_DIR}
 	${entt_SOURCE_DIR}/src
 )
 
