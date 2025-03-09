@@ -25,6 +25,7 @@
 
 #include <imgui_helper.h>
 
+#include <core/physics.hpp>
 #include <core/registry.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -117,6 +118,10 @@ int main()
     ActionSystem action_system(registry, width, height);
     action_system.init_listeners();
 
+    registry.ctx().emplace<rp3d::PhysicsCommon>();
+    registry.ctx().emplace<rp3d::PhysicsWorld*>(
+        registry.ctx().get<rp3d::PhysicsCommon>().createPhysicsWorld());
+
     registry.spawnLight();
     registry.spawnMap(20, 20);
     registry.loadModels();
@@ -149,6 +154,7 @@ int main()
 
         processInputs(registry, dt);
         cameraSystem(registry, float(width), float(height));
+        physicsSystem(registry, dt);
 
         // This dummy draw call is here to make sure that view 0 is cleared
         // if no other draw calls are submitted to view 0.

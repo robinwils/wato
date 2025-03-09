@@ -8,6 +8,7 @@ void renderSceneObjects(Registry& registry, const float dt);
 void cameraSystem(Registry& registry, float width, float height);
 void processInputs(Registry& registry, const double time_delta);
 void renderImgui(Registry& registry, float width, float height);
+void physicsSystem(Registry& registry, double delta_time);
 
 struct ActionSystem {
    public:

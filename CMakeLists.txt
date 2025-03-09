@@ -31,16 +31,18 @@ FetchContent_Declare(
 	GIT_TAG 0.9.9.8
 	FIND_PACKAGE_ARGS NAMES glm
 )
+FetchContent_Declare(
+	reactphysics3d
+	GIT_REPOSITORY https://github.com/DanielChappuis/reactphysics3d
+	GIT_TAG v0.10.2
+	FIND_PACKAGE_ARGS NAMES reactphysics3d
+)
 
 FetchContent_MakeAvailable(assimp)
 FetchContent_MakeAvailable(glfw3)
 FetchContent_MakeAvailable(entt)
 FetchContent_MakeAvailable(glm)
-
-message(STATUS "assimp directories '${assimp_INCLUDE_DIR}' '${assimp_BINARY_DIR}', populated: ${assimp_POPULATED}")
-message(STATUS "GLFW directories '${glfw3_INCLUDE_DIR}' '${glfw3_BINARY_DIR}', populated: ${glfw3_POPULATED}")
-message(STATUS "entt directories '${entt_SOURCE_DIR}' '${entt_BINARY_DIR}', populated: ${entt_POPULATED}")
-message(STATUS "glm directories '${glm_SOURCE_DIR}' '${glm_BINARY_DIR}', populated: ${glm_POPULATED}")
+FetchContent_MakeAvailable(reactphysics3d)
 
 set(CMAKE_CXX_FLAGS_DEBUG "-DBX_CONFIG_DEBUG")
 
@@ -53,6 +55,7 @@ include_directories(
 	src/imgui
 	deps/iconfontcppheaders
 	${glm_SOURCE_DIR}
+	${reactphysics3d_SOURCE_DIR}/include
 )
 
 if(DEFINED glfw3_SOURCE_DIR)
@@ -99,6 +102,7 @@ set(SOURCES
 	src/systems/input.cpp
 	src/systems/action.cpp
 	src/systems/camera.cpp
+	src/systems/physics.cpp
 	src/renderer/bgfx_utils.cpp
 	src/core/model_loader.cpp
 	src/core/registry.cpp
@@ -126,11 +130,13 @@ PUBLIC FILE_SET HEADERS
 	src/components/imgui.hpp
 	src/components/camera.hpp
 	src/components/health.hpp
+	src/components/rigid_body.hpp
 	src/core/model_loader.hpp
 	src/core/tile.hpp
 	src/core/cache.hpp
 	src/core/sys.hpp
 	src/core/ray.hpp
+	src/core/physics.hpp
 	src/core/action.hpp
 	src/core/registry.hpp
 	src/input/input.hpp
@@ -164,6 +170,7 @@ elseif(UNIX)
 		GL
 		GLU
 		ZLIB::ZLIB
+		reactphysics3d
 	)
 endif()
 

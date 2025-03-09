@@ -7,6 +7,7 @@
 #include "components/health.hpp"
 #include "components/imgui.hpp"
 #include "components/placement_mode.hpp"
+#include "components/rigid_body.hpp"
 #include "components/scene_object.hpp"
 #include "components/tile.hpp"
 #include "components/transform3d.hpp"
@@ -17,6 +18,7 @@
 #include "glm/geometric.hpp"
 #include "glm/gtx/string_cast.hpp"
 #include "input/input.hpp"
+#include "reactphysics3d/engine/PhysicsWorld.h"
 #include "renderer/plane_primitive.hpp"
 #include "systems/systems.hpp"
 
@@ -90,15 +92,23 @@ glm::vec3 ActionSystem::get_mouse_ray() const
 void ActionSystem::build_tower(BuildTower bt)
 {
     auto tower = m_ghost_tower;
+
+    Transform3D t;
     if (!m_registry.valid(tower)) {
         DBG("invalid ghost tower, creating tower");
         tower = m_registry.create();
         m_registry.emplace<SceneObject>(tower, "tower_model"_hs);
-        m_registry.emplace<Transform3D>(tower, glm::vec3(0.0f), glm::vec3(0.0f), glm::vec3(0.1f));
+        t = m_registry.emplace<Transform3D>(tower,
+            glm::vec3(0.0f),
+            glm::vec3(0.0f),
+            glm::vec3(0.1f));
     } else {
         m_registry.remove<PlacementMode>(tower);
         m_registry.remove<ImguiDrawable>(tower);
+        t = m_registry.get<Transform3D>(tower);
     }
+    auto* phyWorld = m_registry.ctx().get<rp3d::PhysicsWorld*>();
+    m_registry.emplace<RigidBody>(tower, phyWorld->createRigidBody(t.to_rp3d()));
     m_registry.emplace<Health>(tower, 100.0f);
     m_ghost_tower = entt::null;
 }
