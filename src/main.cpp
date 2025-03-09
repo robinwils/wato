@@ -10,6 +10,8 @@
 
 #include <iostream>
 
+#include "reactphysics3d/engine/PhysicsWorld.h"
+
 #if BX_PLATFORM_LINUX
 #define GLFW_EXPOSE_NATIVE_X11
 #elif BX_PLATFORM_WINDOWS
@@ -25,6 +27,7 @@
 
 #include <imgui_helper.h>
 
+#include <core/physics.hpp>
 #include <core/registry.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -116,6 +119,10 @@ int main()
 
     ActionSystem action_system(registry, width, height);
     action_system.init_listeners();
+
+    registry.ctx().emplace<rp3d::PhysicsCommon>();
+    registry.ctx().emplace<rp3d::PhysicsWorld>(
+        registry.ctx().get<rp3d::PhysicsCommon>().createPhysicsWorld());
 
     registry.spawnLight();
     registry.spawnMap(20, 20);
