@@ -118,9 +118,21 @@ int main()
     ActionSystem action_system(registry, width, height);
     action_system.init_listeners();
 
-    registry.ctx().emplace<rp3d::PhysicsCommon>();
-    registry.ctx().emplace<rp3d::PhysicsWorld*>(
-        registry.ctx().get<rp3d::PhysicsCommon>().createPhysicsWorld());
+    auto& phy_common = registry.ctx().emplace<rp3d::PhysicsCommon>();
+    registry.ctx().emplace<rp3d::PhysicsWorld*>(phy_common.createPhysicsWorld());
+
+    // Create the default logger
+    rp3d::DefaultLogger* logger = phy_common.createDefaultLogger();
+
+    uint log_level = static_cast<uint>(static_cast<uint>(rp3d::Logger::Level::Warning)
+                                       | static_cast<uint>(rp3d::Logger::Level::Error)
+                                       | static_cast<uint>(rp3d::Logger::Level::Information));
+
+    // Output the logs into the standard output
+    logger->addStreamDestination(std::cout, log_level, rp3d::DefaultLogger::Format::Text);
+
+    // Set the logger
+    phy_common.setLogger(logger);
 
 #if WATO_DEBUG
     auto* phy_world = registry.ctx().get<rp3d::PhysicsWorld*>();
