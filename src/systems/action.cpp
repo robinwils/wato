@@ -107,10 +107,15 @@ void ActionSystem::build_tower(BuildTower bt)
         m_registry.remove<ImguiDrawable>(tower);
         t = m_registry.get<Transform3D>(tower);
     }
-    auto* phyWorld = m_registry.ctx().get<rp3d::PhysicsWorld*>();
-    auto* rb       = phyWorld->createRigidBody(t.to_rp3d());
+    auto* phy_world    = m_registry.ctx().get<rp3d::PhysicsWorld*>();
+    auto& phy_common   = m_registry.ctx().get<rp3d::PhysicsCommon>();
+    auto* rb           = phy_world->createRigidBody(t.to_rp3d());
+    auto* capsuleShape = phy_common.createCapsuleShape(1.0, 2.0);
+
+    rb->addCollider(capsuleShape, t.to_rp3d());
     m_registry.emplace<RigidBody>(tower, rb);
     m_registry.emplace<Health>(tower, 100.0f);
+
 #ifdef WATO_DEBUG
     rb->setIsDebugEnabled(true);
 #endif
