@@ -122,6 +122,17 @@ int main()
     registry.ctx().emplace<rp3d::PhysicsWorld*>(
         registry.ctx().get<rp3d::PhysicsCommon>().createPhysicsWorld());
 
+#if WATO_DEBUG
+    auto* phy_world = registry.ctx().get<rp3d::PhysicsWorld*>();
+    phy_world->setIsDebugRenderingEnabled(true);
+    rp3d::DebugRenderer& debug_renderer = phy_world->getDebugRenderer();
+    debug_renderer.reset();
+
+    // Select the contact points and contact normals to be displayed
+    debug_renderer.setIsDebugItemDisplayed(rp3d::DebugRenderer::DebugItem::CONTACT_POINT, true);
+    debug_renderer.setIsDebugItemDisplayed(rp3d::DebugRenderer::DebugItem::CONTACT_NORMAL, true);
+#endif
+
     registry.spawnLight();
     registry.spawnMap(20, 20);
     registry.loadModels();
@@ -161,6 +172,9 @@ int main()
         bgfx::touch(0);
 
         renderSceneObjects(registry, time);
+#if WATO_DEBUG
+        physicsDebugRenderSystem(registry);
+#endif
 
         // Advance to next frame. Process submitted rendering primitives.
         bgfx::frame();

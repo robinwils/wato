@@ -134,6 +134,7 @@ PUBLIC FILE_SET HEADERS
 	src/core/model_loader.hpp
 	src/core/tile.hpp
 	src/core/cache.hpp
+	src/core/config.h
 	src/core/sys.hpp
 	src/core/ray.hpp
 	src/core/physics.hpp
