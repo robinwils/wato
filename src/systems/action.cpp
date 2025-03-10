@@ -108,7 +108,7 @@ void ActionSystem::build_tower(BuildTower bt)
         t = m_registry.get<Transform3D>(tower);
     }
     auto& phyWorld = m_registry.ctx().get<rp3d::PhysicsWorld>();
-    m_registry.emplace<rp3d::RigidBody>(tower, phyWorld.createRigidBody());
+    m_registry.emplace<rp3d::RigidBody>(tower, phyWorld.createRigidBody(t.to_rp3d()));
     m_registry.emplace<Health>(tower, 100.0f);
     m_ghost_tower = entt::null;
 }
