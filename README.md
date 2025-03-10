@@ -72,6 +72,7 @@ cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=1 .
 ```
 
 `CMAKE_EXPORT_COMPILE_COMMANDS` is used for generating the compile json DB for LSP usage (clangd)
+`CMAKE_CXX_COMPILER_LAUNCHER=ccache` can be used to improve build times.
 
 ## Icon fonts
 
