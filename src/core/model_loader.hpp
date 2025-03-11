@@ -8,10 +8,11 @@
 #include "core/sys.hpp"
 #include "renderer/primitive.hpp"
 
-std::vector<Primitive *> processNode(const aiNode *node, const aiScene *scene);
+std::vector<Primitive<PositionNormalUvVertex> *> processNode(const aiNode *node,
+    const aiScene                                                         *scene);
 
 struct ModelLoader final {
-    using result_type = std::shared_ptr<std::vector<Primitive *>>;
+    using result_type = std::shared_ptr<std::vector<Primitive<PositionNormalUvVertex> *>>;
 
     template <typename... Args>
     result_type operator()(const char *_name, unsigned int postProcessFlags)
@@ -33,7 +34,7 @@ struct ModelLoader final {
         if (nullptr == scene) {
             // TODO: handle error
             DBG("could not load %s", _name);
-            return std::make_shared<std::vector<Primitive *>>();
+            return std::make_shared<std::vector<Primitive<PositionNormalUvVertex> *>>();
         }
         DBG("scene %s has:", scene->mName);
         DBG("  %d meshes", scene->mNumMeshes);
@@ -43,13 +44,13 @@ struct ModelLoader final {
 
         auto meshes = processNode(scene->mRootNode, scene);
 
-        return std::make_shared<std::vector<Primitive *>>(meshes);
+        return std::make_shared<std::vector<Primitive<PositionNormalUvVertex> *>>(meshes);
     }
 
     template <typename... Args>
-    result_type operator()(Primitive *primitive)
+    result_type operator()(Primitive<PositionNormalUvVertex> *primitive)
     {
         auto meshes = std::vector({primitive});
-        return std::make_shared<std::vector<Primitive *>>(meshes);
+        return std::make_shared<std::vector<Primitive<PositionNormalUvVertex> *>>(meshes);
     }
 };

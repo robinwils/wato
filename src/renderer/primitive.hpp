@@ -2,6 +2,7 @@
 
 #include <bgfx/bgfx.h>
 
+#include <cstdint>
 #include <glm/ext/vector_float2.hpp>
 #include <glm/ext/vector_float3.hpp>
 #include <renderer/material.hpp>
@@ -10,6 +11,31 @@
 
 #include "core/sys.hpp"
 #include "glm/fwd.hpp"
+#include "reactphysics3d/reactphysics3d.h"
+
+struct PositionColorVertex {
+    glm::vec3 position;
+    glm::vec4 color;
+
+    static PositionColorVertex fromRP3DDebug(const rp3d::Vector3 pos, uint32_t color)
+    {
+        return PositionColorVertex{glm::vec3(pos.x, pos.y, pos.z),
+            glm::vec4(color & static_cast<uint32_t>(rp3d::DebugRenderer::DebugColor::RED),
+                color & static_cast<uint32_t>(rp3d::DebugRenderer::DebugColor::GREEN),
+                color & static_cast<uint32_t>(rp3d::DebugRenderer::DebugColor::BLUE),
+                1.0)};
+    }
+
+    static bgfx::VertexLayout getVertexLayout()
+    {
+        bgfx::VertexLayout vertex_layout;
+        vertex_layout.begin()
+            .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
+            .add(bgfx::Attrib::Normal, 4, bgfx::AttribType::Float)
+            .end();
+        return vertex_layout;
+    }
+};
 
 struct PositionNormalUvVertex {
     glm::vec3 position;
@@ -28,13 +54,16 @@ struct PositionNormalUvVertex {
     }
 };
 
+template <typename VL>
 class Primitive
 {
    public:
+    typedef VL layout_type;
+
     Primitive(const Material& _material) : m_material(_material), m_is_initialized(false) {}
-    Primitive(const Material&               _material,
-        std::vector<PositionNormalUvVertex> vertices,
-        std::vector<uint16_t>               indices)
+    Primitive(const Material&    _material,
+        std::vector<layout_type> vertices,
+        std::vector<uint16_t>    indices)
         : m_vertices(vertices), m_indices(indices), m_material(_material)
     {
     }
@@ -90,31 +119,31 @@ class Primitive
         bgfx::submit(0, m_material.shader->program(), bgfx::ViewMode::Default, discard_states);
     }
 
-   protected:
-    std::vector<PositionNormalUvVertex> m_vertices;
-    std::vector<uint16_t>               m_indices;
     Material                            m_material;
-
-    bool m_is_initialized;
-
-    bgfx::VertexBufferHandle m_vertex_buffer_handle;
-    bgfx::IndexBufferHandle  m_index_buffer_handle;
-
     virtual void initializePrimitive()
     {
         assert(!m_vertices.empty());
         assert(!m_indices.empty());
 
-        const bgfx::VertexLayout vertex_layout = PositionNormalUvVertex::getVertexLayout();
+        const bgfx::VertexLayout vertex_layout = layout_type::getVertexLayout();
 
         m_vertex_buffer_handle = bgfx::createVertexBuffer(
-            bgfx::makeRef(m_vertices.data(), sizeof(PositionNormalUvVertex) * m_vertices.size()),
+            bgfx::makeRef(m_vertices.data(), sizeof(layout_type) * m_vertices.size()),
             vertex_layout);
         m_index_buffer_handle = bgfx::createIndexBuffer(
             bgfx::makeRef(m_indices.data(), sizeof(uint16_t) * m_indices.size()));
 
         m_is_initialized = true;
     }
+
+   protected:
+    std::vector<layout_type> m_vertices;
+    std::vector<uint16_t>    m_indices;
+
+    bool m_is_initialized;
+
+    bgfx::VertexBufferHandle m_vertex_buffer_handle;
+    bgfx::IndexBufferHandle  m_index_buffer_handle;
 
    private:
     virtual void destroyPrimitive()

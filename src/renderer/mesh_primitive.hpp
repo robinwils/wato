@@ -3,7 +3,7 @@
 #include <renderer/primitive.hpp>
 #include <vector>
 
-class MeshPrimitive : public Primitive
+class MeshPrimitive : public Primitive<PositionNormalUvVertex>
 {
    public:
     MeshPrimitive(std::vector<PositionNormalUvVertex> _vertices,

@@ -6,10 +6,10 @@
 #include "glm/geometric.hpp"
 #include "glm/gtc/matrix_access.hpp"
 
-class PlanePrimitive : public Primitive
+class PlanePrimitive : public Primitive<PositionNormalUvVertex>
 {
    public:
-    PlanePrimitive(const Material& _material) : Primitive(_material)
+    PlanePrimitive(const Material& _material) : Primitive<PositionNormalUvVertex>(_material)
     {
         m_vertices = {
             {{+0.5f, +0.0f, -0.5f}, {0.0f, +1.0f, 0.0f}, {0.0f, 1.0f}},

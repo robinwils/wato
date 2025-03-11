@@ -9,7 +9,7 @@
 
 #include "core/cache.hpp"
 #include "glm/ext/matrix_transform.hpp"
-#include "renderer/material.hpp"
+#include "renderer/blinn_phong_material.hpp"
 #include "renderer/mesh_primitive.hpp"
 #include "renderer/primitive.hpp"
 
@@ -39,7 +39,7 @@ std::vector<entt::hashed_string> processMaterialTextures(const aiMaterial *mater
     return textures;
 }
 
-Primitive *processMesh(const aiMesh *mesh, const aiScene *scene)
+Primitive<PositionNormalUvVertex> *processMesh(const aiMesh *mesh, const aiScene *scene)
 {
     std::vector<PositionNormalUvVertex> vertices;
     for (unsigned int i = 0; i < mesh->mNumVertices; ++i) {
@@ -160,7 +160,8 @@ void processMetaData(const aiNode *node, const aiScene *scene)
     }
 }
 
-std::vector<Primitive *> processNode(const aiNode *node, const aiScene *scene)
+std::vector<Primitive<PositionNormalUvVertex> *> processNode(const aiNode *node,
+    const aiScene                                                         *scene)
 {
     auto t         = node->mTransformation;
     auto transform = glm::identity<glm::mat4>();
@@ -189,7 +190,7 @@ std::vector<Primitive *> processNode(const aiNode *node, const aiScene *scene)
     }
 
     processMetaData(node, scene);
-    std::vector<Primitive *> meshes;
+    std::vector<Primitive<PositionNormalUvVertex> *> meshes;
     for (unsigned int i = 0; i < node->mNumMeshes; ++i) {
         auto *mesh = processMesh(scene->mMeshes[node->mMeshes[i]], scene);
         meshes.push_back(mesh);
