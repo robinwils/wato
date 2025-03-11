@@ -93,28 +93,20 @@ void ActionSystem::build_tower(BuildTower bt)
 {
     auto tower = m_ghost_tower;
 
-    Transform3D t;
-    if (!m_registry.valid(tower)) {
-        DBG("invalid ghost tower, creating tower");
-        tower = m_registry.create();
-        m_registry.emplace<SceneObject>(tower, "tower_model"_hs);
-        t = m_registry.emplace<Transform3D>(tower,
-            glm::vec3(0.0f),
-            glm::vec3(0.0f),
-            glm::vec3(0.1f));
-    } else {
-        m_registry.remove<PlacementMode>(tower);
-        m_registry.remove<ImguiDrawable>(tower);
-        t = m_registry.get<Transform3D>(tower);
-    }
-    auto* phy_world    = m_registry.ctx().get<rp3d::PhysicsWorld*>();
-    auto& phy_common   = m_registry.ctx().get<rp3d::PhysicsCommon>();
-    auto* rb           = phy_world->createRigidBody(t.to_rp3d());
-    auto* capsuleShape = phy_common.createCapsuleShape(1.0, 2.0);
+    BX_ASSERT(m_registry.valid(tower), "ghost tower must be valid");
+    const auto& t          = m_registry.get<Transform3D>(tower);
+    auto*       phy_world  = m_registry.ctx().get<rp3d::PhysicsWorld*>();
+    auto&       phy_common = m_registry.ctx().get<rp3d::PhysicsCommon>();
+    auto*       rb         = phy_world->createRigidBody(t.to_rp3d());
+    auto*       box        = phy_common.createBoxShape(rp3d::Vector3(0.5f, 1.0f, 0.5f));
 
-    rb->addCollider(capsuleShape, t.to_rp3d());
+    rb->setType(rp3d::BodyType::STATIC);
+    rb->addCollider(box, rp3d::Transform::identity());
+
     m_registry.emplace<RigidBody>(tower, rb);
     m_registry.emplace<Health>(tower, 100.0f);
+    m_registry.remove<PlacementMode>(tower);
+    m_registry.remove<ImguiDrawable>(tower);
 
 #if WATO_DEBUG
     rb->setIsDebugEnabled(true);
@@ -141,7 +133,7 @@ void ActionSystem::tower_placement_mode(TowerPlacementMode m)
         m_ghost_tower = m_registry.create();
         m_registry.emplace<SceneObject>(m_ghost_tower, "tower_model"_hs);
         m_registry.emplace<Transform3D>(m_ghost_tower,
-            glm::vec3(0.0f),
+            glm::vec3(intersect.x, 0.0f, intersect.z),
             glm::vec3(0.0f),
             glm::vec3(0.1f));
         m_registry.emplace<PlacementMode>(m_ghost_tower);

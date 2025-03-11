@@ -155,7 +155,6 @@ target_sources(wato
     src/main.cpp
     src/renderer/bgfx_utils.cpp
     src/renderer/material.cpp
-    src/renderer/primitive.cpp
     src/systems/action.cpp
     src/systems/camera.cpp
     src/systems/imgui.cpp

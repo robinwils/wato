@@ -13,9 +13,7 @@
 
 void renderSceneObjects(Registry& registry, const float dt)
 {
-    uint64_t state = 0 | BGFX_STATE_WRITE_R | BGFX_STATE_WRITE_G | BGFX_STATE_WRITE_B
-                     | BGFX_STATE_WRITE_A | BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LESS
-                     | BGFX_STATE_CULL_CW | BGFX_STATE_MSAA;
+    uint64_t state = BGFX_STATE_DEFAULT;
 
     auto bp_shader = PROGRAM_CACHE["blinnphong"_hs];
     // light

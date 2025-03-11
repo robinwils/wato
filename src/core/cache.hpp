@@ -11,6 +11,7 @@
 #include <renderer/shader.hpp>
 
 #include "bgfx/bgfx.h"
+#include "renderer/primitive.hpp"
 
 using namespace entt::literals;
 

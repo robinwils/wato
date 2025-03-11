@@ -1,6 +1,8 @@
 #pragma once
 #include <glm/ext/vector_float3.hpp>
+#include <glm/fwd.hpp>
 #include <glm/gtc/quaternion.hpp>
+#include <glm/gtx/string_cast.hpp>
 
 #include "core/physics.hpp"
 #include "reactphysics3d/mathematics/Transform.h"
@@ -14,7 +16,7 @@ struct Transform3D {
     rp3d::Transform to_rp3d() const
     {
         auto q = glm::quat_cast(orientation());
-        return rp3d::Transform(RP3D_VEC3(position), rp3d::Quaternion(RP3D_VEC3(q), q.w));
+        return rp3d::Transform(RP3D_VEC3(position), rp3d::Quaternion(q.x, q.y, q.z, q.w));
     }
 
     glm::mat4 orientation() const
@@ -24,5 +26,11 @@ struct Transform3D {
         model      = glm::rotate(model, glm::radians(rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
         model      = glm::rotate(model, glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
         return model;
+    }
+
+    std::string to_string() const
+    {
+        return "Transform3D: position = " + glm::to_string(position)
+               + ", rotation = " + glm::to_string(rotation) + ", scale = " + glm::to_string(scale);
     }
 };

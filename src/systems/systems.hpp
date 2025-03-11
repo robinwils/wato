@@ -10,7 +10,10 @@ void cameraSystem(Registry& registry, float width, float height);
 void processInputs(Registry& registry, const double time_delta);
 void renderImgui(Registry& registry, float width, float height);
 void physicsSystem(Registry& registry, double delta_time);
+
+#if WATO_DEBUG
 void physicsDebugRenderSystem(Registry& registry);
+#endif
 
 struct ActionSystem {
    public:
