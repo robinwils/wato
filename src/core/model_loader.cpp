@@ -94,10 +94,11 @@ Primitive<PositionNormalUvVertex> *processMesh(const aiMesh *mesh, const aiScene
             }
 
             DBG("creating mesh with %d vertices and %d indices", vertices.size(), indices.size());
-            auto     program = PROGRAM_CACHE["blinnphong"_hs];
-            Material m(program,
+            auto  program = PROGRAM_CACHE["blinnphong"_hs];
+            auto *m       = new BlinnPhongMaterial(program,
                 glm::vec3(diffuse.r, diffuse.g, diffuse.b),
                 glm::vec3(specular.r, specular.g, specular.b));
+
             mp = new MeshPrimitive(std::move(vertices), std::move(indices), m);
         }
     } else {

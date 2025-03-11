@@ -143,6 +143,7 @@ PUBLIC FILE_SET HEADERS
 	src/input/input.hpp
 	src/renderer/bgfx_utils.hpp
 	src/renderer/material.hpp
+	src/renderer/blinn_phong_material.hpp
 	src/renderer/mesh_primitive.hpp
 	src/renderer/primitive.hpp
 	src/renderer/plane_primitive.hpp

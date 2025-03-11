@@ -9,7 +9,7 @@
 class PlanePrimitive : public Primitive<PositionNormalUvVertex>
 {
    public:
-    PlanePrimitive(const Material& _material) : Primitive<PositionNormalUvVertex>(_material)
+    PlanePrimitive(Material* _material) : Primitive<PositionNormalUvVertex>(_material)
     {
         m_vertices = {
             {{+0.5f, +0.0f, -0.5f}, {0.0f, +1.0f, 0.0f}, {0.0f, 1.0f}},

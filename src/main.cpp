@@ -145,6 +145,7 @@ int main()
     debug_renderer.setIsDebugItemDisplayed(rp3d::DebugRenderer::DebugItem::CONTACT_NORMAL, true);
 #endif
 
+    registry.loadShaders();
     registry.spawnLight();
     registry.spawnMap(20, 20);
     registry.loadModels();

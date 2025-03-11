@@ -11,9 +11,10 @@
 #include "components/tile.hpp"
 #include "components/transform3d.hpp"
 #include "core/cache.hpp"
+#include "renderer/blinn_phong_material.hpp"
 #include "renderer/plane_primitive.hpp"
 
-void Registry::spawnMap(uint32_t _w, uint32_t _h)
+void Registry::loadShaders()
 {
     auto [bp, pLoaded] = PROGRAM_CACHE.load("blinnphong"_hs,
         "vs_blinnphong",
@@ -26,7 +27,14 @@ void Registry::spawnMap(uint32_t _w, uint32_t _h)
             {"u_lightDir",    bgfx::UniformType::Vec4   },
             {"u_lightCol",    bgfx::UniformType::Vec4   }
     });
+    auto [c, cLoaded]  = PROGRAM_CACHE.load("simple"_hs,
+        "vs_cubes",
+        "fs_cubes",
+        std::unordered_map<std::string, bgfx::UniformType::Enum>{});
+}
 
+void Registry::spawnMap(uint32_t _w, uint32_t _h)
+{
     auto [diff, dLoaded] =
         TEXTURE_CACHE.load("grass/diffuse"_hs, "assets/textures/TreeTop_COLOR.png");
     auto [sp, sLoaded] =
@@ -46,7 +54,8 @@ void Registry::spawnMap(uint32_t _w, uint32_t _h)
         throw std::runtime_error("could not load grass/specular texture, invalid handle");
     }
 
-    MODEL_CACHE.load("grass_tile"_hs, new PlanePrimitive(Material(shader, diffuse, specular)));
+    MODEL_CACHE.load("grass_tile"_hs,
+        new PlanePrimitive(new BlinnPhongMaterial(shader, diffuse, specular)));
 
     for (uint32_t i = 0; i < _w; ++i) {
         for (uint32_t j = 0; j < _h; ++j) {

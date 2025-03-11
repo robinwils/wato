@@ -60,10 +60,8 @@ class Primitive
    public:
     typedef VL layout_type;
 
-    Primitive(const Material& _material) : m_material(_material), m_is_initialized(false) {}
-    Primitive(const Material&    _material,
-        std::vector<layout_type> vertices,
-        std::vector<uint16_t>    indices)
+    Primitive(Material* _material) : m_material(_material), m_is_initialized(false) {}
+    Primitive(Material* _material, std::vector<layout_type> vertices, std::vector<uint16_t> indices)
         : m_vertices(vertices), m_indices(indices), m_material(_material)
     {
     }
@@ -110,16 +108,15 @@ class Primitive
 
     virtual void submit(uint8_t discard_states = BGFX_DISCARD_ALL) const
     {
-        m_material.submit();
+        m_material->submit();
         assert(m_is_initialized);
 
         bgfx::setVertexBuffer(0, m_vertex_buffer_handle);
         bgfx::setIndexBuffer(m_index_buffer_handle);
 
-        bgfx::submit(0, m_material.shader->program(), bgfx::ViewMode::Default, discard_states);
+        bgfx::submit(0, m_material->shader->program(), bgfx::ViewMode::Default, discard_states);
     }
 
-    Material                            m_material;
     virtual void initializePrimitive()
     {
         assert(!m_vertices.empty());
@@ -139,6 +136,7 @@ class Primitive
    protected:
     std::vector<layout_type> m_vertices;
     std::vector<uint16_t>    m_indices;
+    Material*                m_material;
 
     bool m_is_initialized;
 

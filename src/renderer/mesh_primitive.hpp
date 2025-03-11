@@ -8,7 +8,7 @@ class MeshPrimitive : public Primitive<PositionNormalUvVertex>
    public:
     MeshPrimitive(std::vector<PositionNormalUvVertex> _vertices,
         std::vector<uint16_t>                         _indices,
-        const Material&                               _mat)
+        Material*                                     _mat)
         : Primitive(_mat, _vertices, _indices)
     {
         initializePrimitive();
