@@ -12,3 +12,7 @@ indent_style = tab
 [*.{cpp,cc,cxx,h,hpp,hxx}]
 indent_style = space
 indent_size = 4
+
+[{CMakeLists.txt,*.cmake,*.rst}]
+indent_size = 2
+indent_style = space

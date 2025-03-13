@@ -116,7 +116,7 @@ void ActionSystem::build_tower(BuildTower bt)
     m_registry.emplace<RigidBody>(tower, rb);
     m_registry.emplace<Health>(tower, 100.0f);
 
-#ifdef WATO_DEBUG
+#if WATO_DEBUG
     rb->setIsDebugEnabled(true);
 #endif
     m_ghost_tower = entt::null;

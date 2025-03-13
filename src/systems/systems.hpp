@@ -1,6 +1,7 @@
 #pragma once
 #include <core/registry.hpp>
 
+#include "config.h"
 #include "core/action.hpp"
 #include "entt/entity/entity.hpp"
 
