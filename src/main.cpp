@@ -28,6 +28,7 @@
 #include <imgui_helper.h>
 
 #include <core/physics.hpp>
+#include <renderer/physics.hpp>
 #include <core/registry.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -142,24 +143,6 @@ int main()
 
     Registry registry;
 
-    /*
-    // Create vertex stream declaration.
-    PosColorVertex::init();
-
-    // Create static vertex buffer.
-    bgfx::VertexBufferHandle vbh = bgfx::createVertexBuffer(
-        // Static data can be passed with bgfx::makeRef
-        bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices))
-        , PosColorVertex::ms_layout
-    );
-
-    // Create static index buffer for triangle list rendering.
-    bgfx::IndexBufferHandle ibh = bgfx::createIndexBuffer(
-        // Static data can be passed with bgfx::makeRef
-        bgfx::makeRef(s_cubeTriList, sizeof(s_cubeTriList))
-    );
-    */
-
     entt::dispatcher event_dispatcher;
     registry.ctx().emplace<entt::dispatcher &>(event_dispatcher);
 
@@ -194,11 +177,9 @@ int main()
     rp3d::DebugRenderer &debug_renderer = phy_world->getDebugRenderer();
 
     // Select the contact points and contact normals to be displayed
+    registry.ctx().emplace<DebugRendererParams>(false, false);
     debug_renderer.setIsDebugItemDisplayed(rp3d::DebugRenderer::DebugItem::CONTACT_POINT, true);
     debug_renderer.setIsDebugItemDisplayed(rp3d::DebugRenderer::DebugItem::CONTACT_NORMAL, true);
-    // debug_renderer.setIsDebugItemDisplayed(rp3d::DebugRenderer::DebugItem::COLLISION_SHAPE,
-    // true);
-    debug_renderer.setIsDebugItemDisplayed(rp3d::DebugRenderer::DebugItem::COLLIDER_AABB, true);
 #endif
 
     registry.loadShaders();

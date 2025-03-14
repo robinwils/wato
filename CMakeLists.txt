@@ -137,6 +137,7 @@ target_sources(wato
     src/renderer/blinn_phong_material.hpp
     src/renderer/material.hpp
     src/renderer/mesh_primitive.hpp
+    src/renderer/physics.hpp
     src/renderer/plane_primitive.hpp
     src/renderer/primitive.hpp
     src/systems/systems.hpp
