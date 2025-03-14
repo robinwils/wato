@@ -99,7 +99,7 @@ int main()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     // macos: glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
-    GLFWwindow* window = glfwCreateWindow(1024, 768, "wato", nullptr, nullptr);
+    GLFWwindow *window = glfwCreateWindow(1024, 768, "wato", nullptr, nullptr);
     if (window == NULL) {
         std::cout << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
@@ -114,7 +114,7 @@ int main()
 
 #if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
     init.platformData.ndt = glfwGetX11Display();
-    init.platformData.nwh = (void*)(uintptr_t)glfwGetX11Window(window);
+    init.platformData.nwh = (void *)(uintptr_t)glfwGetX11Window(window);
 #elif BX_PLATFORM_OSX
     init.platformData.nwh = glfwGetCocoaWindow(window);
 #elif BX_PLATFORM_WINDOWS
@@ -161,22 +161,22 @@ int main()
     */
 
     entt::dispatcher event_dispatcher;
-    registry.ctx().emplace<entt::dispatcher&>(event_dispatcher);
+    registry.ctx().emplace<entt::dispatcher &>(event_dispatcher);
 
     imguiCreate();
     Input input(window);
     input.init();
     glfwSetWindowUserPointer(window, &registry);
-    registry.ctx().emplace<Input&>(input);
+    registry.ctx().emplace<Input &>(input);
 
     ActionSystem action_system(registry, width, height);
     action_system.init_listeners();
 
-    auto& phy_common = registry.ctx().emplace<rp3d::PhysicsCommon>();
-    registry.ctx().emplace<rp3d::PhysicsWorld*>(phy_common.createPhysicsWorld());
+    auto &phy_common = registry.ctx().emplace<rp3d::PhysicsCommon>();
+    registry.ctx().emplace<rp3d::PhysicsWorld *>(phy_common.createPhysicsWorld());
 
     // Create the default logger
-    rp3d::DefaultLogger* logger = phy_common.createDefaultLogger();
+    rp3d::DefaultLogger *logger = phy_common.createDefaultLogger();
 
     uint log_level = static_cast<uint>(static_cast<uint>(rp3d::Logger::Level::Warning)
                                        | static_cast<uint>(rp3d::Logger::Level::Error)
@@ -189,9 +189,9 @@ int main()
     phy_common.setLogger(logger);
 
 #if WATO_DEBUG
-    auto* phy_world = registry.ctx().get<rp3d::PhysicsWorld*>();
+    auto *phy_world = registry.ctx().get<rp3d::PhysicsWorld *>();
     phy_world->setIsDebugRenderingEnabled(true);
-    rp3d::DebugRenderer& debug_renderer = phy_world->getDebugRenderer();
+    rp3d::DebugRenderer &debug_renderer = phy_world->getDebugRenderer();
 
     // Select the contact points and contact normals to be displayed
     debug_renderer.setIsDebugItemDisplayed(rp3d::DebugRenderer::DebugItem::CONTACT_POINT, true);
