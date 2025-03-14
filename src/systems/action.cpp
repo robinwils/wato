@@ -98,7 +98,7 @@ void ActionSystem::build_tower(BuildTower bt)
     auto*       phy_world  = m_registry.ctx().get<rp3d::PhysicsWorld*>();
     auto&       phy_common = m_registry.ctx().get<rp3d::PhysicsCommon>();
     auto*       rb         = phy_world->createRigidBody(t.to_rp3d());
-    auto*       box        = phy_common.createBoxShape(rp3d::Vector3(0.5f, 1.0f, 0.5f));
+    auto*       box        = phy_common.createBoxShape(rp3d::Vector3(0.35f, 0.65f, 0.35f));
 
     rb->setType(rp3d::BodyType::STATIC);
     rb->addCollider(box, rp3d::Transform::identity());
