@@ -165,6 +165,8 @@ target_sources(wato
 
 target_include_directories(wato PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
 
+target_link_options(wato PRIVATE -rdynamic)
+
 # Link libraries
 target_link_libraries(wato
   bgfxDebug
