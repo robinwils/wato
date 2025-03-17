@@ -44,7 +44,6 @@ void processBuildInputs(Input& input, entt::dispatcher& dispatcher)
         }
 
         if (input.isMouseButtonPressed(Mouse::Left)) {
-            input.m_tower_placement_mode = false;
             dispatcher.trigger(BuildTower{});
         }
     }

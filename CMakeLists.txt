@@ -126,6 +126,7 @@ target_sources(wato
     src/components/transform3d.hpp
     src/core/action.hpp
     src/core/cache.hpp
+    src/core/event_handler.hpp
     src/core/model_loader.hpp
     src/core/ray.hpp
     src/core/registry.hpp
@@ -146,6 +147,7 @@ target_sources(wato
     deps/imgui/imgui_draw.cpp
     deps/imgui/imgui_tables.cpp
     deps/imgui/imgui_widgets.cpp
+    src/core/event_handler.cpp
     src/core/model_loader.cpp
     src/core/ray.cpp
     src/core/registry.cpp

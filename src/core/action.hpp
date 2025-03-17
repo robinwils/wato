@@ -21,3 +21,6 @@ struct BuildTower {
 struct TowerPlacementMode {
     bool enable;
 };
+
+struct TowerCreated {
+};

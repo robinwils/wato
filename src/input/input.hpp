@@ -198,6 +198,8 @@ class Input
     void setKey(Keyboard::Key _key, Button::Action _state);
     void setKeyModifier(Keyboard::Key _key, ModifierKey _mod);
 
+    void exitTowerPlacementMode() { m_tower_placement_mode = false; }
+
     bool isMouseButtonPressed(Mouse::Button _button) const
     {
         return mouseState.buttons[_button].action == Button::Press;

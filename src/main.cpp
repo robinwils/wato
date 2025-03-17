@@ -12,6 +12,7 @@
 
 #include "bgfx/defines.h"
 #include "components/physics.hpp"
+#include "core/event_handler.hpp"
 
 #if BX_PLATFORM_LINUX
 #define GLFW_EXPOSE_NATIVE_X11
@@ -153,10 +154,13 @@ int main()
     registry.ctx().emplace<Input &>(input);
 
     ActionSystem action_system(registry, width, height);
-    action_system.init_listeners();
+    action_system.init_listeners(input);
 
     auto &phy = registry.ctx().emplace<Physics>();
     phy.world = phy.common.createPhysicsWorld();
+
+    EventHandler eh(registry, action_system);
+    phy.world->setEventListener(&eh);
 
     // Create the default logger
     rp3d::DefaultLogger *logger = phy.common.createDefaultLogger();
