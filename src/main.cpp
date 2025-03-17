@@ -11,6 +11,7 @@
 #include <iostream>
 
 #include "bgfx/defines.h"
+#include "components/physics.hpp"
 
 #if BX_PLATFORM_LINUX
 #define GLFW_EXPOSE_NATIVE_X11
@@ -27,13 +28,12 @@
 
 #include <imgui_helper.h>
 
-#include <core/physics.hpp>
-#include <renderer/physics.hpp>
 #include <core/registry.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <input/input.hpp>
 #include <renderer/bgfx_utils.hpp>
+#include <renderer/physics.hpp>
 #include <renderer/plane_primitive.hpp>
 #include <systems/systems.hpp>
 
@@ -155,11 +155,11 @@ int main()
     ActionSystem action_system(registry, width, height);
     action_system.init_listeners();
 
-    auto &phy_common = registry.ctx().emplace<rp3d::PhysicsCommon>();
-    registry.ctx().emplace<rp3d::PhysicsWorld *>(phy_common.createPhysicsWorld());
+    auto &phy = registry.ctx().emplace<Physics>();
+    phy.world = phy.common.createPhysicsWorld();
 
     // Create the default logger
-    rp3d::DefaultLogger *logger = phy_common.createDefaultLogger();
+    rp3d::DefaultLogger *logger = phy.common.createDefaultLogger();
 
     uint log_level = static_cast<uint>(static_cast<uint>(rp3d::Logger::Level::Warning)
                                        | static_cast<uint>(rp3d::Logger::Level::Error)
@@ -169,12 +169,11 @@ int main()
     logger->addStreamDestination(std::cout, log_level, rp3d::DefaultLogger::Format::Text);
 
     // Set the logger
-    phy_common.setLogger(logger);
+    phy.common.setLogger(logger);
 
 #if WATO_DEBUG
-    auto *phy_world = registry.ctx().get<rp3d::PhysicsWorld *>();
-    phy_world->setIsDebugRenderingEnabled(true);
-    rp3d::DebugRenderer &debug_renderer = phy_world->getDebugRenderer();
+    phy.world->setIsDebugRenderingEnabled(true);
+    rp3d::DebugRenderer &debug_renderer = phy.world->getDebugRenderer();
 
     // Select the contact points and contact normals to be displayed
     registry.ctx().emplace<DebugRendererParams>(false, false);

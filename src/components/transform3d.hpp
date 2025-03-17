@@ -4,9 +4,7 @@
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/string_cast.hpp>
 
-#include "core/physics.hpp"
-#include "reactphysics3d/mathematics/Transform.h"
-#include "reactphysics3d/mathematics/Vector3.h"
+#include "reactphysics3d/reactphysics3d.h"
 
 struct Transform3D {
     glm::vec3 position;
@@ -16,7 +14,8 @@ struct Transform3D {
     rp3d::Transform to_rp3d() const
     {
         auto q = glm::quat_cast(orientation());
-        return rp3d::Transform(RP3D_VEC3(position), rp3d::Quaternion(q.x, q.y, q.z, q.w));
+        return rp3d::Transform(rp3d::Vector3(position.x, position.y, position.z),
+            rp3d::Quaternion(q.x, q.y, q.z, q.w));
     }
 
     glm::mat4 orientation() const

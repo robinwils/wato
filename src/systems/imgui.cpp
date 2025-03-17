@@ -4,6 +4,7 @@
 
 #include "components/camera.hpp"
 #include "components/light_source.hpp"
+#include "components/physics.hpp"
 #include "components/transform3d.hpp"
 #include "config.h"
 #include "core/registry.hpp"
@@ -49,8 +50,8 @@ void renderImgui(Registry& registry, float width, float height)
 #if WATO_DEBUG
     ImGui::Text("Physics info");
 
-    auto*                phy_world      = registry.ctx().get<rp3d::PhysicsWorld*>();
-    rp3d::DebugRenderer& debug_renderer = phy_world->getDebugRenderer();
+    auto&                phy            = registry.ctx().get<Physics>();
+    rp3d::DebugRenderer& debug_renderer = phy.world->getDebugRenderer();
     auto                 n_tri          = debug_renderer.getNbTriangles();
     auto                 n_lines        = debug_renderer.getNbLines();
     auto&                params         = registry.ctx().get<DebugRendererParams>();

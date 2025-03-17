@@ -127,7 +127,6 @@ target_sources(wato
     src/core/action.hpp
     src/core/cache.hpp
     src/core/model_loader.hpp
-    src/core/physics.hpp
     src/core/ray.hpp
     src/core/registry.hpp
     src/core/sys.hpp

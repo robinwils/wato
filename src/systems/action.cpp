@@ -94,23 +94,14 @@ void ActionSystem::build_tower(BuildTower bt)
     auto tower = m_ghost_tower;
 
     BX_ASSERT(m_registry.valid(tower), "ghost tower must be valid");
-    const auto& t          = m_registry.get<Transform3D>(tower);
-    auto*       phy_world  = m_registry.ctx().get<rp3d::PhysicsWorld*>();
-    auto&       phy_common = m_registry.ctx().get<rp3d::PhysicsCommon>();
-    auto*       rb         = phy_world->createRigidBody(t.to_rp3d());
-    auto*       box        = phy_common.createBoxShape(rp3d::Vector3(0.35f, 0.65f, 0.35f));
+    auto& phy = m_registry.ctx().get<Physics>();
 
-    rb->setType(rp3d::BodyType::STATIC);
-    rb->addCollider(box, rp3d::Transform::identity());
-
-    m_registry.emplace<RigidBody>(tower, rb);
+    m_registry.emplace_or_replace<RigidBody>(tower,
+        phy.createCollider(m_registry.get<Transform3D>(tower), rp3d::BodyType::STATIC));
     m_registry.emplace<Health>(tower, 100.0f);
     m_registry.remove<PlacementMode>(tower);
     m_registry.remove<ImguiDrawable>(tower);
 
-#if WATO_DEBUG
-    rb->setIsDebugEnabled(true);
-#endif
     m_ghost_tower = entt::null;
 }
 

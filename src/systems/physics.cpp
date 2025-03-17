@@ -1,3 +1,5 @@
+#include "components/physics.hpp"
+
 #include <reactphysics3d/reactphysics3d.h>
 
 #include <cstring>
@@ -17,7 +19,7 @@
 
 void physicsSystem(Registry& registry, double delta_time)
 {
-    auto* phy_world = registry.ctx().get<rp3d::PhysicsWorld*>();
+    auto& phy = registry.ctx().get<Physics>();
 
     // Constant physics time step, TODO: as static const for now
     static const double time_step   = 1.0f / 60.0f;
@@ -30,7 +32,7 @@ void physicsSystem(Registry& registry, double delta_time)
     // one or several physics steps
     while (accumulator >= time_step) {
         // Update the Dynamics world with a constant time step
-        phy_world->update(time_step);
+        phy.world->update(time_step);
 
         // Decrease the accumulated time
         accumulator -= time_step;
@@ -63,8 +65,8 @@ bgfx::VertexLayout PosColor::ms_layout;
 
 void physicsDebugRenderSystem(Registry& registry)
 {
-    auto*                phy_world      = registry.ctx().get<rp3d::PhysicsWorld*>();
-    rp3d::DebugRenderer& debug_renderer = phy_world->getDebugRenderer();
+    auto&                phy            = registry.ctx().get<Physics>();
+    rp3d::DebugRenderer& debug_renderer = phy.world->getDebugRenderer();
 
     PosColor::init();
 
