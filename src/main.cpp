@@ -165,24 +165,17 @@ int main()
     // Create the default logger
     rp3d::DefaultLogger *logger = phy.common.createDefaultLogger();
 
-    uint log_level = static_cast<uint>(static_cast<uint>(rp3d::Logger::Level::Warning)
-                                       | static_cast<uint>(rp3d::Logger::Level::Error)
-                                       | static_cast<uint>(rp3d::Logger::Level::Information));
-
     // Output the logs into the standard output
-    logger->addStreamDestination(std::cout, log_level, rp3d::DefaultLogger::Format::Text);
+    logger->addStreamDestination(std::cout,
+        static_cast<uint>(rp3d::Logger::Level::Error),
+        rp3d::DefaultLogger::Format::Text);
 
     // Set the logger
     phy.common.setLogger(logger);
+    registry.ctx().emplace<PhysicsParams>(false, false, true, logger);
 
 #if WATO_DEBUG
     phy.world->setIsDebugRenderingEnabled(true);
-    rp3d::DebugRenderer &debug_renderer = phy.world->getDebugRenderer();
-
-    // Select the contact points and contact normals to be displayed
-    registry.ctx().emplace<DebugRendererParams>(false, false);
-    debug_renderer.setIsDebugItemDisplayed(rp3d::DebugRenderer::DebugItem::CONTACT_POINT, true);
-    debug_renderer.setIsDebugItemDisplayed(rp3d::DebugRenderer::DebugItem::CONTACT_NORMAL, true);
 #endif
 
     registry.loadShaders();

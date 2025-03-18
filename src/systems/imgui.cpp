@@ -47,14 +47,34 @@ void renderImgui(Registry& registry, float width, float height)
         }
     }
 
-#if WATO_DEBUG
-    ImGui::Text("Physics info");
+    auto& params = registry.ctx().get<PhysicsParams>();
+    auto& phy    = registry.ctx().get<Physics>();
+    auto* logger = phy.common.getLogger();
 
-    auto&                phy            = registry.ctx().get<Physics>();
+    ImGui::Text("Physics info");
+    if (ImGui::Checkbox("Information Logs", &params.info_logs)
+        || ImGui::Checkbox("Warning Logs", &params.warning_logs)
+        || ImGui::Checkbox("Error logs", &params.error_logs)) {
+        uint log_level = 0;
+        if (params.info_logs) {
+            log_level |= static_cast<uint>(rp3d::Logger::Level::Information);
+        }
+        if (params.warning_logs) {
+            log_level |= static_cast<uint>(rp3d::Logger::Level::Warning);
+        }
+        if (params.error_logs) {
+            log_level |= static_cast<uint>(rp3d::Logger::Level::Error);
+        }
+        params.logger->removeAllDestinations();
+        params.logger->addStreamDestination(std::cout,
+            log_level,
+            rp3d::DefaultLogger::Format::Text);
+    }
+
+#if WATO_DEBUG
     rp3d::DebugRenderer& debug_renderer = phy.world->getDebugRenderer();
     auto                 n_tri          = debug_renderer.getNbTriangles();
     auto                 n_lines        = debug_renderer.getNbLines();
-    auto&                params         = registry.ctx().get<DebugRendererParams>();
 
     ImGui::Text("%d debug lines and %d debug triangles", n_lines, n_tri);
     ImGui::Checkbox("Collider Shapes", &params.render_shapes);
@@ -64,6 +84,10 @@ void renderImgui(Registry& registry, float width, float height)
         params.render_shapes);
     debug_renderer.setIsDebugItemDisplayed(rp3d::DebugRenderer::DebugItem::COLLIDER_AABB,
         params.render_aabb);
+    debug_renderer.setIsDebugItemDisplayed(rp3d::DebugRenderer::DebugItem::CONTACT_POINT,
+        params.render_contact_points);
+    debug_renderer.setIsDebugItemDisplayed(rp3d::DebugRenderer::DebugItem::CONTACT_NORMAL,
+        params.render_contact_normals);
 #endif
 
     imguiEndFrame();
