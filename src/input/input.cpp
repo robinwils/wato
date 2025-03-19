@@ -616,17 +616,15 @@ static void scrollCb(GLFWwindow* _window, double _xoffset, double _yoffset)
     input.setMouseScroll(_xoffset, _yoffset);
 }
 
-Input::Input(GLFWwindow* _window) : mouseState(), m_window(_window), m_tower_placement_mode(false)
-{
-}
+Input::Input(GLFWwindow* _window) : mouseState(), mWindow(_window), m_tower_placement_mode(false) {}
 
 void Input::init()
 {
-    glfwSetKeyCallback(m_window, keyCb);
+    glfwSetKeyCallback(mWindow, keyCb);
     // glfwSetCharCallback(m_window[0], charCb);
-    glfwSetScrollCallback(m_window, scrollCb);
-    glfwSetCursorPosCallback(m_window, cursorPosCb);
-    glfwSetMouseButtonCallback(m_window, mouseButtonCb);
+    glfwSetScrollCallback(mWindow, scrollCb);
+    glfwSetCursorPosCallback(mWindow, cursorPosCb);
+    glfwSetMouseButtonCallback(mWindow, mouseButtonCb);
     // glfwSetWindowSizeCallback(m_window[0], windowSizeCb);
     // glfwSetDropCallback(m_window[0], dropFileCb);
 }

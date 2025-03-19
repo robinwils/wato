@@ -159,8 +159,8 @@ int main()
     auto &phy = registry.ctx().emplace<Physics>();
     phy.world = phy.common.createPhysicsWorld();
 
-    EventHandler eh(registry, action_system);
-    phy.world->setEventListener(&eh);
+    EventHandler eventHandler(&registry, &action_system);
+    phy.world->setEventListener(&eventHandler);
 
     // Create the default logger
     rp3d::DefaultLogger *logger = phy.common.createDefaultLogger();

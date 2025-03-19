@@ -8,27 +8,28 @@ void EventHandler::onContact(const rp3d::CollisionCallback::CallbackData& callba
 
 void EventHandler::onTrigger(const rp3d::OverlapCallback::CallbackData& callbackData)
 {
-    auto& dispatcher = m_registry.ctx().get<entt::dispatcher&>();
+    auto& dispatcher = mRegistry->ctx().get<entt::dispatcher&>();
 
     for (uint32_t pairIdx = 0; pairIdx < callbackData.getNbOverlappingPairs(); ++pairIdx) {
         const auto& pair    = callbackData.getOverlappingPair(pairIdx);
-        const auto* entity1 = (entt::entity*)pair.getBody1()->getUserData();
-        const auto* entity2 = (entt::entity*)pair.getBody2()->getUserData();
+        const auto* entity1 = static_cast<entt::entity*>(pair.getBody1()->getUserData());
+        const auto* entity2 = static_cast<entt::entity*>(pair.getBody2()->getUserData());
 
         // check if we are triggering the placement mode's ghost tower
-        auto placement = m_registry.view<PlacementMode>();
+        auto placement = mRegistry->view<PlacementMode>();
         bool placementModeTrigger =
-            (entity1 && m_registry.valid(*entity1) && placement->contains(*entity1))
-            || (entity2 && m_registry.valid(*entity2) && placement->contains(*entity2));
+            ((entity1 != nullptr) && mRegistry->valid(*entity1) && placement->contains(*entity1))
+            || ((entity2 != nullptr) && mRegistry->valid(*entity2)
+                && placement->contains(*entity2));
 
         if (placementModeTrigger) {
             switch (pair.getEventType()) {
                 case rp3d::OverlapCallback::OverlapPair::EventType::OverlapStart:
                 case rp3d::OverlapCallback::OverlapPair::EventType::OverlapStay:
-                    m_action_system.setCanBuild(false);
+                    mActionSystem->setCanBuild(false);
                     break;
                 case rp3d::OverlapCallback::OverlapPair::EventType::OverlapExit:
-                    m_action_system.setCanBuild(true);
+                    mActionSystem->setCanBuild(true);
                     break;
             }
         }

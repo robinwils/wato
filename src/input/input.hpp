@@ -260,7 +260,7 @@ class Input
     bool          m_tower_placement_mode;
 
    private:
-    GLFWwindow* m_window;
+    GLFWwindow* mWindow;
 };
 
 static void cursorPosCb(GLFWwindow* _window, double _xpos, double _ypos);
