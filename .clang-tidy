@@ -1,5 +1,20 @@
 ---
-Checks:          'clang-diagnostic-*,clang-analyzer-*,llvm-*'
+Checks: "
+        cppcoreguidelines-init-variables
+        cppcoreguidelines-init-variables
+        -abseil-*,
+        -altera-*,
+        -android-*,
+        -fuchsia-*,
+        -google-*,
+        -llvm*,
+        -modernize-use-trailing-return-type,
+        -zircon-*,
+        -readability-*,
+        -cppcoreguidelines-non-private-member-variables-in-classes,
+        -misc-non-private-member-variables-in-classes,
+        readability-identifier-naming,
+"
 WarningsAsErrors: ''
 HeaderFileExtensions:
   - ''
@@ -29,6 +44,23 @@ CheckOptions:
   llvm-else-after-return.WarnOnConditionVariables: 'false'
   llvm-else-after-return.WarnOnUnfixable: 'false'
   llvm-qualified-auto.AddConstToQualified: 'false'
+  readability-identifier-naming.ClassCase: CamelCase
+  readability-identifier-naming.MemberCase: CamelCase
+  readability-identifier-naming.PrivateMemberPrefix: 'm'
+  readability-identifier-naming.ProtectedMemberCase: CamelCase
+  readability-identifier-naming.ProtectedMemberPrefix: 'm'
+  readability-identifier-naming.ConstantCase: UPPER_CASE
+  readability-identifier-naming.EnumConstantCase: CamelCase
+  readability-identifier-naming.ConstantParameterCase: CamelCase
+  readability-identifier-naming.ConstantParameterPrefix: 'a'
+  readability-identifier-naming.LocalConstantCase: camelBack
+  readability-identifier-naming.ParameterCase: CamelCase
+  readability-identifier-naming.ParameterPrefix: 'a'
+  readability-identifier-naming.MacroDefinitionCase: UPPER_CASE
+  readability-identifier-naming.MacroDefinitionPrefix: 'WATO_'
+  readability-identifier-naming.MethodCase: CamelCase
+  readability-identifier-naming.PrivateMethodCase: camelBack
+  readability-identifier-naming.VariableCase: camelBack
 SystemHeaders:   false
 ...
 
