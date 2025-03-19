@@ -6,13 +6,13 @@
 #include "components/transform3d.hpp"
 #include "core/registry.hpp"
 
-void cameraSystem(Registry& registry, float width, float height)
+void cameraSystem(Registry& aRegistry, float aWidth, float aHeight)
 {
-    for (auto&& [entity, camera, transform] : registry.view<Camera, Transform3D>().each()) {
-        const auto& viewMat = camera.view(transform.position);
-        const auto& proj    = camera.proj(width, height);
+    for (auto&& [entity, camera, transform] : aRegistry.view<Camera, Transform3D>().each()) {
+        const auto& viewMat = camera.View(transform.Position);
+        const auto& proj    = camera.Projection(aWidth, aHeight);
         bgfx::setViewTransform(0, glm::value_ptr(viewMat), glm::value_ptr(proj));
-        bgfx::setViewRect(0, 0, 0, uint16_t(width), uint16_t(height));
+        bgfx::setViewRect(0, 0, 0, uint16_t(aWidth), uint16_t(aHeight));
 
         // just because I know there is only 1 camera (for now)
         break;

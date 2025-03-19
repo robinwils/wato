@@ -4,6 +4,7 @@
 
 #include <entt/core/hashed_string.hpp>
 #include <glm/gtx/string_cast.hpp>
+#include <span>
 #include <stdexcept>
 #include <vector>
 
@@ -15,20 +16,23 @@
 
 using namespace entt::literals;
 
-std::vector<entt::hashed_string> processMaterialTextures(const aiMaterial *material,
-    aiTextureType                                                          type,
-    aiString                                                              *path)
+std::vector<entt::hashed_string> processMaterialTextures(const aiMaterial *aMaterial,
+    aiTextureType                                                          aType,
+    aiString                                                              *aPath)
 {
     std::vector<entt::hashed_string> textures;
-    for (unsigned int i = 0; i < material->GetTextureCount(type); ++i) {
-        auto res = material->GetTexture(type, i, path);
+    for (unsigned int i = 0; i < aMaterial->GetTextureCount(aType); ++i) {
+        auto res = aMaterial->GetTexture(aType, i, aPath);
         if (AI_SUCCESS != res) {
             throw std::runtime_error("could not get texture");
         }
-        auto hs           = entt::hashed_string{path->C_Str()};
-        auto [it, loaded] = TEXTURE_CACHE.load(hs, path->C_Str());
-        auto diffuse      = TEXTURE_CACHE[hs];
+        auto hs          = entt::hashed_string{aPath->C_Str()};
+        auto [_, loaded] = WATO_TEXTURE_CACHE.load(hs, aPath->C_Str());
+        if (!loaded) {
+            throw std::runtime_error("could not load model material texture");
+        }
 
+        auto diffuse = WATO_TEXTURE_CACHE[hs];
         if (!bgfx::isValid(diffuse)) {
             throw std::runtime_error("could not load model material texture, invalid handle");
         }
@@ -39,62 +43,62 @@ std::vector<entt::hashed_string> processMaterialTextures(const aiMaterial *mater
     return textures;
 }
 
-Primitive<PositionNormalUvVertex> *processMesh(const aiMesh *mesh, const aiScene *scene)
+Primitive<PositionNormalUvVertex> *processMesh(const aiMesh *aMesh, const aiScene *aScene)
 {
     std::vector<PositionNormalUvVertex> vertices;
-    for (unsigned int i = 0; i < mesh->mNumVertices; ++i) {
-        PositionNormalUvVertex vertex;
-        vertex.position.x = mesh->mVertices[i].x;
-        vertex.position.y = mesh->mVertices[i].y;
-        vertex.position.z = mesh->mVertices[i].z;
+    for (unsigned int i = 0; i < aMesh->mNumVertices; ++i) {
+        PositionNormalUvVertex vertex{};
+        vertex.Position.x = aMesh->mVertices[i].x;
+        vertex.Position.y = aMesh->mVertices[i].y;
+        vertex.Position.z = aMesh->mVertices[i].z;
 
-        vertex.normal.x = mesh->mNormals[i].x;
-        vertex.normal.y = mesh->mNormals[i].y;
-        vertex.normal.z = mesh->mNormals[i].z;
+        vertex.Normal.x = aMesh->mNormals[i].x;
+        vertex.Normal.y = aMesh->mNormals[i].y;
+        vertex.Normal.z = aMesh->mNormals[i].z;
 
-        if (mesh->mTextureCoords[0]) {
-            vertex.uv.x = mesh->mTextureCoords[0][i].x;
-            vertex.uv.y = mesh->mTextureCoords[0][i].y;
+        if (aMesh->mTextureCoords[0]) {
+            vertex.Uv.x = aMesh->mTextureCoords[0][i].x;
+            vertex.Uv.y = aMesh->mTextureCoords[0][i].y;
         }
         vertices.push_back(vertex);
     }
 
     std::vector<uint16_t> indices;
-    for (unsigned int i = 0; i < mesh->mNumFaces; ++i) {
-        auto face = mesh->mFaces[i];
+    for (unsigned int i = 0; i < aMesh->mNumFaces; ++i) {
+        auto face = aMesh->mFaces[i];
         for (unsigned int j = 0; j < face.mNumIndices; ++j) {
             indices.push_back(face.mIndices[j]);
         }
     }
 
-    MeshPrimitive *mp;
-    if (mesh->mMaterialIndex >= 0) {
-        auto        diffuse_path  = aiString("texture_diffuse");
-        auto        specular_path = aiString("texture_specular");
-        const auto *material      = scene->mMaterials[mesh->mMaterialIndex];
+    MeshPrimitive *mp = nullptr;
+    if (aMesh->mMaterialIndex >= 0) {
+        auto        diffusePath  = aiString("texture_diffuse");
+        auto        specularPath = aiString("texture_specular");
+        const auto *material     = aScene->mMaterials[aMesh->mMaterialIndex];
 
-        auto textures = processMaterialTextures(material, aiTextureType_DIFFUSE, &diffuse_path);
-        auto spec_textures =
-            processMaterialTextures(material, aiTextureType_SPECULAR, &specular_path);
+        auto textures = processMaterialTextures(material, aiTextureType_DIFFUSE, &diffusePath);
+        auto specTextures =
+            processMaterialTextures(material, aiTextureType_SPECULAR, &specularPath);
 
-        if (textures.size() > 0 || spec_textures.size() > 0) {
-            DBG("mesh %s has %d material textures", mesh->mName.C_Str(), textures.size());
-            textures.reserve(textures.size() + spec_textures.size());
-            textures.insert(textures.end(), spec_textures.begin(), spec_textures.end());
+        if (textures.size() > 0 || specTextures.size() > 0) {
+            DBG("mesh %s has %d material textures", aMesh->mName.C_Str(), textures.size());
+            textures.reserve(textures.size() + specTextures.size());
+            textures.insert(textures.end(), specTextures.begin(), specTextures.end());
             throw std::runtime_error("not implemented");
         } else {
             // no material textures, get material info via properties
             aiColor3D diffuse;
             if (material->Get(AI_MATKEY_COLOR_DIFFUSE, diffuse) != AI_SUCCESS) {
-                DBG("failed to get diffuse color for mesh %s", mesh->mName.C_Str());
+                DBG("failed to get diffuse color for mesh %s", aMesh->mName.C_Str());
             }
             aiColor3D specular;
             if (material->Get(AI_MATKEY_COLOR_SPECULAR, specular) != AI_SUCCESS) {
-                DBG("failed to get specular color for mesh %s", mesh->mName.C_Str());
+                DBG("failed to get specular color for mesh %s", aMesh->mName.C_Str());
             }
 
             DBG("creating mesh with %d vertices and %d indices", vertices.size(), indices.size());
-            auto  program = PROGRAM_CACHE["blinnphong"_hs];
+            auto  program = WATO_PROGRAM_CACHE["blinnphong"_hs];
             auto *m       = new BlinnPhongMaterial(program,
                 glm::vec3(diffuse.r, diffuse.g, diffuse.b),
                 glm::vec3(specular.r, specular.g, specular.b));
@@ -102,23 +106,23 @@ Primitive<PositionNormalUvVertex> *processMesh(const aiMesh *mesh, const aiScene
             mp = new MeshPrimitive(std::move(vertices), std::move(indices), m);
         }
     } else {
-        DBG("no material in mesh %s", mesh->mName.C_Str());
+        DBG("no material in mesh %s", aMesh->mName.C_Str());
         throw std::runtime_error("no material in mesh");
     }
     return mp;
 }
 
-void processMetaData(const aiNode *node, const aiScene *scene)
+void processMetaData(const aiNode *aNode, const aiScene * /*aScene*/)
 {
-    if (!node->mMetaData) {
-        DBG("node %s metadata is null", node->mName.C_Str());
+    if (!aNode->mMetaData) {
+        DBG("node %s metadata is null", aNode->mName.C_Str());
         return;
     }
-    DBG("node %s has %d metadata", node->mName.C_Str(), node->mMetaData->mNumProperties);
-    auto *mdata = node->mMetaData;
-    for (unsigned int prop_idx = 0; prop_idx < mdata->mNumProperties; ++prop_idx) {
-        auto &key = mdata->mKeys[prop_idx];
-        auto &val = mdata->mValues[prop_idx];
+    DBG("node %s has %d metadata", aNode->mName.C_Str(), aNode->mMetaData->mNumProperties);
+    auto *mdata = aNode->mMetaData;
+    for (unsigned int propIdx = 0; propIdx < mdata->mNumProperties; ++propIdx) {
+        auto &key = mdata->mKeys[propIdx];
+        auto &val = mdata->mValues[propIdx];
 
         switch (val.mType) {
             case AI_BOOL:
@@ -161,12 +165,12 @@ void processMetaData(const aiNode *node, const aiScene *scene)
     }
 }
 
-std::vector<Primitive<PositionNormalUvVertex> *> processNode(const aiNode *node,
-    const aiScene                                                         *scene)
+std::vector<Primitive<PositionNormalUvVertex> *> processNode(const aiNode *aNode,
+    const aiScene                                                         *aScene)
 {
-    auto t         = node->mTransformation;
+    auto t         = aNode->mTransformation;
     auto transform = glm::identity<glm::mat4>();
-    if (!node->mTransformation.IsIdentity()) {
+    if (!aNode->mTransformation.IsIdentity()) {
         transform = glm::mat4(t.a1,
             t.a2,
             t.a3,
@@ -184,20 +188,20 @@ std::vector<Primitive<PositionNormalUvVertex> *> processNode(const aiNode *node,
             t.d3,
             t.d4);
         DBG("node %s has transformation %s",
-            node->mName.C_Str(),
+            aNode->mName.C_Str(),
             glm::to_string(transform).c_str());
     } else {
-        DBG("node %s has identity transform", node->mName.C_Str());
+        DBG("node %s has identity transform", aNode->mName.C_Str());
     }
 
-    processMetaData(node, scene);
+    processMetaData(aNode, aScene);
     std::vector<Primitive<PositionNormalUvVertex> *> meshes;
-    for (unsigned int i = 0; i < node->mNumMeshes; ++i) {
-        auto *mesh = processMesh(scene->mMeshes[node->mMeshes[i]], scene);
+    for (unsigned int i = 0; i < aNode->mNumMeshes; ++i) {
+        auto *mesh = processMesh(aScene->mMeshes[aNode->mMeshes[i]], aScene);
         meshes.push_back(mesh);
     }
-    for (unsigned int i = 0; i < node->mNumChildren; i++) {
-        auto child_meshes = processNode(node->mChildren[i], scene);
+    for (unsigned int i = 0; i < aNode->mNumChildren; i++) {
+        auto child_meshes = processNode(aNode->mChildren[i], aScene);
         meshes.insert(meshes.end(), child_meshes.begin(), child_meshes.end());
     }
     return meshes;

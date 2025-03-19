@@ -11,15 +11,15 @@ struct CameraMovement {
         CameraZoom,
     };
 
-    CameraAction action;
-    double       delta;
+    CameraAction Action;
+    double       Delta;
 };
 
 struct BuildTower {
 };
 
 struct TowerPlacementMode {
-    bool enable;
+    bool Enable;
 };
 
 struct TowerCreated {

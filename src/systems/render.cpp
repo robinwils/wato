@@ -11,34 +11,34 @@
 #include "core/cache.hpp"
 #include "systems.hpp"
 
-void renderSceneObjects(Registry& registry, const float dt)
+void renderSceneObjects(Registry& aRegistry, const float /*dt*/)
 {
     uint64_t state = BGFX_STATE_DEFAULT;
 
-    auto bp_shader = PROGRAM_CACHE["blinnphong"_hs];
+    auto bpShader = WATO_PROGRAM_CACHE["blinnphong"_hs];
     // light
-    for (auto&& [light, source] : registry.view<LightSource>().each()) {
-        bgfx::setUniform(bp_shader->uniform("u_lightDir"),
+    for (auto&& [light, source] : aRegistry.view<LightSource>().each()) {
+        bgfx::setUniform(bpShader->Uniform("u_lightDir"),
             glm::value_ptr(glm::vec4(source.direction, 0.0f)));
-        bgfx::setUniform(bp_shader->uniform("u_lightCol"),
+        bgfx::setUniform(bpShader->Uniform("u_lightCol"),
             glm::value_ptr(glm::vec4(source.color, 0.0f)));
     }
-    auto group = registry.group<SceneObject>(entt::get<Transform3D>);
-    auto check = registry.view<PlacementMode>();
+    auto group = aRegistry.group<SceneObject>(entt::get<Transform3D>);
+    auto check = aRegistry.view<PlacementMode>();
 
     for (auto&& [entity, obj, t] : group.each()) {
         auto model = glm::mat4(1.0f);
-        model      = glm::translate(model, t.position);
-        model      = glm::rotate(model, glm::radians(t.rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
-        model      = glm::rotate(model, glm::radians(t.rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
-        model      = glm::rotate(model, glm::radians(t.rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
-        model      = glm::scale(model, t.scale);
+        model      = glm::translate(model, t.Position);
+        model      = glm::rotate(model, glm::radians(t.Rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
+        model      = glm::rotate(model, glm::radians(t.Rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
+        model      = glm::rotate(model, glm::radians(t.Rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+        model      = glm::scale(model, t.Scale);
 
         if (check.contains(entity)) {
             // DBG("GOT Placement mode entity!")
         }
 
-        if (auto primitives = MODEL_CACHE[obj.model_hash]; primitives) {
+        if (auto primitives = WATO_MODEL_CACHE[obj.model_hash]; primitives) {
             for (const auto* p : *primitives) {
                 // Set model matrix for rendering.
                 bgfx::setTransform(glm::value_ptr(model));
@@ -48,7 +48,7 @@ void renderSceneObjects(Registry& registry, const float dt)
 
                 // Set render states.
                 bgfx::setState(state);
-                p->submit();
+                p->Submit();
             }
         }
     }

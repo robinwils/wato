@@ -5,18 +5,18 @@
 #include <glm/glm.hpp>
 
 struct Camera {
-    glm::vec3 up;
-    glm::vec3 front;
-    glm::vec3 dir;
-    float     speed;
-    float     fov;
-    float     near_clip;
-    float     far_clip;
+    glm::vec3 Up;
+    glm::vec3 Front;
+    glm::vec3 Dir;
+    float     Speed;
+    float     Fov;
+    float     NearClip;
+    float     FarClip;
 
-    glm::vec3 right() const { return glm::cross(up, front); }
-    glm::mat4 proj(float _w, float _h) const
+    [[nodiscard]] glm::vec3 Right() const { return glm::cross(Up, Front); }
+    [[nodiscard]] glm::mat4 Projection(float aW, float aH) const
     {
-        return glm::perspective(glm::radians(fov), _w / _h, near_clip, far_clip);
+        return glm::perspective(glm::radians(Fov), aW / aH, NearClip, FarClip);
     }
-    glm::mat4 view(glm::vec3 pos) const { return glm::lookAt(pos, pos + dir, up); }
+    [[nodiscard]] glm::mat4 View(glm::vec3 aPos) const { return glm::lookAt(aPos, aPos + Dir, Up); }
 };

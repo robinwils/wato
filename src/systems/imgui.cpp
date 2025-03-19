@@ -14,80 +14,77 @@
 #include "input/input.hpp"
 #include "renderer/physics.hpp"
 
-void renderImgui(Registry& registry, float width, float height)
+void renderImgui(Registry& aRegistry, float aWidth, float aHeight)
 {
-    const auto& input = registry.ctx().get<Input&>();
+    const auto& input = aRegistry.ctx().get<Input&>();
 
-    imguiBeginFrame(input, uint16_t(width), uint16_t(height));
-    showImguiDialogs(width, height);
+    imguiBeginFrame(input, uint16_t(aWidth), uint16_t(aHeight));
+    showImguiDialogs(aWidth, aHeight);
 
-    for (auto&& [entity, imgui] : registry.view<ImguiDrawable>().each()) {
-        auto [camera, transform] = registry.try_get<Camera, Transform3D>(entity);
+    for (auto&& [entity, imgui] : aRegistry.view<ImguiDrawable>().each()) {
+        auto [camera, transform] = aRegistry.try_get<Camera, Transform3D>(entity);
         ImGui::Text("%s Settings", imgui.name.c_str());
         if (camera && transform) {
-            input.drawImgui(*camera, transform->position, width, height);
-            ImGui::DragFloat3("Position", glm::value_ptr(transform->position), 0.1f, 5.0f);
-            ImGui::DragFloat3("Direction", glm::value_ptr(camera->dir), 0.1f, 2.0f);
-            ImGui::DragFloat("FoV (Degree)", &camera->fov, 10.0f, 120.0f);
-            ImGui::DragFloat("Speed", &camera->speed, 0.1f, 0.01f, 5.0f, "%.03f");
+            input.DrawImgui(*camera, transform->Position, aWidth, aHeight);
+            ImGui::DragFloat3("Position", glm::value_ptr(transform->Position), 0.1f, 5.0f);
+            ImGui::DragFloat3("Direction", glm::value_ptr(camera->Dir), 0.1f, 2.0f);
+            ImGui::DragFloat("FoV (Degree)", &camera->Fov, 10.0f, 120.0f);
+            ImGui::DragFloat("Speed", &camera->Speed, 0.1f, 0.01f, 5.0f, "%.03f");
             continue;
         }
         if (transform) {
-            ImGui::Text("Position = %s", glm::to_string(transform->position).c_str());
+            ImGui::Text("Position = %s", glm::to_string(transform->Position).c_str());
             continue;
         }
 
-        auto* light_source = registry.try_get<LightSource>(entity);
-        if (light_source) {
+        auto* lightSource = aRegistry.try_get<LightSource>(entity);
+        if (lightSource) {
             ImGui::DragFloat3("Light direction",
-                glm::value_ptr(light_source->direction),
+                glm::value_ptr(lightSource->direction),
                 0.1f,
                 5.0f);
-            ImGui::DragFloat3("Light color", glm::value_ptr(light_source->color), 0.10f, 2.0f);
+            ImGui::DragFloat3("Light color", glm::value_ptr(lightSource->color), 0.10f, 2.0f);
         }
     }
 
-    auto& params = registry.ctx().get<PhysicsParams>();
-    auto& phy    = registry.ctx().get<Physics>();
-    auto* logger = phy.common.getLogger();
+    auto& params = aRegistry.ctx().get<PhysicsParams>();
+    auto& phy    = aRegistry.ctx().get<Physics>();
 
     ImGui::Text("Physics info");
-    if (ImGui::Checkbox("Information Logs", &params.info_logs)
-        || ImGui::Checkbox("Warning Logs", &params.warning_logs)
-        || ImGui::Checkbox("Error logs", &params.error_logs)) {
-        uint log_level = 0;
-        if (params.info_logs) {
-            log_level |= static_cast<uint>(rp3d::Logger::Level::Information);
+    if (ImGui::Checkbox("Information Logs", &params.InfoLogs)
+        || ImGui::Checkbox("Warning Logs", &params.WarningLogs)
+        || ImGui::Checkbox("Error logs", &params.ErrorLogs)) {
+        uint logLevel = 0;
+        if (params.InfoLogs) {
+            logLevel |= static_cast<uint>(rp3d::Logger::Level::Information);
         }
-        if (params.warning_logs) {
-            log_level |= static_cast<uint>(rp3d::Logger::Level::Warning);
+        if (params.WarningLogs) {
+            logLevel |= static_cast<uint>(rp3d::Logger::Level::Warning);
         }
-        if (params.error_logs) {
-            log_level |= static_cast<uint>(rp3d::Logger::Level::Error);
+        if (params.ErrorLogs) {
+            logLevel |= static_cast<uint>(rp3d::Logger::Level::Error);
         }
-        params.logger->removeAllDestinations();
-        params.logger->addStreamDestination(std::cout,
-            log_level,
-            rp3d::DefaultLogger::Format::Text);
+        params.Logger->removeAllDestinations();
+        params.Logger->addStreamDestination(std::cout, logLevel, rp3d::DefaultLogger::Format::Text);
     }
 
 #if WATO_DEBUG
-    rp3d::DebugRenderer& debug_renderer = phy.world->getDebugRenderer();
-    auto                 n_tri          = debug_renderer.getNbTriangles();
-    auto                 n_lines        = debug_renderer.getNbLines();
+    rp3d::DebugRenderer& debugRenderer = phy.world->getDebugRenderer();
+    auto                 nTri          = debugRenderer.getNbTriangles();
+    auto                 nLines        = debugRenderer.getNbLines();
 
-    ImGui::Text("%d debug lines and %d debug triangles", n_lines, n_tri);
-    ImGui::Checkbox("Collider Shapes", &params.render_shapes);
-    ImGui::Checkbox("Collider AABB", &params.render_aabb);
+    ImGui::Text("%d debug lines and %d debug triangles", nLines, nTri);
+    ImGui::Checkbox("Collider Shapes", &params.RenderShapes);
+    ImGui::Checkbox("Collider AABB", &params.RenderAabb);
 
-    debug_renderer.setIsDebugItemDisplayed(rp3d::DebugRenderer::DebugItem::COLLISION_SHAPE,
-        params.render_shapes);
-    debug_renderer.setIsDebugItemDisplayed(rp3d::DebugRenderer::DebugItem::COLLIDER_AABB,
-        params.render_aabb);
-    debug_renderer.setIsDebugItemDisplayed(rp3d::DebugRenderer::DebugItem::CONTACT_POINT,
-        params.render_contact_points);
-    debug_renderer.setIsDebugItemDisplayed(rp3d::DebugRenderer::DebugItem::CONTACT_NORMAL,
-        params.render_contact_normals);
+    debugRenderer.setIsDebugItemDisplayed(rp3d::DebugRenderer::DebugItem::COLLISION_SHAPE,
+        params.RenderShapes);
+    debugRenderer.setIsDebugItemDisplayed(rp3d::DebugRenderer::DebugItem::COLLIDER_AABB,
+        params.RenderAabb);
+    debugRenderer.setIsDebugItemDisplayed(rp3d::DebugRenderer::DebugItem::CONTACT_POINT,
+        params.RenderContactPoints);
+    debugRenderer.setIsDebugItemDisplayed(rp3d::DebugRenderer::DebugItem::CONTACT_NORMAL,
+        params.RenderContactNormals);
 #endif
 
     imguiEndFrame();

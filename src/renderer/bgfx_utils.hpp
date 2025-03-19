@@ -16,7 +16,7 @@
 #include <tinystl/vector.h>
 
 struct BxSingleton {
-    static BxSingleton& getInstance()
+    static BxSingleton& GetInstance()
     {
         static BxSingleton instance;
 
@@ -26,26 +26,26 @@ struct BxSingleton {
     BxSingleton(BxSingleton const&)    = delete;
     void operator=(BxSingleton const&) = delete;
 
-    bx::DefaultAllocator allocator;
-    bx::FileReader       reader;
-    bx::FileWriter       writer;
+    bx::DefaultAllocator Allocator;
+    bx::FileReader       Reader;
+    bx::FileWriter       Writer;
 
    private:
     BxSingleton() {};
 };
 
 ///
-void unload(void* _ptr);
+void unload(void* aPtr);
 
 ///
-bimg::ImageContainer* imageLoad(const char* _filePath, bgfx::TextureFormat::Enum _dstFormat);
+bimg::ImageContainer* imageLoad(const char* aFilePath, bgfx::TextureFormat::Enum aDstFormat);
 
 ///
-void calcTangents(void* _vertices,
-    uint16_t            _numVertices,
-    bgfx::VertexLayout  _layout,
-    const uint16_t*     _indices,
-    uint32_t            _numIndices);
+void calcTangents(void* aVertices,
+    uint16_t            aNumVertices,
+    bgfx::VertexLayout  aLayout,
+    const uint16_t*     aIndices,
+    uint32_t            aNumIndices);
 
 /// Returns true if both internal transient index and vertex buffer have
 /// enough space.
@@ -54,22 +54,22 @@ void calcTangents(void* _vertices,
 /// @param[in] _layout Vertex layout.
 /// @param[in] _numIndices Number of indices.
 ///
-inline bool checkAvailTransientBuffers(uint32_t _numVertices,
-    const bgfx::VertexLayout&                   _layout,
-    uint32_t                                    _numIndices)
+inline bool checkAvailTransientBuffers(uint32_t aNumVertices,
+    const bgfx::VertexLayout&                   aLayout,
+    uint32_t                                    aNumIndices)
 {
-    return _numVertices == bgfx::getAvailTransientVertexBuffer(_numVertices, _layout)
-           && (0 == _numIndices || _numIndices == bgfx::getAvailTransientIndexBuffer(_numIndices));
+    return aNumVertices == bgfx::getAvailTransientVertexBuffer(aNumVertices, aLayout)
+           && (0 == aNumIndices || aNumIndices == bgfx::getAvailTransientIndexBuffer(aNumIndices));
 }
 
 ///
-inline uint32_t encodeNormalRgba8(float _x, float _y = 0.0f, float _z = 0.0f, float _w = 0.0f)
+inline uint32_t encodeNormalRgba8(float aX, float aY = 0.0f, float aZ = 0.0f, float aW = 0.0f)
 {
     const float src[] = {
-        _x * 0.5f + 0.5f,
-        _y * 0.5f + 0.5f,
-        _z * 0.5f + 0.5f,
-        _w * 0.5f + 0.5f,
+        aX * 0.5f + 0.5f,
+        aY * 0.5f + 0.5f,
+        aZ * 0.5f + 0.5f,
+        aW * 0.5f + 0.5f,
     };
     uint32_t dst;
     bx::packRgba8(&dst, src);
@@ -79,31 +79,31 @@ inline uint32_t encodeNormalRgba8(float _x, float _y = 0.0f, float _z = 0.0f, fl
 ///
 struct MeshState {
     struct Texture {
-        uint32_t            m_flags;
-        bgfx::UniformHandle m_sampler;
-        bgfx::TextureHandle m_texture;
-        uint8_t             m_stage;
+        uint32_t            Flags;
+        bgfx::UniformHandle Sampler;
+        bgfx::TextureHandle Tex;
+        uint8_t             Stage;
     };
 
-    Texture             m_textures[4];
-    uint64_t            m_state;
-    bgfx::ProgramHandle m_program;
-    uint8_t             m_numTextures;
-    bgfx::ViewId        m_viewId;
+    Texture             Textures[4];
+    uint64_t            State;
+    bgfx::ProgramHandle Program;
+    uint8_t             NumTextures;
+    bgfx::ViewId        ViewID;
 };
 
 /// bgfx::RendererType::Enum to name.
-bx::StringView getName(bgfx::RendererType::Enum _type);
+bx::StringView getName(bgfx::RendererType::Enum aType);
 
 /// Name to bgfx::RendererType::Enum.
-bgfx::RendererType::Enum getType(const bx::StringView& _name);
+bgfx::RendererType::Enum getType(const bx::StringView& aName);
 
 ///
 struct Args {
-    Args(int _argc, const char* const* _argv);
+    Args(int aArgc, const char* const* aArgv);
 
-    bgfx::RendererType::Enum m_type;
-    uint16_t                 m_pciId;
+    bgfx::RendererType::Enum MType;
+    uint16_t                 MPciId;
 };
 
 #endif  // BGFX_UTILS_H_HEADER_GUARD

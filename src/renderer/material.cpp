@@ -2,14 +2,14 @@
 
 #include "core/sys.hpp"
 
-bgfx::ShaderHandle loadShader(bx::FileReaderI* _reader, const char* _name)
+bgfx::ShaderHandle loadShader(bx::FileReaderI* aReader, const char* aName)
 {
     char filePath[512];
 
     const char* renderer = "???";
 
     bx::strCopy(filePath, BX_COUNTOF(filePath), "shaders/");
-    bx::strCat(filePath, BX_COUNTOF(filePath), _name);
+    bx::strCat(filePath, BX_COUNTOF(filePath), aName);
 
 #if BX_PLATFORM_WINDOWS
     bx::strCat(filePath, BX_COUNTOF(filePath), "_windows");
@@ -53,18 +53,18 @@ bgfx::ShaderHandle loadShader(bx::FileReaderI* _reader, const char* _name)
     bx::strCat(filePath, BX_COUNTOF(filePath), renderer);
     bx::strCat(filePath, BX_COUNTOF(filePath), ".bin");
 
-    bgfx::ShaderHandle handle = bgfx::createShader(loadMem(_reader, filePath));
-    bgfx::setName(handle, _name);
+    bgfx::ShaderHandle handle = bgfx::createShader(loadMem(aReader, filePath));
+    bgfx::setName(handle, aName);
 
     return handle;
 }
 
-bgfx::ProgramHandle loadProgram(bx::FileReader* fr, const char* _vsName, const char* _fsName)
+bgfx::ProgramHandle loadProgram(bx::FileReader* aFr, const char* aVsName, const char* aFsName)
 {
-    bgfx::ShaderHandle vsh = loadShader(fr, _vsName);
+    bgfx::ShaderHandle vsh = loadShader(aFr, aVsName);
     bgfx::ShaderHandle fsh = BGFX_INVALID_HANDLE;
-    if (NULL != _fsName) {
-        fsh = loadShader(fr, _fsName);
+    if (NULL != aFsName) {
+        fsh = loadShader(aFr, aFsName);
     }
 
     return bgfx::createProgram(vsh, fsh, true /* destroy shaders when program is destroyed */);

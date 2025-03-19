@@ -8,17 +8,17 @@
 class Shader
 {
    public:
-    Shader(bgfx::ProgramHandle                               &handle,
-        std::unordered_map<std::string, bgfx::UniformHandle> &uniforms)
-        : m_handle(handle), m_uniforms(uniforms)
+    Shader(bgfx::ProgramHandle                               &aHandle,
+        std::unordered_map<std::string, bgfx::UniformHandle> &aUniforms)
+        : mUniforms(aUniforms), mHandle(aHandle)
     {
     }
 
-    bgfx::UniformHandle uniform(const char *const name) const { return m_uniforms.at(name); }
+    bgfx::UniformHandle Uniform(const char *const aName) const { return mUniforms.at(aName); }
 
-    bgfx::ProgramHandle program() const { return m_handle; }
+    bgfx::ProgramHandle Program() const { return mHandle; }
 
    private:
-    std::unordered_map<std::string, bgfx::UniformHandle> m_uniforms;
-    bgfx::ProgramHandle                                  m_handle;
+    std::unordered_map<std::string, bgfx::UniformHandle> mUniforms;
+    bgfx::ProgramHandle                                  mHandle;
 };

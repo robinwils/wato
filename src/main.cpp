@@ -125,7 +125,7 @@ int main()
 
     init.type = bgfx::RendererType::Vulkan;
 
-    int width, height;
+    int width = 0, height = 0;
     glfwGetWindowSize(window, &width, &height);
     init.resolution.width  = (uint32_t)width;
     init.resolution.height = (uint32_t)height;
@@ -134,7 +134,7 @@ int main()
     if (!bgfx::init(init)) return 1;
 
     // Set view 0 to the same dimensions as the window and to clear the color buffer.
-    const bgfx::ViewId kClearView = 0;
+    const bgfx::ViewId clearView = 0;
 
     // Enable stats or debug text.
     bgfx::setDebug(BGFX_DEBUG_TEXT | BGFX_DEBUG_PROFILER);
@@ -144,22 +144,22 @@ int main()
 
     Registry registry;
 
-    entt::dispatcher event_dispatcher;
-    registry.ctx().emplace<entt::dispatcher &>(event_dispatcher);
+    entt::dispatcher eventDispatcher;
+    registry.ctx().emplace<entt::dispatcher &>(eventDispatcher);
 
     imguiCreate();
     Input input(window);
-    input.init();
+    input.Init();
     glfwSetWindowUserPointer(window, &registry);
     registry.ctx().emplace<Input &>(input);
 
-    ActionSystem action_system(registry, width, height);
-    action_system.init_listeners(input);
+    ActionSystem actionSystem(&registry, width, height);
+    actionSystem.InitListeners(input);
 
     auto &phy = registry.ctx().emplace<Physics>();
     phy.world = phy.common.createPhysicsWorld();
 
-    EventHandler eventHandler(&registry, &action_system);
+    EventHandler eventHandler(&registry, &actionSystem);
     phy.world->setEventListener(&eventHandler);
 
     // Create the default logger
@@ -178,15 +178,15 @@ int main()
     phy.world->setIsDebugRenderingEnabled(true);
 #endif
 
-    registry.loadShaders();
-    registry.spawnLight();
-    registry.spawnMap(20, 20);
-    registry.loadModels();
-    registry.spawnPlayerAndCamera();
+    registry.LoadShaders();
+    registry.SpawnLight();
+    registry.SpawnMap(20, 20);
+    registry.LoadModels();
+    registry.SpawnPlayerAndCamera();
     // registry.spawnPlane();
 
-    double  prevTime     = glfwGetTime();
-    int64_t m_timeOffset = bx::getHPCounter();
+    double  prevTime    = glfwGetTime();
+    int64_t mTimeOffset = bx::getHPCounter();
 
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
@@ -195,10 +195,10 @@ int main()
         glfwGetWindowSize(window, &width, &height);
         if (width != oldWidth || height != oldHeight) {
             bgfx::reset((uint32_t)width, (uint32_t)height, BGFX_RESET_VSYNC);
-            bgfx::setViewRect(kClearView, 0, 0, bgfx::BackbufferRatio::Equal);
-            action_system.udpate_win_size(width, height);
+            bgfx::setViewRect(clearView, 0, 0, bgfx::BackbufferRatio::Equal);
+            actionSystem.UdpateWinSize(width, height);
         }
-        bgfx::touch(kClearView);
+        bgfx::touch(clearView);
         // Use debug font to print information about this example.
         bgfx::dbgTextClear();
 
@@ -207,7 +207,7 @@ int main()
         auto t      = glfwGetTime();
         auto dt     = t - prevTime;
         prevTime    = t;
-        double time = ((bx::getHPCounter() - m_timeOffset) / double(bx::getHPFrequency()));
+        double time = ((bx::getHPCounter() - mTimeOffset) / double(bx::getHPFrequency()));
 
         processInputs(registry, dt);
         cameraSystem(registry, float(width), float(height));

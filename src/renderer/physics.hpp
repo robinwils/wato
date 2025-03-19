@@ -4,16 +4,16 @@
 #include "reactphysics3d/utils/DefaultLogger.h"
 
 struct PhysicsParams {
-    bool info_logs;
-    bool warning_logs;
-    bool error_logs;
+    bool InfoLogs;
+    bool WarningLogs;
+    bool ErrorLogs;
 
-    reactphysics3d::DefaultLogger* logger;
+    reactphysics3d::DefaultLogger* Logger;
 
 #if WATO_DEBUG
-    bool render_shapes;
-    bool render_aabb;
-    bool render_contact_points;
-    bool render_contact_normals;
+    bool RenderShapes;
+    bool RenderAabb;
+    bool RenderContactPoints;
+    bool RenderContactNormals;
 #endif
 };

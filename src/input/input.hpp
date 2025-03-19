@@ -153,8 +153,8 @@ struct Button {
     };
 
     struct State {
-        Action action;
-        bool   modifiers[6];
+        Action Action;
+        bool   Modifiers[6];
     };
 };
 
@@ -169,76 +169,81 @@ enum ModifierKey {
 };
 
 struct KeyboardState {
-    KeyboardState() : keys() {}
+    KeyboardState() : Keys() {}
 
-    Button::State keys[Keyboard::Key::Count];
+    Button::State Keys[Keyboard::Key::Count];
 };
 
 struct MouseState {
-    MouseState() : pos(), scroll(), buttons() {}
+    MouseState() : Pos(), Scroll(), Buttons() {}
 
-    void clear();
+    void Clear();
 
-    glm::dvec2    pos, scroll;
-    Button::State buttons[3];
+    glm::dvec2    Pos, Scroll;
+    Button::State Buttons[3];
 };
 
-std::string key_string(const Keyboard::Key& k);
+std::string key_string(const Keyboard::Key& aK);
 
 class Input
 {
    public:
-    Input(GLFWwindow* _window);
+    Input(GLFWwindow* aWindow);
 
-    void init();
-    void setMouseButtonPressed(Mouse::Button _button, Button::Action _action);
-    void setMouseButtonModifier(Mouse::Button _button, ModifierKey _mod);
-    void setMousePos(double _x, double _y);
-    void setMouseScroll(double _xoffset, double _yoffset);
-    void setKey(Keyboard::Key _key, Button::Action _state);
-    void setKeyModifier(Keyboard::Key _key, ModifierKey _mod);
+    void Init();
+    void SetMouseButtonPressed(Mouse::Button aButton, Button::Action aAction);
+    void SetMouseButtonModifier(Mouse::Button aButton, ModifierKey aMod);
+    void SetMousePos(double aX, double aY);
+    void SetMouseScroll(double aXoffset, double aYoffset);
+    void SetKey(Keyboard::Key aKey, Button::Action aState);
+    void SetKeyModifier(Keyboard::Key aKey, ModifierKey aMod);
 
-    void exitTowerPlacementMode() { m_tower_placement_mode = false; }
+    void ExitTowerPlacementMode() { mTowerPlacementMode = false; }
+    void EnterTowerPlacementMode() { mTowerPlacementMode = true; }
 
-    bool isMouseButtonPressed(Mouse::Button _button) const
+    bool IsPlacementMode() const { return mTowerPlacementMode; }
+    bool IsMouseButtonPressed(Mouse::Button aButton) const
     {
-        return mouseState.buttons[_button].action == Button::Press;
+        return MouseState.Buttons[aButton].Action == Button::Press;
     }
-    bool isKeyPressed(Keyboard::Key _key) const
+    bool IsKeyPressed(Keyboard::Key aKey) const
     {
-        return keyboardState.keys[_key].action == Button::Press;
+        return KeyboardState.Keys[aKey].Action == Button::Press;
     }
-    bool isKeyRepeat(Keyboard::Key _key) const
+    bool IsKeyRepeat(Keyboard::Key aKey) const
     {
-        return keyboardState.keys[_key].action == Button::Repeat;
+        return KeyboardState.Keys[aKey].Action == Button::Repeat;
     }
-    bool isKeyReleased(Keyboard::Key _key) const
+    bool IsKeyReleased(Keyboard::Key aKey) const
     {
-        return keyboardState.keys[_key].action == Button::Release;
+        return KeyboardState.Keys[aKey].Action == Button::Release;
     }
-    bool isKeyUnknown(Keyboard::Key _key) const
+    bool IsKeyUnknown(Keyboard::Key aKey) const
     {
-        return keyboardState.keys[_key].action == Button::Unknown;
-    }
-
-    bool isPrevKeyPressed(Keyboard::Key _key) const
-    {
-        return prevKeyboardState.keys[_key].action == Button::Press;
-    }
-    bool isPrevKeyRepeat(Keyboard::Key _key) const
-    {
-        return prevKeyboardState.keys[_key].action == Button::Repeat;
-    }
-    bool isPrevKeyReleased(Keyboard::Key _key) const
-    {
-        return prevKeyboardState.keys[_key].action == Button::Release;
-    }
-    bool isPrevKeyUnknown(Keyboard::Key _key) const
-    {
-        return prevKeyboardState.keys[_key].action == Button::Unknown;
+        return KeyboardState.Keys[aKey].Action == Button::Unknown;
     }
 
-    void drawImgui(const Camera& cam, const glm::vec3& cam_pos, const float w, const float h) const;
+    bool IsPrevKeyPressed(Keyboard::Key aKey) const
+    {
+        return PrevKeyboardState.Keys[aKey].Action == Button::Press;
+    }
+    bool IsPrevKeyRepeat(Keyboard::Key aKey) const
+    {
+        return PrevKeyboardState.Keys[aKey].Action == Button::Repeat;
+    }
+    bool IsPrevKeyReleased(Keyboard::Key aKey) const
+    {
+        return PrevKeyboardState.Keys[aKey].Action == Button::Release;
+    }
+    bool IsPrevKeyUnknown(Keyboard::Key aKey) const
+    {
+        return PrevKeyboardState.Keys[aKey].Action == Button::Unknown;
+    }
+
+    void DrawImgui(const Camera& aCamera,
+        const glm::vec3&         aCamPos,
+        const float              aWidth,
+        const float              aHeight) const;
 
     /**
      * @brief unproject mouse screen coordinates to world view
@@ -248,19 +253,17 @@ class Input
      * @param w screen width
      * @param h screen height
      */
-    glm::vec3 worldMousePos(const Camera& cam,
-        const glm::vec3&                  cam_pos,
-        const float                       w,
-        const float                       h) const;
+    glm::vec3 WorldMousePos(const Camera& aCam,
+        const glm::vec3&                  aCamPos,
+        const float                       aWidth,
+        const float                       aHeight) const;
 
-    void clear() { mouseState.clear(); }
+    void clear() { MouseState.Clear(); }
 
-    MouseState    mouseState;
-    KeyboardState keyboardState, prevKeyboardState;
-    bool          m_tower_placement_mode;
+    MouseState    MouseState;
+    KeyboardState KeyboardState, PrevKeyboardState;
 
    private:
+    bool        mTowerPlacementMode;
     GLFWwindow* mWindow;
 };
-
-static void cursorPosCb(GLFWwindow* _window, double _xpos, double _ypos);

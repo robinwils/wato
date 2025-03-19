@@ -11,57 +11,60 @@
 #include "renderer/material.hpp"
 #include "renderer/shader.hpp"
 
-bgfx::ShaderHandle  loadShader(bx::FileReaderI* _reader, const char* _name);
-bgfx::ProgramHandle loadProgram(bx::FileReader* fr, const char* _vsName, const char* _fsName);
+bgfx::ShaderHandle  loadShader(bx::FileReaderI* aReader, const char* aName);
+bgfx::ProgramHandle loadProgram(bx::FileReader* aFr, const char* aVsName, const char* aFsName);
 
-struct BlinnPhongMaterial : Material {
-    BlinnPhongMaterial(entt::resource<Shader> _shader,
-        entt::resource<bgfx::TextureHandle>   _diffuse,
-        entt::resource<bgfx::TextureHandle>   _specular)
-        : Material(_shader),
-          m_diffuseTexture(_diffuse),
-          m_specularTexture(_specular),
-          m_useDiffuseTexture(true),
-          m_useSpecularTexture(true)
+class BlinnPhongMaterial : public Material
+{
+   public:
+    BlinnPhongMaterial(entt::resource<Shader> aShader,
+        entt::resource<bgfx::TextureHandle>   aDiffuse,
+        entt::resource<bgfx::TextureHandle>   aSpecular)
+        : Material(aShader),
+          mUseDiffuseTexture(true),
+          mDiffuseTexture(aDiffuse),
+          mUseSpecularTexture(true),
+          mSpecularTexture(aSpecular)
+    {
+    }
+    virtual ~BlinnPhongMaterial() {}
+
+    BlinnPhongMaterial(entt::resource<Shader> aShader, glm::vec3 aDiffuse, glm::vec3 aSpecular)
+        : Material(aShader),
+          mDiffuse(aDiffuse),
+          mUseDiffuseTexture(false),
+          mSpecular(aSpecular),
+          mUseSpecularTexture(false)
     {
     }
 
-    BlinnPhongMaterial(entt::resource<Shader> _shader, glm::vec3 _diffuse, glm::vec3 _specular)
-        : Material(_shader),
-          m_diffuse(_diffuse),
-          m_specular(_specular),
-          m_useDiffuseTexture(false),
-          m_useSpecularTexture(false)
+    void Submit() const
     {
-    }
-
-    void submit() const
-    {
-        if (m_useDiffuseTexture) {
-            bgfx::setTexture(0, shader->uniform("s_diffuseTex"), m_diffuseTexture);
-            bgfx::setUniform(shader->uniform("u_diffuse"),
-                glm::value_ptr(glm::vec4(m_diffuse, 1.0f)));
+        if (mUseDiffuseTexture) {
+            bgfx::setTexture(0, mShader->Uniform("s_diffuseTex"), mDiffuseTexture);
+            bgfx::setUniform(mShader->Uniform("u_diffuse"),
+                glm::value_ptr(glm::vec4(mDiffuse, 1.0f)));
         } else {
-            bgfx::setUniform(shader->uniform("u_diffuse"),
-                glm::value_ptr(glm::vec4(m_diffuse, 0.0f)));
+            bgfx::setUniform(mShader->Uniform("u_diffuse"),
+                glm::value_ptr(glm::vec4(mDiffuse, 0.0f)));
         }
 
-        if (m_useSpecularTexture) {
-            bgfx::setTexture(1, shader->uniform("s_specularTex"), m_specularTexture);
-            bgfx::setUniform(shader->uniform("u_specular"),
-                glm::value_ptr(glm::vec4(m_specular, 1.0f)));
+        if (mUseSpecularTexture) {
+            bgfx::setTexture(1, mShader->Uniform("s_specularTex"), mSpecularTexture);
+            bgfx::setUniform(mShader->Uniform("u_specular"),
+                glm::value_ptr(glm::vec4(mSpecular, 1.0f)));
         } else {
-            bgfx::setUniform(shader->uniform("u_specular"),
-                glm::value_ptr(glm::vec4(m_specular, 0.0f)));
+            bgfx::setUniform(mShader->Uniform("u_specular"),
+                glm::value_ptr(glm::vec4(mSpecular, 0.0f)));
         }
     }
 
    protected:
-    glm::vec3                           m_diffuse;
-    bool                                m_useDiffuseTexture;
-    entt::resource<bgfx::TextureHandle> m_diffuseTexture;
+    glm::vec3                           mDiffuse;
+    bool                                mUseDiffuseTexture;
+    entt::resource<bgfx::TextureHandle> mDiffuseTexture;
 
-    glm::vec3                           m_specular;
-    bool                                m_useSpecularTexture;
-    entt::resource<bgfx::TextureHandle> m_specularTexture;
+    glm::vec3                           mSpecular;
+    bool                                mUseSpecularTexture;
+    entt::resource<bgfx::TextureHandle> mSpecularTexture;
 };

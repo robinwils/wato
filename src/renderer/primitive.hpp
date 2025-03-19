@@ -13,19 +13,19 @@
 #include "glm/fwd.hpp"
 
 struct PositionNormalUvVertex {
-    glm::vec3 position;
-    glm::vec3 normal;
-    glm::vec2 uv;
+    glm::vec3 Position;
+    glm::vec3 Normal;
+    glm::vec2 Uv;
 
-    static bgfx::VertexLayout getVertexLayout()
+    static bgfx::VertexLayout GetVertexLayout()
     {
-        bgfx::VertexLayout vertex_layout;
-        vertex_layout.begin()
+        bgfx::VertexLayout vertexLayout;
+        vertexLayout.begin()
             .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
             .add(bgfx::Attrib::Normal, 3, bgfx::AttribType::Float)
             .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
             .end();
-        return vertex_layout;
+        return vertexLayout;
     }
 };
 
@@ -35,98 +35,100 @@ class Primitive
    public:
     typedef VL layout_type;
 
-    Primitive(Material* _material) : m_material(_material), m_is_initialized(false) {}
-    Primitive(Material* _material, std::vector<layout_type> vertices, std::vector<uint16_t> indices)
-        : m_vertices(vertices), m_indices(indices), m_material(_material)
+    Primitive(Material* aMaterial) : mMaterial(aMaterial), mIsInitialized(false) {}
+    Primitive(Material*          aMaterial,
+        std::vector<layout_type> aVertices,
+        std::vector<uint16_t>    aIndices)
+        : mVertices(aVertices), mIndices(aIndices), mMaterial(aMaterial)
     {
     }
-    Primitive(const Primitive& other) noexcept
-        : m_vertices(other.m_vertices),
-          m_indices(other.m_indices),
-          m_material(other.m_material),
-          m_is_initialized(other.m_is_initialized),
-          m_vertex_buffer_handle(other.m_vertex_buffer_handle),
-          m_index_buffer_handle(other.m_index_buffer_handle)
+    Primitive(const Primitive& aOther) noexcept
+        : mVertices(aOther.mVertices),
+          mIndices(aOther.mIndices),
+          mMaterial(aOther.mMaterial),
+          mIsInitialized(aOther.mIsInitialized),
+          mVertexBufferHandle(aOther.mVertexBufferHandle),
+          mIndexBufferHandle(aOther.mIndexBufferHandle)
     {
     }
-    Primitive(Primitive&& other) noexcept
-        : m_vertices(std::move(other.m_vertices)),
-          m_indices(std::move(other.m_indices)),
-          m_material(std::move(other.m_material)),
-          m_vertex_buffer_handle(other.m_vertex_buffer_handle),
-          m_index_buffer_handle(other.m_index_buffer_handle),
+    Primitive(Primitive&& aOther) noexcept
+        : mVertices(std::move(aOther.mVertices)),
+          mIndices(std::move(aOther.mIndices)),
+          mMaterial(std::move(aOther.mMaterial)),
+          mVertexBufferHandle(aOther.mVertexBufferHandle),
+          mIndexBufferHandle(aOther.mIndexBufferHandle),
 
-          m_is_initialized(other.m_is_initialized)
+          mIsInitialized(aOther.mIsInitialized)
     {
-        other.m_vertex_buffer_handle.idx = bgfx::kInvalidHandle;
-        other.m_index_buffer_handle.idx  = bgfx::kInvalidHandle;
-        other.m_is_initialized           = false;
+        aOther.mVertexBufferHandle.idx = bgfx::kInvalidHandle;
+        aOther.mIndexBufferHandle.idx  = bgfx::kInvalidHandle;
+        aOther.mIsInitialized          = false;
     }
 
-    Primitive& operator=(Primitive& other)
+    Primitive& operator=(Primitive& aOther)
     {
-        m_vertex_buffer_handle = other.m_vertex_buffer_handle;
-        m_index_buffer_handle  = other.m_index_buffer_handle;
-        m_vertices             = std::move(other.m_vertices);
-        m_indices              = std::move(other.m_indices);
+        mVertexBufferHandle = aOther.mVertexBufferHandle;
+        mIndexBufferHandle  = aOther.mIndexBufferHandle;
+        mVertices           = std::move(aOther.mVertices);
+        mIndices            = std::move(aOther.mIndices);
         return *this;
     }
-    Primitive& operator=(Primitive&& other)
+    Primitive& operator=(Primitive&& aOther)
     {
-        m_vertex_buffer_handle = other.m_vertex_buffer_handle;
-        m_index_buffer_handle  = other.m_index_buffer_handle;
-        m_vertices             = std::move(other.m_vertices);
-        m_indices              = std::move(other.m_indices);
+        mVertexBufferHandle = aOther.mVertexBufferHandle;
+        mIndexBufferHandle  = aOther.mIndexBufferHandle;
+        mVertices           = std::move(aOther.mVertices);
+        mIndices            = std::move(aOther.mIndices);
         return *this;
     }
     virtual ~Primitive() { destroyPrimitive(); }
 
-    virtual void submit(uint8_t discard_states = BGFX_DISCARD_ALL) const
+    virtual void Submit(uint8_t aDiscardStates = BGFX_DISCARD_ALL) const
     {
-        m_material->submit();
-        assert(m_is_initialized);
+        mMaterial->Submit();
+        assert(mIsInitialized);
 
-        bgfx::setVertexBuffer(0, m_vertex_buffer_handle);
-        bgfx::setIndexBuffer(m_index_buffer_handle);
+        bgfx::setVertexBuffer(0, mVertexBufferHandle);
+        bgfx::setIndexBuffer(mIndexBufferHandle);
 
-        bgfx::submit(0, m_material->shader->program(), bgfx::ViewMode::Default, discard_states);
+        bgfx::submit(0, mMaterial->Program(), bgfx::ViewMode::Default, aDiscardStates);
     }
 
-    virtual void initializePrimitive()
+    virtual void InitializePrimitive()
     {
-        assert(!m_vertices.empty());
-        assert(!m_indices.empty());
+        assert(!mVertices.empty());
+        assert(!mIndices.empty());
 
-        const bgfx::VertexLayout vertex_layout = layout_type::getVertexLayout();
+        const bgfx::VertexLayout vertexLayout = layout_type::GetVertexLayout();
 
-        m_vertex_buffer_handle = bgfx::createVertexBuffer(
-            bgfx::makeRef(m_vertices.data(), sizeof(layout_type) * m_vertices.size()),
-            vertex_layout);
-        m_index_buffer_handle = bgfx::createIndexBuffer(
-            bgfx::makeRef(m_indices.data(), sizeof(uint16_t) * m_indices.size()));
+        mVertexBufferHandle = bgfx::createVertexBuffer(
+            bgfx::makeRef(mVertices.data(), sizeof(layout_type) * mVertices.size()),
+            vertexLayout);
+        mIndexBufferHandle = bgfx::createIndexBuffer(
+            bgfx::makeRef(mIndices.data(), sizeof(uint16_t) * mIndices.size()));
 
-        m_is_initialized = true;
+        mIsInitialized = true;
     }
 
    protected:
-    std::vector<layout_type> m_vertices;
-    std::vector<uint16_t>    m_indices;
-    Material*                m_material;
+    std::vector<layout_type> mVertices;
+    std::vector<uint16_t>    mIndices;
+    Material*                mMaterial;
 
-    bool m_is_initialized;
+    bool mIsInitialized;
 
-    bgfx::VertexBufferHandle m_vertex_buffer_handle;
-    bgfx::IndexBufferHandle  m_index_buffer_handle;
+    bgfx::VertexBufferHandle mVertexBufferHandle;
+    bgfx::IndexBufferHandle  mIndexBufferHandle;
 
    private:
     virtual void destroyPrimitive()
     {
-        if (m_is_initialized) {
+        if (mIsInitialized) {
             DBG("destroying vertex buffer %d and index buffer %d",
-                m_vertex_buffer_handle.idx,
-                m_index_buffer_handle.idx);
-            bgfx::destroy(m_vertex_buffer_handle);
-            bgfx::destroy(m_index_buffer_handle);
+                mVertexBufferHandle.idx,
+                mIndexBufferHandle.idx);
+            bgfx::destroy(mVertexBufferHandle);
+            bgfx::destroy(mIndexBufferHandle);
         }
     }
 };

@@ -1,104 +1,101 @@
 #include "components/physics.hpp"
 
-#include <reactphysics3d/reactphysics3d.h>
-
+#include <cstdint>
 #include <cstring>
 #include <entt/core/hashed_string.hpp>
-#include <glm/ext/matrix_transform.hpp>
 
 #include "bgfx/bgfx.h"
 #include "bgfx/defines.h"
 #include "bx/bx.h"
+#include "config.h"
 #include "core/cache.hpp"
 #include "core/registry.hpp"
-#include "core/sys.hpp"
-#include "entt/core/fwd.hpp"
+#include "reactphysics3d/utils/DebugRenderer.h"
 #include "renderer/material.hpp"
-#include "renderer/primitive.hpp"
 #include "systems/systems.hpp"
 
-void physicsSystem(Registry& registry, double delta_time)
+void physicsSystem(Registry& aRegistry, double aDeltaTime)
 {
-    auto& phy = registry.ctx().get<Physics>();
+    auto& phy = aRegistry.ctx().get<Physics>();
 
     // Constant physics time step, TODO: as static const for now
-    static const double time_step   = 1.0f / 60.0f;
-    static double       accumulator = 0.0f;
+    static const double timeStep    = 1.0F / 60.0F;
+    static double       accumulator = 0.0F;
 
     // Add the time difference in the accumulator
-    accumulator += delta_time;
+    accumulator += aDeltaTime;
 
     // While there is enough accumulated time to take
     // one or several physics steps
-    while (accumulator >= time_step) {
+    while (accumulator >= timeStep) {
         // Update the Dynamics world with a constant time step
-        phy.world->update(time_step);
+        phy.world->update(timeStep);
 
         // Decrease the accumulated time
-        accumulator -= time_step;
+        accumulator -= timeStep;
     }
 }
 
 #if WATO_DEBUG
-static bool v_init = false;
+static bool vInit = false;
 struct PosColor {
-    float    m_x;
-    float    m_y;
-    float    m_z;
-    uint32_t m_rgba;
+    float    MX;
+    float    MY;
+    float    MZ;
+    uint32_t MRgba;
 
-    static void init()
+    static void Init()
     {
-        if (v_init) {
+        if (vInit) {
             return;
         }
-        ms_layout.begin()
+        msLayout.begin()
             .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
             .add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
             .end();
-        v_init = true;
+        vInit = true;
     }
 
-    static bgfx::VertexLayout ms_layout;
+    static bgfx::VertexLayout msLayout;
 };
-bgfx::VertexLayout PosColor::ms_layout;
+bgfx::VertexLayout PosColor::msLayout;
 
-void physicsDebugRenderSystem(Registry& registry)
+void physicsDebugRenderSystem(Registry& aRegistry)
 {
-    auto&                phy            = registry.ctx().get<Physics>();
-    rp3d::DebugRenderer& debug_renderer = phy.world->getDebugRenderer();
+    auto&                      phy           = aRegistry.ctx().get<Physics>();
+    rp3d::DebugRenderer const& debugRenderer = phy.world->getDebugRenderer();
 
-    PosColor::init();
+    PosColor::Init();
 
-    auto n_tri   = debug_renderer.getNbTriangles();
-    auto n_lines = debug_renderer.getNbLines();
+    auto nTri   = debugRenderer.getNbTriangles();
+    auto nLines = debugRenderer.getNbLines();
 
-    auto  debug_shader = PROGRAM_CACHE["simple"_hs];
-    auto* debug_mat    = new Material(debug_shader);
-    if (n_tri > 0) {
+    auto  debugShader = WATO_PROGRAM_CACHE["simple"_hs];
+    auto* debugMat    = new Material(debugShader);
+    if (nTri > 0) {
         auto state = BGFX_STATE_DEFAULT;
-        if (3 * n_tri == bgfx::getAvailTransientVertexBuffer(3 * n_tri, PosColor::ms_layout)) {
-            bgfx::TransientVertexBuffer vb;
-            bgfx::allocTransientVertexBuffer(&vb, 3 * n_tri, PosColor::ms_layout);
+        if (3 * nTri == bgfx::getAvailTransientVertexBuffer(3 * nTri, PosColor::msLayout)) {
+            bgfx::TransientVertexBuffer vb{};
+            bgfx::allocTransientVertexBuffer(&vb, 3 * nTri, PosColor::msLayout);
 
-            bx::memCopy(vb.data, debug_renderer.getTrianglesArray(), 3 * n_tri * sizeof(PosColor));
+            bx::memCopy(vb.data, debugRenderer.getTrianglesArray(), 3 * nTri * sizeof(PosColor));
 
             bgfx::setState(state);
             bgfx::setVertexBuffer(0, &vb);
-            bgfx::submit(0, debug_mat->shader->program(), bgfx::ViewMode::Default);
+            bgfx::submit(0, debugMat->Program(), bgfx::ViewMode::Default);
         }
     }
-    if (n_lines > 0) {
+    if (nLines > 0) {
         auto state = BGFX_STATE_DEFAULT | BGFX_STATE_PT_LINES;
-        if (2 * n_lines == bgfx::getAvailTransientVertexBuffer(2 * n_lines, PosColor::ms_layout)) {
-            bgfx::TransientVertexBuffer vb;
-            bgfx::allocTransientVertexBuffer(&vb, 2 * n_lines, PosColor::ms_layout);
+        if (2 * nLines == bgfx::getAvailTransientVertexBuffer(2 * nLines, PosColor::msLayout)) {
+            bgfx::TransientVertexBuffer vb{};
+            bgfx::allocTransientVertexBuffer(&vb, 2 * nLines, PosColor::msLayout);
 
-            bx::memCopy(vb.data, debug_renderer.getLinesArray(), 2 * n_lines * sizeof(PosColor));
+            bx::memCopy(vb.data, debugRenderer.getLinesArray(), 2 * nLines * sizeof(PosColor));
 
             bgfx::setState(state);
             bgfx::setVertexBuffer(0, &vb);
-            bgfx::submit(0, debug_mat->shader->program(), bgfx::ViewMode::Default);
+            bgfx::submit(0, debugMat->Program(), bgfx::ViewMode::Default);
         }
     }
 }

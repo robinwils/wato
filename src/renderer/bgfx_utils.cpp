@@ -24,56 +24,56 @@ namespace stl = tinystl;
 #include <core/sys.hpp>
 #include <renderer/bgfx_utils.hpp>
 
-void calcTangents(void* _vertices,
-    uint16_t            _numVertices,
-    bgfx::VertexLayout  _layout,
-    const uint16_t*     _indices,
-    uint32_t            _numIndices)
+void calcTangents(void* aVertices,
+    uint16_t            aNumVertices,
+    bgfx::VertexLayout  aLayout,
+    const uint16_t*     aIndices,
+    uint32_t            aNumIndices)
 {
     struct PosTexcoord {
-        float m_x;
-        float m_y;
-        float m_z;
-        float m_pad0;
-        float m_u;
-        float m_v;
-        float m_pad1;
-        float m_pad2;
+        float X;
+        float Y;
+        float Z;
+        float Pad0;
+        float U;
+        float V;
+        float Pad1;
+        float Pad2;
     };
 
-    float* tangents = new float[6 * _numVertices];
-    bx::memSet(tangents, 0, 6 * _numVertices * sizeof(float));
+    float* tangents = new float[6 * aNumVertices];
+    bx::memSet(tangents, 0, 6 * aNumVertices * sizeof(float));
 
     PosTexcoord v0;
     PosTexcoord v1;
     PosTexcoord v2;
 
-    for (uint32_t ii = 0, num = _numIndices / 3; ii < num; ++ii) {
-        const uint16_t* indices = &_indices[ii * 3];
+    for (uint32_t ii = 0, num = aNumIndices / 3; ii < num; ++ii) {
+        const uint16_t* indices = &aIndices[ii * 3];
         uint32_t        i0      = indices[0];
         uint32_t        i1      = indices[1];
         uint32_t        i2      = indices[2];
 
-        bgfx::vertexUnpack(&v0.m_x, bgfx::Attrib::Position, _layout, _vertices, i0);
-        bgfx::vertexUnpack(&v0.m_u, bgfx::Attrib::TexCoord0, _layout, _vertices, i0);
+        bgfx::vertexUnpack(&v0.X, bgfx::Attrib::Position, aLayout, aVertices, i0);
+        bgfx::vertexUnpack(&v0.U, bgfx::Attrib::TexCoord0, aLayout, aVertices, i0);
 
-        bgfx::vertexUnpack(&v1.m_x, bgfx::Attrib::Position, _layout, _vertices, i1);
-        bgfx::vertexUnpack(&v1.m_u, bgfx::Attrib::TexCoord0, _layout, _vertices, i1);
+        bgfx::vertexUnpack(&v1.X, bgfx::Attrib::Position, aLayout, aVertices, i1);
+        bgfx::vertexUnpack(&v1.U, bgfx::Attrib::TexCoord0, aLayout, aVertices, i1);
 
-        bgfx::vertexUnpack(&v2.m_x, bgfx::Attrib::Position, _layout, _vertices, i2);
-        bgfx::vertexUnpack(&v2.m_u, bgfx::Attrib::TexCoord0, _layout, _vertices, i2);
+        bgfx::vertexUnpack(&v2.X, bgfx::Attrib::Position, aLayout, aVertices, i2);
+        bgfx::vertexUnpack(&v2.U, bgfx::Attrib::TexCoord0, aLayout, aVertices, i2);
 
-        const float bax = v1.m_x - v0.m_x;
-        const float bay = v1.m_y - v0.m_y;
-        const float baz = v1.m_z - v0.m_z;
-        const float bau = v1.m_u - v0.m_u;
-        const float bav = v1.m_v - v0.m_v;
+        const float bax = v1.X - v0.X;
+        const float bay = v1.Y - v0.Y;
+        const float baz = v1.Z - v0.Z;
+        const float bau = v1.U - v0.U;
+        const float bav = v1.V - v0.V;
 
-        const float cax = v2.m_x - v0.m_x;
-        const float cay = v2.m_y - v0.m_y;
-        const float caz = v2.m_z - v0.m_z;
-        const float cau = v2.m_u - v0.m_u;
-        const float cav = v2.m_v - v0.m_v;
+        const float cax = v2.X - v0.X;
+        const float cay = v2.Y - v0.Y;
+        const float caz = v2.Z - v0.Z;
+        const float cau = v2.U - v0.U;
+        const float cav = v2.V - v0.V;
 
         const float det    = (bau * cav - bav * cau);
         const float invDet = 1.0f / det;
@@ -99,12 +99,12 @@ void calcTangents(void* _vertices,
         }
     }
 
-    for (uint32_t ii = 0; ii < _numVertices; ++ii) {
+    for (uint32_t ii = 0; ii < aNumVertices; ++ii) {
         const bx::Vec3 tanu = bx::load<bx::Vec3>(&tangents[ii * 6]);
         const bx::Vec3 tanv = bx::load<bx::Vec3>(&tangents[ii * 6 + 3]);
 
         float nxyzw[4];
-        bgfx::vertexUnpack(nxyzw, bgfx::Attrib::Normal, _layout, _vertices, ii);
+        bgfx::vertexUnpack(nxyzw, bgfx::Attrib::Normal, aLayout, aVertices, ii);
 
         const bx::Vec3 normal = bx::load<bx::Vec3>(nxyzw);
         const float    ndt    = bx::dot(normal, tanu);
@@ -115,7 +115,7 @@ void calcTangents(void* _vertices,
         bx::store(tangent, bx::normalize(tmp));
         tangent[3] = bx::dot(nxt, tanv) < 0.0f ? -1.0f : 1.0f;
 
-        bgfx::vertexPack(tangent, true, bgfx::Attrib::Tangent, _layout, _vertices, ii);
+        bgfx::vertexPack(tangent, true, bgfx::Attrib::Tangent, aLayout, aVertices, ii);
     }
 
     delete[] tangents;
@@ -123,15 +123,15 @@ void calcTangents(void* _vertices,
 
 namespace bgfx
 {
-int32_t read(bx::ReaderI* _reader, bgfx::VertexLayout& _layout, bx::Error* _err);
+int32_t read(bx::ReaderI* aReader, bgfx::VertexLayout& aLayout, bx::Error* aErr);
 }  // namespace bgfx
 
 struct RendererTypeRemap {
-    bx::StringView           name;
-    bgfx::RendererType::Enum type;
+    bx::StringView           Name;
+    bgfx::RendererType::Enum Type;
 };
 
-static RendererTypeRemap s_rendererTypeRemap[] = {
+static RendererTypeRemap sRendererTypeRemap[] = {
     {"d3d11", bgfx::RendererType::Direct3D11},
     {"d3d12", bgfx::RendererType::Direct3D12},
     {"gl",    bgfx::RendererType::OpenGL    },
@@ -140,61 +140,61 @@ static RendererTypeRemap s_rendererTypeRemap[] = {
     {"vk",    bgfx::RendererType::Vulkan    },
 };
 
-bx::StringView getName(bgfx::RendererType::Enum _type)
+bx::StringView getName(bgfx::RendererType::Enum aType)
 {
-    for (uint32_t ii = 0; ii < BX_COUNTOF(s_rendererTypeRemap); ++ii) {
-        const RendererTypeRemap& remap = s_rendererTypeRemap[ii];
+    for (uint32_t ii = 0; ii < BX_COUNTOF(sRendererTypeRemap); ++ii) {
+        const RendererTypeRemap& remap = sRendererTypeRemap[ii];
 
-        if (_type == remap.type) {
-            return remap.name;
+        if (aType == remap.Type) {
+            return remap.Name;
         }
     }
 
     return "";
 }
 
-bgfx::RendererType::Enum getType(const bx::StringView& _name)
+bgfx::RendererType::Enum getType(const bx::StringView& aName)
 {
-    for (uint32_t ii = 0; ii < BX_COUNTOF(s_rendererTypeRemap); ++ii) {
-        const RendererTypeRemap& remap = s_rendererTypeRemap[ii];
+    for (uint32_t ii = 0; ii < BX_COUNTOF(sRendererTypeRemap); ++ii) {
+        const RendererTypeRemap& remap = sRendererTypeRemap[ii];
 
-        if (0 == bx::strCmpI(_name, remap.name)) {
-            return remap.type;
+        if (0 == bx::strCmpI(aName, remap.Name)) {
+            return remap.Type;
         }
     }
 
     return bgfx::RendererType::Count;
 }
 
-Args::Args(int _argc, const char* const* _argv)
-    : m_type(bgfx::RendererType::Count), m_pciId(BGFX_PCI_ID_NONE)
+Args::Args(int aArgc, const char* const* aArgv)
+    : MType(bgfx::RendererType::Count), MPciId(BGFX_PCI_ID_NONE)
 {
-    bx::CommandLine cmdLine(_argc, (const char**)_argv);
+    bx::CommandLine cmdLine(aArgc, (const char**)aArgv);
 
     if (cmdLine.hasArg("gl")) {
-        m_type = bgfx::RendererType::OpenGL;
+        MType = bgfx::RendererType::OpenGL;
     } else if (cmdLine.hasArg("vk")) {
-        m_type = bgfx::RendererType::Vulkan;
+        MType = bgfx::RendererType::Vulkan;
     } else if (cmdLine.hasArg("noop")) {
-        m_type = bgfx::RendererType::Noop;
+        MType = bgfx::RendererType::Noop;
     }
     if (cmdLine.hasArg("d3d11")) {
-        m_type = bgfx::RendererType::Direct3D11;
+        MType = bgfx::RendererType::Direct3D11;
     } else if (cmdLine.hasArg("d3d12")) {
-        m_type = bgfx::RendererType::Direct3D12;
+        MType = bgfx::RendererType::Direct3D12;
     } else if (BX_ENABLED(BX_PLATFORM_OSX)) {
         if (cmdLine.hasArg("mtl")) {
-            m_type = bgfx::RendererType::Metal;
+            MType = bgfx::RendererType::Metal;
         }
     }
 
     if (cmdLine.hasArg("amd")) {
-        m_pciId = BGFX_PCI_ID_AMD;
+        MPciId = BGFX_PCI_ID_AMD;
     } else if (cmdLine.hasArg("nvidia")) {
-        m_pciId = BGFX_PCI_ID_NVIDIA;
+        MPciId = BGFX_PCI_ID_NVIDIA;
     } else if (cmdLine.hasArg("intel")) {
-        m_pciId = BGFX_PCI_ID_INTEL;
+        MPciId = BGFX_PCI_ID_INTEL;
     } else if (cmdLine.hasArg("sw")) {
-        m_pciId = BGFX_PCI_ID_SOFTWARE_RASTERIZER;
+        MPciId = BGFX_PCI_ID_SOFTWARE_RASTERIZER;
     }
 }

@@ -1,6 +1,8 @@
 #include <inttypes.h>
 #include <stdint.h>
 
+#include <cstddef>
+
 namespace ImGui
 {
 struct Font {
@@ -12,27 +14,27 @@ struct Font {
     };
 };
 
-void PushFont(Font::Enum _font);
+void PushFont(Font::Enum aFont);
 
 // BK - simple string class for convenience.
 class ImString
 {
    public:
     ImString();
-    ImString(const ImString& rhs);
-    ImString(const char* rhs);
+    ImString(const ImString& aRhs);
+    ImString(const char* aRhs);
     ~ImString();
 
-    ImString& operator=(const ImString& rhs);
-    ImString& operator=(const char* rhs);
+    ImString& operator=(const ImString& aRhs);
+    ImString& operator=(const char* aRhs);
 
     void Clear();
     bool IsEmpty() const;
 
-    const char* CStr() const { return NULL == Ptr ? "" : Ptr; }
+    const char* CStr() const { return NULL == mPtr ? "" : mPtr; }
 
    private:
-    char* Ptr;
+    char* mPtr;
 };
 
 }  // namespace ImGui

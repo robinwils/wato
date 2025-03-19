@@ -1,3 +1,3 @@
 struct Health {
-    float health;
+    float Health;
 };

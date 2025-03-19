@@ -4,14 +4,12 @@
 #include "core/sys.hpp"
 #include "entt/entity/fwd.hpp"
 
-void EventHandler::onContact(const rp3d::CollisionCallback::CallbackData& callbackData) {}
+void EventHandler::onContact(const rp3d::CollisionCallback::CallbackData& aCallbackData) {}
 
-void EventHandler::onTrigger(const rp3d::OverlapCallback::CallbackData& callbackData)
+void EventHandler::onTrigger(const rp3d::OverlapCallback::CallbackData& aCallbackData)
 {
-    auto& dispatcher = mRegistry->ctx().get<entt::dispatcher&>();
-
-    for (uint32_t pairIdx = 0; pairIdx < callbackData.getNbOverlappingPairs(); ++pairIdx) {
-        const auto& pair    = callbackData.getOverlappingPair(pairIdx);
+    for (uint32_t pairIdx = 0; pairIdx < aCallbackData.getNbOverlappingPairs(); ++pairIdx) {
+        const auto& pair    = aCallbackData.getOverlappingPair(pairIdx);
         const auto* entity1 = static_cast<entt::entity*>(pair.getBody1()->getUserData());
         const auto* entity2 = static_cast<entt::entity*>(pair.getBody2()->getUserData());
 
@@ -26,10 +24,10 @@ void EventHandler::onTrigger(const rp3d::OverlapCallback::CallbackData& callback
             switch (pair.getEventType()) {
                 case rp3d::OverlapCallback::OverlapPair::EventType::OverlapStart:
                 case rp3d::OverlapCallback::OverlapPair::EventType::OverlapStay:
-                    mActionSystem->setCanBuild(false);
+                    mActionSystem->SetCanBuild(false);
                     break;
                 case rp3d::OverlapCallback::OverlapPair::EventType::OverlapExit:
-                    mActionSystem->setCanBuild(true);
+                    mActionSystem->SetCanBuild(true);
                     break;
             }
         }

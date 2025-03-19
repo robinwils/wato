@@ -183,7 +183,6 @@ target_sources(wato
     deps/imgui/imgui_widgets.cpp
     src/core/event_handler.cpp
     src/core/model_loader.cpp
-    src/core/ray.cpp
     src/core/registry.cpp
     src/core/sys.cpp
     src/imgui/imgui_helper.cpp

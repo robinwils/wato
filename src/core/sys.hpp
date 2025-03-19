@@ -12,8 +12,8 @@
     bx::debugPrintf(DBG_PREFIX _format "\n", ##__VA_ARGS__); \
     BX_MACRO_BLOCK_END
 
-const bgfx::Memory* loadMem(bx::FileReaderI* _reader, const char* _filePath);
-void*               load(bx::FileReaderI* _reader,
-                  bx::AllocatorI*         _allocator,
-                  const char*             _filePath,
-                  uint32_t*               _size = NULL);
+const bgfx::Memory* loadMem(bx::FileReaderI* aReader, const char* aFilePath);
+void*               load(bx::FileReaderI* aReader,
+                  bx::AllocatorI*         aAllocator,
+                  const char*             aFilePath,
+                  uint32_t*               aSize = NULL);

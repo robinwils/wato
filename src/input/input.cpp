@@ -9,18 +9,18 @@
 #include "core/sys.hpp"
 #include "glm/gtx/string_cast.hpp"
 
-void MouseState::clear()
+void MouseState::Clear()
 {
-    pos.x    = -1.0f;
-    pos.y    = -1.0f;
-    scroll.x = 0.0f;
-    scroll.y = 0.0f;
-    memset(buttons, 0, sizeof(buttons));
+    Pos.x    = -1.0f;
+    Pos.y    = -1.0f;
+    Scroll.x = 0.0f;
+    Scroll.y = 0.0f;
+    memset(Buttons, 0, sizeof(Buttons));
 }
 
-Mouse::Button to_mouse_button(int32_t _button)
+Mouse::Button to_mouse_button(int32_t aButton)
 {
-    switch (_button) {
+    switch (aButton) {
         case GLFW_MOUSE_BUTTON_LEFT:
             return Mouse::Button::Left;
         case GLFW_MOUSE_BUTTON_RIGHT:
@@ -32,9 +32,9 @@ Mouse::Button to_mouse_button(int32_t _button)
     }
 }
 
-Button::Action to_action(int32_t _action)
+Button::Action to_action(int32_t aAction)
 {
-    switch (_action) {
+    switch (aAction) {
         case GLFW_PRESS:
             return Button::Action::Press;
         case GLFW_RELEASE:
@@ -46,9 +46,9 @@ Button::Action to_action(int32_t _action)
     }
 }
 
-Keyboard::Key to_key(int32_t key)
+Keyboard::Key to_key(int32_t aKey)
 {
-    switch (key) {
+    switch (aKey) {
         case GLFW_KEY_SPACE:
             return Keyboard::Key::Space;
         case GLFW_KEY_APOSTROPHE:
@@ -294,9 +294,9 @@ Keyboard::Key to_key(int32_t key)
     }
 }
 
-std::string key_string(const Keyboard::Key& k)
+std::string key_string(const Keyboard::Key& aKey)
 {
-    switch (k) {
+    switch (aKey) {
         case Keyboard::Space:
             return "Space";
         case Keyboard::Apostrophe:
@@ -542,83 +542,83 @@ std::string key_string(const Keyboard::Key& k)
     }
 }
 
-void keyCb(GLFWwindow* _window, int32_t _key, int32_t _scancode, int32_t _action, int32_t _mods)
+void keyCb(GLFWwindow* aWindow, int32_t aKey, int32_t aScancode, int32_t aAction, int32_t aMods)
 {
-    Registry*     registry = static_cast<Registry*>(glfwGetWindowUserPointer(_window));
+    Registry*     registry = static_cast<Registry*>(glfwGetWindowUserPointer(aWindow));
     Input&        input    = registry->ctx().get<Input&>();
-    Keyboard::Key key      = to_key(_key);
+    Keyboard::Key key      = to_key(aKey);
 
     // don't reset current state, it will discard input and make movement choppy
-    input.prevKeyboardState = input.keyboardState;
-    input.setKey(key, to_action(_action));
+    input.PrevKeyboardState = input.KeyboardState;
+    input.SetKey(key, to_action(aAction));
 
-    if (_mods & GLFW_MOD_SHIFT) {
-        input.setKeyModifier(key, ModifierKey::Shift);
+    if (aMods & GLFW_MOD_SHIFT) {
+        input.SetKeyModifier(key, ModifierKey::Shift);
     }
-    if (_mods & GLFW_MOD_CONTROL) {
-        input.setKeyModifier(key, ModifierKey::Ctrl);
+    if (aMods & GLFW_MOD_CONTROL) {
+        input.SetKeyModifier(key, ModifierKey::Ctrl);
     }
-    if (_mods & GLFW_MOD_ALT) {
-        input.setKeyModifier(key, ModifierKey::Alt);
+    if (aMods & GLFW_MOD_ALT) {
+        input.SetKeyModifier(key, ModifierKey::Alt);
     }
-    if (_mods & GLFW_MOD_SUPER) {
-        input.setKeyModifier(key, ModifierKey::Super);
+    if (aMods & GLFW_MOD_SUPER) {
+        input.SetKeyModifier(key, ModifierKey::Super);
     }
-    if (_mods & GLFW_MOD_CAPS_LOCK) {
-        input.setKeyModifier(key, ModifierKey::CapsLock);
+    if (aMods & GLFW_MOD_CAPS_LOCK) {
+        input.SetKeyModifier(key, ModifierKey::CapsLock);
     }
-    if (_mods & GLFW_MOD_NUM_LOCK) {
-        input.setKeyModifier(key, ModifierKey::NumLock);
+    if (aMods & GLFW_MOD_NUM_LOCK) {
+        input.SetKeyModifier(key, ModifierKey::NumLock);
     }
 }
 
-static void cursorPosCb(GLFWwindow* _window, double _xpos, double _ypos)
+static void cursorPosCb(GLFWwindow* aWindow, double aXpos, double aYpos)
 {
-    Registry* registry = static_cast<Registry*>(glfwGetWindowUserPointer(_window));
+    Registry* registry = static_cast<Registry*>(glfwGetWindowUserPointer(aWindow));
     Input&    input    = registry->ctx().get<Input&>();
 
-    input.setMousePos(_xpos, _ypos);
+    input.SetMousePos(aXpos, aYpos);
 }
 
-static void mouseButtonCb(GLFWwindow* _window, int32_t _button, int32_t _action, int32_t _mods)
+static void mouseButtonCb(GLFWwindow* aWindow, int32_t aButton, int32_t aAction, int32_t aMods)
 {
-    Registry*     registry = static_cast<Registry*>(glfwGetWindowUserPointer(_window));
+    Registry*     registry = static_cast<Registry*>(glfwGetWindowUserPointer(aWindow));
     Input&        input    = registry->ctx().get<Input&>();
-    Mouse::Button button   = to_mouse_button(_button);
+    Mouse::Button button   = to_mouse_button(aButton);
 
-    input.setMouseButtonPressed(button, to_action(_action));
+    input.SetMouseButtonPressed(button, to_action(aAction));
 
-    if (_mods & GLFW_MOD_SHIFT) {
-        input.setMouseButtonModifier(button, ModifierKey::Shift);
+    if (aMods & GLFW_MOD_SHIFT) {
+        input.SetMouseButtonModifier(button, ModifierKey::Shift);
     }
-    if (_mods & GLFW_MOD_CONTROL) {
-        input.setMouseButtonModifier(button, ModifierKey::Ctrl);
+    if (aMods & GLFW_MOD_CONTROL) {
+        input.SetMouseButtonModifier(button, ModifierKey::Ctrl);
     }
-    if (_mods & GLFW_MOD_ALT) {
-        input.setMouseButtonModifier(button, ModifierKey::Alt);
+    if (aMods & GLFW_MOD_ALT) {
+        input.SetMouseButtonModifier(button, ModifierKey::Alt);
     }
-    if (_mods & GLFW_MOD_SUPER) {
-        input.setMouseButtonModifier(button, ModifierKey::Super);
+    if (aMods & GLFW_MOD_SUPER) {
+        input.SetMouseButtonModifier(button, ModifierKey::Super);
     }
-    if (_mods & GLFW_MOD_CAPS_LOCK) {
-        input.setMouseButtonModifier(button, ModifierKey::CapsLock);
+    if (aMods & GLFW_MOD_CAPS_LOCK) {
+        input.SetMouseButtonModifier(button, ModifierKey::CapsLock);
     }
-    if (_mods & GLFW_MOD_NUM_LOCK) {
-        input.setMouseButtonModifier(button, ModifierKey::NumLock);
+    if (aMods & GLFW_MOD_NUM_LOCK) {
+        input.SetMouseButtonModifier(button, ModifierKey::NumLock);
     }
 }
 
-static void scrollCb(GLFWwindow* _window, double _xoffset, double _yoffset)
+static void scrollCb(GLFWwindow* aWindow, double aXoffset, double aYoffset)
 {
-    Registry* registry = static_cast<Registry*>(glfwGetWindowUserPointer(_window));
+    Registry* registry = static_cast<Registry*>(glfwGetWindowUserPointer(aWindow));
     Input&    input    = registry->ctx().get<Input&>();
 
-    input.setMouseScroll(_xoffset, _yoffset);
+    input.SetMouseScroll(aXoffset, aYoffset);
 }
 
-Input::Input(GLFWwindow* _window) : mouseState(), mWindow(_window), m_tower_placement_mode(false) {}
+Input::Input(GLFWwindow* aWindow) : MouseState(), mTowerPlacementMode(false), mWindow(aWindow) {}
 
-void Input::init()
+void Input::Init()
 {
     glfwSetKeyCallback(mWindow, keyCb);
     // glfwSetCharCallback(m_window[0], charCb);
@@ -629,66 +629,66 @@ void Input::init()
     // glfwSetDropCallback(m_window[0], dropFileCb);
 }
 
-void Input::setMouseButtonPressed(Mouse::Button _button, Button::Action _action)
+void Input::SetMouseButtonPressed(Mouse::Button aButton, Button::Action aAction)
 {
-    mouseState.buttons[_button].action = _action;
+    MouseState.Buttons[aButton].Action = aAction;
 }
 
-void Input::setMouseButtonModifier(Mouse::Button _button, ModifierKey _mod)
+void Input::SetMouseButtonModifier(Mouse::Button aButton, ModifierKey aMod)
 {
-    mouseState.buttons[_button].modifiers[_mod] = true;
+    MouseState.Buttons[aButton].Modifiers[aMod] = true;
 }
 
-void Input::setMousePos(double _x, double _y)
+void Input::SetMousePos(double aX, double aY)
 {
-    mouseState.pos.x = _x;
-    mouseState.pos.y = _y;
+    MouseState.Pos.x = aX;
+    MouseState.Pos.y = aY;
 }
 
-void Input::setMouseScroll(double _xoffset, double _yoffset)
+void Input::SetMouseScroll(double aXoffset, double aYoffset)
 {
-    mouseState.scroll.x = _xoffset;
-    mouseState.scroll.y = _yoffset;
+    MouseState.Scroll.x = aXoffset;
+    MouseState.Scroll.y = aYoffset;
 }
 
-void Input::setKey(Keyboard::Key _key, Button::Action _action)
+void Input::SetKey(Keyboard::Key aKey, Button::Action aAction)
 {
-    keyboardState.keys[_key].action = _action;
+    KeyboardState.Keys[aKey].Action = aAction;
 }
 
-void Input::setKeyModifier(Keyboard::Key _key, ModifierKey _mod)
+void Input::SetKeyModifier(Keyboard::Key aKey, ModifierKey aMod)
 {
-    keyboardState.keys[_key].modifiers[_mod] = true;
+    KeyboardState.Keys[aKey].Modifiers[aMod] = true;
 }
 
-void Input::drawImgui(const Camera& cam,
-    const glm::vec3&                cam_pos,
-    const float                     w,
-    const float                     h) const
+void Input::DrawImgui(const Camera& aCam,
+    const glm::vec3&                aCamPos,
+    const float                     aWidth,
+    const float                     aHeight) const
 {
-    auto dir = worldMousePos(cam, cam_pos, w, h);
+    auto dir = WorldMousePos(aCam, aCamPos, aWidth, aHeight);
 
     ImGui::Text("Input Information");
-    ImGui::Text("Mouse: %s", glm::to_string(mouseState.pos).c_str());
+    ImGui::Text("Mouse: %s", glm::to_string(MouseState.Pos).c_str());
     ImGui::Text("Ray cast: %s", glm::to_string(dir).c_str());
 }
 
-glm::vec3 Input::worldMousePos(const Camera& cam,
-    const glm::vec3&                         cam_pos,
-    const float                              w,
-    const float                              h) const
+glm::vec3 Input::WorldMousePos(const Camera& aCam,
+    const glm::vec3&                         aCamPos,
+    const float                              aWidth,
+    const float                              aHeight) const
 {
     // viewport -> NDC
-    float x_ndc = 1.0f - 2.0f * mouseState.pos.x / w;
-    float y_ndc = 1.0f - 2.0f * mouseState.pos.y / h;
+    float xNdc = 1.0f - 2.0f * MouseState.Pos.x / aWidth;
+    float yNdc = 1.0f - 2.0f * MouseState.Pos.y / aHeight;
 
     // NDC -> view
-    const auto& inv_proj = glm::inverse(cam.proj(w, h));
-    glm::vec4   ray_ndc(x_ndc, y_ndc, 1.0f, 1.0f);
-    glm::vec4   ray_view = ray_ndc * inv_proj;
+    const auto& invProj = glm::inverse(aCam.Projection(aWidth, aHeight));
+    glm::vec4   rayNdc(xNdc, yNdc, 1.0f, 1.0f);
+    glm::vec4   rayView = rayNdc * invProj;
 
     // view -> world
-    const auto& inv_view = glm::inverse(cam.view(cam_pos));
-    ray_view             = glm::vec4(ray_view.x, ray_view.y, 1.0f, 0.0f);
-    return glm::normalize(ray_view * inv_view);
+    const auto& invView = glm::inverse(aCam.View(aCamPos));
+    rayView             = glm::vec4(rayView.x, rayView.y, 1.0f, 0.0f);
+    return glm::normalize(rayView * invView);
 }

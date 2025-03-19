@@ -11,15 +11,19 @@
 #include "glm/ext/vector_float3.hpp"
 #include "renderer/shader.hpp"
 
-bgfx::ShaderHandle  loadShader(bx::FileReaderI* _reader, const char* _name);
-bgfx::ProgramHandle loadProgram(bx::FileReader* fr, const char* _vsName, const char* _fsName);
+bgfx::ShaderHandle  loadShader(bx::FileReaderI* aReader, const char* aName);
+bgfx::ProgramHandle loadProgram(bx::FileReader* aFr, const char* aVsName, const char* aFsName);
 
-struct Material {
-    Material(entt::resource<Shader> _shader) : shader(_shader) {}
+class Material
+{
+   public:
+    Material(entt::resource<Shader> aShader) : mShader(aShader) {}
+    virtual ~Material() {}
 
-    virtual void submit() const {}
+    virtual void Submit() const {}
 
-    entt::resource<Shader> shader;
+    bgfx::ProgramHandle Program() const { return mShader->Program(); }
 
    protected:
+    entt::resource<Shader> mShader;
 };

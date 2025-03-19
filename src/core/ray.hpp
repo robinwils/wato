@@ -4,12 +4,12 @@
 #include "glm/geometric.hpp"
 
 struct Ray {
-    Ray(glm::vec3 o, glm::vec3 d) : orig(o), dir(d) {}
-    glm::vec3 orig;
-    glm::vec3 dir;
+    Ray(glm::vec3 aOrigin, glm::vec3 aDir) : Orig(aOrigin), Dir(aDir) {}
+    glm::vec3 Orig;
+    glm::vec3 Dir;
 
-    float intersect_plane(const glm::vec3& p_normal) const
+    float IntersectPlane(const glm::vec3& aPlaneNormal) const
     {
-        return glm::dot(orig, p_normal) / glm::dot(dir, p_normal);
+        return glm::dot(Orig, aPlaneNormal) / glm::dot(Dir, aPlaneNormal);
     }
 };

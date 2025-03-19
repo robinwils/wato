@@ -1,24 +1,28 @@
 #pragma once
 
+#include <glm/ext/matrix_transform.hpp>
+#include <glm/ext/vector_float3.hpp>
+#include <glm/fwd.hpp>
+#include <glm/trigonometric.hpp>
 #include <renderer/primitive.hpp>
 
-#include "components/transform3d.hpp"
 #include "glm/geometric.hpp"
 #include "glm/gtc/matrix_access.hpp"
+#include "renderer/material.hpp"
 
 class PlanePrimitive : public Primitive<PositionNormalUvVertex>
 {
    public:
-    PlanePrimitive(Material* _material) : Primitive<PositionNormalUvVertex>(_material)
+    explicit PlanePrimitive(Material* aMaterial) : Primitive<PositionNormalUvVertex>(aMaterial)
     {
-        m_vertices = {
-            {{+0.5f, +0.0f, -0.5f}, {0.0f, +1.0f, 0.0f}, {0.0f, 1.0f}},
-            {{-0.5f, +0.0f, -0.5f}, {0.0f, +1.0f, 0.0f}, {0.0f, 0.0f}},
-            {{-0.5f, +0.0f, +0.5f}, {0.0f, +1.0f, 0.0f}, {1.0f, 0.0f}},
-            {{+0.5f, +0.0f, +0.5f}, {0.0f, +1.0f, 0.0f}, {1.0f, 1.0f}},
+        mVertices = {
+            {{+0.5F, +0.0F, -0.5F}, {0.0F, +1.0F, 0.0F}, {0.0F, 1.0F}},
+            {{-0.5F, +0.0F, -0.5F}, {0.0F, +1.0F, 0.0F}, {0.0F, 0.0F}},
+            {{-0.5F, +0.0F, +0.5F}, {0.0F, +1.0F, 0.0F}, {1.0F, 0.0F}},
+            {{+0.5F, +0.0F, +0.5F}, {0.0F, +1.0F, 0.0F}, {1.0F, 1.0F}},
         };
 
-        m_indices = {
+        mIndices = {
             0,
             1,
             2,  //
@@ -28,15 +32,15 @@ class PlanePrimitive : public Primitive<PositionNormalUvVertex>
             3,  //
         };
 
-        Primitive::initializePrimitive();
+        Primitive::InitializePrimitive();
     }
 
-    glm::vec3 normal(const glm::vec3& rotation) const
+    [[nodiscard]] glm::vec3 Normal(const glm::vec3& aRotation) const
     {
-        auto model = glm::mat4(1.0f);
-        model      = glm::rotate(model, glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
-        model      = glm::rotate(model, glm::radians(rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
-        model      = glm::rotate(model, glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+        auto model = glm::mat4(1.0F);
+        model      = glm::rotate(model, glm::radians(aRotation.x), glm::vec3(1.0F, 0.0F, 0.0F));
+        model      = glm::rotate(model, glm::radians(aRotation.y), glm::vec3(0.0F, 1.0F, 0.0F));
+        model      = glm::rotate(model, glm::radians(aRotation.z), glm::vec3(0.0F, 0.0F, 1.0F));
 
         return glm::normalize(glm::vec3(glm::column(model, 1)));
     }

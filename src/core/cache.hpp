@@ -6,23 +6,31 @@
 #include <core/sys.hpp>
 #include <entt/core/hashed_string.hpp>
 #include <entt/resource/cache.hpp>
-#include <renderer/bgfx_utils.hpp>
+#include <memory>
 #include <renderer/material.hpp>
 #include <renderer/shader.hpp>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 #include "bgfx/bgfx.h"
+#include "bgfx/defines.h"
+#include "bimg/bimg.h"
+#include "bx/allocator.h"
+#include "bx/bx.h"
+#include "bx/file.h"
 #include "renderer/primitive.hpp"
 
 using namespace entt::literals;
 
-#define TEXTURE_CACHE (ResourceCache::instance().textureCache)
-#define PROGRAM_CACHE (ResourceCache::instance().programCache)
-#define MODEL_CACHE   (ResourceCache::instance().modelCache)
+#define WATO_TEXTURE_CACHE (ResourceCache::Instance().TextureCache)
+#define WATO_PROGRAM_CACHE (ResourceCache::Instance().ProgramCache)
+#define WATO_MODEL_CACHE   (ResourceCache::Instance().ModelCache)
 
-static void imageReleaseCb(void* _ptr, void* _userData)
+inline static void imageReleaseCb(void* aPtr, void* aUserData)
 {
-    BX_UNUSED(_ptr);
-    bimg::ImageContainer* imageContainer = (bimg::ImageContainer*)_userData;
+    BX_UNUSED(aPtr);
+    auto* imageContainer = (bimg::ImageContainer*)aUserData;
     bimg::imageFree(imageContainer);
 }
 
@@ -30,37 +38,37 @@ struct TextureLoader final {
     using result_type = std::shared_ptr<bgfx::TextureHandle>;
 
     template <typename... Args>
-    result_type operator()(const char* _name,
-        uint64_t                       _flags       = BGFX_TEXTURE_NONE | BGFX_SAMPLER_NONE,
-        uint8_t                        _skip        = 0,
-        bgfx::TextureInfo*             _info        = NULL,
-        bimg::Orientation::Enum*       _orientation = NULL)
+    result_type operator()(const char* aName,
+        uint64_t                       aFlags       = BGFX_TEXTURE_NONE | BGFX_SAMPLER_NONE,
+        uint8_t                        aSkip        = 0,
+        bgfx::TextureInfo*             aInfo        = nullptr,
+        bimg::Orientation::Enum*       aOrientation = nullptr)
     {
-        BX_UNUSED(_skip);
+        BX_UNUSED(aSkip);
         bgfx::TextureHandle handle = BGFX_INVALID_HANDLE;
 
-        uint32_t size;
-        void*    data = load(&fr, &allocator, _name, &size);
-        if (NULL != data) {
-            bimg::ImageContainer* imageContainer = bimg::imageParse(&allocator, data, size);
+        uint32_t size = 0;
+        void*    data = load(&mfr, &mallocator, aName, &size);
+        if (nullptr != data) {
+            bimg::ImageContainer* imageContainer = bimg::imageParse(&mallocator, data, size);
 
-            if (NULL != imageContainer) {
-                if (NULL != _orientation) {
-                    *_orientation = imageContainer->m_orientation;
+            if (nullptr != imageContainer) {
+                if (nullptr != aOrientation) {
+                    *aOrientation = imageContainer->m_orientation;
                 }
 
                 const bgfx::Memory* mem = bgfx::makeRef(imageContainer->m_data,
                     imageContainer->m_size,
                     imageReleaseCb,
                     imageContainer);
-                bx::free(&allocator, data);
+                bx::free(&mallocator, data);
 
                 if (imageContainer->m_cubeMap) {
                     handle = bgfx::createTextureCube(uint16_t(imageContainer->m_width),
                         1 < imageContainer->m_numMips,
                         imageContainer->m_numLayers,
                         bgfx::TextureFormat::Enum(imageContainer->m_format),
-                        _flags,
+                        aFlags,
                         mem);
                 } else if (1 < imageContainer->m_depth) {
                     handle = bgfx::createTexture3D(uint16_t(imageContainer->m_width),
@@ -68,29 +76,29 @@ struct TextureLoader final {
                         uint16_t(imageContainer->m_depth),
                         1 < imageContainer->m_numMips,
                         bgfx::TextureFormat::Enum(imageContainer->m_format),
-                        _flags,
+                        aFlags,
                         mem);
                 } else if (bgfx::isTextureValid(0,
                                false,
                                imageContainer->m_numLayers,
                                bgfx::TextureFormat::Enum(imageContainer->m_format),
-                               _flags)) {
+                               aFlags)) {
                     handle = bgfx::createTexture2D(uint16_t(imageContainer->m_width),
                         uint16_t(imageContainer->m_height),
                         1 < imageContainer->m_numMips,
                         imageContainer->m_numLayers,
                         bgfx::TextureFormat::Enum(imageContainer->m_format),
-                        _flags,
+                        aFlags,
                         mem);
                 }
 
                 if (bgfx::isValid(handle)) {
-                    DBG("Loaded texture %s", _name);
-                    bgfx::setName(handle, _name);
+                    DBG("Loaded texture %s", aName);
+                    bgfx::setName(handle, aName);
                 }
 
-                if (NULL != _info) {
-                    bgfx::calcTextureSize(*_info,
+                if (nullptr != aInfo) {
+                    bgfx::calcTextureSize(*aInfo,
                         uint16_t(imageContainer->m_width),
                         uint16_t(imageContainer->m_height),
                         uint16_t(imageContainer->m_depth),
@@ -106,31 +114,31 @@ struct TextureLoader final {
     }
 
    private:
-    bx::DefaultAllocator allocator;
-    bx::FileReader       fr;
+    bx::DefaultAllocator mallocator;
+    bx::FileReader       mfr;
 };
 
 struct ProgramLoader final {
     using result_type = std::shared_ptr<Shader>;
 
     template <typename... Args>
-    result_type operator()(const char*                           _vsName,
-        const char*                                              _fsName,
-        std::unordered_map<std::string, bgfx::UniformType::Enum> _uniforms)
+    result_type operator()(const char*                                  aVsName,
+        const char*                                                     aFsName,
+        const std::unordered_map<std::string, bgfx::UniformType::Enum>& aUniforms)
     {
-        auto handle = loadProgram(&fr, _vsName, _fsName);
+        auto handle = loadProgram(&mfr, aVsName, aFsName);
 
-        auto uniform_handles = std::unordered_map<std::string, bgfx::UniformHandle>();
-        for (auto&& [name, type] : _uniforms) {
+        auto uniformHandles = std::unordered_map<std::string, bgfx::UniformHandle>();
+        for (auto&& [name, type] : aUniforms) {
             DBG("creating uniform '%s'", name.c_str());
-            uniform_handles[name] = bgfx::createUniform(name.c_str(), type);
+            uniformHandles[name] = bgfx::createUniform(name.c_str(), type);
         }
 
-        return std::make_shared<Shader>(handle, uniform_handles);
+        return std::make_shared<Shader>(handle, uniformHandles);
     }
 
    private:
-    bx::FileReader fr;
+    bx::FileReader mfr;
 };
 
 using TextureCache = entt::resource_cache<bgfx::TextureHandle, TextureLoader>;
@@ -139,7 +147,7 @@ using ModelCache =
     entt::resource_cache<std::vector<Primitive<PositionNormalUvVertex>*>, ModelLoader>;
 
 struct ResourceCache {
-    static ResourceCache& instance()
+    static ResourceCache& Instance()
     {
         static ResourceCache rc;
 
@@ -149,9 +157,9 @@ struct ResourceCache {
     ResourceCache(ResourceCache const&)  = delete;
     void operator=(ResourceCache const&) = delete;
 
-    TextureCache textureCache;
-    ProgramCache programCache;
-    ModelCache   modelCache;
+    TextureCache TextureCache;
+    ProgramCache ProgramCache;
+    ModelCache   ModelCache;
 
    private:
     ResourceCache() {};

@@ -4,11 +4,13 @@
 
 #include <entt/entity/registry.hpp>
 
-struct Registry : public entt::basic_registry<entt::entity> {
-    void spawnPlane();
-    void spawnMap(uint32_t _w, uint32_t _h);
-    void spawnLight();
-    void loadShaders();
-    void loadModels();
-    void spawnPlayerAndCamera();
+class Registry : public entt::basic_registry<entt::entity>
+{
+   public:
+    void SpawnPlane();
+    void SpawnMap(uint32_t aWidth, uint32_t aHeight);
+    void SpawnLight();
+    void LoadShaders();
+    void LoadModels();
+    void SpawnPlayerAndCamera();
 };

@@ -14,9 +14,9 @@
 #include "renderer/blinn_phong_material.hpp"
 #include "renderer/plane_primitive.hpp"
 
-void Registry::loadShaders()
+void Registry::LoadShaders()
 {
-    auto [bp, pLoaded] = PROGRAM_CACHE.load("blinnphong"_hs,
+    auto [bp, pLoaded] = WATO_PROGRAM_CACHE.load("blinnphong"_hs,
         "vs_blinnphong",
         "fs_blinnphong",
         std::unordered_map<std::string, bgfx::UniformType::Enum>{
@@ -27,24 +27,24 @@ void Registry::loadShaders()
             {"u_lightDir",    bgfx::UniformType::Vec4   },
             {"u_lightCol",    bgfx::UniformType::Vec4   }
     });
-    auto [c, cLoaded]  = PROGRAM_CACHE.load("simple"_hs,
+    auto [c, cLoaded]  = WATO_PROGRAM_CACHE.load("simple"_hs,
         "vs_cubes",
         "fs_cubes",
         std::unordered_map<std::string, bgfx::UniformType::Enum>{});
 }
 
-void Registry::spawnMap(uint32_t _w, uint32_t _h)
+void Registry::SpawnMap(uint32_t aWidth, uint32_t aHeight)
 {
     auto [diff, dLoaded] =
-        TEXTURE_CACHE.load("grass/diffuse"_hs, "assets/textures/TreeTop_COLOR.png");
+        WATO_TEXTURE_CACHE.load("grass/diffuse"_hs, "assets/textures/TreeTop_COLOR.png");
     auto [sp, sLoaded] =
-        TEXTURE_CACHE.load("grass/specular"_hs, "assets/textures/TreeTop_SPEC.png");
+        WATO_TEXTURE_CACHE.load("grass/specular"_hs, "assets/textures/TreeTop_SPEC.png");
 
-    auto shader   = PROGRAM_CACHE["blinnphong"_hs];
-    auto diffuse  = TEXTURE_CACHE["grass/diffuse"_hs];
-    auto specular = TEXTURE_CACHE["grass/specular"_hs];
+    auto shader   = WATO_PROGRAM_CACHE["blinnphong"_hs];
+    auto diffuse  = WATO_TEXTURE_CACHE["grass/diffuse"_hs];
+    auto specular = WATO_TEXTURE_CACHE["grass/specular"_hs];
 
-    if (!bgfx::isValid(shader->program())) {
+    if (!bgfx::isValid(shader->Program())) {
         throw std::runtime_error("could not load blinnphong program, invalid handle");
     }
     if (!bgfx::isValid(diffuse)) {
@@ -54,11 +54,11 @@ void Registry::spawnMap(uint32_t _w, uint32_t _h)
         throw std::runtime_error("could not load grass/specular texture, invalid handle");
     }
 
-    MODEL_CACHE.load("grass_tile"_hs,
+    WATO_MODEL_CACHE.load("grass_tile"_hs,
         new PlanePrimitive(new BlinnPhongMaterial(shader, diffuse, specular)));
 
-    for (uint32_t i = 0; i < _w; ++i) {
-        for (uint32_t j = 0; j < _h; ++j) {
+    for (uint32_t i = 0; i < aWidth; ++i) {
+        for (uint32_t j = 0; j < aHeight; ++j) {
             auto tile = create();
             emplace<Transform3D>(tile, glm::vec3(i, 0.0f, j), glm::vec3(0.0f), glm::vec3(1.0f));
             emplace<SceneObject>(tile, "grass_tile"_hs);
@@ -67,22 +67,22 @@ void Registry::spawnMap(uint32_t _w, uint32_t _h)
     }
 }
 
-void Registry::spawnLight()
+void Registry::SpawnLight()
 {
     auto light = create();
     emplace<LightSource>(light, glm::vec3(-1.0f, -1.0f, 0.0f), glm::vec3(0.5f));
     emplace<ImguiDrawable>(light, "Directional Light");
 }
 
-void Registry::loadModels()
+void Registry::LoadModels()
 {
-    MODEL_CACHE.load("tower_model"_hs,
+    WATO_MODEL_CACHE.load("tower_model"_hs,
         "assets/models/tower.fbx",
         aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_PreTransformVertices
             | aiProcess_GlobalScale);
 }
 
-void Registry::spawnPlayerAndCamera()
+void Registry::SpawnPlayerAndCamera()
 {
     auto player = create();
 

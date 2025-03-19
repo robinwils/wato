@@ -4,56 +4,62 @@
 #include "core/registry.hpp"
 #include "entt/signal/dispatcher.hpp"
 
-void processCameraInputs(Input& input, entt::dispatcher& dispatcher, const double time_delta)
+void processCameraInputs(Input& aInput, entt::dispatcher& aDispatcher, double aTimeDelta)
 {
-    if (input.isKeyPressed(Keyboard::W) || input.isKeyRepeat(Keyboard::W)) {
-        dispatcher.trigger(CameraMovement{CameraMovement::CameraForward, time_delta});
+    if (aInput.IsKeyPressed(Keyboard::W) || aInput.IsKeyRepeat(Keyboard::W)) {
+        aDispatcher.trigger(
+            CameraMovement{.Action = CameraMovement::CameraForward, .Delta = aTimeDelta});
     }
-    if (input.isKeyPressed(Keyboard::A) || input.isKeyRepeat(Keyboard::A)) {
-        dispatcher.trigger(CameraMovement{CameraMovement::CameraLeft, time_delta});
+    if (aInput.IsKeyPressed(Keyboard::A) || aInput.IsKeyRepeat(Keyboard::A)) {
+        aDispatcher.trigger(
+            CameraMovement{.Action = CameraMovement::CameraLeft, .Delta = aTimeDelta});
     }
-    if (input.isKeyPressed(Keyboard::S) || input.isKeyRepeat(Keyboard::S)) {
-        dispatcher.trigger(CameraMovement{CameraMovement::CameraBack, time_delta});
+    if (aInput.IsKeyPressed(Keyboard::S) || aInput.IsKeyRepeat(Keyboard::S)) {
+        aDispatcher.trigger(
+            CameraMovement{.Action = CameraMovement::CameraBack, .Delta = aTimeDelta});
     }
-    if (input.isKeyPressed(Keyboard::D) || input.isKeyRepeat(Keyboard::D)) {
-        dispatcher.trigger(CameraMovement{CameraMovement::CameraRight, time_delta});
+    if (aInput.IsKeyPressed(Keyboard::D) || aInput.IsKeyRepeat(Keyboard::D)) {
+        aDispatcher.trigger(
+            CameraMovement{.Action = CameraMovement::CameraRight, .Delta = aTimeDelta});
     }
-    if (input.mouseState.scroll.y != 0) {
-        dispatcher.trigger(CameraMovement{CameraMovement::CameraZoom,
-            (input.mouseState.scroll.y) * 5.0f * time_delta});
-        input.mouseState.scroll.y = 0;
+    if (aInput.MouseState.Scroll.y != 0) {
+        aDispatcher.trigger(CameraMovement{.Action = CameraMovement::CameraZoom,
+            .Delta = (aInput.MouseState.Scroll.y) * 5.0f * aTimeDelta});
+        aInput.MouseState.Scroll.y = 0;
     }
 }
 
-void processBuildInputs(Input& input, entt::dispatcher& dispatcher)
+void processBuildInputs(Input& aInput, entt::dispatcher& aDispatcher)
 {
-    if (input.isKeyPressed(Keyboard::B) && !input.isPrevKeyPressed(Keyboard::B)
-        && !input.isMouseButtonPressed(Mouse::Left)) {
-        if (!input.m_tower_placement_mode) input.m_tower_placement_mode = true;
-        dispatcher.trigger(TowerPlacementMode{true});
+    if (aInput.IsKeyPressed(Keyboard::B) && !aInput.IsPrevKeyPressed(Keyboard::B)
+        && !aInput.IsMouseButtonPressed(Mouse::Left)) {
+        if (!aInput.IsPlacementMode()) {
+            aInput.EnterTowerPlacementMode();
+        }
+        aDispatcher.trigger(TowerPlacementMode{true});
     }
 
-    if (input.m_tower_placement_mode) {
-        dispatcher.trigger(TowerPlacementMode{true});
+    if (aInput.IsPlacementMode()) {
+        aDispatcher.trigger(TowerPlacementMode{true});
     }
 
-    if (input.m_tower_placement_mode) {
-        if (input.isKeyPressed(Keyboard::Escape)) {
-            input.m_tower_placement_mode = false;
-            dispatcher.trigger(TowerPlacementMode{false});
+    if (aInput.IsPlacementMode()) {
+        if (aInput.IsKeyPressed(Keyboard::Escape)) {
+            aInput.ExitTowerPlacementMode();
+            aDispatcher.trigger(TowerPlacementMode{false});
         }
 
-        if (input.isMouseButtonPressed(Mouse::Left)) {
-            dispatcher.trigger(BuildTower{});
+        if (aInput.IsMouseButtonPressed(Mouse::Left)) {
+            aDispatcher.trigger(BuildTower{});
         }
     }
 }
 
-void processInputs(Registry& registry, const double time_delta)
+void processInputs(Registry& aRegistry, double aTimeDelta)
 {
-    auto& input      = registry.ctx().get<Input&>();
-    auto& dispatcher = registry.ctx().get<entt::dispatcher&>();
+    auto& input      = aRegistry.ctx().get<Input&>();
+    auto& dispatcher = aRegistry.ctx().get<entt::dispatcher&>();
 
-    processCameraInputs(input, dispatcher, time_delta);
+    processCameraInputs(input, dispatcher, aTimeDelta);
     processBuildInputs(input, dispatcher);
 }
