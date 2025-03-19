@@ -1,12 +1,26 @@
 cmake_minimum_required(VERSION 3.31)
 
-project(WaTo)
+project(
+  WaTo
+  VERSION 0.0.1
+  DESCRIPTION "3D PvP Tower Defense game"
+  HOMEPAGE_URL "https://github.com/robinwils/wato"
+  LANGUAGES CXX C
+)
 
-set(CMAKE_CXX_STANDARD 20)
+if (NOT DEFINED CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 20)
+endif()
+
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_package(ZLIB REQUIRED)
 
+find_program(CLANG_TIDY_BIN clang-tidy REQUIRED)
+
 option(DEBUG_ENABLE "Enable debug features" OFF)
+
+option(wato_WARNINGS_AS_ERRORS "Treat Warnings As Errors" OFF)
 
 include(FetchContent)
 FetchContent_Declare(
@@ -46,7 +60,8 @@ FetchContent_MakeAvailable(entt)
 FetchContent_MakeAvailable(glm)
 FetchContent_MakeAvailable(reactphysics3d)
 
-set(CMAKE_CXX_FLAGS_DEBUG "-DBX_CONFIG_DEBUG")
+set(DEBUG_FLAGS "-DBX_CONFIG_DEBUG")
+set(RELEASE_FLAGS "")
 
 
 if(DEBUG_ENABLE)
@@ -59,6 +74,23 @@ endif()
 configure_file(config.h.in config.h @ONLY)
 
 add_executable(wato)
+
+if (DEBUG_ENABLE)
+  target_compile_options(wato PUBLIC ${DEBUG_FLAGS})
+else()
+  target_compile_options(wato PUBLIC ${RELEASE_FLAGS})
+endif()
+
+include(cmake/CompilerWarnings.cmake)
+wato_set_project_warnings(
+  wato
+  ${wato_WARNINGS_AS_ERRORS}
+  ""
+  ""
+  ""
+  "")
+
+target_compile_features(wato INTERFACE cxx_std_${CMAKE_CXX_STANDARD})
 
 target_include_directories(wato
   PRIVATE
@@ -106,6 +138,8 @@ elseif(UNIX)
     deps/bgfx/.build/linux64_gcc/bin
   )
 endif()
+
+target_compile_options(wato PUBLIC)
 
 target_sources(wato
   PUBLIC FILE_SET HEADERS
