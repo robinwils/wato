@@ -229,9 +229,29 @@ elseif(UNIX)
   )
 endif()
 
+set(wato_includes "$<TARGET_PROPERTY:wato,INCLUDE_DIRECTORIES>")
+set(wato_sources "$<FILTER:$<TARGET_PROPERTY:wato,SOURCES>,INCLUDE,src/*>")
+set(wato_headers "$<FILTER:$<TARGET_PROPERTY:wato,HEADER_SET>,INCLUDE,src/*>")
+set(wato_opts "$<TARGET_PROPERTY:wato,COMPILE_OPTIONS>")
+
 add_custom_target(format-sources
-  COMMAND clang-format -style=file -i $<TARGET_PROPERTY:wato,SOURCES>
-  $<TARGET_PROPERTY:wato,HEADER_SET>
+  COMMAND clang-format -style=file -i ${wato_sources} ${wato_headers}
+  # COMMAND_EXPAND_LISTS option means that paths with spaces will be handled correctly.
+  # see https://cmake.org/cmake/help/latest/manual/cmake-generator-expressions.7.html
   COMMAND_EXPAND_LISTS
+  WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+
+add_custom_target(tidy-sources
+  COMMAND ${CLANG_TIDY_BIN} --fix --format-style=file
+    -p ${CMAKE_BINARY_DIR}
+    ${wato_sources}
+    ${wato_headers}
+    --
+    ${compile_opts}
+    "$<$<BOOL:${wato_includes}>:-I$<JOIN:${wato_includes},;-I>>"
+  COMMAND_EXPAND_LISTS
+  VERBATIM
+  COMMENT "Running clang-tidy with auto-fix on all sources..."
   WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
 )
