@@ -35,8 +35,8 @@ void imguiCreate(float aFontSize = 18.0f, bx::AllocatorI* aAllocator = NULL);
 void imguiDestroy();
 
 void imguiBeginFrame(const Input& aInput,
-    uint16_t                      aWidth,
-    uint16_t                      aHeight,
+    int                           aWidth,
+    int                           aHeight,
     int                           aInputChar = -1,
     bgfx::ViewId                  aView      = 255);
 

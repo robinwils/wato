@@ -161,11 +161,13 @@ target_sources(wato
     src/core/action.hpp
     src/core/cache.hpp
     src/core/event_handler.hpp
+    src/core/game.hpp
     src/core/model_loader.hpp
     src/core/ray.hpp
     src/core/registry.hpp
     src/core/sys.hpp
     src/core/tile.hpp
+    src/core/window.hpp
     src/input/input.hpp
     src/renderer/bgfx_utils.hpp
     src/renderer/blinn_phong_material.hpp
@@ -182,9 +184,11 @@ target_sources(wato
     deps/imgui/imgui_tables.cpp
     deps/imgui/imgui_widgets.cpp
     src/core/event_handler.cpp
+    src/core/game.cpp
     src/core/model_loader.cpp
     src/core/registry.cpp
     src/core/sys.cpp
+    src/core/window.cpp
     src/imgui/imgui_helper.cpp
     src/input/input.cpp
     src/main.cpp

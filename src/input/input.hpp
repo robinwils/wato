@@ -188,9 +188,24 @@ std::string key_string(const Keyboard::Key& aK);
 class Input
 {
    public:
-    Input(GLFWwindow* aWindow);
+    Input() : MouseState(), mTowerPlacementMode(false) {}
 
     void Init();
+
+    // raw callback handlers
+    static void KeyCallback(GLFWwindow* aWindow,
+        int32_t                         aKey,
+        int32_t                         aScancode,
+        int32_t                         aAction,
+        int32_t                         aMods);
+
+    static void ScrollCallback(GLFWwindow* aWindow, double aXoffset, double aYoffset);
+    static void CursorPosCallback(GLFWwindow* aWindow, double aXpos, double aYpos);
+    static void MouseButtonCallback(GLFWwindow* aWindow,
+        int32_t                                 aButton,
+        int32_t                                 aAction,
+        int32_t                                 aMods);
+
     void SetMouseButtonPressed(Mouse::Button aButton, Button::Action aAction);
     void SetMouseButtonModifier(Mouse::Button aButton, ModifierKey aMod);
     void SetMousePos(double aX, double aY);
@@ -258,12 +273,11 @@ class Input
         const float                       aWidth,
         const float                       aHeight) const;
 
-    void clear() { MouseState.Clear(); }
+    void Clear() { MouseState.Clear(); }
 
     MouseState    MouseState;
     KeyboardState KeyboardState, PrevKeyboardState;
 
    private:
-    bool        mTowerPlacementMode;
-    GLFWwindow* mWindow;
+    bool mTowerPlacementMode;
 };

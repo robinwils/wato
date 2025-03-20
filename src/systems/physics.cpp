@@ -29,7 +29,7 @@ void physicsSystem(Registry& aRegistry, double aDeltaTime)
     // one or several physics steps
     while (accumulator >= timeStep) {
         // Update the Dynamics world with a constant time step
-        phy.world->update(timeStep);
+        phy.World->update(timeStep);
 
         // Decrease the accumulated time
         accumulator -= timeStep;
@@ -63,7 +63,7 @@ bgfx::VertexLayout PosColor::msLayout;
 void physicsDebugRenderSystem(Registry& aRegistry)
 {
     auto&                      phy           = aRegistry.ctx().get<Physics>();
-    rp3d::DebugRenderer const& debugRenderer = phy.world->getDebugRenderer();
+    rp3d::DebugRenderer const& debugRenderer = phy.World->getDebugRenderer();
 
     PosColor::Init();
 

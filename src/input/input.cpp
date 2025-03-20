@@ -4,9 +4,6 @@
 #include <string.h>
 
 #include "components/camera.hpp"
-#include "core/ray.hpp"
-#include "core/registry.hpp"
-#include "core/sys.hpp"
 #include "glm/gtx/string_cast.hpp"
 
 void MouseState::Clear()
@@ -542,91 +539,81 @@ std::string key_string(const Keyboard::Key& aKey)
     }
 }
 
-void keyCb(GLFWwindow* aWindow, int32_t aKey, int32_t aScancode, int32_t aAction, int32_t aMods)
+void Input::KeyCallback(GLFWwindow* aWindow,
+    int32_t                         aKey,
+    int32_t                         aScancode,
+    int32_t                         aAction,
+    int32_t                         aMods)
 {
-    Registry*     registry = static_cast<Registry*>(glfwGetWindowUserPointer(aWindow));
-    Input&        input    = registry->ctx().get<Input&>();
-    Keyboard::Key key      = to_key(aKey);
+    Input*        input = static_cast<Input*>(glfwGetWindowUserPointer(aWindow));
+    Keyboard::Key key   = to_key(aKey);
 
     // don't reset current state, it will discard input and make movement choppy
-    input.PrevKeyboardState = input.KeyboardState;
-    input.SetKey(key, to_action(aAction));
+    input->PrevKeyboardState = input->KeyboardState;
+    input->SetKey(key, to_action(aAction));
 
     if (aMods & GLFW_MOD_SHIFT) {
-        input.SetKeyModifier(key, ModifierKey::Shift);
+        input->SetKeyModifier(key, ModifierKey::Shift);
     }
     if (aMods & GLFW_MOD_CONTROL) {
-        input.SetKeyModifier(key, ModifierKey::Ctrl);
+        input->SetKeyModifier(key, ModifierKey::Ctrl);
     }
     if (aMods & GLFW_MOD_ALT) {
-        input.SetKeyModifier(key, ModifierKey::Alt);
+        input->SetKeyModifier(key, ModifierKey::Alt);
     }
     if (aMods & GLFW_MOD_SUPER) {
-        input.SetKeyModifier(key, ModifierKey::Super);
+        input->SetKeyModifier(key, ModifierKey::Super);
     }
     if (aMods & GLFW_MOD_CAPS_LOCK) {
-        input.SetKeyModifier(key, ModifierKey::CapsLock);
+        input->SetKeyModifier(key, ModifierKey::CapsLock);
     }
     if (aMods & GLFW_MOD_NUM_LOCK) {
-        input.SetKeyModifier(key, ModifierKey::NumLock);
+        input->SetKeyModifier(key, ModifierKey::NumLock);
     }
 }
 
-static void cursorPosCb(GLFWwindow* aWindow, double aXpos, double aYpos)
+void Input::CursorPosCallback(GLFWwindow* aWindow, double aXpos, double aYpos)
 {
-    Registry* registry = static_cast<Registry*>(glfwGetWindowUserPointer(aWindow));
-    Input&    input    = registry->ctx().get<Input&>();
+    Input* input = static_cast<Input*>(glfwGetWindowUserPointer(aWindow));
 
-    input.SetMousePos(aXpos, aYpos);
+    input->SetMousePos(aXpos, aYpos);
 }
 
-static void mouseButtonCb(GLFWwindow* aWindow, int32_t aButton, int32_t aAction, int32_t aMods)
+void Input::MouseButtonCallback(GLFWwindow* aWindow,
+    int32_t                                 aButton,
+    int32_t                                 aAction,
+    int32_t                                 aMods)
 {
-    Registry*     registry = static_cast<Registry*>(glfwGetWindowUserPointer(aWindow));
-    Input&        input    = registry->ctx().get<Input&>();
-    Mouse::Button button   = to_mouse_button(aButton);
+    Input*        input  = static_cast<Input*>(glfwGetWindowUserPointer(aWindow));
+    Mouse::Button button = to_mouse_button(aButton);
 
-    input.SetMouseButtonPressed(button, to_action(aAction));
+    input->SetMouseButtonPressed(button, to_action(aAction));
 
     if (aMods & GLFW_MOD_SHIFT) {
-        input.SetMouseButtonModifier(button, ModifierKey::Shift);
+        input->SetMouseButtonModifier(button, ModifierKey::Shift);
     }
     if (aMods & GLFW_MOD_CONTROL) {
-        input.SetMouseButtonModifier(button, ModifierKey::Ctrl);
+        input->SetMouseButtonModifier(button, ModifierKey::Ctrl);
     }
     if (aMods & GLFW_MOD_ALT) {
-        input.SetMouseButtonModifier(button, ModifierKey::Alt);
+        input->SetMouseButtonModifier(button, ModifierKey::Alt);
     }
     if (aMods & GLFW_MOD_SUPER) {
-        input.SetMouseButtonModifier(button, ModifierKey::Super);
+        input->SetMouseButtonModifier(button, ModifierKey::Super);
     }
     if (aMods & GLFW_MOD_CAPS_LOCK) {
-        input.SetMouseButtonModifier(button, ModifierKey::CapsLock);
+        input->SetMouseButtonModifier(button, ModifierKey::CapsLock);
     }
     if (aMods & GLFW_MOD_NUM_LOCK) {
-        input.SetMouseButtonModifier(button, ModifierKey::NumLock);
+        input->SetMouseButtonModifier(button, ModifierKey::NumLock);
     }
 }
 
-static void scrollCb(GLFWwindow* aWindow, double aXoffset, double aYoffset)
+void Input::ScrollCallback(GLFWwindow* aWindow, double aXoffset, double aYoffset)
 {
-    Registry* registry = static_cast<Registry*>(glfwGetWindowUserPointer(aWindow));
-    Input&    input    = registry->ctx().get<Input&>();
+    Input* input = static_cast<Input*>(glfwGetWindowUserPointer(aWindow));
 
-    input.SetMouseScroll(aXoffset, aYoffset);
-}
-
-Input::Input(GLFWwindow* aWindow) : MouseState(), mTowerPlacementMode(false), mWindow(aWindow) {}
-
-void Input::Init()
-{
-    glfwSetKeyCallback(mWindow, keyCb);
-    // glfwSetCharCallback(m_window[0], charCb);
-    glfwSetScrollCallback(mWindow, scrollCb);
-    glfwSetCursorPosCallback(mWindow, cursorPosCb);
-    glfwSetMouseButtonCallback(mWindow, mouseButtonCb);
-    // glfwSetWindowSizeCallback(m_window[0], windowSizeCb);
-    // glfwSetDropCallback(m_window[0], dropFileCb);
+    input->SetMouseScroll(aXoffset, aYoffset);
 }
 
 void Input::SetMouseButtonPressed(Mouse::Button aButton, Button::Action aAction)

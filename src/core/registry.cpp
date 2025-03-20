@@ -2,17 +2,52 @@
 
 #include <bgfx/bgfx.h>
 
+#include <entt/signal/dispatcher.hpp>
 #include <glm/ext/vector_float3.hpp>
 
 #include "components/camera.hpp"
 #include "components/imgui.hpp"
 #include "components/light_source.hpp"
+#include "components/physics.hpp"
 #include "components/scene_object.hpp"
 #include "components/tile.hpp"
 #include "components/transform3d.hpp"
 #include "core/cache.hpp"
+#include "core/event_handler.hpp"
+#include "input/input.hpp"
 #include "renderer/blinn_phong_material.hpp"
+#include "renderer/physics.hpp"
 #include "renderer/plane_primitive.hpp"
+
+void Registry::Init(WatoWindow *aWin, EventHandler *aPhyEventHandler)
+{
+    ctx().emplace<entt::dispatcher>();
+    ctx().emplace<Input &>(aWin->GetInput());
+    auto &phy = ctx().emplace<Physics>();
+    phy.World = phy.Common.createPhysicsWorld();
+
+    phy.World->setEventListener(aPhyEventHandler);
+
+    // Create the default logger
+    rp3d::DefaultLogger *logger = phy.Common.createDefaultLogger();
+
+    // Output the logs into the standard output
+    logger->addStreamDestination(std::cout,
+        static_cast<uint>(rp3d::Logger::Level::Error),
+        rp3d::DefaultLogger::Format::Text);
+
+    ctx().emplace<PhysicsParams>(false, false, true, logger);
+
+#if WATO_DEBUG
+    phy.World->setIsDebugRenderingEnabled(true);
+#endif
+
+    LoadShaders();
+    SpawnLight();
+    SpawnMap(20, 20);
+    LoadModels();
+    SpawnPlayerAndCamera();
+}
 
 void Registry::LoadShaders()
 {

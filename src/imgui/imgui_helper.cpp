@@ -485,8 +485,8 @@ void imguiCreate(float aFontSize, bx::AllocatorI* aAllocator)
 void imguiDestroy() { sCtx.Destroy(); }
 
 void imguiBeginFrame(const Input& aInput,
-    uint16_t                      aWidth,
-    uint16_t                      aHeight,
+    int                           aWidth,
+    int                           aHeight,
     int                           aInputChar,
     bgfx::ViewId                  aViewId)
 {

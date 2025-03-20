@@ -4,9 +4,14 @@
 
 #include <entt/entity/registry.hpp>
 
+#include "core/window.hpp"
+
+class EventHandler;
+
 class Registry : public entt::basic_registry<entt::entity>
 {
    public:
+    void Init(WatoWindow* aWin, EventHandler* aPhyHandler);
     void SpawnPlane();
     void SpawnMap(uint32_t aWidth, uint32_t aHeight);
     void SpawnLight();

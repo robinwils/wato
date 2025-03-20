@@ -13,6 +13,7 @@
 #include "bgfx/defines.h"
 #include "components/physics.hpp"
 #include "core/event_handler.hpp"
+#include "core/game.hpp"
 
 #if BX_PLATFORM_LINUX
 #define GLFW_EXPOSE_NATIVE_X11
@@ -94,137 +95,9 @@ void signalHandler(int signum) {}
 int main()
 {
     signal(SIGSEGV, signalHandler);
-    if (!glfwInit()) return 1;
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    // macos: glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
-    GLFWwindow *window = glfwCreateWindow(1024, 768, "wato", nullptr, nullptr);
-    if (window == NULL) {
-        std::cout << "Failed to create GLFW window" << std::endl;
-        glfwTerminate();
-        return -1;
-    }
-    glfwMakeContextCurrent(window);
+    Game game(1920, 1080);
+    game.Init();
 
-    // Call bgfx::renderFrame before bgfx::init to signal to bgfx not to create a render thread.
-    // Most graphics APIs must be used on the same thread that created the window.
-    bgfx::renderFrame();
-    bgfx::Init init;
-
-#if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
-    init.platformData.ndt = glfwGetX11Display();
-    init.platformData.nwh = (void *)(uintptr_t)glfwGetX11Window(window);
-#elif BX_PLATFORM_OSX
-    init.platformData.nwh = glfwGetCocoaWindow(window);
-#elif BX_PLATFORM_WINDOWS
-    init.platformData.nwh = glfwGetWin32Window(window);
-#endif
-
-    init.type = bgfx::RendererType::Vulkan;
-
-    int width = 0, height = 0;
-    glfwGetWindowSize(window, &width, &height);
-    init.resolution.width  = (uint32_t)width;
-    init.resolution.height = (uint32_t)height;
-    init.resolution.reset  = BGFX_RESET_VSYNC;
-
-    if (!bgfx::init(init)) return 1;
-
-    // Set view 0 to the same dimensions as the window and to clear the color buffer.
-    const bgfx::ViewId clearView = 0;
-
-    // Enable stats or debug text.
-    bgfx::setDebug(BGFX_DEBUG_TEXT | BGFX_DEBUG_PROFILER);
-
-    // Set view 0 clear state.
-    bgfx::setViewClear(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x0090cfff, 1.0f, 0);
-
-    Registry registry;
-
-    entt::dispatcher eventDispatcher;
-    registry.ctx().emplace<entt::dispatcher &>(eventDispatcher);
-
-    imguiCreate();
-    Input input(window);
-    input.Init();
-    glfwSetWindowUserPointer(window, &registry);
-    registry.ctx().emplace<Input &>(input);
-
-    ActionSystem actionSystem(&registry, width, height);
-    actionSystem.InitListeners(input);
-
-    auto &phy = registry.ctx().emplace<Physics>();
-    phy.world = phy.common.createPhysicsWorld();
-
-    EventHandler eventHandler(&registry, &actionSystem);
-    phy.world->setEventListener(&eventHandler);
-
-    // Create the default logger
-    rp3d::DefaultLogger *logger = phy.common.createDefaultLogger();
-
-    // Output the logs into the standard output
-    logger->addStreamDestination(std::cout,
-        static_cast<uint>(rp3d::Logger::Level::Error),
-        rp3d::DefaultLogger::Format::Text);
-
-    // Set the logger
-    phy.common.setLogger(logger);
-    registry.ctx().emplace<PhysicsParams>(false, false, true, logger);
-
-#if WATO_DEBUG
-    phy.world->setIsDebugRenderingEnabled(true);
-#endif
-
-    registry.LoadShaders();
-    registry.SpawnLight();
-    registry.SpawnMap(20, 20);
-    registry.LoadModels();
-    registry.SpawnPlayerAndCamera();
-    // registry.spawnPlane();
-
-    double  prevTime    = glfwGetTime();
-    int64_t mTimeOffset = bx::getHPCounter();
-
-    while (!glfwWindowShouldClose(window)) {
-        glfwPollEvents();
-        // Handle window resize.
-        int oldWidth = width, oldHeight = height;
-        glfwGetWindowSize(window, &width, &height);
-        if (width != oldWidth || height != oldHeight) {
-            bgfx::reset((uint32_t)width, (uint32_t)height, BGFX_RESET_VSYNC);
-            bgfx::setViewRect(clearView, 0, 0, bgfx::BackbufferRatio::Equal);
-            actionSystem.UdpateWinSize(width, height);
-        }
-        bgfx::touch(clearView);
-        // Use debug font to print information about this example.
-        bgfx::dbgTextClear();
-
-        renderImgui(registry, width, height);
-
-        auto t      = glfwGetTime();
-        auto dt     = t - prevTime;
-        prevTime    = t;
-        double time = ((bx::getHPCounter() - mTimeOffset) / double(bx::getHPFrequency()));
-
-        processInputs(registry, dt);
-        cameraSystem(registry, float(width), float(height));
-        physicsSystem(registry, dt);
-
-        // This dummy draw call is here to make sure that view 0 is cleared
-        // if no other draw calls are submitted to view 0.
-        bgfx::touch(0);
-
-        renderSceneObjects(registry, time);
-#if WATO_DEBUG
-        physicsDebugRenderSystem(registry);
-#endif
-
-        // Advance to next frame. Process submitted rendering primitives.
-        bgfx::frame();
-    }
-
-    return 0;
+    return game.Run();
 }

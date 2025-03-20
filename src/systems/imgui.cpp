@@ -2,30 +2,26 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
-#include "components/camera.hpp"
 #include "components/light_source.hpp"
-#include "components/physics.hpp"
 #include "components/transform3d.hpp"
-#include "config.h"
-#include "core/registry.hpp"
-#include "glm/gtx/string_cast.hpp"
 #include "imgui.h"
 #include "imgui_helper.h"
-#include "input/input.hpp"
 #include "renderer/physics.hpp"
+#include "systems/systems.hpp"
 
-void renderImgui(Registry& aRegistry, float aWidth, float aHeight)
+void renderImgui(Registry& aRegistry, WatoWindow& aWin)
 {
-    const auto& input = aRegistry.ctx().get<Input&>();
-
-    imguiBeginFrame(input, uint16_t(aWidth), uint16_t(aHeight));
-    showImguiDialogs(aWidth, aHeight);
+    imguiBeginFrame(aWin.GetInput(), aWin.Width<int>(), aWin.Height<int>());
+    showImguiDialogs(aWin.Width<float>(), aWin.Height<float>());
 
     for (auto&& [entity, imgui] : aRegistry.view<ImguiDrawable>().each()) {
         auto [camera, transform] = aRegistry.try_get<Camera, Transform3D>(entity);
         ImGui::Text("%s Settings", imgui.name.c_str());
         if (camera && transform) {
-            input.DrawImgui(*camera, transform->Position, aWidth, aHeight);
+            aWin.GetInput().DrawImgui(*camera,
+                transform->Position,
+                aWin.Width<float>(),
+                aWin.Height<float>());
             ImGui::DragFloat3("Position", glm::value_ptr(transform->Position), 0.1f, 5.0f);
             ImGui::DragFloat3("Direction", glm::value_ptr(camera->Dir), 0.1f, 2.0f);
             ImGui::DragFloat("FoV (Degree)", &camera->Fov, 10.0f, 120.0f);
@@ -69,7 +65,7 @@ void renderImgui(Registry& aRegistry, float aWidth, float aHeight)
     }
 
 #if WATO_DEBUG
-    rp3d::DebugRenderer& debugRenderer = phy.world->getDebugRenderer();
+    rp3d::DebugRenderer& debugRenderer = phy.World->getDebugRenderer();
     auto                 nTri          = debugRenderer.getNbTriangles();
     auto                 nLines        = debugRenderer.getNbLines();
 

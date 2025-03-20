@@ -124,7 +124,7 @@ void ActionSystem::towerPlacementMode(TowerPlacementMode aM)
             auto& phy = mRegistry->ctx().get<Physics>();
             auto& rb  = mRegistry->get<RigidBody>(mGhostTower);
 
-            phy.world->destroyRigidBody(rb.rigid_body);
+            phy.World->destroyRigidBody(rb.rigid_body);
             mRegistry->destroy(mGhostTower);
             mGhostTower = entt::null;
             return;
@@ -147,8 +147,8 @@ void ActionSystem::towerPlacementMode(TowerPlacementMode aM)
         mRegistry->emplace<PlacementMode>(mGhostTower);
         mRegistry->emplace<ImguiDrawable>(mGhostTower, "Ghost Tower");
 
-        auto* rb       = phy.world->createRigidBody(t.ToRp3d());
-        auto* box      = phy.common.createBoxShape(rp3d::Vector3(0.35F, 0.65F, 0.35F));
+        auto* rb       = phy.World->createRigidBody(t.ToRp3d());
+        auto* box      = phy.Common.createBoxShape(rp3d::Vector3(0.35F, 0.65F, 0.35F));
         auto* collider = rb->addCollider(box, rp3d::Transform::identity());
 
         rb->enableGravity(false);
