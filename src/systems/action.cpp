@@ -20,6 +20,7 @@
 #include "entt/entity/fwd.hpp"
 #include "entt/signal/dispatcher.hpp"
 #include "entt/signal/fwd.hpp"
+#include "glm/trigonometric.hpp"
 #include "input/input.hpp"
 #include "reactphysics3d/components/RigidBodyComponents.h"
 #include "reactphysics3d/engine/PhysicsWorld.h"
@@ -134,7 +135,7 @@ void ActionSystem::towerPlacementMode(TowerPlacementMode aM)
             aT.Position.x = intersect.x;
             aT.Position.z = intersect.z;
             mRegistry->patch<RigidBody>(mGhostTower,
-                [aT](RigidBody& aRb) { aRb.rigid_body->setTransform(aT.ToRp3d()); });
+                [aT](RigidBody& aRb) { aRb.rigid_body->setTransform(aT.ToRP3D()); });
         });
     } else if (aM.Enable) {
         auto& phy   = mRegistry->ctx().get<Physics>();
@@ -147,7 +148,7 @@ void ActionSystem::towerPlacementMode(TowerPlacementMode aM)
         mRegistry->emplace<PlacementMode>(mGhostTower);
         mRegistry->emplace<ImguiDrawable>(mGhostTower, "Ghost Tower");
 
-        auto* rb       = phy.World->createRigidBody(t.ToRp3d());
+        auto* rb       = phy.World->createRigidBody(t.ToRP3D());
         auto* box      = phy.Common.createBoxShape(rp3d::Vector3(0.35F, 0.65F, 0.35F));
         auto* collider = rb->addCollider(box, rp3d::Transform::identity());
 

@@ -7,6 +7,8 @@
 #include "bgfx/bgfx.h"
 #include "bgfx/defines.h"
 #include "bx/bx.h"
+#include "components/rigid_body.hpp"
+#include "components/transform3d.hpp"
 #include "config.h"
 #include "core/cache.hpp"
 #include "core/registry.hpp"
@@ -19,8 +21,8 @@ void physicsSystem(Registry& aRegistry, double aDeltaTime)
     auto& phy = aRegistry.ctx().get<Physics>();
 
     // Constant physics time step, TODO: as static const for now
-    static const double timeStep    = 1.0F / 60.0F;
-    static double       accumulator = 0.0F;
+    static const rp3d::decimal timeStep    = 1.0F / 60.0F;
+    static rp3d::decimal       accumulator = 0.0F;
 
     // Add the time difference in the accumulator
     accumulator += aDeltaTime;
@@ -33,6 +35,17 @@ void physicsSystem(Registry& aRegistry, double aDeltaTime)
 
         // Decrease the accumulated time
         accumulator -= timeStep;
+    }
+
+    // Compute the time interpolation factor
+    rp3d::decimal factor = accumulator / timeStep;
+
+    // update transforms
+    for (auto&& [entity, t, rb] : aRegistry.view<Transform3D, RigidBody>().each()) {
+        auto updatedTransform = rb.rigid_body->getTransform();
+        auto interpolatedTransform =
+            reactphysics3d::Transform::interpolateTransforms(t.ToRP3D(), updatedTransform, factor);
+        t.FromRP3D(interpolatedTransform);
     }
 }
 
