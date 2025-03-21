@@ -153,8 +153,8 @@ struct Button {
     };
 
     struct State {
-        Action Action;
-        bool   Modifiers[6];
+        enum Action Action;
+        bool        Modifiers[6];
     };
 };
 
@@ -275,8 +275,8 @@ class Input
 
     void Clear() { MouseState.Clear(); }
 
-    MouseState    MouseState;
-    KeyboardState KeyboardState, PrevKeyboardState;
+    struct MouseState    MouseState;
+    struct KeyboardState KeyboardState, PrevKeyboardState;
 
    private:
     bool mTowerPlacementMode;
