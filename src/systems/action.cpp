@@ -88,7 +88,7 @@ glm::vec3 ActionSystem::getMouseRay() const
             BX_ASSERT(primitives->size() == 1, "plane should have 1 primitive");
             const auto* plane = dynamic_cast<PlanePrimitive*>(primitives->back());
 
-            float const d = ray.IntersectPlane(plane->Normal(t.Rotation));
+            float const d = ray.IntersectPlane(plane->Normal(t.Orientation));
             return ray.Orig + d * ray.Dir;
         }
     }
@@ -143,7 +143,7 @@ void ActionSystem::towerPlacementMode(TowerPlacementMode aM)
         mRegistry->emplace<SceneObject>(mGhostTower, "tower_model"_hs);
         const auto& t = mRegistry->emplace<Transform3D>(mGhostTower,
             glm::vec3(intersect.x, 0.0F, intersect.z),
-            glm::vec3(0.0F),
+            glm::identity<glm::quat>(),
             glm::vec3(0.1F));
         mRegistry->emplace<PlacementMode>(mGhostTower);
         mRegistry->emplace<ImguiDrawable>(mGhostTower, "Ghost Tower");

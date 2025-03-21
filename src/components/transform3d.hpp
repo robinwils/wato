@@ -11,28 +11,30 @@
 
 struct Transform3D {
     glm::vec3 Position;
-    glm::vec3 Rotation;
+    glm::quat Orientation;
     glm::vec3 Scale;
 
-    [[nodiscard]] rp3d::Transform ToRp3d() const
+    [[nodiscard]] rp3d::Transform ToRP3D() const
     {
-        auto q = glm::quat_cast(Orientation());
         return rp3d::Transform(rp3d::Vector3(Position.x, Position.y, Position.z),
-            rp3d::Quaternion(q.x, q.y, q.z, q.w));
-    }
-
-    [[nodiscard]] glm::mat4 Orientation() const
-    {
-        auto model = glm::mat4(1.0F);
-        model      = glm::rotate(model, glm::radians(Rotation.x), glm::vec3(1.0F, 0.0F, 0.0F));
-        model      = glm::rotate(model, glm::radians(Rotation.y), glm::vec3(0.0F, 1.0F, 0.0F));
-        model      = glm::rotate(model, glm::radians(Rotation.z), glm::vec3(0.0F, 0.0F, 1.0F));
-        return model;
+            rp3d::Quaternion(Orientation.x, Orientation.y, Orientation.z, Orientation.w));
     }
 
     [[nodiscard]] std::string ToString() const
     {
-        return "Transform3D: position = " + glm::to_string(Position)
-               + ", rotation = " + glm::to_string(Rotation) + ", scale = " + glm::to_string(Scale);
+        return "Transform3D: position = " + glm::to_string(Position) + ", rotation = "
+               + glm::to_string(Orientation) + ", scale = " + glm::to_string(Scale);
+    }
+
+    void FromRP3D(const rp3d::Transform& aTransform)
+    {
+        Position.x = aTransform.getPosition().x;
+        Position.y = aTransform.getPosition().y;
+        Position.z = aTransform.getPosition().z;
+
+        Orientation = glm::quat(aTransform.getOrientation().w,
+            aTransform.getOrientation().x,
+            aTransform.getOrientation().y,
+            aTransform.getOrientation().z);
     }
 };

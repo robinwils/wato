@@ -9,6 +9,7 @@
 #include "components/scene_object.hpp"
 #include "components/transform3d.hpp"
 #include "core/cache.hpp"
+#include "glm/ext/quaternion_transform.hpp"
 #include "systems.hpp"
 
 void renderSceneObjects(Registry& aRegistry, const float /*dt*/)
@@ -27,12 +28,10 @@ void renderSceneObjects(Registry& aRegistry, const float /*dt*/)
     auto check = aRegistry.view<PlacementMode>();
 
     for (auto&& [entity, obj, t] : group.each()) {
-        auto model = glm::mat4(1.0f);
-        model      = glm::translate(model, t.Position);
-        model      = glm::rotate(model, glm::radians(t.Rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
-        model      = glm::rotate(model, glm::radians(t.Rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
-        model      = glm::rotate(model, glm::radians(t.Rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
-        model      = glm::scale(model, t.Scale);
+        auto model  = glm::identity<glm::mat4>();
+        model       = glm::translate(model, t.Position);
+        model      *= glm::mat4_cast(t.Orientation);
+        model       = glm::scale(model, t.Scale);
 
         if (check.contains(entity)) {
             // DBG("GOT Placement mode entity!")

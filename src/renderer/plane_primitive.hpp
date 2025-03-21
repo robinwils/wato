@@ -8,6 +8,7 @@
 
 #include "glm/geometric.hpp"
 #include "glm/gtc/matrix_access.hpp"
+#include "glm/gtc/quaternion.hpp"
 #include "renderer/material.hpp"
 
 class PlanePrimitive : public Primitive<PositionNormalUvVertex>
@@ -35,13 +36,8 @@ class PlanePrimitive : public Primitive<PositionNormalUvVertex>
         Primitive::InitializePrimitive();
     }
 
-    [[nodiscard]] glm::vec3 Normal(const glm::vec3& aRotation) const
+    [[nodiscard]] glm::vec3 Normal(const glm::quat& aOrientation) const
     {
-        auto model = glm::mat4(1.0F);
-        model      = glm::rotate(model, glm::radians(aRotation.x), glm::vec3(1.0F, 0.0F, 0.0F));
-        model      = glm::rotate(model, glm::radians(aRotation.y), glm::vec3(0.0F, 1.0F, 0.0F));
-        model      = glm::rotate(model, glm::radians(aRotation.z), glm::vec3(0.0F, 0.0F, 1.0F));
-
-        return glm::normalize(glm::vec3(glm::column(model, 1)));
+        return glm::normalize(glm::vec3(glm::column(glm::mat4_cast(aOrientation), 1)));
     }
 };
