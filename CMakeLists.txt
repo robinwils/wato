@@ -151,10 +151,7 @@ target_sources(wato
     src/components/health.hpp
     src/components/imgui.hpp
     src/components/placement_mode.hpp
-    src/components/position.hpp
     src/components/rigid_body.hpp
-    src/components/rotation.hpp
-    src/components/scale.hpp
     src/components/scene_object.hpp
     src/components/tile.hpp
     src/components/transform3d.hpp
