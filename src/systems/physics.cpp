@@ -11,13 +11,14 @@
 #include "components/transform3d.hpp"
 #include "config.h"
 #include "core/cache.hpp"
-#include "core/registry.hpp"
+#include "core/game_engine.hpp"
 #include "reactphysics3d/utils/DebugRenderer.h"
+#include "registry/registry.hpp"
 #include "renderer/material.hpp"
 
 void PhysicsSystem::operator()(Registry& aRegistry, const float aDeltaTime)
 {
-    auto& phy = aRegistry.GetPhysics();
+    auto& phy = aRegistry.ctx().get<GameEngine>().GetPhysics();
 
     // Constant physics time step, TODO: as static const for now
     static const rp3d::decimal timeStep    = 1.0F / 60.0F;
@@ -74,7 +75,7 @@ bgfx::VertexLayout PosColor::msLayout;
 
 void PhysicsDebugSystem::operator()(Registry& aRegistry, const float aDeltaTime)
 {
-    auto&                      phy           = aRegistry.GetPhysics();
+    auto&                      phy           = aRegistry.ctx().get<GameEngine>().GetPhysics();
     rp3d::DebugRenderer const& debugRenderer = phy.World()->getDebugRenderer();
 
     PosColor::Init();

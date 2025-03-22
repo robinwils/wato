@@ -6,21 +6,21 @@
 #include "core/window.hpp"
 #include "renderer/renderer.hpp"
 
-class Engine
+class GameEngine
 {
    public:
-    Engine() {}
-    Engine(std::unique_ptr<WatoWindow> aWin,
-        std::unique_ptr<Renderer>      aRenderer,
-        std::unique_ptr<Physics>       aPhy)
+    GameEngine() {}
+    GameEngine(std::unique_ptr<WatoWindow> aWin,
+        std::unique_ptr<Renderer>          aRenderer,
+        std::unique_ptr<Physics>           aPhy)
         : mWindow(std::move(aWin)), mRenderer(std::move(aRenderer)), mPhysics(std::move(aPhy))
     {
     }
-    Engine(Engine &&)                 = delete;
-    Engine(const Engine &)            = delete;
-    Engine &operator=(Engine &&)      = delete;
-    Engine &operator=(const Engine &) = delete;
-    ~Engine()                         = default;
+    GameEngine(GameEngine &&)                 = delete;
+    GameEngine(const GameEngine &)            = delete;
+    GameEngine &operator=(GameEngine &&)      = delete;
+    GameEngine &operator=(const GameEngine &) = delete;
+    ~GameEngine()                             = default;
 
     Input      &GetPlayerInput() { return mWindow->GetInput(); }
     Physics    &GetPhysics() { return *mPhysics; }

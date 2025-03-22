@@ -1,8 +1,9 @@
 #pragma once
 
-#include "core/registry.hpp"
+#include "entt/signal/delegate.hpp"
+#include "registry/registry.hpp"
 
-using SystemDelegate = entt::delegate<void(Registry&, const float, WatoWindow&)>;
+using SystemDelegate = entt::delegate<void(Registry&, const float)>;
 using SystemRegistry = std::vector<SystemDelegate>;
 
 template <typename Derived>

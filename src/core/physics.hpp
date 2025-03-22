@@ -2,8 +2,7 @@
 
 #include "config.h"
 #include "reactphysics3d/reactphysics3d.h"
-
-class Registry;
+#include "registry/registry.hpp"
 
 struct PhysicsParams {
     bool InfoLogs;

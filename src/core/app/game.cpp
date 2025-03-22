@@ -1,23 +1,27 @@
-#include "core/game.hpp"
+#include "core/app/game.hpp"
 
 #include <bx/bx.h>
 
 #include <memory>
 
-#include "core/event_handler.hpp"
+#include "core/game_engine.hpp"
+#include "core/physics.hpp"
+#include "registry/game_registry.hpp"
+#include "renderer/renderer.hpp"
 #include "systems/system.hpp"
 
 void Game::Init()
 {
-    auto &engine = mRegistry.ctx().emplace<Engine>(std::make_unique<WatoWindow>(mWidth, mHeight),
-        std::make_unique<Renderer>(),
-        std::make_unique<Physics>());
+    auto &engine =
+        mRegistry.ctx().emplace<GameEngine>(std::make_unique<WatoWindow>(mWidth, mHeight),
+            std::make_unique<Renderer>(),
+            std::make_unique<Physics>());
 
     engine.GetWindow().Init();
-    engine.GetRenderer().Init(mRegistry.GetWindow());
+    engine.GetRenderer().Init(mRegistry.ctx().get<GameEngine>().GetWindow());
     engine.GetPhysics().Init(&mRegistry);
 
-    mRegistry.LoadResources();
+    LoadResources(mRegistry);
     mSystems.push_back(RenderImguiSystem::MakeDelegate(mRenderImguiSystem));
     mSystems.push_back(PlayerInputSystem::MakeDelegate(mPlayerInputSystem));
     mSystems.push_back(CameraSystem::MakeDelegate(mCameraSystem));
@@ -31,8 +35,8 @@ void Game::Init()
 
 int Game::Run()
 {
-    auto &window   = mRegistry.GetWindow();
-    auto &renderer = mRegistry.GetRenderer();
+    auto &window   = mRegistry.ctx().get<GameEngine>().GetWindow();
+    auto &renderer = mRegistry.ctx().get<GameEngine>().GetRenderer();
 
     using clock   = std::chrono::high_resolution_clock;
     auto prevTime = clock::now();
@@ -50,7 +54,7 @@ int Game::Run()
         prevTime = t;
 
         for (const auto &system : mSystems) {
-            system(mRegistry, dt.count(), window);
+            system(mRegistry, dt.count());
         }
 
         renderer.Render();

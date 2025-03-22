@@ -13,6 +13,7 @@
 #include "components/scene_object.hpp"
 #include "components/transform3d.hpp"
 #include "core/cache.hpp"
+#include "core/game_engine.hpp"
 #include "imgui_helper.h"
 
 void RenderSystem::operator()(Registry& aRegistry)
@@ -60,19 +61,20 @@ void RenderSystem::operator()(Registry& aRegistry)
     }
 }
 
-void RenderImguiSystem::operator()(Registry& aRegistry, const float aDeltaTime, WatoWindow& aWin)
+void RenderImguiSystem::operator()(Registry& aRegistry, const float aDeltaTime)
 {
-    imguiBeginFrame(aWin.GetInput(), aWin.Width<int>(), aWin.Height<int>());
-    showImguiDialogs(aWin.Width<float>(), aWin.Height<float>());
+    auto& window = aRegistry.ctx().get<GameEngine>().GetWindow();
+    imguiBeginFrame(window.GetInput(), window.Width<int>(), window.Height<int>());
+    showImguiDialogs(window.Width<float>(), window.Height<float>());
 
     for (auto&& [entity, imgui] : aRegistry.view<ImguiDrawable>().each()) {
         auto [camera, transform] = aRegistry.try_get<Camera, Transform3D>(entity);
         ImGui::Text("%s Settings", imgui.name.c_str());
         if (camera && transform) {
-            aWin.GetInput().DrawImgui(*camera,
+            window.GetInput().DrawImgui(*camera,
                 transform->Position,
-                aWin.Width<float>(),
-                aWin.Height<float>());
+                window.Width<float>(),
+                window.Height<float>());
             ImGui::DragFloat3("Position", glm::value_ptr(transform->Position), 0.1f, 5.0f);
             ImGui::DragFloat3("Direction", glm::value_ptr(camera->Dir), 0.1f, 2.0f);
             ImGui::DragFloat("FoV (Degree)", &camera->Fov, 10.0f, 120.0f);
@@ -94,7 +96,7 @@ void RenderImguiSystem::operator()(Registry& aRegistry, const float aDeltaTime, 
         }
     }
 
-    auto& phy = aRegistry.GetPhysics();
+    auto& phy = aRegistry.ctx().get<GameEngine>().GetPhysics();
 
     ImGui::Text("Physics info");
     if (ImGui::Checkbox("Information Logs", &phy.Params.InfoLogs)
@@ -125,13 +127,14 @@ void RenderImguiSystem::operator()(Registry& aRegistry, const float aDeltaTime, 
     imguiEndFrame();
 }
 
-void CameraSystem::operator()(Registry& aRegistry, const float aDeltaTime, WatoWindow& aWin)
+void CameraSystem::operator()(Registry& aRegistry, const float aDeltaTime)
 {
+    auto& window = aRegistry.ctx().get<GameEngine>().GetWindow();
     for (auto&& [entity, camera, transform] : aRegistry.view<Camera, Transform3D>().each()) {
         const auto& viewMat = camera.View(transform.Position);
-        const auto& proj    = camera.Projection(aWin.Width<float>(), aWin.Height<float>());
+        const auto& proj    = camera.Projection(window.Width<float>(), window.Height<float>());
         bgfx::setViewTransform(0, glm::value_ptr(viewMat), glm::value_ptr(proj));
-        bgfx::setViewRect(0, 0, 0, aWin.Width<uint16_t>(), aWin.Height<uint16_t>());
+        bgfx::setViewRect(0, 0, 0, window.Width<uint16_t>(), window.Height<uint16_t>());
 
         // just because I know there is only 1 camera (for now)
         // TODO: put in registry context var as singleton ?

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/registry.hpp"
+#include "registry/registry.hpp"
 #include "reactphysics3d/reactphysics3d.h"
 
 struct RigidBodyData {

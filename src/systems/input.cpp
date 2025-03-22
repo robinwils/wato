@@ -9,34 +9,36 @@
 #include "components/transform3d.hpp"
 #include "core/cache.hpp"
 #include "core/event_handler.hpp"
+#include "core/game_engine.hpp"
 #include "core/physics.hpp"
 #include "core/ray.hpp"
-#include "core/registry.hpp"
 #include "core/window.hpp"
+#include "registry/registry.hpp"
 #include "renderer/plane_primitive.hpp"
 #include "systems/input.hpp"
 
-void PlayerInputSystem::operator()(Registry& aRegistry, const float aDeltaTime, WatoWindow& aWin)
+void PlayerInputSystem::operator()(Registry& aRegistry, const float aDeltaTime)
 {
     cameraInput(aRegistry, aDeltaTime);
 
-    auto& input = aRegistry.GetPlayerInput();
+    auto& window = aRegistry.ctx().get<GameEngine>().GetWindow();
+    auto& input  = aRegistry.ctx().get<GameEngine>().GetPlayerInput();
     if (input.IsKeyPressed(Keyboard::B) && !input.IsPrevKeyPressed(Keyboard::B)
         && !input.IsMouseButtonPressed(Mouse::Left)) {
         if (!input.IsPlacementMode()) {
             input.EnterTowerPlacementMode();
         }
-        towerPlacementMode(aRegistry, aWin, true);
+        towerPlacementMode(aRegistry, true);
     }
 
     if (input.IsPlacementMode()) {
-        towerPlacementMode(aRegistry, aWin, true);
+        towerPlacementMode(aRegistry, true);
     }
 
     if (input.IsPlacementMode()) {
         if (input.IsKeyPressed(Keyboard::Escape)) {
             input.ExitTowerPlacementMode();
-            towerPlacementMode(aRegistry, aWin, false);
+            towerPlacementMode(aRegistry, false);
         }
 
         if (input.IsMouseButtonPressed(Mouse::Left)) {
@@ -47,7 +49,7 @@ void PlayerInputSystem::operator()(Registry& aRegistry, const float aDeltaTime, 
 
 void PlayerInputSystem::cameraInput(Registry& aRegistry, const float aDeltaTime)
 {
-    auto& input = aRegistry.GetPlayerInput();
+    auto& input = aRegistry.ctx().get<GameEngine>().GetPlayerInput();
     for (auto&& [entity, cam, t] : aRegistry.view<Camera, Transform3D>().each()) {
         float const speed = cam.Speed * aDeltaTime;
 
@@ -72,14 +74,18 @@ void PlayerInputSystem::cameraInput(Registry& aRegistry, const float aDeltaTime)
     }
 }
 
-glm::vec3 PlayerInputSystem::getMouseRay(Registry& aRegistry, WatoWindow& aWin) const
+glm::vec3 PlayerInputSystem::getMouseRay(Registry& aRegistry) const
 {
-    const auto& input = aRegistry.GetPlayerInput();
+    auto& input  = aRegistry.ctx().get<GameEngine>().GetPlayerInput();
+    auto& window = aRegistry.ctx().get<GameEngine>().GetWindow();
 
     for (auto&& [_, cam, tcam] : aRegistry.view<Camera, Transform3D>().each()) {
         for (auto&& [_, t, obj] : aRegistry.view<Transform3D, SceneObject, Tile>().each()) {
             auto ray = Ray(tcam.Position,
-                input.WorldMousePos(cam, tcam.Position, aWin.Width<float>(), aWin.Height<float>()));
+                input.WorldMousePos(cam,
+                    tcam.Position,
+                    window.Width<float>(),
+                    window.Height<float>()));
 
             const auto& primitives = WATO_MODEL_CACHE[obj.model_hash];
             BX_ASSERT(primitives->size() == 1, "plane should have 1 primitive");
@@ -92,11 +98,11 @@ glm::vec3 PlayerInputSystem::getMouseRay(Registry& aRegistry, WatoWindow& aWin) 
     throw std::runtime_error("should not be here, no terrain or camera was instanced");
 }
 
-void PlayerInputSystem::towerPlacementMode(Registry& aRegistry, WatoWindow& aWin, bool aEnable)
+void PlayerInputSystem::towerPlacementMode(Registry& aRegistry, bool aEnable)
 {
-    auto intersect = getMouseRay(aRegistry, aWin);
+    auto intersect = getMouseRay(aRegistry);
 
-    auto& phy               = aRegistry.GetPhysics();
+    auto& phy               = aRegistry.ctx().get<GameEngine>().GetPhysics();
     auto  placementModeView = aRegistry.view<PlacementMode>();
 
     if (!placementModeView->empty()) {
@@ -150,7 +156,7 @@ void PlayerInputSystem::towerPlacementMode(Registry& aRegistry, WatoWindow& aWin
 
 void PlayerInputSystem::buildTower(Registry& aRegistry)
 {
-    auto& input = aRegistry.GetPlayerInput();
+    auto& input = aRegistry.ctx().get<GameEngine>().GetPlayerInput();
     if (!input.IsAbleToBuild()) {
         return;
     }

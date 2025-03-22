@@ -1,5 +1,6 @@
 #pragma once
 
+#include "registry/registry.hpp"
 #include "systems/system.hpp"
 
 class RenderSystem : public System<RenderSystem>
@@ -13,7 +14,7 @@ class RenderSystem : public System<RenderSystem>
 class RenderImguiSystem : public System<RenderImguiSystem>
 {
    public:
-    void operator()(Registry& aRegistry, const float aDeltaTime, WatoWindow& aWin);
+    void operator()(Registry& aRegistry, const float aDeltaTime);
 
     static constexpr const char* StaticName() { return "RenderImguiSystem"; }
 };
@@ -21,7 +22,7 @@ class RenderImguiSystem : public System<RenderImguiSystem>
 class CameraSystem : public System<CameraSystem>
 {
    public:
-    void operator()(Registry& aRegistry, const float aDeltaTime, WatoWindow& aWin);
+    void operator()(Registry& aRegistry, const float aDeltaTime);
 
     static constexpr const char* StaticName() { return "CameraSystem"; }
 };

@@ -1,10 +1,6 @@
 #include <bx/bx.h>
 
-#include "core/app/game.hpp"
-
-#if defined(None)  // X11 defines this...
-#undef None
-#endif  // defined(None)
+#include "core/app/server.hpp"
 
 #if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
 #include <cxxabi.h>
@@ -61,8 +57,5 @@ int main()
 {
     signal(SIGSEGV, signalHandler);
 
-    Game game(1920, 1080);
-    game.Init();
-
-    return game.Run();
+    std::cout << "Server" << std::endl;
 }

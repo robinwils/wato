@@ -53,12 +53,19 @@ FetchContent_Declare(
   GIT_TAG v0.10.2
   FIND_PACKAGE_ARGS NAMES reactphysics3d
 )
+FetchContent_Declare(
+  enet
+  GIT_REPOSITORY https://github.com/zpl-c/enet
+  GIT_TAG v2.6.2
+  FIND_PACKAGE_ARGS NAMES enet
+)
 
 FetchContent_MakeAvailable(assimp)
 FetchContent_MakeAvailable(glfw3)
 FetchContent_MakeAvailable(entt)
 FetchContent_MakeAvailable(glm)
 FetchContent_MakeAvailable(reactphysics3d)
+FetchContent_MakeAvailable(enet)
 
 set(DEBUG_FLAGS "-DBX_CONFIG_DEBUG")
 set(RELEASE_FLAGS "")
@@ -73,6 +80,7 @@ endif()
 # Configure the file using the provided (or default) value
 configure_file(config.h.in config.h @ONLY)
 
+add_subdirectory(src/watod)
 add_executable(wato)
 
 if (DEBUG_ENABLE)
@@ -94,15 +102,14 @@ target_compile_features(wato INTERFACE cxx_std_${CMAKE_CXX_STANDARD})
 
 target_include_directories(wato
   PRIVATE
-  deps/bimg/include
-  src
-  deps/bx/include
-  deps/bgfx/include
-  deps/imgui
-  src/imgui
-  deps/iconfontcppheaders
-  ${glm_SOURCE_DIR}
-  ${reactphysics3d_SOURCE_DIR}/include
+    deps/bimg/include
+    src
+    deps/bx/include
+    deps/bgfx/include
+    deps/imgui
+    src/imgui
+    deps/iconfontcppheaders
+    ${glm_SOURCE_DIR}
 )
 
 if(DEFINED glfw3_SOURCE_DIR)
@@ -116,6 +123,13 @@ if(DEFINED entt_SOURCE_DIR)
   target_include_directories(wato
   PRIVATE
     ${entt_SOURCE_DIR}/src
+  )
+endif()
+
+if(DEFINED reactphysics3d_SOURCE_DIR)
+  target_include_directories(wato
+  PRIVATE
+    ${reactphysics3d_SOURCE_DIR}/include
   )
 endif()
 
@@ -155,19 +169,19 @@ target_sources(wato
     src/components/scene_object.hpp
     src/components/tile.hpp
     src/components/transform3d.hpp
-    src/core/action.hpp
+    src/core/app/app.hpp
+    src/core/app/game.hpp
     src/core/cache.hpp
-    src/core/engine.hpp
     src/core/event_handler.hpp
-    src/core/game.hpp
     src/core/model_loader.hpp
     src/core/physics.hpp
     src/core/ray.hpp
-    src/core/registry.hpp
     src/core/sys.hpp
     src/core/tile.hpp
     src/core/window.hpp
     src/input/input.hpp
+    src/registry/game_registry.hpp
+    src/registry/registry.hpp
     src/renderer/bgfx_utils.hpp
     src/renderer/blinn_phong_material.hpp
     src/renderer/material.hpp
@@ -185,16 +199,15 @@ target_sources(wato
     deps/imgui/imgui_draw.cpp
     deps/imgui/imgui_tables.cpp
     deps/imgui/imgui_widgets.cpp
+    src/core/app/game.cpp
     src/core/event_handler.cpp
-    src/core/game.cpp
-    src/core/model_loader.cpp
-    src/core/physics.cpp
-    src/core/registry.cpp
+    src/core/model_loader.cpp src/core/physics.cpp
     src/core/sys.cpp
     src/core/window.cpp
     src/imgui/imgui_helper.cpp
     src/input/input.cpp
     src/main.cpp
+    src/registry/game_registry.cpp
     src/renderer/bgfx_utils.cpp
     src/renderer/material.cpp
     src/renderer/renderer.cpp

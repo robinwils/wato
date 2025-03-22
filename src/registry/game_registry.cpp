@@ -1,4 +1,4 @@
-#include "registry.hpp"
+#include "registry/game_registry.hpp"
 
 #include <bgfx/bgfx.h>
 
@@ -12,19 +12,20 @@
 #include "components/tile.hpp"
 #include "components/transform3d.hpp"
 #include "core/cache.hpp"
+#include "registry/registry.hpp"
 #include "renderer/blinn_phong_material.hpp"
 #include "renderer/plane_primitive.hpp"
 
-void Registry::LoadResources()
+void LoadResources(Registry& aRegistry)
 {
-    LoadShaders();
-    SpawnLight();
-    SpawnMap(20, 20);
+    LoadShaders(aRegistry);
+    SpawnLight(aRegistry);
+    SpawnMap(aRegistry, 20, 20);
     LoadModels();
-    SpawnPlayerAndCamera();
+    SpawnPlayerAndCamera(aRegistry);
 }
 
-void Registry::LoadShaders()
+void LoadShaders(Registry& aRegistry)
 {
     auto [bp, pLoaded] = WATO_PROGRAM_CACHE.load("blinnphong"_hs,
         "vs_blinnphong",
@@ -43,7 +44,7 @@ void Registry::LoadShaders()
         std::unordered_map<std::string, bgfx::UniformType::Enum>{});
 }
 
-void Registry::SpawnMap(uint32_t aWidth, uint32_t aHeight)
+void SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeight)
 {
     auto [diff, dLoaded] =
         WATO_TEXTURE_CACHE.load("grass/diffuse"_hs, "assets/textures/TreeTop_COLOR.png");
@@ -69,22 +70,25 @@ void Registry::SpawnMap(uint32_t aWidth, uint32_t aHeight)
 
     for (uint32_t i = 0; i < aWidth; ++i) {
         for (uint32_t j = 0; j < aHeight; ++j) {
-            auto tile = create();
-            emplace<Transform3D>(tile, glm::vec3(i, 0.0f, j), glm::vec3(0.0f), glm::vec3(1.0f));
-            emplace<SceneObject>(tile, "grass_tile"_hs);
-            emplace<Tile>(tile);
+            auto tile = aRegistry.create();
+            aRegistry.emplace<Transform3D>(tile,
+                glm::vec3(i, 0.0f, j),
+                glm::vec3(0.0f),
+                glm::vec3(1.0f));
+            aRegistry.emplace<SceneObject>(tile, "grass_tile"_hs);
+            aRegistry.emplace<Tile>(tile);
         }
     }
 }
 
-void Registry::SpawnLight()
+void SpawnLight(Registry& aRegistry)
 {
-    auto light = create();
-    emplace<LightSource>(light, glm::vec3(-1.0f, -1.0f, 0.0f), glm::vec3(0.5f));
-    emplace<ImguiDrawable>(light, "Directional Light");
+    auto light = aRegistry.create();
+    aRegistry.emplace<LightSource>(light, glm::vec3(-1.0f, -1.0f, 0.0f), glm::vec3(0.5f));
+    aRegistry.emplace<ImguiDrawable>(light, "Directional Light");
 }
 
-void Registry::LoadModels()
+void LoadModels()
 {
     WATO_MODEL_CACHE.load("tower_model"_hs,
         "assets/models/tower.fbx",
@@ -92,12 +96,12 @@ void Registry::LoadModels()
             | aiProcess_GlobalScale);
 }
 
-void Registry::SpawnPlayerAndCamera()
+void SpawnPlayerAndCamera(Registry& aRegistry)
 {
-    auto player = create();
+    auto player = aRegistry.create();
 
-    auto camera = create();
-    emplace<Camera>(camera,
+    auto camera = aRegistry.create();
+    aRegistry.emplace<Camera>(camera,
         // up, front, dir
         glm::vec3(0.0f, 1.0f, 0.0f),
         glm::vec3(0.0f, 0.0f, -1.0f),
@@ -108,6 +112,9 @@ void Registry::SpawnPlayerAndCamera()
         0.1f,
         100.0f);
     // pos, rot, scale
-    emplace<Transform3D>(camera, glm::vec3(0.0f, 2.0f, 1.5f), glm::vec3(1.0f), glm::vec3(1.0f));
-    emplace<ImguiDrawable>(camera, "Camera");
+    aRegistry.emplace<Transform3D>(camera,
+        glm::vec3(0.0f, 2.0f, 1.5f),
+        glm::vec3(1.0f),
+        glm::vec3(1.0f));
+    aRegistry.emplace<ImguiDrawable>(camera, "Camera");
 }
