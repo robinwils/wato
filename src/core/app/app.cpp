@@ -1,13 +1,11 @@
-#include "core/game.hpp"
-
 #include <bx/bx.h>
 
 #include <memory>
 
-#include "core/event_handler.hpp"
+#include "core/app/game.hpp"
 #include "systems/system.hpp"
 
-void Game::Init()
+void Application::Init()
 {
     auto &engine = mRegistry.ctx().emplace<Engine>(std::make_unique<WatoWindow>(mWidth, mHeight),
         std::make_unique<Renderer>(),
@@ -18,18 +16,10 @@ void Game::Init()
     engine.GetPhysics().Init(&mRegistry);
 
     mRegistry.LoadResources();
-    mSystems.push_back(RenderImguiSystem::MakeDelegate(mRenderImguiSystem));
-    mSystems.push_back(PlayerInputSystem::MakeDelegate(mPlayerInputSystem));
-    mSystems.push_back(CameraSystem::MakeDelegate(mCameraSystem));
     mSystems.push_back(PhysicsSystem::MakeDelegate(mPhysicsSystem));
-    mSystems.push_back(RenderSystem::MakeDelegate(mRenderSystem));
-
-#if WATO_DEBUG
-    mSystems.push_back(PhysicsDebugSystem::MakeDelegate(mPhysicsDbgSystem));
-#endif
 }
 
-int Game::Run()
+int Application::Run()
 {
     auto &window   = mRegistry.GetWindow();
     auto &renderer = mRegistry.GetRenderer();

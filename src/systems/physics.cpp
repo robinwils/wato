@@ -11,7 +11,7 @@
 #include "components/transform3d.hpp"
 #include "config.h"
 #include "core/cache.hpp"
-#include "core/registry.hpp"
+#include "registry/registry.hpp"
 #include "reactphysics3d/utils/DebugRenderer.h"
 #include "renderer/material.hpp"
 

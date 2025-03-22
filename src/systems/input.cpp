@@ -11,7 +11,7 @@
 #include "core/event_handler.hpp"
 #include "core/physics.hpp"
 #include "core/ray.hpp"
-#include "core/registry.hpp"
+#include "registry/registry.hpp"
 #include "core/window.hpp"
 #include "renderer/plane_primitive.hpp"
 #include "systems/input.hpp"

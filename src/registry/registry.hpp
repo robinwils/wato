@@ -1,8 +1,5 @@
 #pragma once
 
-#include <bgfx/bgfx.h>
-#include <bimg/decode.h>
-
 #include <entt/entity/registry.hpp>
 
 #include "core/engine.hpp"

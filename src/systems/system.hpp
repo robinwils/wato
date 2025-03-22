@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/registry.hpp"
+#include "registry/registry.hpp"
 
 using SystemDelegate = entt::delegate<void(Registry&, const float, WatoWindow&)>;
 using SystemRegistry = std::vector<SystemDelegate>;
