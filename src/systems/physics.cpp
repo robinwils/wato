@@ -14,9 +14,9 @@
 #include "core/registry.hpp"
 #include "reactphysics3d/utils/DebugRenderer.h"
 #include "renderer/material.hpp"
-#include "systems/systems.hpp"
+#include "systems/physics.hpp"
 
-void physicsSystem(Registry& aRegistry, double aDeltaTime)
+void PhysicsSystem::operator()(Registry& aRegistry, const float aDeltaTime)
 {
     auto& phy = aRegistry.ctx().get<Physics>();
 
@@ -52,10 +52,10 @@ void physicsSystem(Registry& aRegistry, double aDeltaTime)
 #if WATO_DEBUG
 static bool vInit = false;
 struct PosColor {
-    float    MX;
-    float    MY;
-    float    MZ;
-    uint32_t MRgba;
+    float    X;
+    float    Y;
+    float    Z;
+    uint32_t RGBA;
 
     static void Init()
     {
@@ -73,7 +73,7 @@ struct PosColor {
 };
 bgfx::VertexLayout PosColor::msLayout;
 
-void physicsDebugRenderSystem(Registry& aRegistry)
+void PhysicsDebugSystem::operator()(Registry& aRegistry, const float aDeltaTime)
 {
     auto&                      phy           = aRegistry.ctx().get<Physics>();
     rp3d::DebugRenderer const& debugRenderer = phy.World->getDebugRenderer();

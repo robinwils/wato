@@ -24,10 +24,10 @@ void EventHandler::onTrigger(const rp3d::OverlapCallback::CallbackData& aCallbac
             switch (pair.getEventType()) {
                 case rp3d::OverlapCallback::OverlapPair::EventType::OverlapStart:
                 case rp3d::OverlapCallback::OverlapPair::EventType::OverlapStay:
-                    mActionSystem->SetCanBuild(false);
+                    mRegistry->ctx().get<Input&>().SetCanBuild(false);
                     break;
                 case rp3d::OverlapCallback::OverlapPair::EventType::OverlapExit:
-                    mActionSystem->SetCanBuild(true);
+                    mRegistry->ctx().get<Input&>().SetCanBuild(true);
                     break;
             }
         }

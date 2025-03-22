@@ -2,15 +2,11 @@
 
 #include "core/registry.hpp"
 #include "reactphysics3d/reactphysics3d.h"
-#include "systems/systems.hpp"
 
 class EventHandler : public rp3d::EventListener
 {
    public:
-    EventHandler(Registry* aRegistry, ActionSystem* aActionSystem)
-        : mRegistry(aRegistry), mActionSystem(aActionSystem)
-    {
-    }
+    EventHandler(Registry* aRegistry) : mRegistry(aRegistry) {}
     /// Called when some contacts occur
     /**
      * @param callbackData Contains information about all the contacts
@@ -24,6 +20,5 @@ class EventHandler : public rp3d::EventListener
     void onTrigger(const rp3d::OverlapCallback::CallbackData& /*callbackData*/) override;
 
    private:
-    Registry*     mRegistry;
-    ActionSystem* mActionSystem;
+    Registry* mRegistry;
 };

@@ -1,45 +1,10 @@
-#include <GLFW/glfw3.h>
-#include <bgfx/bgfx.h>
-#include <bgfx/platform.h>
-#include <bx/allocator.h>
 #include <bx/bx.h>
-#include <bx/debug.h>
-#include <bx/file.h>
-#include <bx/math.h>
-#include <bx/timer.h>
 
-#include <iostream>
-
-#include "bgfx/defines.h"
-#include "components/physics.hpp"
-#include "core/event_handler.hpp"
 #include "core/game.hpp"
-
-#if BX_PLATFORM_LINUX
-#define GLFW_EXPOSE_NATIVE_X11
-#elif BX_PLATFORM_WINDOWS
-#define GLFW_EXPOSE_NATIVE_WIN32
-#elif BX_PLATFORM_OSX
-#define GLFW_EXPOSE_NATIVE_COCOA
-#endif
-#include <GLFW/glfw3native.h>
 
 #if defined(None)  // X11 defines this...
 #undef None
 #endif  // defined(None)
-
-#include <imgui_helper.h>
-
-#include <core/registry.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include <input/input.hpp>
-#include <renderer/bgfx_utils.hpp>
-#include <renderer/physics.hpp>
-#include <renderer/plane_primitive.hpp>
-#include <systems/systems.hpp>
-
-#include "entt/signal/dispatcher.hpp"
 
 #if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
 #include <cxxabi.h>

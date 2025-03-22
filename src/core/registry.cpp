@@ -21,7 +21,6 @@
 
 void Registry::Init(WatoWindow *aWin, EventHandler *aPhyEventHandler)
 {
-    ctx().emplace<entt::dispatcher>();
     ctx().emplace<Input &>(aWin->GetInput());
     auto &phy = ctx().emplace<Physics>();
     phy.World = phy.Common.createPhysicsWorld();

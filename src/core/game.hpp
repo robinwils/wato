@@ -6,15 +6,16 @@
 #include "core/event_handler.hpp"
 #include "core/registry.hpp"
 #include "core/window.hpp"
-#include "systems/systems.hpp"
+#include "entt/signal/fwd.hpp"
+#include "systems/input.hpp"
+#include "systems/physics.hpp"
+#include "systems/render.hpp"
 
 class Game
 {
    public:
     explicit Game(int aWidth, int aHeight)
-        : mWindow(std::make_unique<WatoWindow>(aWidth, aHeight)),
-          mActionSystem(&mRegistry, aWidth, aHeight),
-          mPhysicsEventHandler(&mRegistry, &mActionSystem)
+        : mWindow(std::make_unique<WatoWindow>(aWidth, aHeight)), mPhysicsEventHandler(&mRegistry)
     {
     }
     virtual ~Game() = default;
@@ -37,7 +38,16 @@ class Game
     Registry mRegistry;
 
     // TODO: I don't know where to put this yet, maybe handle this better ?
-    ActionSystem mActionSystem;
+    PhysicsSystem mPhysicsSystem;
+#if WATO_DEBUG
+    PhysicsDebugSystem mPhysicsDbgSystem;
+#endif
+    PlayerInputSystem mPlayerInputSystem;
+    RenderSystem      mRenderSystem;
+    RenderImguiSystem mRenderImguiSystem;
+    CameraSystem      mCameraSystem;
+
+    SystemRegistry mSystems;
 
     // Physics event handler
     EventHandler mPhysicsEventHandler;

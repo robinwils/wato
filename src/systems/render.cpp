@@ -1,19 +1,29 @@
+#include "systems/render.hpp"
+
 #include <bgfx/bgfx.h>
 
+#include <cstdint>
 #include <glm/ext/matrix_float4x4.hpp>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "components/imgui.hpp"
 #include "components/light_source.hpp"
+#include "components/physics.hpp"
 #include "components/placement_mode.hpp"
 #include "components/scene_object.hpp"
 #include "components/transform3d.hpp"
 #include "core/cache.hpp"
 #include "glm/ext/quaternion_transform.hpp"
-#include "systems.hpp"
+#include "imgui_helper.h"
+#include "renderer/physics.hpp"
 
-void renderSceneObjects(Registry& aRegistry, const float /*dt*/)
+void RenderSystem::operator()(Registry& aRegistry)
 {
+    // This dummy draw call is here to make sure that view 0 is cleared
+    // if no other draw calls are submitted to view 0.
+    bgfx::touch(0);
+
     uint64_t state = BGFX_STATE_DEFAULT;
 
     auto bpShader = WATO_PROGRAM_CACHE["blinnphong"_hs];
@@ -50,5 +60,96 @@ void renderSceneObjects(Registry& aRegistry, const float /*dt*/)
                 p->Submit();
             }
         }
+    }
+}
+
+void RenderImguiSystem::operator()(Registry& aRegistry, const float aDeltaTime, WatoWindow& aWin)
+{
+    imguiBeginFrame(aWin.GetInput(), aWin.Width<int>(), aWin.Height<int>());
+    showImguiDialogs(aWin.Width<float>(), aWin.Height<float>());
+
+    for (auto&& [entity, imgui] : aRegistry.view<ImguiDrawable>().each()) {
+        auto [camera, transform] = aRegistry.try_get<Camera, Transform3D>(entity);
+        ImGui::Text("%s Settings", imgui.name.c_str());
+        if (camera && transform) {
+            aWin.GetInput().DrawImgui(*camera,
+                transform->Position,
+                aWin.Width<float>(),
+                aWin.Height<float>());
+            ImGui::DragFloat3("Position", glm::value_ptr(transform->Position), 0.1f, 5.0f);
+            ImGui::DragFloat3("Direction", glm::value_ptr(camera->Dir), 0.1f, 2.0f);
+            ImGui::DragFloat("FoV (Degree)", &camera->Fov, 10.0f, 120.0f);
+            ImGui::DragFloat("Speed", &camera->Speed, 0.1f, 0.01f, 5.0f, "%.03f");
+            continue;
+        }
+        if (transform) {
+            ImGui::Text("Position = %s", glm::to_string(transform->Position).c_str());
+            continue;
+        }
+
+        auto* lightSource = aRegistry.try_get<LightSource>(entity);
+        if (lightSource) {
+            ImGui::DragFloat3("Light direction",
+                glm::value_ptr(lightSource->direction),
+                0.1f,
+                5.0f);
+            ImGui::DragFloat3("Light color", glm::value_ptr(lightSource->color), 0.10f, 2.0f);
+        }
+    }
+
+    auto& params = aRegistry.ctx().get<PhysicsParams>();
+    auto& phy    = aRegistry.ctx().get<Physics>();
+
+    ImGui::Text("Physics info");
+    if (ImGui::Checkbox("Information Logs", &params.InfoLogs)
+        || ImGui::Checkbox("Warning Logs", &params.WarningLogs)
+        || ImGui::Checkbox("Error logs", &params.ErrorLogs)) {
+        uint logLevel = 0;
+        if (params.InfoLogs) {
+            logLevel |= static_cast<uint>(rp3d::Logger::Level::Information);
+        }
+        if (params.WarningLogs) {
+            logLevel |= static_cast<uint>(rp3d::Logger::Level::Warning);
+        }
+        if (params.ErrorLogs) {
+            logLevel |= static_cast<uint>(rp3d::Logger::Level::Error);
+        }
+        params.Logger->removeAllDestinations();
+        params.Logger->addStreamDestination(std::cout, logLevel, rp3d::DefaultLogger::Format::Text);
+    }
+
+#if WATO_DEBUG
+    rp3d::DebugRenderer& debugRenderer = phy.World->getDebugRenderer();
+    auto                 nTri          = debugRenderer.getNbTriangles();
+    auto                 nLines        = debugRenderer.getNbLines();
+
+    ImGui::Text("%d debug lines and %d debug triangles", nLines, nTri);
+    ImGui::Checkbox("Collider Shapes", &params.RenderShapes);
+    ImGui::Checkbox("Collider AABB", &params.RenderAabb);
+
+    debugRenderer.setIsDebugItemDisplayed(rp3d::DebugRenderer::DebugItem::COLLISION_SHAPE,
+        params.RenderShapes);
+    debugRenderer.setIsDebugItemDisplayed(rp3d::DebugRenderer::DebugItem::COLLIDER_AABB,
+        params.RenderAabb);
+    debugRenderer.setIsDebugItemDisplayed(rp3d::DebugRenderer::DebugItem::CONTACT_POINT,
+        params.RenderContactPoints);
+    debugRenderer.setIsDebugItemDisplayed(rp3d::DebugRenderer::DebugItem::CONTACT_NORMAL,
+        params.RenderContactNormals);
+#endif
+
+    imguiEndFrame();
+}
+
+void CameraSystem::operator()(Registry& aRegistry, const float aDeltaTime, WatoWindow& aWin)
+{
+    for (auto&& [entity, camera, transform] : aRegistry.view<Camera, Transform3D>().each()) {
+        const auto& viewMat = camera.View(transform.Position);
+        const auto& proj    = camera.Projection(aWin.Width<float>(), aWin.Height<float>());
+        bgfx::setViewTransform(0, glm::value_ptr(viewMat), glm::value_ptr(proj));
+        bgfx::setViewRect(0, 0, 0, aWin.Width<uint16_t>(), aWin.Height<uint16_t>());
+
+        // just because I know there is only 1 camera (for now)
+        // TODO: put in registry context var as singleton ?
+        break;
     }
 }

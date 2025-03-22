@@ -173,7 +173,10 @@ target_sources(wato
     src/renderer/physics.hpp
     src/renderer/plane_primitive.hpp
     src/renderer/primitive.hpp
-    src/systems/systems.hpp
+    src/systems/input.hpp
+    src/systems/physics.hpp
+    src/systems/render.hpp
+    src/systems/system.hpp
 
   PRIVATE
     deps/imgui/imgui.cpp
@@ -191,9 +194,6 @@ target_sources(wato
     src/main.cpp
     src/renderer/bgfx_utils.cpp
     src/renderer/material.cpp
-    src/systems/action.cpp
-    src/systems/camera.cpp
-    src/systems/imgui.cpp
     src/systems/input.cpp
     src/systems/physics.cpp
     src/systems/render.cpp

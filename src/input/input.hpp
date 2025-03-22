@@ -179,7 +179,7 @@ struct MouseState {
 
     void Clear();
 
-    glm::dvec2    Pos, Scroll;
+    glm::fvec2    Pos, Scroll;
     Button::State Buttons[3];
 };
 
@@ -188,7 +188,7 @@ std::string key_string(const Keyboard::Key& aK);
 class Input
 {
    public:
-    Input() : MouseState(), mTowerPlacementMode(false) {}
+    Input() : MouseState(), mTowerPlacementMode(false), mCanBuild(true) {}
 
     void Init();
 
@@ -216,7 +216,11 @@ class Input
     void ExitTowerPlacementMode() { mTowerPlacementMode = false; }
     void EnterTowerPlacementMode() { mTowerPlacementMode = true; }
 
-    bool IsPlacementMode() const { return mTowerPlacementMode; }
+    [[nodiscard]] bool IsPlacementMode() const noexcept { return mTowerPlacementMode; }
+    [[nodiscard]] bool IsAbleToBuild() const noexcept { return mCanBuild; }
+
+    void SetCanBuild(bool aEnable) noexcept { mCanBuild = aEnable; }
+
     bool IsMouseButtonPressed(Mouse::Button aButton) const
     {
         return MouseState.Buttons[aButton].Action == Button::Press;
@@ -279,5 +283,5 @@ class Input
     struct KeyboardState KeyboardState, PrevKeyboardState;
 
    private:
-    bool mTowerPlacementMode;
+    bool mTowerPlacementMode, mCanBuild;
 };

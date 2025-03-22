@@ -6,6 +6,7 @@
 #include "bx/timer.h"
 #include "core/event_handler.hpp"
 #include "imgui_helper.h"
+#include "systems/system.hpp"
 
 void Game::Init()
 {
@@ -40,17 +41,24 @@ void Game::Init()
     // Set view 0 clear state.
     bgfx::setViewClear(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x0090cfff, 1.0f, 0);
 
-    mRegistry.Init(mWindow.get(), new EventHandler(&mRegistry, &mActionSystem));
+    mRegistry.Init(mWindow.get(), new EventHandler(&mRegistry));
 
     imguiCreate();
 
-    mActionSystem.InitListeners(mWindow->GetInput());
+    mSystems.push_back(RenderImguiSystem::MakeDelegate(mRenderImguiSystem));
+    mSystems.push_back(PlayerInputSystem::MakeDelegate(mPlayerInputSystem));
+    mSystems.push_back(CameraSystem::MakeDelegate(mCameraSystem));
+    mSystems.push_back(PhysicsSystem::MakeDelegate(mPhysicsSystem));
+    mSystems.push_back(RenderSystem::MakeDelegate(mRenderSystem));
+
+#if WATO_DEBUG
+    mSystems.push_back(PhysicsDebugSystem::MakeDelegate(mPhysicsDbgSystem));
+#endif
 }
 
 int Game::Run()
 {
-    double  prevTime    = glfwGetTime();
-    int64_t mTimeOffset = bx::getHPCounter();
+    double prevTime = glfwGetTime();
 
     while (!mWindow->ShouldClose()) {
         mWindow->PollEvents();
@@ -58,31 +66,18 @@ int Game::Run()
         if (mWindow->Resize()) {
             bgfx::reset(mWindow->Width<uint32_t>(), mWindow->Height<uint32_t>(), BGFX_RESET_VSYNC);
             bgfx::setViewRect(CLEAR_VIEW, 0, 0, bgfx::BackbufferRatio::Equal);
-            mActionSystem.UdpateWinSize(mWindow->Width<int>(), mWindow->Height<int>());
         }
         bgfx::touch(CLEAR_VIEW);
         // Use debug font to print information about this example.
         bgfx::dbgTextClear();
 
-        renderImgui(mRegistry, *mWindow.get());
+        auto t   = glfwGetTime();
+        auto dt  = static_cast<float>(t - prevTime);
+        prevTime = t;
 
-        auto t      = glfwGetTime();
-        auto dt     = t - prevTime;
-        prevTime    = t;
-        double time = ((bx::getHPCounter() - mTimeOffset) / double(bx::getHPFrequency()));
-
-        processInputs(mRegistry, dt);
-        cameraSystem(mRegistry, mWindow->Width<float>(), mWindow->Height<float>());
-        physicsSystem(mRegistry, dt);
-
-        // This dummy draw call is here to make sure that view 0 is cleared
-        // if no other draw calls are submitted to view 0.
-        bgfx::touch(0);
-
-        renderSceneObjects(mRegistry, time);
-#if WATO_DEBUG
-        physicsDebugRenderSystem(mRegistry);
-#endif
+        for (const auto& system : mSystems) {
+            system(mRegistry, dt, *mWindow);
+        }
 
         // Advance to next frame. Process submitted rendering primitives.
         bgfx::frame();
