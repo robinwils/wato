@@ -1,11 +1,7 @@
 #pragma once
 
-#include <memory>
-
 #include "core/event_handler.hpp"
 #include "core/registry.hpp"
-#include "core/window.hpp"
-#include "renderer/renderer.hpp"
 #include "systems/input.hpp"
 #include "systems/physics.hpp"
 #include "systems/render.hpp"
@@ -14,7 +10,7 @@ class Game
 {
    public:
     explicit Game(int aWidth, int aHeight)
-        : mWindow(aWidth, aHeight), mPhysicsEventHandler(&mRegistry)
+        : mPhysicsEventHandler(&mRegistry), mWidth(aWidth), mHeight(aHeight)
     {
     }
     virtual ~Game() = default;
@@ -28,10 +24,6 @@ class Game
     int  Run();
 
    private:
-    WatoWindow mWindow;
-
-    Renderer mRenderer;
-
     Registry mRegistry;
 
     // TODO: I don't know where to put this yet, maybe handle this better ?
@@ -48,4 +40,6 @@ class Game
 
     // Physics event handler
     EventHandler mPhysicsEventHandler;
+
+    int mWidth, mHeight;
 };

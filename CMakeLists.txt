@@ -157,6 +157,7 @@ target_sources(wato
     src/components/transform3d.hpp
     src/core/action.hpp
     src/core/cache.hpp
+    src/core/engine.hpp
     src/core/event_handler.hpp
     src/core/game.hpp
     src/core/model_loader.hpp

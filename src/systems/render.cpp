@@ -14,7 +14,6 @@
 #include "components/scene_object.hpp"
 #include "components/transform3d.hpp"
 #include "core/cache.hpp"
-#include "glm/ext/quaternion_transform.hpp"
 #include "imgui_helper.h"
 
 void RenderSystem::operator()(Registry& aRegistry)
