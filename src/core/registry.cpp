@@ -19,9 +19,9 @@
 #include "renderer/physics.hpp"
 #include "renderer/plane_primitive.hpp"
 
-void Registry::Init(WatoWindow *aWin, EventHandler *aPhyEventHandler)
+void Registry::Init(WatoWindow &aWin, EventHandler *aPhyEventHandler)
 {
-    ctx().emplace<Input &>(aWin->GetInput());
+    ctx().emplace<Input &>(aWin.GetInput());
     auto &phy = ctx().emplace<Physics>();
     phy.World = phy.Common.createPhysicsWorld();
 

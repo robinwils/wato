@@ -8,7 +8,9 @@
 class WatoWindow
 {
    public:
-    WatoWindow(int aWidth, int aHeight) : mWidth(aWidth), mHeight(aHeight), mInput() {}
+    WatoWindow(int aWidth, int aHeight) : mWidth(aWidth), mHeight(aHeight), mInput(), mIsInit(false)
+    {
+    }
     ~WatoWindow() = default;
 
     WatoWindow(WatoWindow &&)                 = default;
@@ -49,6 +51,8 @@ class WatoWindow
         mHeight = aHeight;
     }
 
+    [[nodiscard]] bool IsInitialized() const noexcept { return mIsInit; }
+
    private:
     struct GLFWwindowDeleter {
         void operator()(GLFWwindow *aWin) const noexcept
@@ -66,4 +70,6 @@ class WatoWindow
     glfw_window_ptr mGLFWWindow;
 
     Input mInput;
+
+    bool mIsInit;
 };

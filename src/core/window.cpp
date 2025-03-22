@@ -42,6 +42,7 @@ void WatoWindow::Init()
     // glfwSetDropCallback(m_window[0], dropFileCb);
 
     glfwSetWindowUserPointer(mGLFWWindow.get(), &this->mInput);
+    mIsInit = true;
 }
 
 void *WatoWindow::GetNativeDisplay()

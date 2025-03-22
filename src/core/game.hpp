@@ -30,8 +30,8 @@ class Game
 
    private:
     const bgfx::ViewId CLEAR_VIEW = 0;
+    WatoWindow mWindow;
 
-    std::unique_ptr<WatoWindow> mWindow;
 
     bgfx::Init mInitParams;
 
