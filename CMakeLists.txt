@@ -161,6 +161,7 @@ target_sources(wato
     src/core/event_handler.hpp
     src/core/game.hpp
     src/core/model_loader.hpp
+    src/core/physics.hpp
     src/core/ray.hpp
     src/core/registry.hpp
     src/core/sys.hpp
@@ -187,6 +188,7 @@ target_sources(wato
     src/core/event_handler.cpp
     src/core/game.cpp
     src/core/model_loader.cpp
+    src/core/physics.cpp
     src/core/registry.cpp
     src/core/sys.cpp
     src/core/window.cpp

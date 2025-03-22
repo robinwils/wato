@@ -2,7 +2,7 @@
 
 #include <memory>
 
-#include "components/physics.hpp"
+#include "core/physics.hpp"
 #include "core/window.hpp"
 #include "renderer/renderer.hpp"
 

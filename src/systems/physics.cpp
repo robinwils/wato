@@ -1,4 +1,4 @@
-#include "components/physics.hpp"
+#include "systems/physics.hpp"
 
 #include <cstdint>
 #include <cstring>
@@ -14,7 +14,6 @@
 #include "core/registry.hpp"
 #include "reactphysics3d/utils/DebugRenderer.h"
 #include "renderer/material.hpp"
-#include "systems/physics.hpp"
 
 void PhysicsSystem::operator()(Registry& aRegistry, const float aDeltaTime)
 {
@@ -31,7 +30,7 @@ void PhysicsSystem::operator()(Registry& aRegistry, const float aDeltaTime)
     // one or several physics steps
     while (accumulator >= timeStep) {
         // Update the Dynamics world with a constant time step
-        phy.World->update(timeStep);
+        phy.World()->update(timeStep);
 
         // Decrease the accumulated time
         accumulator -= timeStep;
@@ -76,7 +75,7 @@ bgfx::VertexLayout PosColor::msLayout;
 void PhysicsDebugSystem::operator()(Registry& aRegistry, const float aDeltaTime)
 {
     auto&                      phy           = aRegistry.GetPhysics();
-    rp3d::DebugRenderer const& debugRenderer = phy.World->getDebugRenderer();
+    rp3d::DebugRenderer const& debugRenderer = phy.World()->getDebugRenderer();
 
     PosColor::Init();
 

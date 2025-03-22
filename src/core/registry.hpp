@@ -5,8 +5,8 @@
 
 #include <entt/entity/registry.hpp>
 
-#include "components/physics.hpp"
 #include "core/engine.hpp"
+#include "core/physics.hpp"
 #include "core/window.hpp"
 
 class EventHandler;

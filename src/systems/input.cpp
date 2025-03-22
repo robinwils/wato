@@ -2,19 +2,17 @@
 
 #include "components/health.hpp"
 #include "components/imgui.hpp"
-#include "components/physics.hpp"
 #include "components/placement_mode.hpp"
 #include "components/rigid_body.hpp"
 #include "components/scene_object.hpp"
 #include "components/tile.hpp"
 #include "components/transform3d.hpp"
-#include "core/action.hpp"
 #include "core/cache.hpp"
 #include "core/event_handler.hpp"
+#include "core/physics.hpp"
 #include "core/ray.hpp"
 #include "core/registry.hpp"
 #include "core/window.hpp"
-#include "entt/signal/dispatcher.hpp"
 #include "renderer/plane_primitive.hpp"
 #include "systems/input.hpp"
 
@@ -108,7 +106,7 @@ void PlayerInputSystem::towerPlacementMode(Registry& aRegistry, WatoWindow& aWin
 
                 auto* userData = static_cast<RigidBodyData*>(rb.rigid_body->getUserData());
                 delete userData;
-                phy.World->destroyRigidBody(rb.rigid_body);
+                phy.World()->destroyRigidBody(rb.rigid_body);
                 aRegistry.destroy(ghostTower);
                 return;
             }
@@ -131,8 +129,8 @@ void PlayerInputSystem::towerPlacementMode(Registry& aRegistry, WatoWindow& aWin
         aRegistry.emplace<PlacementMode>(ghostTower);
         aRegistry.emplace<ImguiDrawable>(ghostTower, "Ghost Tower");
 
-        auto* rb       = phy.World->createRigidBody(t.ToRP3D());
-        auto* box      = phy.Common.createBoxShape(rp3d::Vector3(0.35F, 0.65F, 0.35F));
+        auto* rb       = phy.World()->createRigidBody(t.ToRP3D());
+        auto* box      = phy.Common().createBoxShape(rp3d::Vector3(0.35F, 0.65F, 0.35F));
         auto* collider = rb->addCollider(box, rp3d::Transform::identity());
 
         rb->enableGravity(false);
