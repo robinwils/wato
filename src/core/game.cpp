@@ -54,8 +54,8 @@ int Game::Run()
     auto &window   = mRegistry.GetWindow();
     auto &renderer = mRegistry.GetRenderer();
 
-    // TODO: use std::chrono
-    double prevTime = glfwGetTime();
+    using clock   = std::chrono::high_resolution_clock;
+    auto prevTime = clock::now();
 
     while (!window.ShouldClose()) {
         window.PollEvents();
@@ -64,12 +64,13 @@ int Game::Run()
             renderer.Resize(window);
         }
 
-        auto t   = glfwGetTime();
-        auto dt  = static_cast<float>(t - prevTime);
+        auto                         t  = clock::now();
+        std::chrono::duration<float> dt = (t - prevTime);
+
         prevTime = t;
 
         for (const auto &system : mSystems) {
-            system(mRegistry, dt, window);
+            system(mRegistry, dt.count(), window);
         }
 
         renderer.Render();
