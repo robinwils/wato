@@ -2,11 +2,10 @@
 
 #include <memory>
 
-#include "bgfx/bgfx.h"
 #include "core/event_handler.hpp"
 #include "core/registry.hpp"
 #include "core/window.hpp"
-#include "entt/signal/fwd.hpp"
+#include "renderer/renderer.hpp"
 #include "systems/input.hpp"
 #include "systems/physics.hpp"
 #include "systems/render.hpp"
@@ -15,7 +14,7 @@ class Game
 {
    public:
     explicit Game(int aWidth, int aHeight)
-        : mWindow(std::make_unique<WatoWindow>(aWidth, aHeight)), mPhysicsEventHandler(&mRegistry)
+        : mWindow(aWidth, aHeight), mPhysicsEventHandler(&mRegistry)
     {
     }
     virtual ~Game() = default;
@@ -29,11 +28,9 @@ class Game
     int  Run();
 
    private:
-    const bgfx::ViewId CLEAR_VIEW = 0;
     WatoWindow mWindow;
 
-
-    bgfx::Init mInitParams;
+    Renderer mRenderer;
 
     Registry mRegistry;
 

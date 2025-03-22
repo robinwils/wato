@@ -173,6 +173,7 @@ target_sources(wato
     src/renderer/physics.hpp
     src/renderer/plane_primitive.hpp
     src/renderer/primitive.hpp
+    src/renderer/renderer.hpp
     src/systems/input.hpp
     src/systems/physics.hpp
     src/systems/render.hpp
@@ -194,6 +195,7 @@ target_sources(wato
     src/main.cpp
     src/renderer/bgfx_utils.cpp
     src/renderer/material.cpp
+    src/renderer/renderer.cpp
     src/systems/input.cpp
     src/systems/physics.cpp
     src/systems/render.cpp
