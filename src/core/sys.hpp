@@ -4,8 +4,6 @@
 #include <bx/bx.h>
 #include <bx/file.h>
 
-#include "config.h"
-
 #define DBG_PREFIX "" __FILE__ "(" BX_STRINGIZE(__LINE__) "): WATO "
 #define DBG(_format, ...)                                    \
     BX_MACRO_BLOCK_BEGIN                                     \

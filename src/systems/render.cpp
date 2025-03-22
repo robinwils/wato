@@ -16,7 +16,6 @@
 #include "core/cache.hpp"
 #include "glm/ext/quaternion_transform.hpp"
 #include "imgui_helper.h"
-#include "renderer/physics.hpp"
 
 void RenderSystem::operator()(Registry& aRegistry)
 {
@@ -97,25 +96,24 @@ void RenderImguiSystem::operator()(Registry& aRegistry, const float aDeltaTime, 
         }
     }
 
-    auto& params = aRegistry.ctx().get<PhysicsParams>();
-    auto& phy    = aRegistry.ctx().get<Physics>();
+    auto& phy = aRegistry.GetPhysics();
 
     ImGui::Text("Physics info");
-    if (ImGui::Checkbox("Information Logs", &params.InfoLogs)
-        || ImGui::Checkbox("Warning Logs", &params.WarningLogs)
-        || ImGui::Checkbox("Error logs", &params.ErrorLogs)) {
+    if (ImGui::Checkbox("Information Logs", &phy.InfoLogs)
+        || ImGui::Checkbox("Warning Logs", &phy.WarningLogs)
+        || ImGui::Checkbox("Error logs", &phy.ErrorLogs)) {
         uint logLevel = 0;
-        if (params.InfoLogs) {
+        if (phy.InfoLogs) {
             logLevel |= static_cast<uint>(rp3d::Logger::Level::Information);
         }
-        if (params.WarningLogs) {
+        if (phy.WarningLogs) {
             logLevel |= static_cast<uint>(rp3d::Logger::Level::Warning);
         }
-        if (params.ErrorLogs) {
+        if (phy.ErrorLogs) {
             logLevel |= static_cast<uint>(rp3d::Logger::Level::Error);
         }
-        params.Logger->removeAllDestinations();
-        params.Logger->addStreamDestination(std::cout, logLevel, rp3d::DefaultLogger::Format::Text);
+        phy.Logger->removeAllDestinations();
+        phy.Logger->addStreamDestination(std::cout, logLevel, rp3d::DefaultLogger::Format::Text);
     }
 
 #if WATO_DEBUG
@@ -124,17 +122,17 @@ void RenderImguiSystem::operator()(Registry& aRegistry, const float aDeltaTime, 
     auto                 nLines        = debugRenderer.getNbLines();
 
     ImGui::Text("%d debug lines and %d debug triangles", nLines, nTri);
-    ImGui::Checkbox("Collider Shapes", &params.RenderShapes);
-    ImGui::Checkbox("Collider AABB", &params.RenderAabb);
+    ImGui::Checkbox("Collider Shapes", &phy.RenderShapes);
+    ImGui::Checkbox("Collider AABB", &phy.RenderAabb);
 
     debugRenderer.setIsDebugItemDisplayed(rp3d::DebugRenderer::DebugItem::COLLISION_SHAPE,
-        params.RenderShapes);
+        phy.RenderShapes);
     debugRenderer.setIsDebugItemDisplayed(rp3d::DebugRenderer::DebugItem::COLLIDER_AABB,
-        params.RenderAabb);
+        phy.RenderAabb);
     debugRenderer.setIsDebugItemDisplayed(rp3d::DebugRenderer::DebugItem::CONTACT_POINT,
-        params.RenderContactPoints);
+        phy.RenderContactPoints);
     debugRenderer.setIsDebugItemDisplayed(rp3d::DebugRenderer::DebugItem::CONTACT_NORMAL,
-        params.RenderContactNormals);
+        phy.RenderContactNormals);
 #endif
 
     imguiEndFrame();

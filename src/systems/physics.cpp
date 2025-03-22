@@ -18,7 +18,7 @@
 
 void PhysicsSystem::operator()(Registry& aRegistry, const float aDeltaTime)
 {
-    auto& phy = aRegistry.ctx().get<Physics>();
+    auto& phy = aRegistry.GetPhysics();
 
     // Constant physics time step, TODO: as static const for now
     static const rp3d::decimal timeStep    = 1.0F / 60.0F;
@@ -75,7 +75,7 @@ bgfx::VertexLayout PosColor::msLayout;
 
 void PhysicsDebugSystem::operator()(Registry& aRegistry, const float aDeltaTime)
 {
-    auto&                      phy           = aRegistry.ctx().get<Physics>();
+    auto&                      phy           = aRegistry.GetPhysics();
     rp3d::DebugRenderer const& debugRenderer = phy.World->getDebugRenderer();
 
     PosColor::Init();

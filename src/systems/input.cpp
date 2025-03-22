@@ -22,7 +22,7 @@ void PlayerInputSystem::operator()(Registry& aRegistry, const float aDeltaTime, 
 {
     cameraInput(aRegistry, aDeltaTime);
 
-    auto& input = aRegistry.ctx().get<Input&>();
+    auto& input = aRegistry.GetPlayerInput();
     if (input.IsKeyPressed(Keyboard::B) && !input.IsPrevKeyPressed(Keyboard::B)
         && !input.IsMouseButtonPressed(Mouse::Left)) {
         if (!input.IsPlacementMode()) {
@@ -49,7 +49,7 @@ void PlayerInputSystem::operator()(Registry& aRegistry, const float aDeltaTime, 
 
 void PlayerInputSystem::cameraInput(Registry& aRegistry, const float aDeltaTime)
 {
-    auto& input = aRegistry.ctx().get<Input&>();
+    auto& input = aRegistry.GetPlayerInput();
     for (auto&& [entity, cam, t] : aRegistry.view<Camera, Transform3D>().each()) {
         float const speed = cam.Speed * aDeltaTime;
 
@@ -76,7 +76,7 @@ void PlayerInputSystem::cameraInput(Registry& aRegistry, const float aDeltaTime)
 
 glm::vec3 PlayerInputSystem::getMouseRay(Registry& aRegistry, WatoWindow& aWin) const
 {
-    const auto& input = aRegistry.ctx().get<Input&>();
+    const auto& input = aRegistry.GetPlayerInput();
 
     for (auto&& [_, cam, tcam] : aRegistry.view<Camera, Transform3D>().each()) {
         for (auto&& [_, t, obj] : aRegistry.view<Transform3D, SceneObject, Tile>().each()) {
@@ -98,13 +98,13 @@ void PlayerInputSystem::towerPlacementMode(Registry& aRegistry, WatoWindow& aWin
 {
     auto intersect = getMouseRay(aRegistry, aWin);
 
-    auto placementModeView = aRegistry.view<PlacementMode>();
+    auto& phy               = aRegistry.GetPhysics();
+    auto  placementModeView = aRegistry.view<PlacementMode>();
 
     if (!placementModeView->empty()) {
         for (auto ghostTower : placementModeView) {
             if (!aEnable) {
-                auto& phy = aRegistry.ctx().get<Physics>();
-                auto& rb  = aRegistry.get<RigidBody>(ghostTower);
+                auto& rb = aRegistry.get<RigidBody>(ghostTower);
 
                 auto* userData = static_cast<RigidBodyData*>(rb.rigid_body->getUserData());
                 delete userData;
@@ -122,8 +122,7 @@ void PlayerInputSystem::towerPlacementMode(Registry& aRegistry, WatoWindow& aWin
                 });
         }
     } else if (aEnable) {
-        auto& phy        = aRegistry.ctx().get<Physics>();
-        auto  ghostTower = aRegistry.create();
+        auto ghostTower = aRegistry.create();
         aRegistry.emplace<SceneObject>(ghostTower, "tower_model"_hs);
         const auto& t = aRegistry.emplace<Transform3D>(ghostTower,
             glm::vec3(intersect.x, 0.0F, intersect.z),
@@ -153,7 +152,7 @@ void PlayerInputSystem::towerPlacementMode(Registry& aRegistry, WatoWindow& aWin
 
 void PlayerInputSystem::buildTower(Registry& aRegistry)
 {
-    auto& input = aRegistry.ctx().get<Input&>();
+    auto& input = aRegistry.GetPlayerInput();
     if (!input.IsAbleToBuild()) {
         return;
     }

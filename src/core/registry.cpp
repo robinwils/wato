@@ -16,7 +16,6 @@
 #include "core/event_handler.hpp"
 #include "input/input.hpp"
 #include "renderer/blinn_phong_material.hpp"
-#include "renderer/physics.hpp"
 #include "renderer/plane_primitive.hpp"
 
 void Registry::Init(WatoWindow &aWin, EventHandler *aPhyEventHandler)
@@ -28,14 +27,16 @@ void Registry::Init(WatoWindow &aWin, EventHandler *aPhyEventHandler)
     phy.World->setEventListener(aPhyEventHandler);
 
     // Create the default logger
-    rp3d::DefaultLogger *logger = phy.Common.createDefaultLogger();
+    phy.Logger = phy.Common.createDefaultLogger();
 
     // Output the logs into the standard output
-    logger->addStreamDestination(std::cout,
+    phy.Logger->addStreamDestination(std::cout,
         static_cast<uint>(rp3d::Logger::Level::Error),
         rp3d::DefaultLogger::Format::Text);
 
-    ctx().emplace<PhysicsParams>(false, false, true, logger);
+    phy.InfoLogs    = false;
+    phy.WarningLogs = false;
+    phy.ErrorLogs   = true;
 
 #if WATO_DEBUG
     phy.World->setIsDebugRenderingEnabled(true);

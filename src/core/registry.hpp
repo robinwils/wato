@@ -4,6 +4,7 @@
 
 #include <entt/entity/registry.hpp>
 
+#include "components/physics.hpp"
 #include "core/window.hpp"
 
 class EventHandler;
@@ -18,4 +19,7 @@ class Registry : public entt::basic_registry<entt::entity>
     void LoadShaders();
     void LoadModels();
     void SpawnPlayerAndCamera();
+
+    Input&   GetPlayerInput() { return ctx().get<Input&>(); }
+    Physics& GetPhysics() { return ctx().get<Physics&>(); }
 };
