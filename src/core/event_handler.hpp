@@ -3,6 +3,11 @@
 #include "core/registry.hpp"
 #include "reactphysics3d/reactphysics3d.h"
 
+struct RigidBodyData {
+    RigidBodyData(entt::entity aEntity) : Entity(aEntity) {}
+    entt::entity Entity;
+};
+
 class EventHandler : public rp3d::EventListener
 {
    public:

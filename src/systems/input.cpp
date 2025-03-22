@@ -10,6 +10,7 @@
 #include "components/transform3d.hpp"
 #include "core/action.hpp"
 #include "core/cache.hpp"
+#include "core/event_handler.hpp"
 #include "core/ray.hpp"
 #include "core/registry.hpp"
 #include "core/window.hpp"
@@ -42,7 +43,6 @@ void PlayerInputSystem::operator()(Registry& aRegistry, const float aDeltaTime, 
 
         if (input.IsMouseButtonPressed(Mouse::Left)) {
             buildTower(aRegistry);
-            input.ExitTowerPlacementMode();
         }
     }
 }
@@ -106,9 +106,10 @@ void PlayerInputSystem::towerPlacementMode(Registry& aRegistry, WatoWindow& aWin
                 auto& phy = aRegistry.ctx().get<Physics>();
                 auto& rb  = aRegistry.get<RigidBody>(ghostTower);
 
+                auto* userData = static_cast<RigidBodyData*>(rb.rigid_body->getUserData());
+                delete userData;
                 phy.World->destroyRigidBody(rb.rigid_body);
                 aRegistry.destroy(ghostTower);
-                ghostTower = entt::null;
                 return;
             }
 
@@ -138,7 +139,9 @@ void PlayerInputSystem::towerPlacementMode(Registry& aRegistry, WatoWindow& aWin
         rb->enableGravity(false);
         rb->setType(rp3d::BodyType::DYNAMIC);
         collider->setIsTrigger(true);
-        rb->setUserData(&ghostTower);
+
+        // TODO: leak here, rigid body does not delete the user data
+        rb->setUserData(new RigidBodyData(ghostTower));
 
 #if WATO_DEBUG
         rb->setIsDebugEnabled(true);
@@ -150,7 +153,8 @@ void PlayerInputSystem::towerPlacementMode(Registry& aRegistry, WatoWindow& aWin
 
 void PlayerInputSystem::buildTower(Registry& aRegistry)
 {
-    if (!aRegistry.ctx().get<Input&>().IsAbleToBuild()) {
+    auto& input = aRegistry.ctx().get<Input&>();
+    if (!input.IsAbleToBuild()) {
         return;
     }
 
@@ -164,4 +168,5 @@ void PlayerInputSystem::buildTower(Registry& aRegistry)
         aRegistry.remove<PlacementMode>(tower);
         aRegistry.remove<ImguiDrawable>(tower);
     }
+    input.ExitTowerPlacementMode();
 }
