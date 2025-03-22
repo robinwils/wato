@@ -112,6 +112,9 @@ void RenderImguiSystem::operator()(Registry& aRegistry, const float aDeltaTime, 
             logLevel |= static_cast<uint>(rp3d::Logger::Level::Error);
         }
         phy.Logger->removeAllDestinations();
+        phy.Logger->addFileDestination("rp3d_log.html",
+            logLevel,
+            rp3d::DefaultLogger::Format::HTML);
         phy.Logger->addStreamDestination(std::cout, logLevel, rp3d::DefaultLogger::Format::Text);
     }
 

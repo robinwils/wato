@@ -22,16 +22,27 @@ void Game::Init()
     phy.World->setEventListener(new EventHandler(&mRegistry));
 
     // Create the default logger
-    phy.Logger = phy.Common.createDefaultLogger();
-
-    // Output the logs into the standard output
-    phy.Logger->addStreamDestination(std::cout,
-        static_cast<uint>(rp3d::Logger::Level::Error),
-        rp3d::DefaultLogger::Format::Text);
-
     phy.InfoLogs    = false;
     phy.WarningLogs = false;
     phy.ErrorLogs   = true;
+    phy.Logger      = phy.Common.createDefaultLogger();
+    uint logLevel   = 0;
+    if (phy.InfoLogs) {
+        logLevel |= static_cast<uint>(rp3d::Logger::Level::Information);
+    }
+    if (phy.WarningLogs) {
+        logLevel |= static_cast<uint>(rp3d::Logger::Level::Warning);
+    }
+    if (phy.ErrorLogs) {
+        logLevel |= static_cast<uint>(rp3d::Logger::Level::Error);
+    }
+
+    // Output the logs into an HTML file
+    phy.Logger->addFileDestination("rp3d_log.html", logLevel, rp3d::DefaultLogger::Format::HTML);
+
+    // Output the logs into the standard output
+    phy.Logger->addStreamDestination(std::cout, logLevel, rp3d::DefaultLogger::Format::Text);
+    phy.Common.setLogger(phy.Logger);
 
 #if WATO_DEBUG
     phy.World->setIsDebugRenderingEnabled(true);
