@@ -26,7 +26,7 @@ void WatoWindow::Init()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     mGLFWWindow = glfw_window_ptr{glfwCreateWindow(mWidth, mHeight, "wato", nullptr, nullptr)};
-    if (mGLFWWindow == NULL) {
+    if (!mGLFWWindow) {
         glfwTerminate();
         throw std::runtime_error("failed to initialize GLFW window");
     }
