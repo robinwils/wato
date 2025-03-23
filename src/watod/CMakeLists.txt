@@ -29,7 +29,7 @@ target_sources(watod
 )
 
 target_link_libraries(watod
-  wato_core
+  watolib
   reactphysics3d
 )
 

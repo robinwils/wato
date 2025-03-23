@@ -81,7 +81,7 @@ endif()
 configure_file(config.h.in config.h @ONLY)
 
 add_library(wato_common INTERFACE)
-add_library(wato_core)
+add_library(watolib)
 add_executable(wato)
 add_subdirectory(src/watod)
 
@@ -175,7 +175,7 @@ elseif(UNIX)
 endif()
 
 
-target_sources(wato_core
+target_sources(watolib
   PUBLIC FILE_SET HEADERS
   BASE_DIRS src
   FILES
@@ -250,7 +250,7 @@ target_include_directories(wato_common INTERFACE "${CMAKE_CURRENT_BINARY_DIR}")
 target_link_options(wato_common INTERFACE -rdynamic)
 
 # Link libraries
-target_link_libraries(wato_core
+target_link_libraries(watolib
   wato_common
   bxDebug
   bimg_decodeDebug
@@ -259,7 +259,7 @@ target_link_libraries(wato_core
   reactphysics3d
 )
 
-target_link_libraries(wato wato_core bgfxDebug)
+target_link_libraries(wato watolib bgfxDebug)
 
 if(WIN32)
   target_link_libraries(wato
