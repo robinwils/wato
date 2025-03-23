@@ -1,12 +1,13 @@
-#include "core/app/server.hpp"
+#include "core/app/game_server.hpp"
 
 #include <bx/bx.h>
 
 #include "core/physics.hpp"
 #include "systems/system.hpp"
 
-void Server::Init()
+void GameServer::Init()
 {
+    mServer.Init();
     auto &physics = mRegistry.ctx().emplace<Physics>();
 
     physics.Init();
@@ -14,10 +15,12 @@ void Server::Init()
     mSystems.push_back(PhysicsSystem::MakeDelegate(mPhysicsSystem));
 }
 
-int Server::Run()
+int GameServer::Run()
 {
     using clock   = std::chrono::high_resolution_clock;
     auto prevTime = clock::now();
+
+    mServer.Run();
 
     return 0;
 }

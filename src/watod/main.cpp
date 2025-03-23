@@ -1,6 +1,7 @@
 #include <bx/bx.h>
 
-#include "core/app/server.hpp"
+#define ENET_IMPLEMENTATION
+#include "core/app/game_server.hpp"
 
 #if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
 #include <cxxabi.h>
@@ -56,7 +57,7 @@ void signalHandler(int signum) {}
 int main()
 {
     signal(SIGSEGV, signalHandler);
-    Server s;
+    GameServer s;
     s.Init();
     return s.Run();
 }
