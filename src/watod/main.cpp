@@ -56,6 +56,7 @@ void signalHandler(int signum) {}
 int main()
 {
     signal(SIGSEGV, signalHandler);
-
-    std::cout << "Server" << std::endl;
+    Server s;
+    s.Init();
+    return s.Run();
 }

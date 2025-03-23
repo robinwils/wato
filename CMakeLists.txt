@@ -80,25 +80,29 @@ endif()
 # Configure the file using the provided (or default) value
 configure_file(config.h.in config.h @ONLY)
 
-add_subdirectory(src/watod)
+add_library(wato_common INTERFACE)
+add_library(wato_core)
 add_executable(wato)
+add_subdirectory(src/watod)
 
 if (DEBUG_ENABLE)
-  target_compile_options(wato PUBLIC ${DEBUG_FLAGS})
+  target_compile_options(wato_common INTERFACE ${DEBUG_FLAGS})
 else()
-  target_compile_options(wato PUBLIC ${RELEASE_FLAGS})
+  target_compile_options(wato_common INTERFACE ${RELEASE_FLAGS})
 endif()
 
 include(cmake/CompilerWarnings.cmake)
-wato_set_project_warnings(
-  wato
-  ${wato_WARNINGS_AS_ERRORS}
-  ""
-  ""
-  ""
-  "")
+wato_set_project_warnings(wato_common
+  VISIBILITY "INTERFACE"
+  AS_ERRRORS ${wato_WARNINGS_AS_ERRORS})
 
-target_compile_features(wato INTERFACE cxx_std_${CMAKE_CXX_STANDARD})
+target_compile_features(wato_common INTERFACE cxx_std_${CMAKE_CXX_STANDARD})
+
+target_include_directories(wato_common
+  SYSTEM INTERFACE
+    deps/bimg/include
+    deps/bx/include
+)
 
 target_include_directories(wato
   PRIVATE
@@ -107,10 +111,7 @@ target_include_directories(wato
 )
 
 target_include_directories(wato
-  SYSTEM PUBLIC
-    deps/bimg/include
-    src
-    deps/bx/include
+  SYSTEM PRIVATE
     deps/bgfx/include
     deps/imgui
     src/imgui
@@ -125,49 +126,56 @@ if(DEFINED glfw3_SOURCE_DIR)
 endif()
 
 if(DEFINED glm_SOURCE_DIR)
-  target_include_directories(wato
-  SYSTEM PUBLIC
+  target_include_directories(wato_common
+  SYSTEM INTERFACE
     ${glm_SOURCE_DIR}/include
   )
 endif()
 
 if(DEFINED entt_SOURCE_DIR)
-  target_include_directories(wato
-  SYSTEM PUBLIC
+  target_include_directories(wato_common
+    SYSTEM INTERFACE
     ${entt_SOURCE_DIR}/src
   )
 endif()
 
 if(DEFINED reactphysics3d_SOURCE_DIR)
-  target_include_directories(wato
-  SYSTEM PUBLIC
+  target_include_directories(wato_common
+  SYSTEM INTERFACE
     ${reactphysics3d_SOURCE_DIR}/include
   )
 endif()
 
+if(DEFINED enet_SOURCE_DIR)
+  target_include_directories(wato_common
+  SYSTEM INTERFACE
+    ${enet_SOURCE_DIR}/include
+  )
+endif()
+
 if(WIN32)
-  target_include_directories(wato
-  SYSTEM PUBLIC
+  target_include_directories(wato_common
+  SYSTEM INTERFACE
     deps/bx/include/compat/msvc
   )
-  target_link_directories(wato
+  target_link_directories(wato_common
+  INTERFACE
     deps/bgfx/.build/win64_vs2022/bin
     deps/glfw/lib-vc2022
   )
 elseif(UNIX)
-  target_include_directories(wato
-  SYSTEM PUBLIC
+  target_include_directories(wato_common
+  SYSTEM INTERFACE
     deps/bx/include/compat/linux
   )
-  target_link_directories(wato
-  PRIVATE
+  target_link_directories(wato_common
+  INTERFACE
     deps/bgfx/.build/linux64_gcc/bin
   )
 endif()
 
-target_compile_options(wato PUBLIC)
 
-target_sources(wato
+target_sources(wato_core
   PUBLIC FILE_SET HEADERS
   BASE_DIRS src
   FILES
@@ -182,18 +190,30 @@ target_sources(wato
     src/components/tile.hpp
     src/components/transform3d.hpp
     src/core/app/app.hpp
+    src/core/physics.hpp
+    src/core/ray.hpp
+    src/registry/registry.hpp
+    src/systems/physics.hpp
+    src/systems/system.hpp
+
+  PRIVATE
+    src/core/physics.cpp
+    src/systems/physics.cpp
+)
+
+target_sources(wato
+  PUBLIC FILE_SET HEADERS
+  BASE_DIRS src
+  FILES
     src/core/app/game.hpp
     src/core/cache.hpp
     src/core/event_handler.hpp
     src/core/model_loader.hpp
-    src/core/physics.hpp
-    src/core/ray.hpp
     src/core/sys.hpp
     src/core/tile.hpp
     src/core/window.hpp
     src/input/input.hpp
     src/registry/game_registry.hpp
-    src/registry/registry.hpp
     src/renderer/bgfx_utils.hpp
     src/renderer/blinn_phong_material.hpp
     src/renderer/material.hpp
@@ -202,9 +222,7 @@ target_sources(wato
     src/renderer/primitive.hpp
     src/renderer/renderer.hpp
     src/systems/input.hpp
-    src/systems/physics.hpp
     src/systems/render.hpp
-    src/systems/system.hpp
 
   PRIVATE
     deps/imgui/imgui.cpp
@@ -213,7 +231,7 @@ target_sources(wato
     deps/imgui/imgui_widgets.cpp
     src/core/app/game.cpp
     src/core/event_handler.cpp
-    src/core/model_loader.cpp src/core/physics.cpp
+    src/core/model_loader.cpp
     src/core/sys.cpp
     src/core/window.cpp
     src/imgui/imgui_helper.cpp
@@ -224,22 +242,24 @@ target_sources(wato
     src/renderer/material.cpp
     src/renderer/renderer.cpp
     src/systems/input.cpp
-    src/systems/physics.cpp
     src/systems/render.cpp
 )
 
-target_include_directories(wato PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
+target_include_directories(wato_common INTERFACE "${CMAKE_CURRENT_BINARY_DIR}")
 
-target_link_options(wato PRIVATE -rdynamic)
+target_link_options(wato_common INTERFACE -rdynamic)
 
 # Link libraries
-target_link_libraries(wato
-  bgfxDebug
+target_link_libraries(wato_core
+  wato_common
   bxDebug
   bimg_decodeDebug
   bimg_encodeDebug
   bimgDebug
+  reactphysics3d
 )
+
+target_link_libraries(wato wato_core bgfxDebug)
 
 if(WIN32)
   target_link_libraries(wato
@@ -254,7 +274,6 @@ elseif(UNIX)
     GL
     GLU
     ZLIB::ZLIB
-    reactphysics3d
   )
 endif()
 
