@@ -142,3 +142,68 @@ void CameraSystem::operator()(Registry& aRegistry, const float aDeltaTime)
         break;
     }
 }
+
+#if WATO_DEBUG
+static bool vInit = false;
+struct PosColor {
+    float    X;
+    float    Y;
+    float    Z;
+    uint32_t RGBA;
+
+    static void Init()
+    {
+        if (vInit) {
+            return;
+        }
+        msLayout.begin()
+            .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
+            .add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
+            .end();
+        vInit = true;
+    }
+
+    static bgfx::VertexLayout msLayout;
+};
+bgfx::VertexLayout PosColor::msLayout;
+
+void PhysicsDebugSystem::operator()(Registry& aRegistry, const float aDeltaTime)
+{
+    auto&                      phy           = aRegistry.ctx().get<Physics&>();
+    rp3d::DebugRenderer const& debugRenderer = phy.World()->getDebugRenderer();
+
+    PosColor::Init();
+
+    auto nTri   = debugRenderer.getNbTriangles();
+    auto nLines = debugRenderer.getNbLines();
+
+    auto  debugShader = WATO_PROGRAM_CACHE["simple"_hs];
+    auto* debugMat    = new Material(debugShader);
+    if (nTri > 0) {
+        auto state = BGFX_STATE_DEFAULT;
+        if (3 * nTri == bgfx::getAvailTransientVertexBuffer(3 * nTri, PosColor::msLayout)) {
+            bgfx::TransientVertexBuffer vb{};
+            bgfx::allocTransientVertexBuffer(&vb, 3 * nTri, PosColor::msLayout);
+
+            bx::memCopy(vb.data, debugRenderer.getTrianglesArray(), 3 * nTri * sizeof(PosColor));
+
+            bgfx::setState(state);
+            bgfx::setVertexBuffer(0, &vb);
+            bgfx::submit(0, debugMat->Program(), bgfx::ViewMode::Default);
+        }
+    }
+    if (nLines > 0) {
+        auto state = BGFX_STATE_DEFAULT | BGFX_STATE_PT_LINES;
+        if (2 * nLines == bgfx::getAvailTransientVertexBuffer(2 * nLines, PosColor::msLayout)) {
+            bgfx::TransientVertexBuffer vb{};
+            bgfx::allocTransientVertexBuffer(&vb, 2 * nLines, PosColor::msLayout);
+
+            bx::memCopy(vb.data, debugRenderer.getLinesArray(), 2 * nLines * sizeof(PosColor));
+
+            bgfx::setState(state);
+            bgfx::setVertexBuffer(0, &vb);
+            bgfx::submit(0, debugMat->Program(), bgfx::ViewMode::Default);
+        }
+    }
+}
+#endif

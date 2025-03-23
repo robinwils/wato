@@ -1,5 +1,6 @@
 #pragma once
 
+#include "config.h"
 #include "registry/registry.hpp"
 #include "systems/system.hpp"
 
@@ -26,3 +27,13 @@ class CameraSystem : public System<CameraSystem>
 
     static constexpr const char* StaticName() { return "CameraSystem"; }
 };
+
+#if WATO_DEBUG
+class PhysicsDebugSystem : public System<PhysicsDebugSystem>
+{
+   public:
+    void operator()(Registry& aRegistry, const float aDeltaTime);
+
+    static constexpr const char* StaticName() { return "PhysicsDebugSystem "; }
+};
+#endif
