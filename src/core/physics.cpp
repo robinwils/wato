@@ -1,13 +1,8 @@
 #include "core/physics.hpp"
 
-#include "core/event_handler.hpp"
-
-void Physics::Init(Registry* aRegistry)
+void Physics::Init()
 {
     mWorld = mCommon.createPhysicsWorld();
-
-    // TODO: leak ?
-    mWorld->setEventListener(new EventHandler(aRegistry));
 
     // Create the default logger
     Params.InfoLogs    = false;

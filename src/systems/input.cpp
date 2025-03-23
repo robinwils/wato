@@ -9,7 +9,6 @@
 #include "components/transform3d.hpp"
 #include "core/cache.hpp"
 #include "core/event_handler.hpp"
-#include "core/game_engine.hpp"
 #include "core/physics.hpp"
 #include "core/ray.hpp"
 #include "core/window.hpp"
@@ -21,8 +20,7 @@ void PlayerInputSystem::operator()(Registry& aRegistry, const float aDeltaTime)
 {
     cameraInput(aRegistry, aDeltaTime);
 
-    auto& window = aRegistry.ctx().get<GameEngine>().GetWindow();
-    auto& input  = aRegistry.ctx().get<GameEngine>().GetPlayerInput();
+    auto& input = aRegistry.ctx().get<WatoWindow&>().GetInput();
     if (input.IsKeyPressed(Keyboard::B) && !input.IsPrevKeyPressed(Keyboard::B)
         && !input.IsMouseButtonPressed(Mouse::Left)) {
         if (!input.IsPlacementMode()) {
@@ -49,7 +47,7 @@ void PlayerInputSystem::operator()(Registry& aRegistry, const float aDeltaTime)
 
 void PlayerInputSystem::cameraInput(Registry& aRegistry, const float aDeltaTime)
 {
-    auto& input = aRegistry.ctx().get<GameEngine>().GetPlayerInput();
+    auto& input = aRegistry.ctx().get<WatoWindow&>().GetInput();
     for (auto&& [entity, cam, t] : aRegistry.view<Camera, Transform3D>().each()) {
         float const speed = cam.Speed * aDeltaTime;
 
@@ -76,8 +74,8 @@ void PlayerInputSystem::cameraInput(Registry& aRegistry, const float aDeltaTime)
 
 glm::vec3 PlayerInputSystem::getMouseRay(Registry& aRegistry) const
 {
-    auto& input  = aRegistry.ctx().get<GameEngine>().GetPlayerInput();
-    auto& window = aRegistry.ctx().get<GameEngine>().GetWindow();
+    auto& input  = aRegistry.ctx().get<WatoWindow&>().GetInput();
+    auto& window = aRegistry.ctx().get<WatoWindow&>();
 
     for (auto&& [_, cam, tcam] : aRegistry.view<Camera, Transform3D>().each()) {
         for (auto&& [_, t, obj] : aRegistry.view<Transform3D, SceneObject, Tile>().each()) {
@@ -102,7 +100,7 @@ void PlayerInputSystem::towerPlacementMode(Registry& aRegistry, bool aEnable)
 {
     auto intersect = getMouseRay(aRegistry);
 
-    auto& phy               = aRegistry.ctx().get<GameEngine>().GetPhysics();
+    auto& phy               = aRegistry.ctx().get<Physics&>();
     auto  placementModeView = aRegistry.view<PlacementMode>();
 
     if (!placementModeView->empty()) {
@@ -156,7 +154,7 @@ void PlayerInputSystem::towerPlacementMode(Registry& aRegistry, bool aEnable)
 
 void PlayerInputSystem::buildTower(Registry& aRegistry)
 {
-    auto& input = aRegistry.ctx().get<GameEngine>().GetPlayerInput();
+    auto& input = aRegistry.ctx().get<WatoWindow&>().GetInput();
     if (!input.IsAbleToBuild()) {
         return;
     }

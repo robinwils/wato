@@ -8,10 +8,7 @@
 class Application
 {
    public:
-    explicit Application(int aWidth, int aHeight)
-        : mPhysicsEventHandler(&mRegistry), mWidth(aWidth), mHeight(aHeight)
-    {
-    }
+    explicit Application(int aWidth, int aHeight) : mWidth(aWidth), mHeight(aHeight) {}
     virtual ~Application() = default;
 
     Application(const Application &)            = delete;
@@ -26,13 +23,8 @@ class Application
     Registry mRegistry;
 
     PhysicsSystem mPhysicsSystem;
-#if WATO_DEBUG
-    PhysicsDebugSystem mPhysicsDbgSystem;
-#endif
 
     SystemRegistry mSystems;
-
-    EventHandler mPhysicsEventHandler;
 
     int mWidth, mHeight;
 };

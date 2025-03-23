@@ -2,7 +2,6 @@
 
 #include "config.h"
 #include "reactphysics3d/reactphysics3d.h"
-#include "registry/registry.hpp"
 
 struct PhysicsParams {
     bool InfoLogs;
@@ -28,7 +27,7 @@ class Physics
     Physics &operator=(const Physics &) = delete;
     Physics &operator=(Physics &&)      = delete;
 
-    void                               Init(Registry *aRegistry);
+    void                               Init();
     void                               InitLogger();
     [[nodiscard]] rp3d::PhysicsWorld  *World() noexcept { return mWorld; }
     [[nodiscard]] rp3d::PhysicsCommon &Common() noexcept { return mCommon; }

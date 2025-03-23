@@ -4,22 +4,24 @@
 
 #include <memory>
 
-#include "core/game_engine.hpp"
 #include "core/physics.hpp"
+#include "core/window.hpp"
 #include "registry/game_registry.hpp"
 #include "renderer/renderer.hpp"
 #include "systems/system.hpp"
 
 void Game::Init()
 {
-    auto &engine =
-        mRegistry.ctx().emplace<GameEngine>(std::make_unique<WatoWindow>(mWidth, mHeight),
-            std::make_unique<Renderer>(),
-            std::make_unique<Physics>());
+    auto &window   = mRegistry.ctx().emplace<WatoWindow>(mWidth, mHeight);
+    auto &renderer = mRegistry.ctx().emplace<Renderer>();
+    auto &physics  = mRegistry.ctx().emplace<Physics>();
 
-    engine.GetWindow().Init();
-    engine.GetRenderer().Init(mRegistry.ctx().get<GameEngine>().GetWindow());
-    engine.GetPhysics().Init(&mRegistry);
+    window.Init();
+    renderer.Init(window);
+    physics.Init();
+
+    // TODO: leak ?
+    physics.World()->setEventListener(new EventHandler(&mRegistry));
 
     LoadResources(mRegistry);
     mSystems.push_back(RenderImguiSystem::MakeDelegate(mRenderImguiSystem));
@@ -35,8 +37,8 @@ void Game::Init()
 
 int Game::Run()
 {
-    auto &window   = mRegistry.ctx().get<GameEngine>().GetWindow();
-    auto &renderer = mRegistry.ctx().get<GameEngine>().GetRenderer();
+    auto &window   = mRegistry.ctx().get<WatoWindow &>();
+    auto &renderer = mRegistry.ctx().get<Renderer &>();
 
     using clock   = std::chrono::high_resolution_clock;
     auto prevTime = clock::now();

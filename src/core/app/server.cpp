@@ -2,22 +2,16 @@
 
 #include <bx/bx.h>
 
-#include <memory>
-
-#include "core/server_engine.hpp"
+#include "core/physics.hpp"
 #include "systems/system.hpp"
 
 void Server::Init()
 {
-    auto &engine = mRegistry.ctx().emplace<ServerEngine>(std::make_unique<Physics>());
+    auto &physics = mRegistry.ctx().emplace<Physics>();
 
-    engine.GetPhysics().Init(&mRegistry);
+    physics.Init();
 
     mSystems.push_back(PhysicsSystem::MakeDelegate(mPhysicsSystem));
-
-#if WATO_DEBUG
-    mSystems.push_back(PhysicsDebugSystem::MakeDelegate(mPhysicsDbgSystem));
-#endif
 }
 
 int Server::Run()

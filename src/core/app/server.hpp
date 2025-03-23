@@ -5,7 +5,7 @@
 class Server : public Application
 {
    public:
-    explicit Server(int aWidth, int aHeight) : Application(aWidth, aHeight) {}
+    explicit Server() : Application(0, 0) {}
     virtual ~Server() = default;
 
     Server(const Server &)            = delete;

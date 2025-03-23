@@ -11,14 +11,14 @@
 #include "components/transform3d.hpp"
 #include "config.h"
 #include "core/cache.hpp"
-#include "core/game_engine.hpp"
 #include "reactphysics3d/utils/DebugRenderer.h"
+#include "core/physics.hpp"
 #include "registry/registry.hpp"
 #include "renderer/material.hpp"
 
 void PhysicsSystem::operator()(Registry& aRegistry, const float aDeltaTime)
 {
-    auto& phy = aRegistry.ctx().get<GameEngine>().GetPhysics();
+    auto& phy = aRegistry.ctx().get<Physics&>();
 
     // Constant physics time step, TODO: as static const for now
     static const rp3d::decimal timeStep    = 1.0F / 60.0F;

@@ -13,7 +13,8 @@
 #include "components/scene_object.hpp"
 #include "components/transform3d.hpp"
 #include "core/cache.hpp"
-#include "core/game_engine.hpp"
+#include "core/physics.hpp"
+#include "core/window.hpp"
 #include "imgui_helper.h"
 
 void RenderSystem::operator()(Registry& aRegistry)
@@ -63,7 +64,7 @@ void RenderSystem::operator()(Registry& aRegistry)
 
 void RenderImguiSystem::operator()(Registry& aRegistry, const float aDeltaTime)
 {
-    auto& window = aRegistry.ctx().get<GameEngine>().GetWindow();
+    auto& window = aRegistry.ctx().get<WatoWindow&>();
     imguiBeginFrame(window.GetInput(), window.Width<int>(), window.Height<int>());
     showImguiDialogs(window.Width<float>(), window.Height<float>());
 
@@ -96,7 +97,7 @@ void RenderImguiSystem::operator()(Registry& aRegistry, const float aDeltaTime)
         }
     }
 
-    auto& phy = aRegistry.ctx().get<GameEngine>().GetPhysics();
+    auto& phy = aRegistry.ctx().get<Physics&>();
 
     ImGui::Text("Physics info");
     if (ImGui::Checkbox("Information Logs", &phy.Params.InfoLogs)
@@ -129,7 +130,7 @@ void RenderImguiSystem::operator()(Registry& aRegistry, const float aDeltaTime)
 
 void CameraSystem::operator()(Registry& aRegistry, const float aDeltaTime)
 {
-    auto& window = aRegistry.ctx().get<GameEngine>().GetWindow();
+    auto& window = aRegistry.ctx().get<WatoWindow&>();
     for (auto&& [entity, camera, transform] : aRegistry.view<Camera, Transform3D>().each()) {
         const auto& viewMat = camera.View(transform.Position);
         const auto& proj    = camera.Projection(window.Width<float>(), window.Height<float>());

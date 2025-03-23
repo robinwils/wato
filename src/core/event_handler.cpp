@@ -1,7 +1,6 @@
 #include "core/event_handler.hpp"
 
 #include "components/placement_mode.hpp"
-#include "core/game_engine.hpp"
 #include "core/window.hpp"
 #include "entt/entity/fwd.hpp"
 
@@ -26,10 +25,10 @@ void EventHandler::onTrigger(const rp3d::OverlapCallback::CallbackData& aCallbac
             switch (pair.getEventType()) {
                 case rp3d::OverlapCallback::OverlapPair::EventType::OverlapStart:
                 case rp3d::OverlapCallback::OverlapPair::EventType::OverlapStay:
-                    mRegistry->ctx().get<GameEngine&>().GetPlayerInput().SetCanBuild(false);
+                    mRegistry->ctx().get<WatoWindow&>().GetInput().SetCanBuild(false);
                     break;
                 case rp3d::OverlapCallback::OverlapPair::EventType::OverlapExit:
-                    mRegistry->ctx().get<GameEngine&>().GetPlayerInput().SetCanBuild(true);
+                    mRegistry->ctx().get<WatoWindow&>().GetInput().SetCanBuild(true);
                     break;
             }
         }
