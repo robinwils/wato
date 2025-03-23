@@ -1,4 +1,3 @@
-#include "bgfx/bgfx.h"
 #include "glm/ext/vector_float3.hpp"
 
 struct LightSource {
