@@ -102,6 +102,12 @@ target_compile_features(wato INTERFACE cxx_std_${CMAKE_CXX_STANDARD})
 
 target_include_directories(wato
   PRIVATE
+    src
+    src/imgui
+)
+
+target_include_directories(wato
+  SYSTEM PUBLIC
     deps/bimg/include
     src
     deps/bx/include
@@ -109,33 +115,39 @@ target_include_directories(wato
     deps/imgui
     src/imgui
     deps/iconfontcppheaders
-    ${glm_SOURCE_DIR}
 )
 
 if(DEFINED glfw3_SOURCE_DIR)
   target_include_directories(wato
-  PRIVATE
+  SYSTEM PUBLIC
     ${glfw3_SOURCE_DIR}/include
+  )
+endif()
+
+if(DEFINED glm_SOURCE_DIR)
+  target_include_directories(wato
+  SYSTEM PUBLIC
+    ${glm_SOURCE_DIR}/include
   )
 endif()
 
 if(DEFINED entt_SOURCE_DIR)
   target_include_directories(wato
-  PRIVATE
+  SYSTEM PUBLIC
     ${entt_SOURCE_DIR}/src
   )
 endif()
 
 if(DEFINED reactphysics3d_SOURCE_DIR)
   target_include_directories(wato
-  PRIVATE
+  SYSTEM PUBLIC
     ${reactphysics3d_SOURCE_DIR}/include
   )
 endif()
 
 if(WIN32)
   target_include_directories(wato
-  PRIVATE
+  SYSTEM PUBLIC
     deps/bx/include/compat/msvc
   )
   target_link_directories(wato
@@ -144,7 +156,7 @@ if(WIN32)
   )
 elseif(UNIX)
   target_include_directories(wato
-  PRIVATE
+  SYSTEM PUBLIC
     deps/bx/include/compat/linux
   )
   target_link_directories(wato
