@@ -1,6 +1,5 @@
 #pragma once
 
-#include "config.h"
 #include "systems/system.hpp"
 
 class PhysicsSystem : public System<PhysicsSystem>
