@@ -128,7 +128,7 @@ endif()
 if(DEFINED glm_SOURCE_DIR)
   target_include_directories(wato_common
   SYSTEM INTERFACE
-    ${glm_SOURCE_DIR}/include
+    ${glm_SOURCE_DIR}
   )
 endif()
 
