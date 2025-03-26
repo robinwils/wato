@@ -2,7 +2,6 @@
 
 #include <bgfx/bgfx.h>
 
-#include <entt/signal/dispatcher.hpp>
 #include <glm/ext/vector_float3.hpp>
 
 #include "components/camera.hpp"
