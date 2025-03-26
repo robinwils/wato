@@ -9,6 +9,7 @@
 #include "components/transform3d.hpp"
 #include "core/cache.hpp"
 #include "core/event_handler.hpp"
+#include "core/net/enet_client.hpp"
 #include "core/physics.hpp"
 #include "core/ray.hpp"
 #include "core/window.hpp"
@@ -42,6 +43,11 @@ void PlayerInputSystem::operator()(Registry& aRegistry, const float aDeltaTime)
         if (input.IsMouseButtonPressed(Mouse::Left)) {
             buildTower(aRegistry);
         }
+    }
+
+    // Creeps
+    if (input.IsKeyPressed(Keyboard::C) && !input.IsPrevKeyPressed(Keyboard::C)) {
+        creepSpawn(aRegistry);
     }
 }
 
@@ -170,4 +176,10 @@ void PlayerInputSystem::buildTower(Registry& aRegistry)
         aRegistry.remove<ImguiDrawable>(tower);
     }
     input.ExitTowerPlacementMode();
+}
+
+void PlayerInputSystem::creepSpawn(Registry& aRegistry)
+{
+    auto& netClient = aRegistry.ctx().get<ENetClient&>();
+    netClient.Send();
 }

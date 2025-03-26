@@ -14,6 +14,7 @@ class PlayerInputSystem : public System<PlayerInputSystem>
     void towerPlacementMode(Registry& aRegistry, bool aEnable);
     void buildTower(Registry& aRegistry);
     void cameraInput(Registry& aRegistry, const float aDeltaTime);
+    void creepSpawn(Registry& aRegistry);
 
     glm::vec3 getMouseRay(Registry& aRegistry) const;
 };
