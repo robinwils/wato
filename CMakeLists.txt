@@ -60,12 +60,20 @@ FetchContent_Declare(
   FIND_PACKAGE_ARGS NAMES enet
 )
 
+FetchContent_Declare(
+  argh
+  GIT_REPOSITORY https://github.com/adishavit/argh.git
+  GIT_TAG v1.3.2
+  FIND_PACKAGE_ARGS NAMES argh
+)
+
 FetchContent_MakeAvailable(assimp)
 FetchContent_MakeAvailable(glfw3)
 FetchContent_MakeAvailable(entt)
 FetchContent_MakeAvailable(glm)
 FetchContent_MakeAvailable(reactphysics3d)
 FetchContent_MakeAvailable(enet)
+FetchContent_MakeAvailable(argh)
 
 set(DEBUG_FLAGS "-DBX_CONFIG_DEBUG")
 set(RELEASE_FLAGS "")
@@ -150,6 +158,13 @@ if(DEFINED enet_SOURCE_DIR)
   target_include_directories(wato_common
   SYSTEM INTERFACE
     ${enet_SOURCE_DIR}/include
+  )
+endif()
+
+if(DEFINED argh_SOURCE_DIR)
+  target_include_directories(wato_common
+  SYSTEM INTERFACE
+    ${argh_SOURCE_DIR}
   )
 endif()
 

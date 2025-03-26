@@ -10,7 +10,7 @@
 void GameServer::Init()
 {
     mServer.Init();
-    auto& physics = mRegistry.ctx().emplace<Physics>();
+    auto& physics = mRegistry.ctx().get<Physics>();
 
     physics.Init();
 
@@ -29,6 +29,13 @@ int GameServer::Run()
             mServer.Poll(mQueue);
         }
     }};
+
+    // while (mRunning) {
+    //     NetEvent* ev;
+    //     while ((ev = mQueue.pop())) {
+    //         std::cout << "GOT EVENT" << std::endl;
+    //     }
+    // }
 
     return 0;
 }

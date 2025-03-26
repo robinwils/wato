@@ -14,10 +14,10 @@
 
 void Game::Init()
 {
-    auto& window    = mRegistry.ctx().emplace<WatoWindow>(mWidth, mHeight);
-    auto& renderer  = mRegistry.ctx().emplace<Renderer>();
-    auto& physics   = mRegistry.ctx().emplace<Physics>();
-    auto& netClient = mRegistry.ctx().emplace<ENetClient>();
+    auto& window    = mRegistry.ctx().get<WatoWindow>();
+    auto& renderer  = mRegistry.ctx().get<Renderer>();
+    auto& physics   = mRegistry.ctx().get<Physics>();
+    auto& netClient = mRegistry.ctx().get<ENetClient>();
 
     window.Init();
     renderer.Init(window);
@@ -44,18 +44,23 @@ int Game::Run()
     auto& window    = mRegistry.ctx().get<WatoWindow&>();
     auto& renderer  = mRegistry.ctx().get<Renderer&>();
     auto& netClient = mRegistry.ctx().get<ENetClient&>();
+    auto& opts      = mRegistry.ctx().get<Options&>();
 
-    using clock   = std::chrono::high_resolution_clock;
-    auto prevTime = clock::now();
+    using clock                 = std::chrono::high_resolution_clock;
+    auto          prevTime      = clock::now();
+    std::jthread* netPollThread = nullptr;
 
-    std::jthread netPollThread{[&]() {
-        while (mRunning) {
-            netClient.Poll(mQueue);
+    mRunning = true;
+    if (opts.Multiplayer()) {
+        netPollThread = new std::jthread([&]() {
+            while (mRunning) {
+                netClient.Poll(mQueue);
+            }
+        });
+
+        if (!netClient.Connect()) {
+            throw std::runtime_error("No available peers for initiating an ENet connection.");
         }
-    }};
-
-    if (!netClient.Connect()) {
-        throw std::runtime_error("No available peers for initiating an ENet connection.");
     }
 
     while (!window.ShouldClose()) {
@@ -76,7 +81,8 @@ int Game::Run()
 
         renderer.Render();
     }
-    mRunning = false;
-    netClient.Disconnect();
+    if (opts.Multiplayer()) {
+        netClient.Disconnect();
+    }
     return 0;
 }

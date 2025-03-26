@@ -16,20 +16,20 @@
 #include <unistd.h>
 void signalHandler(int signum)
 {
-    void  *array[50];
+    void*  array[50];
     size_t size    = backtrace(array, 50);
-    char **symbols = backtrace_symbols(array, size);
+    char** symbols = backtrace_symbols(array, size);
 
     fprintf(stderr, "Error: signal %d:\n", signum);
 
     for (size_t i = 0; i < size; ++i) {
-        char *mangled   = symbols[i];
-        char *demangled = nullptr;
+        char* mangled   = symbols[i];
+        char* demangled = nullptr;
         int   status    = 0;
 
         // Extract function name if possible
         char *begin = nullptr, *end = nullptr;
-        for (char *p = mangled; *p; ++p) {
+        for (char* p = mangled; *p; ++p) {
             if (*p == '(')
                 begin = p;
             else if (*p == '+')
@@ -58,11 +58,11 @@ void signalHandler(int signum)
 void signalHandler(int signum) {}
 #endif
 
-int main()
+int main(int, char** argv)
 {
     signal(SIGSEGV, signalHandler);
 
-    Game game(1920, 1080);
+    Game game(1920, 1080, argv);
     game.Init();
 
     return game.Run();

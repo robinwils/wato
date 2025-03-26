@@ -8,13 +8,13 @@
 class GameServer : public Application
 {
    public:
-    explicit GameServer() : Application(0, 0) {}
+    explicit GameServer(char** aArgv) : Application(0, 0, aArgv) {}
     virtual ~GameServer() = default;
 
-    GameServer(const GameServer &)            = delete;
-    GameServer(GameServer &&)                 = delete;
-    GameServer &operator=(const GameServer &) = delete;
-    GameServer &operator=(GameServer &&)      = delete;
+    GameServer(const GameServer&)            = delete;
+    GameServer(GameServer&&)                 = delete;
+    GameServer& operator=(const GameServer&) = delete;
+    GameServer& operator=(GameServer&&)      = delete;
 
     void Init();
     int  Run();
