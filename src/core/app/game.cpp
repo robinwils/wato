@@ -46,15 +46,16 @@ int Game::Run()
     auto& netClient = mRegistry.ctx().get<ENetClient&>();
     auto& opts      = mRegistry.ctx().get<Options&>();
 
-    using clock                 = std::chrono::high_resolution_clock;
-    auto          prevTime      = clock::now();
-    std::jthread* netPollThread = nullptr;
+    float accumulator                    = 0.0f;
+    using clock                          = std::chrono::steady_clock;
+    auto                        prevTime = clock::now();
+    std::optional<std::jthread> netPollThread;
 
-    mRunning = true;
     if (opts.Multiplayer()) {
-        netPollThread = new std::jthread([&]() {
-            while (mRunning) {
-                netClient.Poll(mQueue);
+        netPollThread.emplace([&]() {
+            while (netClient.Running()) {
+                netClient.ConsumeEvents(nullptr);
+                netClient.Poll();
             }
         });
 
@@ -81,6 +82,7 @@ int Game::Run()
 
         renderer.Render();
     }
+
     if (opts.Multiplayer()) {
         netClient.Disconnect();
     }

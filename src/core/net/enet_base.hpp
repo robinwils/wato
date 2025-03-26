@@ -2,6 +2,7 @@
 
 #include <bx/spscqueue.h>
 
+#include <atomic>
 #include <entt/signal/dispatcher.hpp>
 #include <entt/signal/emitter.hpp>
 
@@ -10,8 +11,8 @@
 class ENetBase
 {
    public:
-    ENetBase()                           = default;
-    ENetBase(ENetBase&&)                 = default;
+    ENetBase() : mRunning(true), mQueue(&mAlloc) {}
+    ENetBase(ENetBase&&)                 = delete;
     ENetBase(const ENetBase&)            = delete;
     ENetBase& operator=(ENetBase&&)      = default;
     ENetBase& operator=(const ENetBase&) = delete;
@@ -20,6 +21,8 @@ class ENetBase
     virtual void Init() = 0;
     virtual void Poll(bx::SpScUnboundedQueueT<NetEvent>& aQueue);
 
+    [[nodiscard]] bool Running() const noexcept { return mRunning; }
+
    protected:
     virtual void OnConnect(ENetEvent& aEvent)                                            = 0;
     virtual void OnReceive(ENetEvent& aEvent, bx::SpScUnboundedQueueT<NetEvent>& aQueue) = 0;
@@ -27,5 +30,8 @@ class ENetBase
     virtual void OnDisconnectTimeout(ENetEvent& aEvent)                                  = 0;
     virtual void OnNone(ENetEvent& aEvent)                                               = 0;
 
-    enet_host_ptr mHost;
+    std::atomic_bool                  mRunning;
+    enet_host_ptr                     mHost;
+    bx::DefaultAllocator              mAlloc;
+    bx::SpScUnboundedQueueT<NetEvent> mQueue;
 };

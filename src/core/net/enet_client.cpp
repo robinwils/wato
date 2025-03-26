@@ -5,6 +5,10 @@
 
 #include <stdexcept>
 
+#include "core/sys/log.hpp"
+
+using namespace std::literals::chrono_literals;
+
 void ENetClient::Init()
 {
     if (enet_initialize() != 0) {
@@ -24,7 +28,6 @@ void ENetClient::Init()
 bool ENetClient::Connect()
 {
     ENetAddress address{};
-    ENetEvent   event{};
 
     /* Connect to some.server.net:1234. */
     enet_address_set_host(&address, "127.0.0.1");
@@ -32,26 +35,14 @@ bool ENetClient::Connect()
 
     /* Initiate the connection, allocating the two channels 0 and 1. */
     mPeer = enet_host_connect(mHost.get(), &address, 2, 0);
-    if (mPeer == nullptr) {
-        return false;
-    }
-
-    /* Wait up to 5 seconds for the connection attempt to succeed. */
-    if (enet_host_service(mHost.get(), &event, 5000) > 0 && event.type == ENET_EVENT_TYPE_CONNECT) {
-        return true;
-    } else {
-        /* Either the 5 seconds are up or a disconnect event was */
-        /* received. Reset the peer in the event the 5 seconds   */
-        /* had run out without any significant event.            */
-        enet_peer_reset(mPeer);
-        return false;
-    }
+    return mPeer != nullptr;
 }
 
 void ENetClient::Send()
 {
     if (mPeer == nullptr) {
-        throw std::runtime_error("client peer not initialized.");
+        DBG("client peer not initialized");
+        return;
     }
     /* Create a reliable packet of size 7 containing "packet\0" */
     ENetPacket* packet =
@@ -73,39 +64,52 @@ void ENetClient::Send()
 
 void ENetClient::Disconnect()
 {
-    enet_peer_disconnect(mPeer, 0);
-
-    ENetEvent event{};
-
-    uint8_t disconnected = false;
-    /* Allow up to 3 seconds for the disconnect to succeed
-     * and drop any packets received packets.
-     */
-    while (enet_host_service(mHost.get(), &event, 3000) > 0) {
-        switch (event.type) {
-            case ENET_EVENT_TYPE_RECEIVE:
-                enet_packet_destroy(event.packet);
-                break;
-            case ENET_EVENT_TYPE_DISCONNECT:
-                puts("Disconnection succeeded.");
-                disconnected = true;
-                break;
-            default:
-                throw std::runtime_error("unhandled event type after disconnection");
-        }
+    if (mPeer != nullptr) {
+        enet_peer_disconnect(mPeer, 0);
+        mDiscTimerStart.emplace(clock_type::now());
     }
+}
 
-    // Drop connection, since disconnection didn't successed
-    if (!disconnected) {
+void ENetClient::ForceDisconnect()
+{
+    if (mPeer != nullptr) {
+        INFO("forcing disconnect");
         enet_peer_reset(mPeer);
     }
 }
 
-void ENetClient::OnConnect(ENetEvent& aEvent) {}
+// Should not use registry here, the client is consuming events in separate thread,
+// receiving only events that should be sent to the server
+void ENetClient::ConsumeEvents(Registry* aRegistry)
+{
+    if (mDiscTimerStart.has_value()) {
+        if (clock_type::now() - mDiscTimerStart.value() > 3s) {
+            ForceDisconnect();
+            mConnected = false;
+            mRunning   = false;
+        }
+    }
+
+    EventVisitor visitor{[&](const CreepSpawnEvent& aEvent) {
+        INFO("received creep spawn ev");
+        std::string evStr("creep_spawn");
+        send(evStr);
+    }};
+    NetEvent*    ev = nullptr;
+    while ((ev = mQueue.pop())) {
+        std::visit(visitor, *ev);
+    }
+}
+
+void ENetClient::OnConnect(ENetEvent& aEvent) { mConnected = true; }
 
 void ENetClient::OnReceive(ENetEvent& aEvent, bx::SpScUnboundedQueueT<NetEvent>& aQueue) {}
 
-void ENetClient::OnDisconnect(ENetEvent& aEvent) {}
+void ENetClient::OnDisconnect(ENetEvent& aEvent)
+{
+    mConnected = false;
+    mRunning   = false;
+}
 
 void ENetClient::OnDisconnectTimeout(ENetEvent& aEvent) {}
 
