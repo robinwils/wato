@@ -1,5 +1,6 @@
 #include <bx/bx.h>
 
+#define ENET_IMPLEMENTATION
 #include "core/app/game.hpp"
 
 #if defined(None)  // X11 defines this...

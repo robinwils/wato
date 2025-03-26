@@ -2,13 +2,15 @@
 
 #include <bx/bx.h>
 
+#include <thread>
+
 #include "core/physics.hpp"
 #include "systems/system.hpp"
 
 void GameServer::Init()
 {
     mServer.Init();
-    auto &physics = mRegistry.ctx().emplace<Physics>();
+    auto& physics = mRegistry.ctx().emplace<Physics>();
 
     physics.Init();
 
@@ -20,7 +22,13 @@ int GameServer::Run()
     using clock   = std::chrono::high_resolution_clock;
     auto prevTime = clock::now();
 
-    mServer.Run();
+    mRunning = true;
+
+    std::jthread netPollThread{[&]() {
+        while (mRunning) {
+            mServer.Poll(mQueue);
+        }
+    }};
 
     return 0;
 }

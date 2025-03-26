@@ -1,6 +1,10 @@
 #pragma once
 
-#include "core/event_handler.hpp"
+#include <bx/spscqueue.h>
+
+#include <atomic>
+
+#include "core/net/net.hpp"
 #include "registry/registry.hpp"
 #include "systems/physics.hpp"
 #include "systems/system.hpp"
@@ -8,7 +12,10 @@
 class Application
 {
    public:
-    explicit Application(int aWidth, int aHeight) : mWidth(aWidth), mHeight(aHeight) {}
+    explicit Application(int aWidth, int aHeight)
+        : mWidth(aWidth), mHeight(aHeight), mRunning(false), mQueue(&mAlloc)
+    {
+    }
     virtual ~Application() = default;
 
     Application(const Application &)            = delete;
@@ -27,4 +34,8 @@ class Application
     SystemRegistry mSystems;
 
     int mWidth, mHeight;
+
+    std::atomic_bool                  mRunning;
+    bx::DefaultAllocator              mAlloc;
+    bx::SpScUnboundedQueueT<NetEvent> mQueue;
 };

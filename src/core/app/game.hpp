@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/app/app.hpp"
+#include "core/event_handler.hpp"
 #include "systems/input.hpp"
 #include "systems/render.hpp"
 

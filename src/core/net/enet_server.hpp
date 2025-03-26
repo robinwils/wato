@@ -1,22 +1,23 @@
 #pragma once
 
-#include <enet.h>
+#include "core/net/enet_base.hpp"
 
-#include "core/net/net.hpp"
-
-class ENetServer
+class ENetServer : public ENetBase
 {
    public:
-    ENetServer()                              = default;
-    ENetServer(ENetServer &&)                 = default;
-    ENetServer(const ENetServer &)            = delete;
-    ENetServer &operator=(ENetServer &&)      = default;
-    ENetServer &operator=(const ENetServer &) = delete;
-    ~ENetServer();
+    ENetServer()                             = default;
+    ENetServer(ENetServer&&)                 = default;
+    ENetServer(const ENetServer&)            = delete;
+    ENetServer& operator=(ENetServer&&)      = default;
+    ENetServer& operator=(const ENetServer&) = delete;
+    ~ENetServer()                            = default;
 
     void Init();
-    void Run();
 
-   private:
-    enet_host_ptr mServer;
+   protected:
+    virtual void OnConnect(ENetEvent& aEvent);
+    virtual void OnReceive(ENetEvent& aEvent, bx::SpScUnboundedQueueT<NetEvent>& aQueue);
+    virtual void OnDisconnect(ENetEvent& aEvent);
+    virtual void OnDisconnectTimeout(ENetEvent& aEvent);
+    virtual void OnNone(ENetEvent& aEvent);
 };

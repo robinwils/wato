@@ -2,23 +2,29 @@
 
 #include <enet.h>
 
-#include <memory>
+#include "core/net/enet_base.hpp"
 
-#include "core/net/net.hpp"
-
-class ENetClient
+class ENetClient : public ENetBase
 {
    public:
-    ENetClient()                              = default;
-    ENetClient(ENetClient &&)                 = default;
-    ENetClient(const ENetClient &)            = delete;
-    ENetClient &operator=(ENetClient &&)      = default;
-    ENetClient &operator=(const ENetClient &) = delete;
-    ~ENetClient();
+    ENetClient() : ENetBase(), mPeer(nullptr) {}
+    ENetClient(ENetClient&&)                 = default;
+    ENetClient(const ENetClient&)            = delete;
+    ENetClient& operator=(ENetClient&&)      = default;
+    ENetClient& operator=(const ENetClient&) = delete;
+    ~ENetClient()                            = default;
 
-    void Init();
-    void Run();
+    virtual void Init();
+    void         Send();
+    bool         Connect();
+    void         Disconnect();
 
    private:
-    enet_host_ptr mClient;
+    void OnConnect(ENetEvent& aEvent);
+    void OnReceive(ENetEvent& aEvent, bx::SpScUnboundedQueueT<NetEvent>& aQueue);
+    void OnDisconnect(ENetEvent& aEvent);
+    void OnDisconnectTimeout(ENetEvent& aEvent);
+    void OnNone(ENetEvent& aEvent);
+
+    ENetPeer* mPeer;
 };

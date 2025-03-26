@@ -1,5 +1,7 @@
 #pragma once
 
+#include <bx/spscqueue.h>
+
 #include "core/app/app.hpp"
 #include "core/net/enet_server.hpp"
 

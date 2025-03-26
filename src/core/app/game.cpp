@@ -3,7 +3,9 @@
 #include <bx/bx.h>
 
 #include <memory>
+#include <thread>
 
+#include "core/net/enet_client.hpp"
 #include "core/physics.hpp"
 #include "core/window.hpp"
 #include "registry/game_registry.hpp"
@@ -12,13 +14,15 @@
 
 void Game::Init()
 {
-    auto &window   = mRegistry.ctx().emplace<WatoWindow>(mWidth, mHeight);
-    auto &renderer = mRegistry.ctx().emplace<Renderer>();
-    auto &physics  = mRegistry.ctx().emplace<Physics>();
+    auto& window    = mRegistry.ctx().emplace<WatoWindow>(mWidth, mHeight);
+    auto& renderer  = mRegistry.ctx().emplace<Renderer>();
+    auto& physics   = mRegistry.ctx().emplace<Physics>();
+    auto& netClient = mRegistry.ctx().emplace<ENetClient>();
 
     window.Init();
     renderer.Init(window);
     physics.Init();
+    netClient.Init();
 
     // TODO: leak ?
     physics.World()->setEventListener(new EventHandler(&mRegistry));
@@ -37,11 +41,22 @@ void Game::Init()
 
 int Game::Run()
 {
-    auto &window   = mRegistry.ctx().get<WatoWindow &>();
-    auto &renderer = mRegistry.ctx().get<Renderer &>();
+    auto& window    = mRegistry.ctx().get<WatoWindow&>();
+    auto& renderer  = mRegistry.ctx().get<Renderer&>();
+    auto& netClient = mRegistry.ctx().get<ENetClient&>();
 
     using clock   = std::chrono::high_resolution_clock;
     auto prevTime = clock::now();
+
+    std::jthread netPollThread{[&]() {
+        while (mRunning) {
+            netClient.Poll(mQueue);
+        }
+    }};
+
+    if (!netClient.Connect()) {
+        throw std::runtime_error("No available peers for initiating an ENet connection.");
+    }
 
     while (!window.ShouldClose()) {
         window.PollEvents();
@@ -55,11 +70,13 @@ int Game::Run()
 
         prevTime = t;
 
-        for (const auto &system : mSystems) {
+        for (const auto& system : mSystems) {
             system(mRegistry, dt.count());
         }
 
         renderer.Render();
     }
+    mRunning = false;
+    netClient.Disconnect();
     return 0;
 }

@@ -190,6 +190,8 @@ target_sources(watolib
     src/components/tile.hpp
     src/components/transform3d.hpp
     src/core/app/app.hpp
+    src/core/event/event.hpp
+    src/core/net/enet_base.hpp
     src/core/physics.hpp
     src/core/ray.hpp
     src/registry/registry.hpp
@@ -197,6 +199,7 @@ target_sources(watolib
     src/systems/system.hpp
 
   PRIVATE
+    src/core/net/enet_base.cpp
     src/core/physics.cpp
     src/systems/physics.cpp
 )
@@ -209,6 +212,7 @@ target_sources(wato
     src/core/cache.hpp
     src/core/event_handler.hpp
     src/core/model_loader.hpp
+    src/core/net/enet_client.hpp
     src/core/sys.hpp
     src/core/tile.hpp
     src/core/window.hpp
@@ -232,6 +236,7 @@ target_sources(wato
     src/core/app/game.cpp
     src/core/event_handler.cpp
     src/core/model_loader.cpp
+    src/core/net/enet_client.cpp
     src/core/sys.cpp
     src/core/window.cpp
     src/imgui/imgui_helper.cpp
