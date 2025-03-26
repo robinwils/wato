@@ -194,6 +194,7 @@ target_sources(watolib
   PUBLIC FILE_SET HEADERS
   BASE_DIRS src
   FILES
+
     src/components/camera.hpp
     src/components/color.hpp
     src/components/direction.hpp
@@ -209,6 +210,7 @@ target_sources(watolib
     src/core/net/enet_base.hpp
     src/core/physics.hpp
     src/core/ray.hpp
+    src/core/sys/log.hpp
     src/registry/registry.hpp
     src/systems/physics.hpp
     src/systems/system.hpp
@@ -228,7 +230,6 @@ target_sources(wato
     src/core/event_handler.hpp
     src/core/model_loader.hpp
     src/core/net/enet_client.hpp
-    src/core/sys.hpp
     src/core/tile.hpp
     src/core/window.hpp
     src/input/input.hpp
@@ -252,7 +253,7 @@ target_sources(wato
     src/core/event_handler.cpp
     src/core/model_loader.cpp
     src/core/net/enet_client.cpp
-    src/core/sys.cpp
+    src/core/sys/mem.cpp
     src/core/window.cpp
     src/imgui/imgui_helper.cpp
     src/input/input.cpp

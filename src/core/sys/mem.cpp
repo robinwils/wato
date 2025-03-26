@@ -1,4 +1,6 @@
-#include "core/sys.hpp"
+#include "core/sys/mem.hpp"
+
+#include "core/sys/log.hpp"
 
 const bgfx::Memory* loadMem(bx::FileReaderI* aReader, const char* aFilePath)
 {

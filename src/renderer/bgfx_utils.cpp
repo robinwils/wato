@@ -21,7 +21,7 @@ namespace stl = tinystl;
 
 #include <bimg/decode.h>
 
-#include <core/sys.hpp>
+#include <core/sys/log.hpp>
 #include <renderer/bgfx_utils.hpp>
 
 void calcTangents(void* aVertices,

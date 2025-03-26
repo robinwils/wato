@@ -2,13 +2,9 @@
 
 #include <bimg/decode.h>
 
-#include <core/model_loader.hpp>
-#include <core/sys.hpp>
 #include <entt/core/hashed_string.hpp>
 #include <entt/resource/cache.hpp>
 #include <memory>
-#include <renderer/material.hpp>
-#include <renderer/shader.hpp>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -19,7 +15,12 @@
 #include "bx/allocator.h"
 #include "bx/bx.h"
 #include "bx/file.h"
+#include "core/model_loader.hpp"
+#include "core/sys/log.hpp"
+#include "core/sys/mem.hpp"
+#include "renderer/material.hpp"
 #include "renderer/primitive.hpp"
+#include "renderer/shader.hpp"
 
 using namespace entt::literals;
 

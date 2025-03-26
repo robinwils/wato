@@ -1,6 +1,6 @@
 #include "renderer/material.hpp"
 
-#include "core/sys.hpp"
+#include "core/sys/mem.hpp"
 
 bgfx::ShaderHandle loadShader(bx::FileReaderI* aReader, const char* aName)
 {

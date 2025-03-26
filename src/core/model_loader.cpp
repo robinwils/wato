@@ -4,11 +4,11 @@
 
 #include <entt/core/hashed_string.hpp>
 #include <glm/gtx/string_cast.hpp>
-#include <span>
 #include <stdexcept>
 #include <vector>
 
 #include "core/cache.hpp"
+#include "core/sys/mem.hpp"
 #include "glm/ext/matrix_transform.hpp"
 #include "renderer/blinn_phong_material.hpp"
 #include "renderer/mesh_primitive.hpp"
@@ -16,9 +16,9 @@
 
 using namespace entt::literals;
 
-std::vector<entt::hashed_string> processMaterialTextures(const aiMaterial *aMaterial,
+std::vector<entt::hashed_string> processMaterialTextures(const aiMaterial* aMaterial,
     aiTextureType                                                          aType,
-    aiString                                                              *aPath)
+    aiString*                                                              aPath)
 {
     std::vector<entt::hashed_string> textures;
     for (unsigned int i = 0; i < aMaterial->GetTextureCount(aType); ++i) {
@@ -43,7 +43,7 @@ std::vector<entt::hashed_string> processMaterialTextures(const aiMaterial *aMate
     return textures;
 }
 
-Primitive<PositionNormalUvVertex> *processMesh(const aiMesh *aMesh, const aiScene *aScene)
+Primitive<PositionNormalUvVertex>* processMesh(const aiMesh* aMesh, const aiScene* aScene)
 {
     std::vector<PositionNormalUvVertex> vertices;
     for (unsigned int i = 0; i < aMesh->mNumVertices; ++i) {
@@ -71,11 +71,11 @@ Primitive<PositionNormalUvVertex> *processMesh(const aiMesh *aMesh, const aiScen
         }
     }
 
-    MeshPrimitive *mp = nullptr;
+    MeshPrimitive* mp = nullptr;
     if (aMesh->mMaterialIndex >= 0) {
         auto        diffusePath  = aiString("texture_diffuse");
         auto        specularPath = aiString("texture_specular");
-        const auto *material     = aScene->mMaterials[aMesh->mMaterialIndex];
+        const auto* material     = aScene->mMaterials[aMesh->mMaterialIndex];
 
         auto textures = processMaterialTextures(material, aiTextureType_DIFFUSE, &diffusePath);
         auto specTextures =
@@ -99,7 +99,7 @@ Primitive<PositionNormalUvVertex> *processMesh(const aiMesh *aMesh, const aiScen
 
             DBG("creating mesh with %d vertices and %d indices", vertices.size(), indices.size());
             auto  program = WATO_PROGRAM_CACHE["blinnphong"_hs];
-            auto *m       = new BlinnPhongMaterial(program,
+            auto* m       = new BlinnPhongMaterial(program,
                 glm::vec3(diffuse.r, diffuse.g, diffuse.b),
                 glm::vec3(specular.r, specular.g, specular.b));
 
@@ -112,17 +112,17 @@ Primitive<PositionNormalUvVertex> *processMesh(const aiMesh *aMesh, const aiScen
     return mp;
 }
 
-void processMetaData(const aiNode *aNode, const aiScene * /*aScene*/)
+void processMetaData(const aiNode* aNode, const aiScene* /*aScene*/)
 {
     if (!aNode->mMetaData) {
         DBG("node %s metadata is null", aNode->mName.C_Str());
         return;
     }
     DBG("node %s has %d metadata", aNode->mName.C_Str(), aNode->mMetaData->mNumProperties);
-    auto *mdata = aNode->mMetaData;
+    auto* mdata = aNode->mMetaData;
     for (unsigned int propIdx = 0; propIdx < mdata->mNumProperties; ++propIdx) {
-        auto &key = mdata->mKeys[propIdx];
-        auto &val = mdata->mValues[propIdx];
+        auto& key = mdata->mKeys[propIdx];
+        auto& val = mdata->mValues[propIdx];
 
         switch (val.mType) {
             case AI_BOOL:
@@ -165,8 +165,8 @@ void processMetaData(const aiNode *aNode, const aiScene * /*aScene*/)
     }
 }
 
-std::vector<Primitive<PositionNormalUvVertex> *> processNode(const aiNode *aNode,
-    const aiScene                                                         *aScene)
+std::vector<Primitive<PositionNormalUvVertex>*> processNode(const aiNode* aNode,
+    const aiScene*                                                        aScene)
 {
     auto t         = aNode->mTransformation;
     auto transform = glm::identity<glm::mat4>();
@@ -195,9 +195,9 @@ std::vector<Primitive<PositionNormalUvVertex> *> processNode(const aiNode *aNode
     }
 
     processMetaData(aNode, aScene);
-    std::vector<Primitive<PositionNormalUvVertex> *> meshes;
+    std::vector<Primitive<PositionNormalUvVertex>*> meshes;
     for (unsigned int i = 0; i < aNode->mNumMeshes; ++i) {
-        auto *mesh = processMesh(aScene->mMeshes[aNode->mMeshes[i]], aScene);
+        auto* mesh = processMesh(aScene->mMeshes[aNode->mMeshes[i]], aScene);
         meshes.push_back(mesh);
     }
     for (unsigned int i = 0; i < aNode->mNumChildren; i++) {

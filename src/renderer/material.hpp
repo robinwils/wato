@@ -7,7 +7,7 @@
 #include <glm/ext/vector_float4.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "core/sys.hpp"
+#include "core/sys/log.hpp"
 #include "glm/ext/vector_float3.hpp"
 #include "renderer/shader.hpp"
 
