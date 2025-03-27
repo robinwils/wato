@@ -8,8 +8,10 @@
 #include "components/tile.hpp"
 #include "components/transform3d.hpp"
 #include "core/cache.hpp"
+#include "core/event/creep_spawn.hpp"
 #include "core/event_handler.hpp"
 #include "core/net/enet_client.hpp"
+#include "core/net/net.hpp"
 #include "core/physics.hpp"
 #include "core/ray.hpp"
 #include "core/window.hpp"
@@ -181,5 +183,5 @@ void PlayerInputSystem::buildTower(Registry& aRegistry)
 void PlayerInputSystem::creepSpawn(Registry& aRegistry)
 {
     auto& netClient = aRegistry.ctx().get<ENetClient&>();
-    netClient.Send();
+    netClient.EnqueueSend(new NetEvent(CreepSpawnEvent()));
 }

@@ -6,18 +6,19 @@ class ENetServer : public ENetBase
 {
    public:
     ENetServer()                             = default;
-    ENetServer(ENetServer&&)                 = default;
+    ENetServer(ENetServer&&)                 = delete;
     ENetServer(const ENetServer&)            = delete;
-    ENetServer& operator=(ENetServer&&)      = default;
+    ENetServer& operator=(ENetServer&&)      = delete;
     ENetServer& operator=(const ENetServer&) = delete;
     ~ENetServer()                            = default;
 
-    void Init();
+    void Init() override;
+    void ConsumeEvents(Registry* aRegistry) override;
 
    protected:
-    virtual void OnConnect(ENetEvent& aEvent);
-    virtual void OnReceive(ENetEvent& aEvent, bx::SpScUnboundedQueueT<NetEvent>& aQueue);
-    virtual void OnDisconnect(ENetEvent& aEvent);
-    virtual void OnDisconnectTimeout(ENetEvent& aEvent);
-    virtual void OnNone(ENetEvent& aEvent);
+    virtual void OnConnect(ENetEvent& aEvent) override;
+    virtual void OnReceive(ENetEvent& aEvent) override;
+    virtual void OnDisconnect(ENetEvent& aEvent) override;
+    virtual void OnDisconnectTimeout(ENetEvent& aEvent) override;
+    virtual void OnNone(ENetEvent& aEvent) override;
 };

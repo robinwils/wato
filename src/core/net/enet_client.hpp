@@ -20,20 +20,24 @@ class ENetClient : public ENetBase
     ENetClient& operator=(const ENetClient&) = delete;
     ~ENetClient()                            = default;
 
-    virtual void Init();
-    void         Send();
-    bool         Connect();
-    void         Disconnect();
-    void         ForceDisconnect();
+    void Init() override;
+    void EnqueueSend(NetEvent* aEvent) { mQueue.push(aEvent); }
+    bool Connect();
+    void Disconnect();
+    void ForceDisconnect();
+    void ConsumeEvents(Registry* aRegistry) override;
 
     [[nodiscard]] bool Connected() const noexcept { return mConnected; }
 
+   protected:
+    void OnConnect(ENetEvent& aEvent) override;
+    void OnReceive(ENetEvent& aEvent) override;
+    void OnDisconnect(ENetEvent& aEvent) override;
+    void OnDisconnectTimeout(ENetEvent& aEvent) override;
+    void OnNone(ENetEvent& aEvent) override;
+
    private:
-    void OnConnect(ENetEvent& aEvent);
-    void OnReceive(ENetEvent& aEvent, bx::SpScUnboundedQueueT<NetEvent>& aQueue);
-    void OnDisconnect(ENetEvent& aEvent);
-    void OnDisconnectTimeout(ENetEvent& aEvent);
-    void OnNone(ENetEvent& aEvent);
+    void send(std::string& aEvStr);
 
     std::optional<clock_type::time_point> mDiscTimerStart;
 

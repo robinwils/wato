@@ -8,13 +8,14 @@
 #include "core/options.hpp"
 #include "core/physics.hpp"
 #include "registry/registry.hpp"
+#include "systems/creep.hpp"
 #include "systems/physics.hpp"
 #include "systems/system.hpp"
 
 class Application
 {
    public:
-    explicit Application(int aWidth, int aHeight, char** aArgv) : mRunning(false), mQueue(&mAlloc)
+    explicit Application(int aWidth, int aHeight, char** aArgv) : mRunning(false)
     {
         mRegistry.ctx().emplace<Options>(aArgv);
         mRegistry.ctx().emplace<Physics>();
@@ -33,10 +34,9 @@ class Application
     Registry mRegistry;
 
     PhysicsSystem mPhysicsSystem;
+    CreepSystem   mCreepSystem;
 
     SystemRegistry mSystems;
 
-    std::atomic_bool                  mRunning;
-    bx::DefaultAllocator              mAlloc;
-    bx::SpScUnboundedQueueT<NetEvent> mQueue;
+    std::atomic_bool mRunning;
 };

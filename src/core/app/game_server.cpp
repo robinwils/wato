@@ -4,6 +4,7 @@
 
 #include <thread>
 
+#include "components/creep_spawn.hpp"
 #include "core/physics.hpp"
 #include "systems/system.hpp"
 
@@ -15,6 +16,7 @@ void GameServer::Init()
     physics.Init();
 
     mSystems.push_back(PhysicsSystem::MakeDelegate(mPhysicsSystem));
+    mSystems.push_back(CreepSystem::MakeDelegate(mCreepSystem));
 }
 
 int GameServer::Run()
@@ -26,16 +28,21 @@ int GameServer::Run()
 
     std::jthread netPollThread{[&]() {
         while (mRunning) {
-            mServer.Poll(mQueue);
+            mServer.Poll();
         }
     }};
 
-    // while (mRunning) {
-    //     NetEvent* ev;
-    //     while ((ev = mQueue.pop())) {
-    //         std::cout << "GOT EVENT" << std::endl;
-    //     }
-    // }
+    while (mRunning) {
+        auto                         t  = clock::now();
+        std::chrono::duration<float> dt = (t - prevTime);
+        prevTime                        = t;
+
+        mServer.ConsumeEvents(&mRegistry);
+
+        for (const auto& system : mSystems) {
+            system(mRegistry, dt.count());
+        }
+    }
 
     return 0;
 }

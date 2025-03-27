@@ -4,7 +4,10 @@
 #include <enet.h>
 
 #include <stdexcept>
+#include <variant>
 
+#include "core/event/creep_spawn.hpp"
+#include "core/net/net.hpp"
 #include "core/sys/log.hpp"
 
 using namespace std::literals::chrono_literals;
@@ -38,7 +41,7 @@ bool ENetClient::Connect()
     return mPeer != nullptr;
 }
 
-void ENetClient::Send()
+void ENetClient::send(std::string& aEvStr)
 {
     if (mPeer == nullptr) {
         DBG("client peer not initialized");
@@ -46,12 +49,7 @@ void ENetClient::Send()
     }
     /* Create a reliable packet of size 7 containing "packet\0" */
     ENetPacket* packet =
-        enet_packet_create("packet", strlen("packet") + 1, ENET_PACKET_FLAG_RELIABLE);
-
-    /* Extend the packet so and append the string "foo", so it now */
-    /* contains "packetfoo\0"                                      */
-    // enet_packet_resize(packet, strlen("packetfoo") + 1);
-    // bx::strCopy(&packet->data[strlen("packet")], "foo");
+        enet_packet_create(aEvStr.c_str(), aEvStr.size(), ENET_PACKET_FLAG_RELIABLE);
 
     /* Send the packet to the peer over channel id 0. */
     /* One could also broadcast the packet by         */
@@ -103,7 +101,7 @@ void ENetClient::ConsumeEvents(Registry* aRegistry)
 
 void ENetClient::OnConnect(ENetEvent& aEvent) { mConnected = true; }
 
-void ENetClient::OnReceive(ENetEvent& aEvent, bx::SpScUnboundedQueueT<NetEvent>& aQueue) {}
+void ENetClient::OnReceive(ENetEvent& aEvent) {}
 
 void ENetClient::OnDisconnect(ENetEvent& aEvent)
 {

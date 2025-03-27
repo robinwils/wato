@@ -7,6 +7,7 @@
 #include <entt/signal/emitter.hpp>
 
 #include "core/net/net.hpp"
+#include "registry/registry.hpp"
 
 class ENetBase
 {
@@ -14,21 +15,25 @@ class ENetBase
     ENetBase() : mRunning(true), mQueue(&mAlloc) {}
     ENetBase(ENetBase&&)                 = delete;
     ENetBase(const ENetBase&)            = delete;
-    ENetBase& operator=(ENetBase&&)      = default;
+    ENetBase& operator=(ENetBase&&)      = delete;
     ENetBase& operator=(const ENetBase&) = delete;
     virtual ~ENetBase();
 
     virtual void Init() = 0;
-    virtual void Poll(bx::SpScUnboundedQueueT<NetEvent>& aQueue);
+
+    // blocking: meant to be called in a dedicated thread
+    virtual void Poll();
+
+    virtual void ConsumeEvents(Registry* aRegistry) = 0;
 
     [[nodiscard]] bool Running() const noexcept { return mRunning; }
 
    protected:
-    virtual void OnConnect(ENetEvent& aEvent)                                            = 0;
-    virtual void OnReceive(ENetEvent& aEvent, bx::SpScUnboundedQueueT<NetEvent>& aQueue) = 0;
-    virtual void OnDisconnect(ENetEvent& aEvent)                                         = 0;
-    virtual void OnDisconnectTimeout(ENetEvent& aEvent)                                  = 0;
-    virtual void OnNone(ENetEvent& aEvent)                                               = 0;
+    virtual void OnConnect(ENetEvent& aEvent)           = 0;
+    virtual void OnReceive(ENetEvent& aEvent)           = 0;
+    virtual void OnDisconnect(ENetEvent& aEvent)        = 0;
+    virtual void OnDisconnectTimeout(ENetEvent& aEvent) = 0;
+    virtual void OnNone(ENetEvent& aEvent)              = 0;
 
     std::atomic_bool                  mRunning;
     enet_host_ptr                     mHost;
