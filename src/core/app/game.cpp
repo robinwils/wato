@@ -41,6 +41,8 @@ void Game::Init()
 
 int Game::Run()
 {
+    constexpr float timeStep = 1.0f / 60.0f;
+
     auto& window    = mRegistry.ctx().get<WatoWindow&>();
     auto& renderer  = mRegistry.ctx().get<Renderer&>();
     auto& netClient = mRegistry.ctx().get<ENetClient&>();
@@ -71,13 +73,21 @@ int Game::Run()
             renderer.Resize(window);
         }
 
-        auto                         t  = clock::now();
-        std::chrono::duration<float> dt = (t - prevTime);
+        auto                         t   = clock::now();
+        std::chrono::duration<float> dt  = (t - prevTime);
+        accumulator                     += dt.count();
 
         prevTime = t;
 
         for (const auto& system : mSystems) {
             system(mRegistry, dt.count());
+        }
+
+        // While there is enough accumulated time to take
+        // one or several physics steps
+        while (accumulator >= timeStep) {
+            // Decrease the accumulated time
+            accumulator -= timeStep;
         }
 
         renderer.Render();
