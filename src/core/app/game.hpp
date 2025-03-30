@@ -1,5 +1,9 @@
 #pragma once
 
+#include <entt/entity/fwd.hpp>
+#include <entt/entity/organizer.hpp>
+#include <taskflow/taskflow.hpp>
+
 #include "core/app/app.hpp"
 #include "core/event_handler.hpp"
 #include "core/net/enet_client.hpp"
@@ -24,10 +28,12 @@ class Game : public Application
     Game& operator=(const Game&) = delete;
     Game& operator=(Game&&)      = delete;
 
-    void Init();
-    int  Run();
+    void Init() override;
+    int  Run() override;
 
    private:
+    entt::organizer   mFrameTimeOrganizer;
+    tf::Taskflow      mTaskflow;
     PlayerInputSystem mPlayerInputSystem;
     RenderSystem      mRenderSystem;
     RenderImguiSystem mRenderImguiSystem;

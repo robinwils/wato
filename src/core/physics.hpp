@@ -8,7 +8,7 @@ struct PhysicsParams {
     bool WarningLogs;
     bool ErrorLogs;
 
-    reactphysics3d::DefaultLogger *Logger;
+    reactphysics3d::DefaultLogger* Logger;
 
 #if WATO_DEBUG
     bool RenderShapes;
@@ -22,19 +22,20 @@ class Physics
 {
    public:
     Physics() {}
-    Physics(const Physics &)            = delete;
-    Physics(Physics &&)                 = delete;
-    Physics &operator=(const Physics &) = delete;
-    Physics &operator=(Physics &&)      = delete;
+    Physics(const Physics&)            = delete;
+    Physics(Physics&&)                 = delete;
+    Physics& operator=(const Physics&) = delete;
+    Physics& operator=(Physics&&)      = delete;
 
     void                               Init();
     void                               InitLogger();
-    [[nodiscard]] rp3d::PhysicsWorld  *World() noexcept { return mWorld; }
-    [[nodiscard]] rp3d::PhysicsCommon &Common() noexcept { return mCommon; }
+    [[nodiscard]] rp3d::PhysicsWorld*  World() noexcept { return mWorld; }
+    [[nodiscard]] rp3d::PhysicsWorld*  World() const noexcept { return mWorld; }
+    [[nodiscard]] rp3d::PhysicsCommon& Common() noexcept { return mCommon; }
 
     PhysicsParams Params;
 
    private:
     rp3d::PhysicsCommon mCommon;
-    rp3d::PhysicsWorld *mWorld = nullptr;
+    rp3d::PhysicsWorld* mWorld = nullptr;
 };

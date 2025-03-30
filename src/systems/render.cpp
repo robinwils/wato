@@ -8,35 +8,27 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "components/imgui.hpp"
-#include "components/light_source.hpp"
-#include "components/placement_mode.hpp"
 #include "components/scene_object.hpp"
-#include "components/transform3d.hpp"
 #include "core/cache.hpp"
 #include "core/physics.hpp"
 #include "core/window.hpp"
 #include "imgui_helper.h"
 
-void RenderSystem::operator()(Registry& aRegistry)
+void RenderSystem::operator()(Registry& aRegistry, const float aDeltaTime)
 {
-    // This dummy draw call is here to make sure that view 0 is cleared
-    // if no other draw calls are submitted to view 0.
-    bgfx::touch(0);
-
     uint64_t state = BGFX_STATE_DEFAULT;
 
     auto bpShader = WATO_PROGRAM_CACHE["blinnphong"_hs];
     // light
-    for (auto&& [light, source] : aRegistry.view<LightSource>().each()) {
+    for (auto&& [light, source] : aRegistry.view<const LightSource>().each()) {
         bgfx::setUniform(bpShader->Uniform("u_lightDir"),
             glm::value_ptr(glm::vec4(source.direction, 0.0f)));
         bgfx::setUniform(bpShader->Uniform("u_lightCol"),
             glm::value_ptr(glm::vec4(source.color, 0.0f)));
     }
-    auto group = aRegistry.group<SceneObject>(entt::get<Transform3D>);
-    auto check = aRegistry.view<PlacementMode>();
+    auto check = aRegistry.view<const PlacementMode>();
 
-    for (auto&& [entity, obj, t] : group.each()) {
+    for (auto&& [entity, obj, t] : aRegistry.view<SceneObject, Transform3D>().each()) {
         auto model  = glm::identity<glm::mat4>();
         model       = glm::translate(model, t.Position);
         model      *= glm::mat4_cast(t.Orientation);
@@ -169,7 +161,7 @@ bgfx::VertexLayout PosColor::msLayout;
 
 void PhysicsDebugSystem::operator()(Registry& aRegistry, const float aDeltaTime)
 {
-    auto&                      phy           = aRegistry.ctx().get<Physics&>();
+    const auto&                phy           = aRegistry.ctx().get<Physics&>();
     rp3d::DebugRenderer const& debugRenderer = phy.World()->getDebugRenderer();
 
     PosColor::Init();

@@ -22,6 +22,9 @@ option(DEBUG_ENABLE "Enable debug features" OFF)
 
 option(wato_WARNINGS_AS_ERRORS "Treat Warnings As Errors" OFF)
 
+set(TF_BUILD_TESTS OFF CACHE BOOL "Disable taskflow test builds" FORCE)
+set(TF_BUILD_EXAMPLES OFF CACHE BOOL "Disable taskflow example builds" FORCE)
+
 include(FetchContent)
 FetchContent_Declare(
   assimp
@@ -67,6 +70,13 @@ FetchContent_Declare(
   FIND_PACKAGE_ARGS NAMES argh
 )
 
+FetchContent_Declare(
+  taskflow
+  GIT_REPOSITORY https://github.com/taskflow/taskflow.git
+  GIT_TAG v3.9.0
+  FIND_PACKAGE_ARGS NAMES taskflow
+)
+
 FetchContent_MakeAvailable(assimp)
 FetchContent_MakeAvailable(glfw3)
 FetchContent_MakeAvailable(entt)
@@ -74,6 +84,7 @@ FetchContent_MakeAvailable(glm)
 FetchContent_MakeAvailable(reactphysics3d)
 FetchContent_MakeAvailable(enet)
 FetchContent_MakeAvailable(argh)
+FetchContent_MakeAvailable(taskflow)
 
 set(DEBUG_FLAGS "-DBX_CONFIG_DEBUG")
 set(RELEASE_FLAGS "")
@@ -165,6 +176,13 @@ if(DEFINED argh_SOURCE_DIR)
   target_include_directories(wato_common
   SYSTEM INTERFACE
     ${argh_SOURCE_DIR}
+  )
+endif()
+
+if(DEFINED taskflow_SOURCE_DIR)
+  target_include_directories(wato_common
+  SYSTEM INTERFACE
+    ${taskflow_SOURCE_DIR}
   )
 endif()
 
