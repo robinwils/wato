@@ -6,6 +6,8 @@
 
 #include "components/creep_spawn.hpp"
 #include "core/physics.hpp"
+#include "core/queue/ring_buffer.hpp"
+#include "input/input.hpp"
 #include "systems/system.hpp"
 
 void GameServer::Init()
@@ -31,6 +33,8 @@ int GameServer::Run()
             mServer.Poll();
         }
     }};
+
+    RingBuffer<Input, 128> rb;
 
     while (mRunning) {
         auto                         t  = clock::now();

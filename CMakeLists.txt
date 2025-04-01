@@ -227,6 +227,7 @@ target_sources(watolib
     src/core/event/event.hpp
     src/core/net/enet_base.hpp
     src/core/physics.hpp
+    src/core/queue/ring_buffer.hpp
     src/core/ray.hpp
     src/core/sys/log.hpp
     src/registry/registry.hpp
