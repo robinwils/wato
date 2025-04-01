@@ -8,8 +8,6 @@
 
 #include "core/net/enet_base.hpp"
 
-using clock_type = std::chrono::steady_clock;
-
 class ENetClient : public ENetBase
 {
    public:
@@ -37,6 +35,8 @@ class ENetClient : public ENetBase
     void OnNone(ENetEvent& aEvent) override;
 
    private:
+    using clock_type = std::chrono::steady_clock;
+
     void send(std::string& aEvStr);
 
     std::optional<clock_type::time_point> mDiscTimerStart;

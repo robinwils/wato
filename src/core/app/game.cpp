@@ -2,6 +2,8 @@
 
 #include <bx/bx.h>
 
+#include <chrono>
+#include <sstream>
 #include <taskflow/taskflow.hpp>
 #include <thread>
 
@@ -72,8 +74,8 @@ int Game::Run()
     auto& opts      = mRegistry.ctx().get<Options&>();
 
     float accumulator                    = 0.0f;
-    using clock                          = std::chrono::steady_clock;
-    auto                        prevTime = clock::now();
+    using clock_type                     = std::chrono::steady_clock;
+    auto                        prevTime = clock_type::now();
     std::optional<std::jthread> netPollThread;
 
     if (opts.Multiplayer()) {
@@ -96,15 +98,18 @@ int Game::Run()
             renderer.Resize(window);
         }
 
-        auto                         t   = clock::now();
-        std::chrono::duration<float> dt  = (t - prevTime);
-        accumulator                     += dt.count();
+        auto                         now        = clock_type::now();
+        std::chrono::duration<float> frameTime  = (now - prevTime);
+        accumulator                            += frameTime.count();
 
-        prevTime = t;
+        // std::ostringstream durationStr;
+        // durationStr << std::chrono::duration_cast<std::chrono::milliseconds>(frameTime);
+        // DBG("delta is %s", durationStr.str().c_str());
 
         // This dummy draw call is here to make sure that view 0 is cleared
         // if no other draw calls are submitted to view 0.
         bgfx::touch(0);
+        prevTime = now;
 
         // While there is enough accumulated time to take
         // one or several physics steps
@@ -114,7 +119,7 @@ int Game::Run()
         }
 
         for (const auto& system : mSystems) {
-            system(mRegistry, dt.count());
+            system(mRegistry, frameTime.count());
         }
 
         renderer.Render();
