@@ -106,9 +106,6 @@ int Game::Run()
         // durationStr << std::chrono::duration_cast<std::chrono::milliseconds>(frameTime);
         // DBG("delta is %s", durationStr.str().c_str());
 
-        // This dummy draw call is here to make sure that view 0 is cleared
-        // if no other draw calls are submitted to view 0.
-        bgfx::touch(0);
         prevTime = now;
 
         // While there is enough accumulated time to take

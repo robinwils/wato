@@ -16,6 +16,10 @@
 
 void RenderSystem::operator()(Registry& aRegistry, const float aDeltaTime)
 {
+    // This dummy draw call is here to make sure that view 0 is cleared
+    // if no other draw calls are submitted to view 0.
+    bgfx::touch(0);
+
     uint64_t state = BGFX_STATE_DEFAULT;
 
     auto bpShader = WATO_PROGRAM_CACHE["blinnphong"_hs];
