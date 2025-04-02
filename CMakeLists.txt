@@ -77,6 +77,14 @@ FetchContent_Declare(
   FIND_PACKAGE_ARGS NAMES taskflow
 )
 
+set(DOCTEST_VERSION v2.4.11)
+FetchContent_Declare(
+  doctest
+  GIT_REPOSITORY https://github.com/doctest/doctest
+  GIT_TAG v2.4.11
+  FIND_PACKAGE_ARGS NAMES doctest
+)
+
 FetchContent_MakeAvailable(assimp)
 FetchContent_MakeAvailable(glfw3)
 FetchContent_MakeAvailable(entt)
@@ -85,6 +93,9 @@ FetchContent_MakeAvailable(reactphysics3d)
 FetchContent_MakeAvailable(enet)
 FetchContent_MakeAvailable(argh)
 FetchContent_MakeAvailable(taskflow)
+FetchContent_MakeAvailable(doctest)
+
+include(CTest)
 
 set(DEBUG_FLAGS "-DBX_CONFIG_DEBUG")
 set(RELEASE_FLAGS "")
@@ -103,12 +114,14 @@ add_library(wato_common INTERFACE)
 add_library(watolib)
 add_executable(wato)
 add_subdirectory(src/watod)
+add_subdirectory(test)
 
 if (DEBUG_ENABLE)
   target_compile_options(wato_common INTERFACE ${DEBUG_FLAGS})
 else()
   target_compile_options(wato_common INTERFACE ${RELEASE_FLAGS})
 endif()
+target_compile_options(wato PRIVATE "-DDOCTEST_CONFIG_DISABLE")
 
 include(cmake/CompilerWarnings.cmake)
 wato_set_project_warnings(wato_common
