@@ -120,6 +120,7 @@ int Game::Run()
         }
 
         renderer.Render();
+        window.GetInput().KeyboardState.Clear();
     }
 
     if (opts.Multiplayer()) {

@@ -12,7 +12,7 @@ void MouseState::Clear()
     Pos.y    = -1.0f;
     Scroll.x = 0.0f;
     Scroll.y = 0.0f;
-    memset(Buttons, 0, sizeof(Buttons));
+    memset(Buttons, 0, N_BUTTONS);
 }
 
 Mouse::Button to_mouse_button(int32_t aButton)

@@ -2,6 +2,7 @@
 
 #include <GLFW/glfw3.h>
 
+#include <cstring>
 #include <glm/glm.hpp>
 #include <string>
 
@@ -171,16 +172,19 @@ enum ModifierKey {
 struct KeyboardState {
     KeyboardState() : Keys() {}
 
+    void Clear() { memset(Keys, 0, Keyboard::Count); }
+
     Button::State Keys[Keyboard::Key::Count];
 };
 
 struct MouseState {
+    static constexpr uint32_t N_BUTTONS = 3;
     MouseState() : Pos(), Scroll(), Buttons() {}
 
     void Clear();
 
     glm::fvec2    Pos, Scroll;
-    Button::State Buttons[3];
+    Button::State Buttons[N_BUTTONS];
 };
 
 std::string key_string(const Keyboard::Key& aK);
@@ -276,8 +280,6 @@ class Input
         const glm::vec3&                  aCamPos,
         const float                       aWidth,
         const float                       aHeight) const;
-
-    void Clear() { MouseState.Clear(); }
 
     struct MouseState    MouseState;
     struct KeyboardState KeyboardState, PrevKeyboardState;

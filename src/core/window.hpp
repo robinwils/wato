@@ -4,6 +4,7 @@
 
 #include <memory>
 
+#include "core/queue/ring_buffer.hpp"
 #include "input/input.hpp"
 class WatoWindow
 {
@@ -13,10 +14,10 @@ class WatoWindow
     }
     ~WatoWindow() = default;
 
-    WatoWindow(WatoWindow &&)                 = default;
-    WatoWindow(const WatoWindow &)            = delete;
-    WatoWindow &operator=(WatoWindow &&)      = default;
-    WatoWindow &operator=(const WatoWindow &) = delete;
+    WatoWindow(WatoWindow&&)                 = default;
+    WatoWindow(const WatoWindow&)            = delete;
+    WatoWindow& operator=(WatoWindow&&)      = default;
+    WatoWindow& operator=(const WatoWindow&) = delete;
 
     void Init();
 
@@ -28,8 +29,8 @@ class WatoWindow
         return (mWidth != oldWidth || mHeight != oldHeight);
     }
     void  PollEvents() { glfwPollEvents(); }
-    void *GetNativeDisplay();
-    void *GetNativeWindow();
+    void* GetNativeDisplay();
+    void* GetNativeWindow();
 
     template <typename T>
     T Width() const
@@ -43,7 +44,7 @@ class WatoWindow
         return static_cast<T>(mHeight);
     }
 
-    Input &GetInput() { return mInput; }
+    Input& GetInput() { return mInput; }
 
     void SetSize(int aWidth, int aHeight)
     {
@@ -55,7 +56,7 @@ class WatoWindow
 
    private:
     struct GLFWwindowDeleter {
-        void operator()(GLFWwindow *aWin) const noexcept
+        void operator()(GLFWwindow* aWin) const noexcept
         {
             if (aWin) {
                 glfwDestroyWindow(aWin);
