@@ -72,5 +72,7 @@ class WatoWindow
 
     Input mInput;
 
+    RingBuffer<Input, 128> mInputBuffer;
+
     bool mIsInit;
 };
