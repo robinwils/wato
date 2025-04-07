@@ -86,7 +86,15 @@ struct RingBuffer {
     RingBuffer& operator=(RingBuffer&&)      = delete;
     ~RingBuffer()                            = default;
 
-    inline void                      Next() { ensureReserved(); }
+    inline void Push(const element_type& aElt = std::nullopt)
+    {
+        ensureReserved();
+
+        if (!mBuffer[mCtrl.m_write]) {
+            mBuffer[mCtrl.m_write].emplace(aElt.value_or(value_type()));
+        }
+    }
+
     [[nodiscard]] inline value_type& Latest() noexcept
     {
         if (!mBuffer[mCtrl.m_current]) {
@@ -116,10 +124,6 @@ struct RingBuffer {
             mCtrl.consume(1);
             mCtrl.reserve(1);
         }
-
-        if (!mBuffer[mCtrl.m_write]) {
-            mBuffer[mCtrl.m_write].emplace(Previous().value_or(value_type{}));
-        }
         mCtrl.commit(1);
     }
     container_type        mBuffer;
@@ -144,11 +148,11 @@ TEST_CASE("ring_buffer.simple_struct")
     CHECK(!rb.Previous());
     rb.Latest().A = 42;
     rb.Latest().B = "42";
-    rb.Next();
+    rb.Push();
 
     rb.Latest().A = 43;
     rb.Latest().B = "43";
-    rb.Next();
+    rb.Push();
 
     rb.Latest().A = 44;
     rb.Latest().B = "44";
@@ -174,6 +178,6 @@ TEST_CASE("ring_buffer.round_trip")
             CHECK(rb.Previous());
             CHECK_EQ(*rb.Previous(), i - 1);
         }
-        rb.Next();
+        rb.Push();
     }
 }

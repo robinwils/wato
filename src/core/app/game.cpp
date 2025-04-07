@@ -119,7 +119,7 @@ int Game::Run()
             accumulator -= timeStep;
 
             mPhysicsSystem(mRegistry, timeStep);
-            window.GetInput().Next();
+            window.GetInput().Push(window.GetInput().Latest());
         }
 
         mUpdateTransformsSystem(mRegistry, accumulator / timeStep);
