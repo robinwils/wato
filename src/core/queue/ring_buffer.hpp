@@ -100,7 +100,7 @@ struct RingBuffer {
     inline value_type& Discard() noexcept
     {
         auto& res = Oldest();
-        mCtrl.commit(1);
+        mCtrl.consume(1);
         return res;
     }
 
