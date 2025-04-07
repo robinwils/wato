@@ -84,6 +84,12 @@ FetchContent_Declare(
   FIND_PACKAGE_ARGS NAMES doctest
 )
 
+FetchContent_Declare(
+  fmt
+  GIT_REPOSITORY https://github.com/fmtlib/fmt.git
+  GIT_TAG 11.1.4
+  FIND_PACKAGE_ARGS NAMES fmt
+)
 
 set(DEPENDENCY_NAMES assimp
   glfw3
@@ -94,6 +100,7 @@ set(DEPENDENCY_NAMES assimp
   argh
   taskflow
   doctest
+  fmt
 )
 
 FetchContent_MakeAvailable(${DEPENDENCY_NAMES})
@@ -229,6 +236,13 @@ if(DEFINED taskflow_SOURCE_DIR)
   )
 endif()
 
+if(DEFINED fmt_SOURCE_DIR)
+  target_include_directories(wato_common
+  SYSTEM INTERFACE
+    ${fmt_SOURCE_DIR}
+  )
+endif()
+
 if(WIN32)
   target_include_directories(wato_common
   SYSTEM INTERFACE
@@ -340,6 +354,7 @@ target_link_libraries(watolib
   bimg_encodeDebug
   bimgDebug
   reactphysics3d
+  fmt
 )
 
 target_link_libraries(wato watolib bgfxDebug)

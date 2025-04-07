@@ -51,14 +51,6 @@ void PlayerInputSystem::operator()(Registry& aRegistry, const float aDeltaTime)
     }
 
     // Creeps
-        DBG("is key pressed = %d, prev = %d, key rel = %d, prev key rel = %d, key repeat = %d, "
-            "prev key repeat = %d",
-            input.IsKeyPressed(Keyboard::C),
-            input.IsPrevKeyPressed(Keyboard::C),
-            input.IsKeyReleased(Keyboard::C),
-            input.IsPrevKeyReleased(Keyboard::C),
-            input.IsKeyRepeat(Keyboard::C),
-            input.IsPrevKeyRepeat(Keyboard::C));
     if (input.IsKeyPressed(Keyboard::C) && prevInput && prevInput->IsKeyPressed(Keyboard::C)) {
         creepSpawn(aRegistry);
     }

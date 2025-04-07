@@ -1,9 +1,17 @@
 #include "input.hpp"
 
+#include <fmt/core.h>
+#include <fmt/format.h>
+#include <fmt/ranges.h>
 #include <imgui.h>
 #include <string.h>
 
+#include <vector>
+
 #include "components/camera.hpp"
+#include "core/queue/ring_buffer.hpp"
+#include "core/sys/log.hpp"
+#include "core/window.hpp"
 #include "glm/gtx/string_cast.hpp"
 
 void MouseState::Clear()
@@ -40,6 +48,21 @@ Button::Action to_action(int32_t aAction)
             return Button::Action::Repeat;
         default:
             return Button::Action::Unknown;
+    }
+}
+
+std::string to_string(Button::Action aAction)
+{
+    switch (aAction) {
+        case Button::Unknown:
+            return "Unknown";
+        case Button::Press:
+            return "Press";
+        case Button::Release:
+            return "Release";
+        case Button::Repeat:
+            return "Repeat";
+            break;
     }
 }
 
@@ -539,6 +562,52 @@ std::string key_string(const Keyboard::Key& aKey)
     }
 }
 
+std::string Button::State::String() const
+{
+    if (Action == Button::Unknown) {
+        return "";
+    }
+
+    std::vector<std::string> modifiers;
+
+    if (Modifiers[ModifierKey::Ctrl]) {
+        modifiers.push_back("Ctrl");
+    }
+    if (Modifiers[ModifierKey::Alt]) {
+        modifiers.push_back("Alt");
+    }
+    if (Modifiers[ModifierKey::Shift]) {
+        modifiers.push_back("Shift");
+    }
+    if (Modifiers[ModifierKey::Super]) {
+        modifiers.push_back("Super");
+    }
+    if (Modifiers[ModifierKey::CapsLock]) {
+        modifiers.push_back("CapsLock");
+    }
+    if (Modifiers[ModifierKey::NumLock]) {
+        modifiers.push_back("NumLock");
+    }
+
+    return fmt::format("{} with {} modifiers", to_string(Action), fmt::join(modifiers, "| "));
+}
+
+std::string KeyboardState::String() const
+{
+    std::string str;
+
+    for (uint32_t i = 0; i < Keyboard::Count; ++i) {
+        auto& state = Keys[i];
+        if (state.Action != Button::Unknown) {
+            str = fmt::format("{}\n {} {}",
+                str,
+                key_string(static_cast<Keyboard::Key>(i)),
+                state.String());
+        }
+    }
+    return str;
+}
+
 void Input::KeyCallback(GLFWwindow* aWindow,
     int32_t                         aKey,
     int32_t                         aScancode,
@@ -551,6 +620,7 @@ void Input::KeyCallback(GLFWwindow* aWindow,
 
     // don't reset current state, it will discard input and make movement choppy
     input.SetKey(key, to_action(aAction));
+    fmt::print("key {} is {}\n", key_string(key), to_string(to_action(aAction)));
 
     if (aMods & GLFW_MOD_SHIFT) {
         input.SetKeyModifier(key, ModifierKey::Shift);
@@ -570,6 +640,10 @@ void Input::KeyCallback(GLFWwindow* aWindow,
     if (aMods & GLFW_MOD_NUM_LOCK) {
         input.SetKeyModifier(key, ModifierKey::NumLock);
     }
+    fmt::print("input: {}\n", win->GetInput().Latest().KeyboardState.String());
+
+    if (win->GetInput().Previous()) {
+        fmt::print("prev input: {}\n", win->GetInput().Previous()->KeyboardState.String());
     }
 }
 

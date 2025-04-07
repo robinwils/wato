@@ -154,13 +154,13 @@ struct Button {
     };
 
     struct State {
+        std::string String() const;
         enum Action Action;
         bool        Modifiers[6];
     };
 };
 
 enum ModifierKey {
-    None,
     Shift,
     Ctrl,
     Alt,
@@ -173,6 +173,8 @@ struct KeyboardState {
     KeyboardState() : Keys() {}
 
     void Clear() { memset(Keys, 0, Keyboard::Count); }
+
+    std::string String() const;
 
     Button::State Keys[Keyboard::Key::Count];
 };
