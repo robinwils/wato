@@ -111,6 +111,7 @@ struct RingBuffer {
 
         if (size == 0) {
             // not enough space, overwrite oldest
+            mBuffer[mCtrl.m_read].reset();
             mCtrl.consume(1);
             mCtrl.reserve(1);
         }
