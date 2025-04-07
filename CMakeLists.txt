@@ -30,7 +30,7 @@ FetchContent_Declare(
   assimp
   GIT_REPOSITORY https://github.com/assimp/assimp.git
   GIT_TAG v5.4.3
-  FIND_PACKAGE_ARGS NAMES assimp
+  FIND_PACKAGE_ARGS NAMES assimp REQUIRED
 )
 FetchContent_Declare(
   glfw3
@@ -85,15 +85,46 @@ FetchContent_Declare(
   FIND_PACKAGE_ARGS NAMES doctest
 )
 
-FetchContent_MakeAvailable(assimp)
-FetchContent_MakeAvailable(glfw3)
-FetchContent_MakeAvailable(entt)
-FetchContent_MakeAvailable(glm)
-FetchContent_MakeAvailable(reactphysics3d)
-FetchContent_MakeAvailable(enet)
-FetchContent_MakeAvailable(argh)
-FetchContent_MakeAvailable(taskflow)
-FetchContent_MakeAvailable(doctest)
+
+set(DEPENDENCY_NAMES assimp
+  glfw3
+  entt
+  glm
+  reactphysics3d
+  enet
+  argh
+  taskflow
+  doctest
+)
+
+FetchContent_MakeAvailable(${DEPENDENCY_NAMES})
+# Display all fetched content info
+message(STATUS "Fetched dependencies information:")
+message(STATUS "----------------------------------")
+
+# For each dependency, show key paths
+foreach(dep ${DEPENDENCY_NAMES})
+  if(${dep}_POPULATED)
+    if(${dep}_SOURCE_DIR)  # Was fetched and built
+      message(STATUS "Dependency: ${dep} fetched and built")
+      message(STATUS "  Source dir: ${${dep}_SOURCE_DIR}")
+      message(STATUS "  Binary dir: ${${dep}_BINARY_DIR}")
+      message(STATUS "  Populated: ${${dep}_POPULATED}")
+      message(STATUS "  Subbuild dir: ${${dep}_SUBBUILD_DIR}")
+    else()
+      message(STATUS "Dependency: ${dep} found on system")
+
+      # Try to get common package variables
+      foreach(var IN ITEMS FOUND VERSION DIR INCLUDE_DIRS LIBRARIES LIBS DEFINITIONS)
+        if(DEFINED ${dep}_${var})
+          message(STATUS "  ${var}: ${${dep}_${var}}")
+        endif()
+      endforeach()
+    endif()
+  else()
+    message(FATAL_ERROR "${dep} was not found!")
+  endif()
+endforeach()
 
 include(CTest)
 
