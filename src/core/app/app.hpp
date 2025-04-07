@@ -33,8 +33,9 @@ class Application
    protected:
     Registry mRegistry;
 
-    PhysicsSystem mPhysicsSystem;
-    CreepSystem   mCreepSystem;
+    PhysicsSystem         mPhysicsSystem;
+    UpdateTransformsSytem mUpdateTransformsSystem;
+    CreepSystem           mCreepSystem;
 
     SystemRegistry mSystems;
 

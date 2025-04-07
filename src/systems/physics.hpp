@@ -9,3 +9,11 @@ class PhysicsSystem : public System<PhysicsSystem>
 
     static constexpr const char* StaticName() { return "PhysicsSystem"; }
 };
+
+class UpdateTransformsSytem : public System<UpdateTransformsSytem>
+{
+   public:
+    void operator()(Registry& aRegistry, const float aFactor);
+
+    static constexpr const char* StaticName() { return "UpdateTransformsSystem"; }
+};

@@ -36,7 +36,7 @@ void Game::Init()
     mSystems.push_back(RenderImguiSystem::MakeDelegate(mRenderImguiSystem));
     mSystems.push_back(PlayerInputSystem::MakeDelegate(mPlayerInputSystem));
     mSystems.push_back(CameraSystem::MakeDelegate(mCameraSystem));
-    mSystems.push_back(PhysicsSystem::MakeDelegate(mPhysicsSystem));
+    // mSystems.push_back(PhysicsSystem::MakeDelegate(mPhysicsSystem));
     mSystems.push_back(RenderSystem::MakeDelegate(mRenderSystem));
 
 #if WATO_DEBUG
@@ -108,18 +108,21 @@ int Game::Run()
 
         prevTime = now;
 
+        for (const auto& system : mSystems) {
+            system(mRegistry, frameTime.count());
+        }
+
         // While there is enough accumulated time to take
         // one or several physics steps
         while (accumulator >= timeStep) {
             // Decrease the accumulated time
             accumulator -= timeStep;
+
+            mPhysicsSystem(mRegistry, timeStep);
             window.GetInput().Next();
         }
 
-        for (const auto& system : mSystems) {
-            system(mRegistry, frameTime.count());
-        }
-
+        mUpdateTransformsSystem(mRegistry, accumulator / timeStep);
         renderer.Render();
     }
 
