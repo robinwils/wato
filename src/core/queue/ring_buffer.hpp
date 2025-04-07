@@ -107,6 +107,7 @@ struct RingBuffer {
    private:
     void ensureReserved()
     {
+        mPrevious = mCtrl.m_current;
         auto size = mCtrl.reserve(1);
 
         if (size == 0) {
@@ -116,10 +117,9 @@ struct RingBuffer {
             mCtrl.reserve(1);
         }
 
-        if (!mBuffer[mCtrl.m_current]) {
-            mBuffer[mCtrl.m_current].emplace();
+        if (!mBuffer[mCtrl.m_write]) {
+            mBuffer[mCtrl.m_write].emplace(Previous().value_or(value_type{}));
         }
-        mPrevious = mCtrl.m_current;
         mCtrl.commit(1);
     }
     container_type        mBuffer;
