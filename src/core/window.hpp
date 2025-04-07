@@ -9,9 +9,7 @@
 class WatoWindow
 {
    public:
-    WatoWindow(int aWidth, int aHeight) : mWidth(aWidth), mHeight(aHeight), mInput(), mIsInit(false)
-    {
-    }
+    WatoWindow(int aWidth, int aHeight) : mWidth(aWidth), mHeight(aHeight), mIsInit(false) {}
     ~WatoWindow() = default;
 
     WatoWindow(WatoWindow&&)                 = default;
@@ -44,7 +42,7 @@ class WatoWindow
         return static_cast<T>(mHeight);
     }
 
-    Input& GetInput() { return mInput; }
+    RingBuffer<Input, 128>& GetInput() { return mInputBuffer; }
 
     void SetSize(int aWidth, int aHeight)
     {
@@ -69,8 +67,6 @@ class WatoWindow
     int mHeight;
 
     glfw_window_ptr mGLFWWindow;
-
-    Input mInput;
 
     RingBuffer<Input, 128> mInputBuffer;
 

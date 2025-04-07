@@ -23,8 +23,11 @@ void PlayerInputSystem::operator()(Registry& aRegistry, const float aDeltaTime)
 {
     cameraInput(aRegistry, aDeltaTime);
 
-    auto& input = aRegistry.ctx().get<WatoWindow&>().GetInput();
-    if (input.IsKeyPressed(Keyboard::B) && !input.IsPrevKeyPressed(Keyboard::B)
+    RingBuffer<Input, 128>& rbuf      = aRegistry.ctx().get<WatoWindow&>().GetInput();
+    std::optional<Input>&   prevInput = rbuf.Previous();
+    Input&                  input     = rbuf.Latest();
+
+    if (input.IsKeyPressed(Keyboard::B) && prevInput && prevInput->IsKeyPressed(Keyboard::B)
         && !input.IsMouseButtonPressed(Mouse::Left)) {
         if (!input.IsPlacementMode()) {
             input.EnterTowerPlacementMode();
@@ -48,7 +51,6 @@ void PlayerInputSystem::operator()(Registry& aRegistry, const float aDeltaTime)
     }
 
     // Creeps
-    if (input.IsKeyPressed(Keyboard::C) && !input.IsPrevKeyReleased(Keyboard::C)) {
         DBG("is key pressed = %d, prev = %d, key rel = %d, prev key rel = %d, key repeat = %d, "
             "prev key repeat = %d",
             input.IsKeyPressed(Keyboard::C),
@@ -57,13 +59,16 @@ void PlayerInputSystem::operator()(Registry& aRegistry, const float aDeltaTime)
             input.IsPrevKeyReleased(Keyboard::C),
             input.IsKeyRepeat(Keyboard::C),
             input.IsPrevKeyRepeat(Keyboard::C));
+    if (input.IsKeyPressed(Keyboard::C) && prevInput && prevInput->IsKeyPressed(Keyboard::C)) {
         creepSpawn(aRegistry);
     }
 }
 
 void PlayerInputSystem::cameraInput(Registry& aRegistry, const float aDeltaTime)
 {
-    auto& input = aRegistry.ctx().get<WatoWindow&>().GetInput();
+    RingBuffer<Input, 128>& rbuf  = aRegistry.ctx().get<WatoWindow&>().GetInput();
+    Input&                  input = rbuf.Latest();
+
     for (auto&& [entity, cam, t] : aRegistry.view<Camera, Transform3D>().each()) {
         float const speed = cam.Speed * aDeltaTime;
 
@@ -90,8 +95,9 @@ void PlayerInputSystem::cameraInput(Registry& aRegistry, const float aDeltaTime)
 
 glm::vec3 PlayerInputSystem::getMouseRay(Registry& aRegistry) const
 {
-    auto& input  = aRegistry.ctx().get<WatoWindow&>().GetInput();
-    auto& window = aRegistry.ctx().get<WatoWindow&>();
+    auto&                   window = aRegistry.ctx().get<WatoWindow&>();
+    RingBuffer<Input, 128>& rbuf   = window.GetInput();
+    Input&                  input  = rbuf.Latest();
 
     for (auto&& [_, cam, tcam] : aRegistry.view<Camera, Transform3D>().each()) {
         for (auto&& [_, t, obj] : aRegistry.view<Transform3D, SceneObject, Tile>().each()) {
@@ -170,7 +176,9 @@ void PlayerInputSystem::towerPlacementMode(Registry& aRegistry, bool aEnable)
 
 void PlayerInputSystem::buildTower(Registry& aRegistry)
 {
-    auto& input = aRegistry.ctx().get<WatoWindow&>().GetInput();
+    RingBuffer<Input, 128>& rbuf  = aRegistry.ctx().get<WatoWindow&>().GetInput();
+    Input&                  input = rbuf.Latest();
+
     if (!input.IsAbleToBuild()) {
         return;
     }

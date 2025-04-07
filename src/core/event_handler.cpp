@@ -25,10 +25,10 @@ void EventHandler::onTrigger(const rp3d::OverlapCallback::CallbackData& aCallbac
             switch (pair.getEventType()) {
                 case rp3d::OverlapCallback::OverlapPair::EventType::OverlapStart:
                 case rp3d::OverlapCallback::OverlapPair::EventType::OverlapStay:
-                    mRegistry->ctx().get<WatoWindow&>().GetInput().SetCanBuild(false);
+                    mRegistry->ctx().get<WatoWindow&>().GetInput().Latest().SetCanBuild(false);
                     break;
                 case rp3d::OverlapCallback::OverlapPair::EventType::OverlapExit:
-                    mRegistry->ctx().get<WatoWindow&>().GetInput().SetCanBuild(true);
+                    mRegistry->ctx().get<WatoWindow&>().GetInput().Latest().SetCanBuild(true);
                     break;
             }
         }

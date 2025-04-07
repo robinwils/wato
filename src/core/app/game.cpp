@@ -113,6 +113,7 @@ int Game::Run()
         while (accumulator >= timeStep) {
             // Decrease the accumulated time
             accumulator -= timeStep;
+            window.GetInput().Next();
         }
 
         for (const auto& system : mSystems) {
@@ -120,7 +121,6 @@ int Game::Run()
         }
 
         renderer.Render();
-        window.GetInput().KeyboardState.Clear();
     }
 
     if (opts.Multiplayer()) {

@@ -545,38 +545,40 @@ void Input::KeyCallback(GLFWwindow* aWindow,
     int32_t                         aAction,
     int32_t                         aMods)
 {
-    Input*        input = static_cast<Input*>(glfwGetWindowUserPointer(aWindow));
+    auto*         win   = static_cast<WatoWindow*>(glfwGetWindowUserPointer(aWindow));
+    Input&        input = win->GetInput().Latest();
     Keyboard::Key key   = to_key(aKey);
 
     // don't reset current state, it will discard input and make movement choppy
-    input->PrevKeyboardState = input->KeyboardState;
-    input->SetKey(key, to_action(aAction));
+    input.SetKey(key, to_action(aAction));
 
     if (aMods & GLFW_MOD_SHIFT) {
-        input->SetKeyModifier(key, ModifierKey::Shift);
+        input.SetKeyModifier(key, ModifierKey::Shift);
     }
     if (aMods & GLFW_MOD_CONTROL) {
-        input->SetKeyModifier(key, ModifierKey::Ctrl);
+        input.SetKeyModifier(key, ModifierKey::Ctrl);
     }
     if (aMods & GLFW_MOD_ALT) {
-        input->SetKeyModifier(key, ModifierKey::Alt);
+        input.SetKeyModifier(key, ModifierKey::Alt);
     }
     if (aMods & GLFW_MOD_SUPER) {
-        input->SetKeyModifier(key, ModifierKey::Super);
+        input.SetKeyModifier(key, ModifierKey::Super);
     }
     if (aMods & GLFW_MOD_CAPS_LOCK) {
-        input->SetKeyModifier(key, ModifierKey::CapsLock);
+        input.SetKeyModifier(key, ModifierKey::CapsLock);
     }
     if (aMods & GLFW_MOD_NUM_LOCK) {
-        input->SetKeyModifier(key, ModifierKey::NumLock);
+        input.SetKeyModifier(key, ModifierKey::NumLock);
+    }
     }
 }
 
 void Input::CursorPosCallback(GLFWwindow* aWindow, double aXpos, double aYpos)
 {
-    Input* input = static_cast<Input*>(glfwGetWindowUserPointer(aWindow));
+    auto*  win   = static_cast<WatoWindow*>(glfwGetWindowUserPointer(aWindow));
+    Input& input = win->GetInput().Latest();
 
-    input->SetMousePos(aXpos, aYpos);
+    input.SetMousePos(aXpos, aYpos);
 }
 
 void Input::MouseButtonCallback(GLFWwindow* aWindow,
@@ -584,36 +586,38 @@ void Input::MouseButtonCallback(GLFWwindow* aWindow,
     int32_t                                 aAction,
     int32_t                                 aMods)
 {
-    Input*        input  = static_cast<Input*>(glfwGetWindowUserPointer(aWindow));
+    auto*         win    = static_cast<WatoWindow*>(glfwGetWindowUserPointer(aWindow));
+    Input&        input  = win->GetInput().Latest();
     Mouse::Button button = to_mouse_button(aButton);
 
-    input->SetMouseButtonPressed(button, to_action(aAction));
+    input.SetMouseButtonPressed(button, to_action(aAction));
 
     if (aMods & GLFW_MOD_SHIFT) {
-        input->SetMouseButtonModifier(button, ModifierKey::Shift);
+        input.SetMouseButtonModifier(button, ModifierKey::Shift);
     }
     if (aMods & GLFW_MOD_CONTROL) {
-        input->SetMouseButtonModifier(button, ModifierKey::Ctrl);
+        input.SetMouseButtonModifier(button, ModifierKey::Ctrl);
     }
     if (aMods & GLFW_MOD_ALT) {
-        input->SetMouseButtonModifier(button, ModifierKey::Alt);
+        input.SetMouseButtonModifier(button, ModifierKey::Alt);
     }
     if (aMods & GLFW_MOD_SUPER) {
-        input->SetMouseButtonModifier(button, ModifierKey::Super);
+        input.SetMouseButtonModifier(button, ModifierKey::Super);
     }
     if (aMods & GLFW_MOD_CAPS_LOCK) {
-        input->SetMouseButtonModifier(button, ModifierKey::CapsLock);
+        input.SetMouseButtonModifier(button, ModifierKey::CapsLock);
     }
     if (aMods & GLFW_MOD_NUM_LOCK) {
-        input->SetMouseButtonModifier(button, ModifierKey::NumLock);
+        input.SetMouseButtonModifier(button, ModifierKey::NumLock);
     }
 }
 
 void Input::ScrollCallback(GLFWwindow* aWindow, double aXoffset, double aYoffset)
 {
-    Input* input = static_cast<Input*>(glfwGetWindowUserPointer(aWindow));
+    auto*  win   = static_cast<WatoWindow*>(glfwGetWindowUserPointer(aWindow));
+    Input& input = win->GetInput().Latest();
 
-    input->SetMouseScroll(aXoffset, aYoffset);
+    input.SetMouseScroll(aXoffset, aYoffset);
 }
 
 void Input::SetMouseButtonPressed(Mouse::Button aButton, Button::Action aAction)

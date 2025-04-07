@@ -246,23 +246,6 @@ class Input
         return KeyboardState.Keys[aKey].Action == Button::Unknown;
     }
 
-    bool IsPrevKeyPressed(Keyboard::Key aKey) const
-    {
-        return PrevKeyboardState.Keys[aKey].Action == Button::Press;
-    }
-    bool IsPrevKeyRepeat(Keyboard::Key aKey) const
-    {
-        return PrevKeyboardState.Keys[aKey].Action == Button::Repeat;
-    }
-    bool IsPrevKeyReleased(Keyboard::Key aKey) const
-    {
-        return PrevKeyboardState.Keys[aKey].Action == Button::Release;
-    }
-    bool IsPrevKeyUnknown(Keyboard::Key aKey) const
-    {
-        return PrevKeyboardState.Keys[aKey].Action == Button::Unknown;
-    }
-
     void DrawImgui(const Camera& aCamera,
         const glm::vec3&         aCamPos,
         const float              aWidth,
@@ -282,7 +265,7 @@ class Input
         const float                       aHeight) const;
 
     struct MouseState    MouseState;
-    struct KeyboardState KeyboardState, PrevKeyboardState;
+    struct KeyboardState KeyboardState;
 
    private:
     bool mTowerPlacementMode, mCanBuild;

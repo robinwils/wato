@@ -61,14 +61,14 @@ void RenderSystem::operator()(Registry& aRegistry, const float aDeltaTime)
 void RenderImguiSystem::operator()(Registry& aRegistry, const float aDeltaTime)
 {
     auto& window = aRegistry.ctx().get<WatoWindow&>();
-    imguiBeginFrame(window.GetInput(), window.Width<int>(), window.Height<int>());
+    imguiBeginFrame(window.GetInput().Latest(), window.Width<int>(), window.Height<int>());
     showImguiDialogs(window.Width<float>(), window.Height<float>());
 
     for (auto&& [entity, imgui] : aRegistry.view<ImguiDrawable>().each()) {
         auto [camera, transform] = aRegistry.try_get<Camera, Transform3D>(entity);
         ImGui::Text("%s Settings", imgui.name.c_str());
         if (camera && transform) {
-            window.GetInput().DrawImgui(*camera,
+            window.GetInput().Latest().DrawImgui(*camera,
                 transform->Position,
                 window.Width<float>(),
                 window.Height<float>());

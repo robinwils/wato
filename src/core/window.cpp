@@ -41,11 +41,11 @@ void WatoWindow::Init()
     // glfwSetWindowSizeCallback(m_window[0], windowSizeCb);
     // glfwSetDropCallback(m_window[0], dropFileCb);
 
-    glfwSetWindowUserPointer(mGLFWWindow.get(), &this->mInput);
+    glfwSetWindowUserPointer(mGLFWWindow.get(), this);
     mIsInit = true;
 }
 
-void *WatoWindow::GetNativeDisplay()
+void* WatoWindow::GetNativeDisplay()
 {
 #if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
     return glfwGetX11Display();
@@ -54,10 +54,10 @@ void *WatoWindow::GetNativeDisplay()
 #endif
 }
 
-void *WatoWindow::GetNativeWindow()
+void* WatoWindow::GetNativeWindow()
 {
 #if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
-    return reinterpret_cast<void *>(static_cast<uintptr_t>(glfwGetX11Window(mGLFWWindow.get())));
+    return reinterpret_cast<void*>(static_cast<uintptr_t>(glfwGetX11Window(mGLFWWindow.get())));
 #elif BX_PLATFORM_OSX
     return glfwGetCocoaWindow(mGLFWWindow.get());
 #elif BX_PLATFORM_WINDOWS
