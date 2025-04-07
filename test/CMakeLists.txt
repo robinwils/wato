@@ -5,6 +5,10 @@ if(DEFINED doctest_SOURCE_DIR)
     SYSTEM PUBLIC
     ${doctest_SOURCE_DIR}
   )
+
+  include("${doctest_SOURCE_DIR}/scripts/cmake/doctest.cmake")
+  doctest_discover_tests(wato_tests TEST_PREFIX "wato.")
+  target_link_libraries(wato_tests doctest)
 endif()
 
 target_sources(wato_tests
@@ -18,10 +22,5 @@ target_sources(wato_tests
 
 target_link_libraries(wato_tests
   watolib
-  doctest
 )
 
-enable_testing()
-
-include("${doctest_SOURCE_DIR}/scripts/cmake/doctest.cmake")
-doctest_discover_tests(wato_tests TEST_PREFIX "wato.")

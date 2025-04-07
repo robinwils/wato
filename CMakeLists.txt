@@ -77,7 +77,6 @@ FetchContent_Declare(
   FIND_PACKAGE_ARGS NAMES taskflow
 )
 
-set(DOCTEST_VERSION v2.4.11)
 FetchContent_Declare(
   doctest
   GIT_REPOSITORY https://github.com/doctest/doctest
