@@ -269,7 +269,6 @@ target_sources(watolib
   PUBLIC FILE_SET HEADERS
   BASE_DIRS src
   FILES
-
     src/components/camera.hpp
     src/components/color.hpp
     src/components/direction.hpp
@@ -286,6 +285,7 @@ target_sources(watolib
     src/core/physics.hpp
     src/core/queue/ring_buffer.hpp
     src/core/ray.hpp
+    src/core/snapshot.hpp
     src/core/sys/log.hpp
     src/registry/registry.hpp
     src/systems/physics.hpp
