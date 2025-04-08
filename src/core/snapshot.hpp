@@ -67,8 +67,10 @@ class ByteInputArchive
     void boundCheck(uint32_t aSize)
     {
         if (mIdx + aSize > mStorage.size()) {
-            fmt::println(" mIdx = {:d}, asked = {:d}, size = {:d}", mIdx, aSize, mStorage.size());
-            throw std::out_of_range("while reading type header");
+            throw std::out_of_range(fmt::format(" mIdx = {:d}, asked = {:d}, size = {:d}",
+                mIdx,
+                aSize,
+                mStorage.size()));
         }
     }
     DataType readTypeHdr()
