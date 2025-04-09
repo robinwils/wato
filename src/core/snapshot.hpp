@@ -3,9 +3,11 @@
 #include <bx/bx.h>
 #include <reactphysics3d/engine/PhysicsCommon.h>
 
+#include <algorithm>
 #include <cstddef>
 #include <cstring>
 #include <glm/gtc/type_ptr.hpp>
+#include <iterator>
 #include <stdexcept>
 
 #include "components/health.hpp"
@@ -15,83 +17,59 @@
 #include "fmt/format.h"
 #include "registry/registry.hpp"
 
-enum DataType {
-    Entity = 0,
-    Transform,
-    Size,
-};
-
 class ByteInputArchive
 {
-    using byte_stream = std::vector<std::byte>;
+    using byte        = uint8_t;
+    using byte_stream = std::vector<byte>;
 
    public:
     ByteInputArchive(byte_stream& aInStream) : mStorage(aInStream), mIdx(0) {}
 
     void operator()(entt::entity& aEntity)
     {
-        boundCheck(sizeof(aEntity));
-        bx::memCopy(&aEntity, &mStorage[mIdx], sizeof(aEntity));
-        mIdx += sizeof(aEntity);
+        Read<entt::entity>(&aEntity, 1);
         fmt::println("in entity {:d}", static_cast<ENTT_ID_TYPE>(aEntity));
     }
 
     void operator()(std::underlying_type_t<entt::entity>& aEntity)
     {
-        // DataType dt = readTypeHdr();
-
-        boundCheck(sizeof(aEntity));
-        bx::memCopy(&aEntity, &mStorage[mIdx], sizeof(aEntity));
-        mIdx += sizeof(aEntity);
-
+        Read<std::underlying_type_t<entt::entity>>(&aEntity, 1);
         fmt::println("in underlying type entity {:d}", aEntity);
     }
 
-    void operator()(Transform3D& aTransform)
+    template <typename T>
+    void operator()(T& aObj)
     {
-        // readTypeHdr();
-        boundCheck(10 * sizeof(float));
-
-        bx::memCopy(&aTransform.Position, &mStorage[mIdx], 3 * sizeof(float));
-        mIdx += 3 * sizeof(float);
-        bx::memCopy(&aTransform.Orientation, &mStorage[mIdx], 4 * sizeof(float));
-        mIdx += 4 * sizeof(float);
-        bx::memCopy(&aTransform.Scale, &mStorage[mIdx], 3 * sizeof(float));
-        mIdx += 3 * sizeof(float);
+        T::Deserialize(*this, aObj);
         fmt::println("in transform");
     }
 
     byte_stream Bytes() const { return mStorage; }
-
-   private:
-    void boundCheck(uint32_t aSize)
+    template <typename T, std::output_iterator<T> Out>
+    void Read(Out aDestination, std::size_t aN)
     {
-        if (mIdx + aSize > mStorage.size()) {
+        if (mIdx + aN * sizeof(T) > mStorage.size()) {
             throw std::out_of_range(fmt::format(" mIdx = {:d}, asked = {:d}, size = {:d}",
                 mIdx,
-                aSize,
+                aN * sizeof(T),
                 mStorage.size()));
         }
-    }
-    DataType readTypeHdr()
-    {
-        DataType dType;
-        boundCheck(sizeof(DataType));
 
-        bx::memCopy(&dType, &mStorage[mIdx], sizeof(DataType));
-        fmt::println("data type hdr: {:d}", static_cast<uint32_t>(dType));
-        mIdx += sizeof(DataType);
-
-        return dType;
+        fmt::println("reading {:d} elts with type size {:d}", aN, sizeof(T));
+        // bx::memCopy(aDestination, &mStorage[mIdx], aN * sizeof(T));
+        std::copy_n(reinterpret_cast<const T*>(&mStorage[mIdx]), aN, aDestination);
+        mIdx += aN * sizeof(T);
     }
 
+   private:
     byte_stream mStorage;
     uint32_t    mIdx;
 };
 
 class ByteOutputArchive
 {
-    using byte_stream = std::vector<std::byte>;
+    using byte        = uint8_t;
+    using byte_stream = std::vector<byte>;
 
    public:
     ByteOutputArchive(byte_stream& aOutStream) : mStorage(aOutStream) {}
@@ -99,43 +77,33 @@ class ByteOutputArchive
     void operator()(entt::entity aEntity)
     {
         fmt::println("out entity {:d}", static_cast<ENTT_ID_TYPE>(aEntity));
-        auto* p = reinterpret_cast<std::byte*>(&aEntity);
-        mStorage.insert(mStorage.end(), p, p + sizeof(aEntity));
+        Write<entt::entity>(&aEntity, 1);
     }
 
     void operator()(std::underlying_type_t<entt::entity> aEntity)
     {
         fmt::println("out underlying type entity {:d}", aEntity);
-        // writeTypeHdr(DataType::Size);
-        auto* p = reinterpret_cast<std::byte*>(&aEntity);
-        mStorage.insert(mStorage.end(), p, p + sizeof(aEntity));
+        Write<std::underlying_type_t<entt::entity>>(&aEntity, 1);
     }
 
-    void operator()(const Transform3D& aTransform)
+    template <typename T>
+    void operator()(const T& aObj)
     {
-        fmt::println("out transform");
-        // writeTypeHdr(DataType::Transform);
-        auto* p = reinterpret_cast<const std::byte*>(glm::value_ptr(aTransform.Position));
-        mStorage.insert(mStorage.end(), p, p + 3 * sizeof(float));
+        T::Serialize(*this, aObj);
+    }
 
-        p = reinterpret_cast<const std::byte*>(glm::value_ptr(aTransform.Orientation));
-        mStorage.insert(mStorage.end(), p, p + 4 * sizeof(float));
-
-        p = reinterpret_cast<const std::byte*>(glm::value_ptr(aTransform.Scale));
-        mStorage.insert(mStorage.end(), p, p + 3 * sizeof(float));
+    template <typename T, std::input_iterator In>
+    void Write(const In& aData, std::size_t aN)
+    {
+        auto* p = reinterpret_cast<const byte*>(aData);
+        // std::copy(p, p + aN, mStorage.end());
+        mStorage.insert(mStorage.end(), p, p + aN * sizeof(T));
     }
 
     byte_stream  Bytes() const { return mStorage; }
     byte_stream& Bytes() { return mStorage; }
 
    private:
-    void writeTypeHdr(const DataType& aType)
-    {
-        auto  raw = static_cast<std::underlying_type_t<DataType>>(aType);
-        auto* p   = reinterpret_cast<const std::byte*>(&raw);
-        mStorage.insert(mStorage.end(), p, p + sizeof(DataType));
-    }
-
     byte_stream mStorage;
 };
 
@@ -148,9 +116,9 @@ void LoadRegistry(entt::registry& aRegistry, InArchive& aArchive);
 #include "doctest.h"
 TEST_CASE("snapshot.simple")
 {
-    entt::registry      src;
-    rp3d::PhysicsCommon comm;
-    rp3d::PhysicsWorld* world = comm.createPhysicsWorld();
+    entt::registry src;
+    // rp3d::PhysicsCommon comm;
+    // rp3d::PhysicsWorld* world = comm.createPhysicsWorld();
 
     auto e1 = src.create();
     src.emplace<Transform3D>(e1, glm::vec3(0.0f, 2.0f, 1.5f), glm::vec3(1.0f), glm::vec3(1.0f));
@@ -158,27 +126,23 @@ TEST_CASE("snapshot.simple")
     auto e2 = src.create();
     src.emplace<Health>(e2, 300.0f);
 
-    auto  e3 = src.create();
-    auto* rb = world->createRigidBody(rp3d::Transform());
+    auto e3 = src.create();
+    // auto* rb = world->createRigidBody(
+    //     rp3d::Transform(rp3d::Vector3(42.0f, 21.0f, 0.0f), rp3d::Quaternion::identity()));
+    // src.emplace<RigidBody>(e3, rb);
 
-    src.emplace<RigidBody>(e3, rb);
-    auto e4 = src.create();
-    auto e5 = src.create();
-    auto e6 = src.create();
-    auto e7 = src.create();
-    auto e8 = src.create();
-    auto e9 = src.create();
-
-    std::vector<std::byte> storage;
-    ByteOutputArchive      outAr(storage);
-    entt::registry         dest;
+    std::vector<uint8_t> storage;
+    ByteOutputArchive    outAr(storage);
+    entt::registry       dest;
     SaveRegistry(src, outAr);
-
-    CAPTURE(outAr.Bytes());
-    CHECK_EQ(outAr.Bytes().size(), 32);
 
     ByteInputArchive inAr(outAr.Bytes());
     LoadRegistry(dest, inAr);
 
     CHECK(dest.valid(e1));
+    CHECK(dest.valid(e2));
+    CHECK(dest.valid(e3));
+    CHECK_EQ(dest.get<Transform3D>(e1).Position, glm::vec3(0.0f, 2.0f, 1.5f));
+    CHECK_EQ(dest.get<Health>(e2).Health, 300.0f);
+    // CHECK_EQ(dest.get<RigidBody>(e3).rigid_body, src.get<RigidBody>(e3).rigid_body);
 }

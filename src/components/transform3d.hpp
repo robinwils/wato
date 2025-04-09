@@ -1,8 +1,10 @@
 #pragma once
+
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/ext/vector_float3.hpp>
 #include <glm/fwd.hpp>
 #include <glm/gtc/quaternion.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/string_cast.hpp>
 #include <glm/trigonometric.hpp>
 #include <string>
@@ -36,5 +38,19 @@ struct Transform3D {
             aTransform.getOrientation().x,
             aTransform.getOrientation().y,
             aTransform.getOrientation().z);
+    }
+
+    constexpr static auto Serialize(auto& aArchive, const auto& aSelf)
+    {
+        aArchive.template Write<float>(glm::value_ptr(aSelf.Position), 3);
+        aArchive.template Write<float>(glm::value_ptr(aSelf.Orientation), 4);
+        aArchive.template Write<float>(glm::value_ptr(aSelf.Scale), 3);
+    }
+
+    constexpr static auto Deserialize(auto& aArchive, auto& aSelf)
+    {
+        aArchive.template Read<float>(glm::value_ptr(aSelf.Position), 3);
+        aArchive.template Read<float>(glm::value_ptr(aSelf.Orientation), 4);
+        aArchive.template Read<float>(glm::value_ptr(aSelf.Scale), 3);
     }
 };
