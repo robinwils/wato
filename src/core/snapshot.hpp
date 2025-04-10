@@ -13,6 +13,7 @@
 #include "components/health.hpp"
 #include "components/rigid_body.hpp"
 #include "components/transform3d.hpp"
+#include "core/physics.hpp"
 #include "fmt/base.h"
 #include "fmt/format.h"
 #include "registry/registry.hpp"
@@ -28,20 +29,20 @@ class ByteInputArchive
     void operator()(entt::entity& aEntity)
     {
         Read<entt::entity>(&aEntity, 1);
-        fmt::println("in entity {:d}", static_cast<ENTT_ID_TYPE>(aEntity));
+        // fmt::println("in entity {:d}", static_cast<ENTT_ID_TYPE>(aEntity));
     }
 
     void operator()(std::underlying_type_t<entt::entity>& aEntity)
     {
         Read<std::underlying_type_t<entt::entity>>(&aEntity, 1);
-        fmt::println("in underlying type entity {:d}", aEntity);
+        // fmt::println("in underlying type entity {:d}", aEntity);
     }
 
     template <typename T>
     void operator()(T& aObj)
     {
         T::Deserialize(*this, aObj);
-        fmt::println("in transform");
+        // fmt::println("in transform");
     }
 
     byte_stream Bytes() const { return mStorage; }
@@ -55,7 +56,7 @@ class ByteInputArchive
                 mStorage.size()));
         }
 
-        fmt::println("reading {:d} elts with type size {:d}", aN, sizeof(T));
+        // fmt::println("reading {:d} elts with type size {:d}", aN, sizeof(T));
         // bx::memCopy(aDestination, &mStorage[mIdx], aN * sizeof(T));
         std::copy_n(reinterpret_cast<const T*>(&mStorage[mIdx]), aN, aDestination);
         mIdx += aN * sizeof(T);
@@ -89,6 +90,7 @@ class ByteOutputArchive
     template <typename T>
     void operator()(const T& aObj)
     {
+        fmt::println("got a component of size {:d}", sizeof(T));
         T::Serialize(*this, aObj);
     }
 
@@ -117,19 +119,20 @@ void LoadRegistry(entt::registry& aRegistry, InArchive& aArchive);
 TEST_CASE("snapshot.simple")
 {
     entt::registry src;
-    // rp3d::PhysicsCommon comm;
-    // rp3d::PhysicsWorld* world = comm.createPhysicsWorld();
+    auto&          phy = src.ctx().emplace<Physics>();
+    phy.Init();
 
     auto e1 = src.create();
     src.emplace<Transform3D>(e1, glm::vec3(0.0f, 2.0f, 1.5f), glm::vec3(1.0f), glm::vec3(1.0f));
 
     auto e2 = src.create();
+    src.emplace<Transform3D>(e2, glm::vec3(4.2f, 2.1f, 0.42f), glm::vec3(42.0f), glm::vec3(0.5f));
     src.emplace<Health>(e2, 300.0f);
 
-    auto e3 = src.create();
-    // auto* rb = world->createRigidBody(
-    //     rp3d::Transform(rp3d::Vector3(42.0f, 21.0f, 0.0f), rp3d::Quaternion::identity()));
-    // src.emplace<RigidBody>(e3, rb);
+    auto  e3 = src.create();
+    auto* rb = phy.World()->createRigidBody(
+        rp3d::Transform(rp3d::Vector3(42.0f, 21.0f, 0.0f), rp3d::Quaternion::identity()));
+    src.emplace<RigidBody>(e3, rb);
 
     std::vector<uint8_t> storage;
     ByteOutputArchive    outAr(storage);
@@ -144,5 +147,5 @@ TEST_CASE("snapshot.simple")
     CHECK(dest.valid(e3));
     CHECK_EQ(dest.get<Transform3D>(e1).Position, glm::vec3(0.0f, 2.0f, 1.5f));
     CHECK_EQ(dest.get<Health>(e2).Health, 300.0f);
-    // CHECK_EQ(dest.get<RigidBody>(e3).rigid_body, src.get<RigidBody>(e3).rigid_body);
+    CHECK_EQ(dest.get<RigidBody>(e3).rigid_body, src.get<RigidBody>(e3).rigid_body);
 }

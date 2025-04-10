@@ -22,8 +22,8 @@ class Physics
 {
    public:
     Physics() {}
-    Physics(const Physics&)            = delete;
-    Physics(Physics&&)                 = delete;
+    Physics(const Physics&) = delete;
+    Physics(Physics&& aPhy) : mWorld(aPhy.mWorld) {}
     Physics& operator=(const Physics&) = delete;
     Physics& operator=(Physics&&)      = delete;
 
@@ -32,6 +32,45 @@ class Physics
     [[nodiscard]] rp3d::PhysicsWorld*  World() noexcept { return mWorld; }
     [[nodiscard]] rp3d::PhysicsWorld*  World() const noexcept { return mWorld; }
     [[nodiscard]] rp3d::PhysicsCommon& Common() noexcept { return mCommon; }
+
+    void test()
+    {
+        for (uint32_t rbIdx = 0; rbIdx < mWorld->getNbRigidBodies(); ++rbIdx) {
+            const rp3d::RigidBody*  rb          = mWorld->getRigidBody(rbIdx);
+            const rp3d::Transform   transform   = rb->getTransform();
+            const rp3d::Vector3&    position    = transform.getPosition();
+            const rp3d::Quaternion& orientation = transform.getOrientation();
+        }
+    }
+    constexpr static auto Serialize(auto& aArchive, const auto& aSelf)
+    {
+        uint32_t nbRigidBodies = aSelf.World()->getNbRigidBodies();
+        aArchive.template Write<uint32_t>(&nbRigidBodies, 1);
+        for (uint32_t rbIdx = 0; rbIdx < nbRigidBodies; ++rbIdx) {
+            const rp3d::RigidBody*  rb          = aSelf.World()->getRigidBody(rbIdx);
+            const rp3d::Transform&  transform   = rb->getTransform();
+            const rp3d::Vector3&    position    = transform.getPosition();
+            const rp3d::Quaternion& orientation = transform.getOrientation();
+
+            aArchive.template Write<float>(&position.x, 3);
+            aArchive.template Write<float>(&orientation.x, 4);
+        }
+    }
+
+    static auto Deserialize(auto& aArchive, auto& aSelf)
+    {
+        aSelf.Init();
+        uint32_t nbRigidBodies = 0;
+        aArchive.template Read<uint32_t>(&nbRigidBodies, 3);
+        for (uint32_t rbIdx = 0; rbIdx < nbRigidBodies; ++rbIdx) {
+            rp3d::Vector3    position;
+            rp3d::Quaternion orientation;
+            aArchive.template Read<float>(&position.x, 3);
+            aArchive.template Read<float>(&orientation.x, 4);
+
+            aSelf.World()->createRigidBody(rp3d::Transform(position, orientation));
+        }
+    }
 
     PhysicsParams Params;
 
