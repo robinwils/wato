@@ -1,5 +1,7 @@
 #include "core/event_handler.hpp"
 
+#include <fmt/base.h>
+
 #include "components/placement_mode.hpp"
 #include "core/window.hpp"
 #include "entt/entity/fwd.hpp"
@@ -12,16 +14,27 @@ void EventHandler::onTrigger(const rp3d::OverlapCallback::CallbackData& aCallbac
     auto placement = mRegistry->view<PlacementMode>();
 
     for (uint32_t pairIdx = 0; pairIdx < aCallbackData.getNbOverlappingPairs(); ++pairIdx) {
-        const auto& pair    = aCallbackData.getOverlappingPair(pairIdx);
-        const auto* entity1 = static_cast<entt::entity*>(pair.getBody1()->getUserData());
-        const auto* entity2 = static_cast<entt::entity*>(pair.getBody2()->getUserData());
+        const auto& pair  = aCallbackData.getOverlappingPair(pairIdx);
+        const auto* data1 = static_cast<RigidBodyData*>(pair.getBody1()->getUserData());
+        const auto* data2 = static_cast<RigidBodyData*>(pair.getBody2()->getUserData());
 
-        bool placementModeTrigger =
-            ((entity1 != nullptr) && mRegistry->valid(*entity1) && placement->contains(*entity1))
-            || ((entity2 != nullptr) && mRegistry->valid(*entity2)
-                && placement->contains(*entity2));
+        bool entity1IsGhost = (data1 != nullptr) && mRegistry->valid(data1->Entity)
+                              && placement->contains(data1->Entity);
+        bool entity2IsGhost = (data2 != nullptr) && mRegistry->valid(data2->Entity)
+                              && placement->contains(data2->Entity);
 
-        if (placementModeTrigger) {
+        if (data1) {
+            fmt::println("entity1 = {:d}", static_cast<uint32_t>(data1->Entity));
+            fmt::println("valid entity1 = {}", mRegistry->valid(data1->Entity));
+            fmt::println("entity1 placement mode = {}", placement.contains(data1->Entity));
+        }
+        if (data2) {
+            fmt::println("entity2 = {:d}", static_cast<uint32_t>(data2->Entity));
+            fmt::println("valid entity2 = {}", mRegistry->valid(data2->Entity));
+            fmt::println("entity2 placement mode = {}", placement.contains(data2->Entity));
+        }
+        if (entity1IsGhost || entity2IsGhost) {
+            fmt::println("triggered placement mode");
             switch (pair.getEventType()) {
                 case rp3d::OverlapCallback::OverlapPair::EventType::OverlapStart:
                 case rp3d::OverlapCallback::OverlapPair::EventType::OverlapStay:

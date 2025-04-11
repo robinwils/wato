@@ -1,5 +1,7 @@
 #include "input/input.hpp"
 
+#include <fmt/base.h>
+
 #include "components/health.hpp"
 #include "components/imgui.hpp"
 #include "components/placement_mode.hpp"
@@ -120,11 +122,6 @@ void PlayerInputSystem::towerPlacementMode(Registry& aRegistry, bool aEnable)
     if (!placementModeView->empty()) {
         for (auto ghostTower : placementModeView) {
             if (!aEnable) {
-                auto& rb = aRegistry.get<RigidBody>(ghostTower);
-
-                auto* userData = static_cast<RigidBodyData*>(rb.rigid_body->getUserData());
-                delete userData;
-                phy.World()->destroyRigidBody(rb.rigid_body);
                 aRegistry.destroy(ghostTower);
                 return;
             }
@@ -134,7 +131,7 @@ void PlayerInputSystem::towerPlacementMode(Registry& aRegistry, bool aEnable)
                     aT.Position.x = intersect.x;
                     aT.Position.z = intersect.z;
                     aRegistry.patch<RigidBody>(ghostTower,
-                        [aT](RigidBody& aRb) { aRb.rigid_body->setTransform(aT.ToRP3D()); });
+                        [aT](RigidBody& aRb) { aRb.RigidBody->setTransform(aT.ToRP3D()); });
                 });
         }
     } else if (aEnable) {
@@ -147,22 +144,12 @@ void PlayerInputSystem::towerPlacementMode(Registry& aRegistry, bool aEnable)
         aRegistry.emplace<PlacementMode>(ghostTower);
         aRegistry.emplace<ImguiDrawable>(ghostTower, "Ghost Tower");
 
-        auto* rb       = phy.World()->createRigidBody(t.ToRP3D());
-        auto* box      = phy.Common().createBoxShape(rp3d::Vector3(0.35F, 0.65F, 0.35F));
-        auto* collider = rb->addCollider(box, rp3d::Transform::identity());
-
-        rb->enableGravity(false);
-        rb->setType(rp3d::BodyType::DYNAMIC);
-        collider->setIsTrigger(true);
-
-        // TODO: leak here, rigid body does not delete the user data
-        rb->setUserData(new RigidBodyData(ghostTower));
-
-#if WATO_DEBUG
-        rb->setIsDebugEnabled(true);
-#endif
-
-        aRegistry.emplace<RigidBody>(ghostTower, rb);
+        rp3d::RigidBody* body = phy.CreateRigidBody(ghostTower,
+            aRegistry,
+            RigidBodyParams{.Type = rp3d::BodyType::DYNAMIC,
+                .Transform        = t.ToRP3D(),
+                .GravityEnabled   = false});
+        phy.AddBoxCollider(body, rp3d::Vector3(0.35F, 0.65F, 0.35F), true);
     }
 }
 
@@ -178,9 +165,9 @@ void PlayerInputSystem::buildTower(Registry& aRegistry)
     for (auto tower : aRegistry.view<PlacementMode>()) {
         auto& rb = aRegistry.get<RigidBody>(tower);
 
-        rb.rigid_body->getCollider(0)->setIsSimulationCollider(true);
+        rb.RigidBody->getCollider(0)->setIsSimulationCollider(true);
+        rb.RigidBody->setType(rp3d::BodyType::STATIC);
 
-        aRegistry.emplace_or_replace<RigidBody>(tower, rb);
         aRegistry.emplace<Health>(tower, 100.0F);
         aRegistry.remove<PlacementMode>(tower);
         aRegistry.remove<ImguiDrawable>(tower);

@@ -1,5 +1,12 @@
 #pragma once
 
+#include <fmt/base.h>
+
+#include <entt/entity/fwd.hpp>
+#include <glm/glm.hpp>
+
+#include "components/rigid_body.hpp"
+#include "components/transform3d.hpp"
 #include "config.h"
 #include "reactphysics3d/reactphysics3d.h"
 
@@ -18,6 +25,12 @@ struct PhysicsParams {
 #endif
 };
 
+struct RigidBodyParams {
+    rp3d::BodyType  Type{rp3d::BodyType::STATIC};
+    rp3d::Transform Transform{rp3d::Transform::identity()};
+    bool            GravityEnabled{true};
+};
+
 class Physics
 {
    public:
@@ -27,7 +40,7 @@ class Physics
     Physics& operator=(const Physics&) = delete;
     Physics& operator=(Physics&&)      = delete;
 
-    void                               Init();
+    void                               Init(Registry& aRegistry);
     void                               InitLogger();
     [[nodiscard]] rp3d::PhysicsWorld*  World() noexcept { return mWorld; }
     [[nodiscard]] rp3d::PhysicsWorld*  World() const noexcept { return mWorld; }
@@ -51,6 +64,13 @@ class Physics
             const rp3d::Transform&  transform   = rb->getTransform();
             const rp3d::Vector3&    position    = transform.getPosition();
             const rp3d::Quaternion& orientation = transform.getOrientation();
+    rp3d::RigidBody* CreateRigidBody(const entt::entity& aEntity,
+        Registry&                                        aRegistry,
+        const RigidBodyParams                            aParams);
+    rp3d::Collider*  AddBoxCollider(rp3d::RigidBody* aBody,
+         const rp3d::Vector3&                        aSize,
+         const bool                                  aIsTrigger = false);
+    void             DeleteRigidBody(Registry& aRegistry, entt::entity aEntity);
 
             aArchive.template Write<float>(&position.x, 3);
             aArchive.template Write<float>(&orientation.x, 4);
@@ -68,7 +88,13 @@ class Physics
             aArchive.template Read<float>(&position.x, 3);
             aArchive.template Read<float>(&orientation.x, 4);
 
-            aSelf.World()->createRigidBody(rp3d::Transform(position, orientation));
+            fmt::println("creating rigid body for entity {:d}", static_cast<ENTT_ID_TYPE>(entity));
+            rp3d::RigidBody* body = phy.CreateRigidBody(entity,
+                aRegistry,
+                RigidBodyParams{.Type = type,
+                    .Transform        = rp3d::Transform(position, orientation),
+                    .GravityEnabled   = gravity});
+            aRegistry.template emplace<RigidBody>(entity, body);
         }
     }
 

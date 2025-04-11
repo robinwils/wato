@@ -15,7 +15,7 @@ void GameServer::Init()
     mServer.Init();
     auto& physics = mRegistry.ctx().get<Physics>();
 
-    physics.Init();
+    physics.Init(mRegistry);
 
     mSystems.push_back(PhysicsSystem::MakeDelegate(mPhysicsSystem));
     mSystems.push_back(CreepSystem::MakeDelegate(mCreepSystem));

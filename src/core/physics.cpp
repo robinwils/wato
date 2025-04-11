@@ -1,6 +1,11 @@
 #include "core/physics.hpp"
 
-void Physics::Init()
+#include <fmt/base.h>
+
+#include "components/rigid_body.hpp"
+#include "core/event_handler.hpp"
+
+void Physics::Init(Registry& aRegistry)
 {
     mWorld = mCommon.createPhysicsWorld();
 
@@ -13,6 +18,7 @@ void Physics::Init()
     mWorld->setIsDebugRenderingEnabled(true);
 #endif
     InitLogger();
+    aRegistry.on_destroy<RigidBody>().connect<&Physics::DeleteRigidBody>(this);
 }
 
 void Physics::InitLogger()
@@ -34,4 +40,43 @@ void Physics::InitLogger()
     // Output the logs into the standard output
     Params.Logger->addStreamDestination(std::cout, logLevel, rp3d::DefaultLogger::Format::Text);
     mCommon.setLogger(Params.Logger);
+}
+
+rp3d::RigidBody* Physics::CreateRigidBody(const entt::entity& aEntity,
+    Registry&                                                 aRegistry,
+    const RigidBodyParams                                     aParams)
+{
+    fmt::println("creating rigid body for {:d}", static_cast<ENTT_ID_TYPE>(aEntity));
+    auto* body = mWorld->createRigidBody(aParams.Transform);
+    body->setType(aParams.Type);
+    // TODO: leak here, rigid body does not delete the user data
+    body->enableGravity(aParams.GravityEnabled);
+    body->setUserData(new RigidBodyData(aEntity));
+#if WATO_DEBUG
+    body->setIsDebugEnabled(true);
+#endif
+    aRegistry.emplace<RigidBody>(aEntity, body);
+    return body;
+}
+
+rp3d::Collider* Physics::AddBoxCollider(rp3d::RigidBody* aBody,
+    const rp3d::Vector3&                                 aSize,
+    const bool                                           aIsTrigger)
+{
+    auto* box      = mCommon.createBoxShape(aSize);
+    auto* collider = aBody->addCollider(box, rp3d::Transform::identity());
+    collider->setIsTrigger(aIsTrigger);
+    return collider;
+}
+
+void Physics::DeleteRigidBody(Registry& aRegistry, entt::entity aEntity)
+{
+    fmt::println("destroying rigid body...");
+    if (const auto& body = aRegistry.get<RigidBody>(aEntity);
+        body.RigidBody && body.RigidBody->getUserData()) {
+        auto* uData = static_cast<RigidBodyData*>(body.RigidBody->getUserData());
+        fmt::println("deleting user data with entt {:d}", static_cast<ENTT_ID_TYPE>(uData->Entity));
+        delete uData;
+        aRegistry.ctx().get<Physics&>().World()->destroyRigidBody(body.RigidBody);
+    }
 }

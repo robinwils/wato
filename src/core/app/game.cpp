@@ -25,7 +25,7 @@ void Game::Init()
 
     window.Init();
     renderer.Init(window);
-    physics.Init();
+    physics.Init(mRegistry);
     netClient.Init();
 
     // TODO: leak ?

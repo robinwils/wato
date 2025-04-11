@@ -129,10 +129,12 @@ TEST_CASE("snapshot.simple")
     src.emplace<Transform3D>(e2, glm::vec3(4.2f, 2.1f, 0.42f), glm::vec3(42.0f), glm::vec3(0.5f));
     src.emplace<Health>(e2, 300.0f);
 
-    auto  e3 = src.create();
-    auto* rb = phy.World()->createRigidBody(
-        rp3d::Transform(rp3d::Vector3(42.0f, 21.0f, 0.0f), rp3d::Quaternion::identity()));
-    src.emplace<RigidBody>(e3, rb);
+    auto e3 = src.create();
+    phy.CreateRigidBody(e3,
+        src,
+        RigidBodyParams{.Type = rp3d::BodyType::STATIC,
+            .Transform        = rp3d::Transform::identity(),
+            .GravityEnabled   = false});
 
     std::vector<uint8_t> storage;
     ByteOutputArchive    outAr(storage);

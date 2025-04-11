@@ -22,7 +22,7 @@ void UpdateTransformsSytem ::operator()(Registry& aRegistry, const float aFactor
 {
     // update transforms
     for (auto&& [entity, t, rb] : aRegistry.view<Transform3D, RigidBody>().each()) {
-        auto updatedTransform = rb.rigid_body->getTransform();
+        auto updatedTransform = rb.RigidBody->getTransform();
         auto interpolatedTransform =
             reactphysics3d::Transform::interpolateTransforms(t.ToRP3D(), updatedTransform, aFactor);
         t.FromRP3D(interpolatedTransform);
