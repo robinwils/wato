@@ -120,7 +120,7 @@ TEST_CASE("snapshot.simple")
 {
     entt::registry src;
     auto&          phy = src.ctx().emplace<Physics>();
-    phy.Init();
+    phy.Init(src);
 
     auto e1 = src.create();
     src.emplace<Transform3D>(e1, glm::vec3(0.0f, 2.0f, 1.5f), glm::vec3(1.0f), glm::vec3(1.0f));
@@ -149,5 +149,5 @@ TEST_CASE("snapshot.simple")
     CHECK(dest.valid(e3));
     CHECK_EQ(dest.get<Transform3D>(e1).Position, glm::vec3(0.0f, 2.0f, 1.5f));
     CHECK_EQ(dest.get<Health>(e2).Health, 300.0f);
-    CHECK_EQ(dest.get<RigidBody>(e3).rigid_body, src.get<RigidBody>(e3).rigid_body);
+    CHECK_EQ(dest.get<RigidBody>(e3).RigidBody->getTransform(), rp3d::Transform::identity());
 }

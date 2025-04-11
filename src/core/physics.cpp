@@ -46,11 +46,11 @@ rp3d::RigidBody* Physics::CreateRigidBody(const entt::entity& aEntity,
     Registry&                                                 aRegistry,
     const RigidBodyParams                                     aParams)
 {
-    fmt::println("creating rigid body for {:d}", static_cast<ENTT_ID_TYPE>(aEntity));
     auto* body = mWorld->createRigidBody(aParams.Transform);
     body->setType(aParams.Type);
-    // TODO: leak here, rigid body does not delete the user data
     body->enableGravity(aParams.GravityEnabled);
+
+    // destroyed in on_destroy listener
     body->setUserData(new RigidBodyData(aEntity));
 #if WATO_DEBUG
     body->setIsDebugEnabled(true);
@@ -71,11 +71,9 @@ rp3d::Collider* Physics::AddBoxCollider(rp3d::RigidBody* aBody,
 
 void Physics::DeleteRigidBody(Registry& aRegistry, entt::entity aEntity)
 {
-    fmt::println("destroying rigid body...");
     if (const auto& body = aRegistry.get<RigidBody>(aEntity);
         body.RigidBody && body.RigidBody->getUserData()) {
         auto* uData = static_cast<RigidBodyData*>(body.RigidBody->getUserData());
-        fmt::println("deleting user data with entt {:d}", static_cast<ENTT_ID_TYPE>(uData->Entity));
         delete uData;
         aRegistry.ctx().get<Physics&>().World()->destroyRigidBody(body.RigidBody);
     }
