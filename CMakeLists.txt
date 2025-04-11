@@ -239,7 +239,7 @@ endif()
 if(DEFINED fmt_SOURCE_DIR)
   target_include_directories(wato_common
   SYSTEM INTERFACE
-    ${fmt_SOURCE_DIR}
+    ${fmt_SOURCE_DIR}/include
   )
 endif()
 
