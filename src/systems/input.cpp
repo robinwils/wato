@@ -29,7 +29,8 @@ void PlayerInputSystem::operator()(Registry& aRegistry, const float aDeltaTime)
     std::optional<Input>&   prevInput = rbuf.Previous();
     Input&                  input     = rbuf.Latest();
 
-    if (input.IsKeyPressed(Keyboard::B) && prevInput && prevInput->IsKeyPressed(Keyboard::B)
+    if (input.KeyboardState.IsKeyPressed(Keyboard::B) && prevInput
+        && prevInput->KeyboardState.IsKeyPressed(Keyboard::B)
         && !input.IsMouseButtonPressed(Mouse::Left)) {
         if (!input.IsPlacementMode()) {
             input.EnterTowerPlacementMode();
@@ -42,7 +43,7 @@ void PlayerInputSystem::operator()(Registry& aRegistry, const float aDeltaTime)
     }
 
     if (input.IsPlacementMode()) {
-        if (input.IsKeyPressed(Keyboard::Escape)) {
+        if (input.KeyboardState.IsKeyPressed(Keyboard::Escape)) {
             input.ExitTowerPlacementMode();
             towerPlacementMode(aRegistry, false);
         }
@@ -53,7 +54,8 @@ void PlayerInputSystem::operator()(Registry& aRegistry, const float aDeltaTime)
     }
 
     // Creeps
-    if (input.IsKeyPressed(Keyboard::C) && prevInput && prevInput->IsKeyPressed(Keyboard::C)) {
+    if (input.KeyboardState.IsKeyPressed(Keyboard::C) && prevInput
+        && prevInput->KeyboardState.IsKeyPressed(Keyboard::C)) {
         creepSpawn(aRegistry);
     }
 }
@@ -66,16 +68,20 @@ void PlayerInputSystem::cameraInput(Registry& aRegistry, const float aDeltaTime)
     for (auto&& [entity, cam, t] : aRegistry.view<Camera, Transform3D>().each()) {
         float const speed = cam.Speed * aDeltaTime;
 
-        if (input.IsKeyPressed(Keyboard::W) || input.IsKeyRepeat(Keyboard::W)) {
+        if (input.KeyboardState.IsKeyPressed(Keyboard::W)
+            || input.KeyboardState.IsKeyRepeat(Keyboard::W)) {
             t.Position += speed * cam.Front;
         }
-        if (input.IsKeyPressed(Keyboard::A) || input.IsKeyRepeat(Keyboard::A)) {
+        if (input.KeyboardState.IsKeyPressed(Keyboard::A)
+            || input.KeyboardState.IsKeyRepeat(Keyboard::A)) {
             t.Position += speed * cam.Right();
         }
-        if (input.IsKeyPressed(Keyboard::S) || input.IsKeyRepeat(Keyboard::S)) {
+        if (input.KeyboardState.IsKeyPressed(Keyboard::S)
+            || input.KeyboardState.IsKeyRepeat(Keyboard::S)) {
             t.Position -= speed * cam.Front;
         }
-        if (input.IsKeyPressed(Keyboard::D) || input.IsKeyRepeat(Keyboard::D)) {
+        if (input.KeyboardState.IsKeyPressed(Keyboard::D)
+            || input.KeyboardState.IsKeyRepeat(Keyboard::D)) {
             t.Position -= speed * cam.Right();
         }
         if (input.MouseState.Scroll.y != 0) {

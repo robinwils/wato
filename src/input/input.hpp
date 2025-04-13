@@ -172,6 +172,23 @@ enum ModifierKey {
 struct KeyboardState {
     KeyboardState() : Keys() {}
 
+    [[nodiscard]] bool IsKeyPressed(Keyboard::Key aKey) const
+    {
+        return Keys[aKey].Action == Button::Press;
+    }
+    [[nodiscard]] bool IsKeyRepeat(Keyboard::Key aKey) const
+    {
+        return Keys[aKey].Action == Button::Repeat;
+    }
+    [[nodiscard]] bool IsKeyReleased(Keyboard::Key aKey) const
+    {
+        return Keys[aKey].Action == Button::Release;
+    }
+    [[nodiscard]] bool IsKeyUnknown(Keyboard::Key aKey) const
+    {
+        return Keys[aKey].Action == Button::Unknown;
+    }
+
     void Clear() { memset(Keys, 0, Keyboard::Count); }
 
     std::string String() const;
@@ -191,6 +208,12 @@ struct MouseState {
 
 std::string key_string(const Keyboard::Key& aK);
 
+// TODO: rework Input in different steps (see if doable):
+// - This class for current and previous raw input (as before...)
+// - detect actions and derive action components (dedicated entity?) inside an input system
+//   - double check if Single component struct for input or dedicated action components
+// - dedicated separated systems for each if dedicated action components ?
+// - only sync actions to server
 class Input
 {
    public:
@@ -231,22 +254,6 @@ class Input
     {
         return MouseState.Buttons[aButton].Action == Button::Press;
     }
-    bool IsKeyPressed(Keyboard::Key aKey) const
-    {
-        return KeyboardState.Keys[aKey].Action == Button::Press;
-    }
-    bool IsKeyRepeat(Keyboard::Key aKey) const
-    {
-        return KeyboardState.Keys[aKey].Action == Button::Repeat;
-    }
-    bool IsKeyReleased(Keyboard::Key aKey) const
-    {
-        return KeyboardState.Keys[aKey].Action == Button::Release;
-    }
-    bool IsKeyUnknown(Keyboard::Key aKey) const
-    {
-        return KeyboardState.Keys[aKey].Action == Button::Unknown;
-    }
 
     void DrawImgui(const Camera& aCamera,
         const glm::vec3&         aCamPos,
@@ -267,7 +274,7 @@ class Input
         const float                       aHeight) const;
 
     struct MouseState    MouseState;
-    struct KeyboardState KeyboardState;
+    struct KeyboardState KeyboardState, PrevKeyboardState;
 
    private:
     bool mTowerPlacementMode, mCanBuild;
