@@ -72,6 +72,7 @@ int Game::Run()
     auto& renderer  = mRegistry.ctx().get<Renderer&>();
     auto& netClient = mRegistry.ctx().get<ENetClient&>();
     auto& opts      = mRegistry.ctx().get<Options&>();
+    auto& actions   = mRegistry.ctx().get<ActionBuffer&>();
 
     float accumulator                    = 0.0f;
     using clock_type                     = std::chrono::steady_clock;
@@ -120,6 +121,7 @@ int Game::Run()
 
             mPhysicsSystem(mRegistry, timeStep);
             window.GetInput().Push(window.GetInput().Latest());
+            actions.Push();
         }
 
         mUpdateTransformsSystem(mRegistry, accumulator / timeStep);

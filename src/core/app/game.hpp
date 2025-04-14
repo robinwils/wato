@@ -7,6 +7,7 @@
 #include "core/app/app.hpp"
 #include "core/event_handler.hpp"
 #include "core/net/enet_client.hpp"
+#include "input/action.hpp"
 #include "renderer/renderer.hpp"
 #include "systems/input.hpp"
 #include "systems/render.hpp"
@@ -17,6 +18,7 @@ class Game : public Application
     explicit Game(int aWidth, int aHeight, char** aArgv)
         : Application(aWidth, aHeight, aArgv), mPhysicsEventHandler(&mRegistry)
     {
+        mRegistry.ctx().emplace<ActionBuffer>();
         mRegistry.ctx().emplace<WatoWindow>(aWidth, aHeight);
         mRegistry.ctx().emplace<Renderer>();
         mRegistry.ctx().emplace<ENetClient>();
