@@ -12,6 +12,7 @@ void EventHandler::onTrigger(const rp3d::OverlapCallback::CallbackData& aCallbac
 {
     // check if we are triggering the placement mode's ghost tower
     auto placement = mRegistry->view<PlacementMode>();
+    bool canBuild  = true;
 
     for (uint32_t pairIdx = 0; pairIdx < aCallbackData.getNbOverlappingPairs(); ++pairIdx) {
         const auto& pair  = aCallbackData.getOverlappingPair(pairIdx);
@@ -23,27 +24,16 @@ void EventHandler::onTrigger(const rp3d::OverlapCallback::CallbackData& aCallbac
         bool entity2IsGhost = (data2 != nullptr) && mRegistry->valid(data2->Entity)
                               && placement->contains(data2->Entity);
 
-        if (data1) {
-            fmt::println("entity1 = {:d}", static_cast<uint32_t>(data1->Entity));
-            fmt::println("valid entity1 = {}", mRegistry->valid(data1->Entity));
-            fmt::println("entity1 placement mode = {}", placement.contains(data1->Entity));
-        }
-        if (data2) {
-            fmt::println("entity2 = {:d}", static_cast<uint32_t>(data2->Entity));
-            fmt::println("valid entity2 = {}", mRegistry->valid(data2->Entity));
-            fmt::println("entity2 placement mode = {}", placement.contains(data2->Entity));
-        }
         if (entity1IsGhost || entity2IsGhost) {
-            fmt::println("triggered placement mode");
             switch (pair.getEventType()) {
                 case rp3d::OverlapCallback::OverlapPair::EventType::OverlapStart:
                 case rp3d::OverlapCallback::OverlapPair::EventType::OverlapStay:
-                    mRegistry->ctx().get<WatoWindow&>().GetInput().Latest().SetCanBuild(false);
+                    canBuild = false;
                     break;
-                case rp3d::OverlapCallback::OverlapPair::EventType::OverlapExit:
-                    mRegistry->ctx().get<WatoWindow&>().GetInput().Latest().SetCanBuild(true);
+                default:
                     break;
             }
         }
     }
+    mRegistry->ctx().get<WatoWindow&>().GetInput().Latest().SetCanBuild(canBuild);
 }
