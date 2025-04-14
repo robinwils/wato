@@ -29,34 +29,28 @@ void PlayerInputSystem::operator()(Registry& aRegistry, const float aDeltaTime)
     std::optional<Input>&   prevInput = rbuf.Previous();
     Input&                  input     = rbuf.Latest();
 
-    if (input.KeyboardState.IsKeyPressed(Keyboard::B) && prevInput
-        && prevInput->KeyboardState.IsKeyPressed(Keyboard::B)
-        && !input.IsMouseButtonPressed(Mouse::Left)) {
-        if (!input.IsPlacementMode()) {
+    if (!input.IsPlacementMode()) {
+        if (input.KeyboardState.IsKeyPressed(Keyboard::B)) {
             input.EnterTowerPlacementMode();
+            towerPlacementMode(aRegistry, true);
         }
-        towerPlacementMode(aRegistry, true);
-    }
 
-    if (input.IsPlacementMode()) {
+        // Creeps
+        if (input.KeyboardState.IsKeyPressed(Keyboard::C) && prevInput
+            && prevInput->KeyboardState.IsKeyPressed(Keyboard::C)) {
+            creepSpawn(aRegistry);
+        }
+    } else {
         towerPlacementMode(aRegistry, true);
-    }
-
-    if (input.IsPlacementMode()) {
         if (input.KeyboardState.IsKeyPressed(Keyboard::Escape)) {
             input.ExitTowerPlacementMode();
             towerPlacementMode(aRegistry, false);
         }
 
-        if (input.IsMouseButtonPressed(Mouse::Left)) {
+        if (input.IsMouseButtonPressed(Mouse::Left)
+            && !prevInput->IsMouseButtonPressed(Mouse::Left)) {
             buildTower(aRegistry);
         }
-    }
-
-    // Creeps
-    if (input.KeyboardState.IsKeyPressed(Keyboard::C) && prevInput
-        && prevInput->KeyboardState.IsKeyPressed(Keyboard::C)) {
-        creepSpawn(aRegistry);
     }
 }
 
