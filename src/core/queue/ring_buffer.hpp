@@ -72,13 +72,13 @@
 template <typename Type, std::size_t Size>
 struct RingBuffer {
    public:
-    static constexpr std::size_t CAPACITY = Size;
+    static constexpr std::size_t kCapacity = Size;
 
     using value_type     = Type;
     using element_type   = std::optional<value_type>;
-    using container_type = std::array<element_type, CAPACITY>;
+    using container_type = std::array<element_type, kCapacity>;
 
-    RingBuffer() : mPrevious(CAPACITY - 1), mCtrl(CAPACITY) {}
+    RingBuffer() : mPrevious(kCapacity - 1), mCtrl(kCapacity) {}
 
     RingBuffer(const RingBuffer&)            = delete;
     RingBuffer(RingBuffer&&)                 = delete;
@@ -171,7 +171,7 @@ TEST_CASE("ring_buffer.round_trip")
 {
     RingBuffer<uint32_t, 8> rb;
 
-    for (uint32_t i = 0; i < rb.CAPACITY * 2; ++i) {
+    for (uint32_t i = 0; i < rb.kCapacity * 2; ++i) {
         rb.Latest() = i;
         CHECK_EQ(rb.Latest(), i);
         if (i != 0) {

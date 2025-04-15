@@ -49,7 +49,8 @@ CheckOptions:
   readability-identifier-naming.PrivateMemberPrefix: 'm'
   readability-identifier-naming.ProtectedMemberCase: CamelCase
   readability-identifier-naming.ProtectedMemberPrefix: 'm'
-  readability-identifier-naming.ConstantCase: UPPER_CASE
+  readability-identifier-naming.ConstantCase: CamelCase
+  readability-identifier-naming.ConstantPrefix: 'k'
   readability-identifier-naming.EnumConstantCase: CamelCase
   readability-identifier-naming.ConstantParameterCase: CamelCase
   readability-identifier-naming.ConstantParameterPrefix: 'a'
