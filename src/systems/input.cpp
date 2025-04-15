@@ -47,8 +47,8 @@ void PlayerInputSystem::operator()(Registry& aRegistry, const float aDeltaTime)
             towerPlacementMode(aRegistry, false);
         }
 
-        if (input.IsMouseButtonPressed(Mouse::Left)
-            && !prevInput->IsMouseButtonPressed(Mouse::Left)) {
+        if (input.MouseState.IsKeyPressed(Mouse::Left)
+            && !prevInput->MouseState.IsKeyPressed(Mouse::Left)) {
             buildTower(aRegistry);
         }
     }

@@ -2,6 +2,7 @@
 
 #include <GLFW/glfw3.h>
 
+#include <array>
 #include <cstring>
 #include <glm/glm.hpp>
 #include <string>
@@ -156,12 +157,12 @@ struct Button {
     struct State {
         std::string String() const;
         enum Action Action;
-        bool        Modifiers[6];
+        uint8_t     Modifiers;
     };
 };
 
-enum ModifierKey {
-    Shift,
+enum class ModifierKey {
+    Shift = 0,
     Ctrl,
     Alt,
     Super,
@@ -169,41 +170,70 @@ enum ModifierKey {
     NumLock,
 };
 
-struct KeyboardState {
-    KeyboardState() : Keys() {}
+constexpr inline uint8_t ModifierMask(const ModifierKey& aMod)
+{
+    return 1 << static_cast<uint8_t>(aMod);
+}
 
-    [[nodiscard]] bool IsKeyPressed(Keyboard::Key aKey) const
+inline void SetModifier(uint8_t& aMods, const uint8_t& aMod) { aMods |= aMod; }
+inline void SetModifier(uint8_t& aMods, const ModifierKey& aMod) { aMods |= ModifierMask(aMod); }
+inline void ClearModifier(uint8_t& aMods, const uint8_t& aMod) { aMods &= ~aMod; }
+inline void ClearModifier(uint8_t& aMods, const ModifierKey& aMod) { aMods &= ~ModifierMask(aMod); }
+inline bool IsModifierSet(const uint8_t& aMods, const uint8_t& aMod) { return (aMods & aMod) != 0; }
+inline bool IsModifierSet(const uint8_t& aMods, const ModifierKey& aMod)
+{
+    return (aMods & ModifierMask(aMod)) != 0;
+}
+
+constexpr uint8_t kAltShiftMod = ModifierMask(ModifierKey::Alt) | ModifierMask(ModifierKey::Shift);
+constexpr uint8_t kCtrlAltMod  = ModifierMask(ModifierKey::Ctrl) | ModifierMask(ModifierKey::Alt);
+constexpr uint8_t kCtrlShiftMod =
+    ModifierMask(ModifierKey::Ctrl) | ModifierMask(ModifierKey::Shift);
+constexpr uint8_t kCtrlAltShiftMod = ModifierMask(ModifierKey::Ctrl)
+                                     | ModifierMask(ModifierKey::Alt)
+                                     | ModifierMask(ModifierKey::Shift);
+
+template <std::size_t Size>
+struct InputState {
+    static constexpr std::size_t kCapacity = Size;
+    virtual ~InputState()                  = default;
+    virtual void Clear() { std::memset(Inputs.data(), 0, kCapacity * sizeof(Button::State)); }
+
+    [[nodiscard]] bool IsKeyPressed(std::size_t aKey) const
     {
-        return Keys[aKey].Action == Button::Press;
+        return Inputs[aKey].Action == Button::Press;
     }
-    [[nodiscard]] bool IsKeyRepeat(Keyboard::Key aKey) const
+    [[nodiscard]] bool IsKeyRepeat(std::size_t aKey) const
     {
-        return Keys[aKey].Action == Button::Repeat;
+        return Inputs[aKey].Action == Button::Repeat;
     }
-    [[nodiscard]] bool IsKeyReleased(Keyboard::Key aKey) const
+    [[nodiscard]] bool IsKeyReleased(std::size_t aKey) const
     {
-        return Keys[aKey].Action == Button::Release;
+        return Inputs[aKey].Action == Button::Release;
     }
-    [[nodiscard]] bool IsKeyUnknown(Keyboard::Key aKey) const
+    [[nodiscard]] bool IsKeyUnknown(std::size_t aKey) const
     {
-        return Keys[aKey].Action == Button::Unknown;
+        return Inputs[aKey].Action == Button::Unknown;
+    }
+    void SetKey(std::size_t aKey, Button::Action aAction) { Inputs[aKey].Action = aAction; }
+    void SetKeyModifier(std::size_t aKey, ModifierKey aMod)
+    {
+        SetModifier(Inputs[aKey].Modifiers, aMod);
     }
 
-    void Clear() { memset(Keys, 0, Keyboard::Count); }
-
-    std::string String() const;
-
-    Button::State Keys[Keyboard::Key::Count];
+    std::array<Button::State, kCapacity> Inputs;
 };
 
-struct MouseState {
-    static constexpr uint32_t N_BUTTONS = 3;
-    MouseState() : Pos(), Scroll(), Buttons() {}
+struct KeyboardState : public InputState<Keyboard::Count> {
+    std::string String() const;
+};
 
-    void Clear();
+static constexpr uint32_t kNumButtons = 3;
+struct MouseState : public InputState<kNumButtons> {
+    MouseState() : Pos(), Scroll() {}
 
-    glm::fvec2    Pos, Scroll;
-    Button::State Buttons[N_BUTTONS];
+    void       Clear() override;
+    glm::fvec2 Pos, Scroll;
 };
 
 std::string key_string(const Keyboard::Key& aK);
@@ -217,6 +247,8 @@ std::string key_string(const Keyboard::Key& aK);
 class Input
 {
    public:
+    using mouse_state    = InputState<3>;
+    using keyboard_state = InputState<Keyboard::Count>;
     Input() : MouseState(), mTowerPlacementMode(false), mCanBuild(true) {}
 
     void Init();
@@ -235,13 +267,6 @@ class Input
         int32_t                                 aAction,
         int32_t                                 aMods);
 
-    void SetMouseButtonPressed(Mouse::Button aButton, Button::Action aAction);
-    void SetMouseButtonModifier(Mouse::Button aButton, ModifierKey aMod);
-    void SetMousePos(double aX, double aY);
-    void SetMouseScroll(double aXoffset, double aYoffset);
-    void SetKey(Keyboard::Key aKey, Button::Action aState);
-    void SetKeyModifier(Keyboard::Key aKey, ModifierKey aMod);
-
     void ExitTowerPlacementMode() { mTowerPlacementMode = false; }
     void EnterTowerPlacementMode() { mTowerPlacementMode = true; }
 
@@ -249,11 +274,6 @@ class Input
     [[nodiscard]] bool IsAbleToBuild() const noexcept { return mCanBuild; }
 
     void SetCanBuild(bool aEnable) noexcept { mCanBuild = aEnable; }
-
-    bool IsMouseButtonPressed(Mouse::Button aButton) const
-    {
-        return MouseState.Buttons[aButton].Action == Button::Press;
-    }
 
     void DrawImgui(const Camera& aCamera,
         const glm::vec3&         aCamPos,
@@ -273,7 +293,7 @@ class Input
         const float                       aWidth,
         const float                       aHeight) const;
 
-    struct MouseState    MouseState;
+    struct MouseState    MouseState, PrevMouseState;
     struct KeyboardState KeyboardState, PrevKeyboardState;
 
    private:

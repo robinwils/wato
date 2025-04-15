@@ -428,11 +428,11 @@ struct OcornutImguiContext {
         io.AddMousePosEvent((float)aInput.MouseState.Pos.x, (float)aInput.MouseState.Pos.y);
 
         io.AddMouseButtonEvent(ImGuiMouseButton_Left,
-            aInput.IsMouseButtonPressed(Mouse::Button::Left));
+            aInput.MouseState.IsKeyPressed(Mouse::Button::Left));
         io.AddMouseButtonEvent(ImGuiMouseButton_Right,
-            aInput.IsMouseButtonPressed(Mouse::Button::Right));
+            aInput.MouseState.IsKeyPressed(Mouse::Button::Right));
         io.AddMouseButtonEvent(ImGuiMouseButton_Middle,
-            aInput.IsMouseButtonPressed(Mouse::Button::Middle));
+            aInput.MouseState.IsKeyPressed(Mouse::Button::Middle));
         io.AddMouseWheelEvent(0.0f, (float)(aInput.MouseState.Scroll.y - LastScroll));
         LastScroll = aInput.MouseState.Scroll.y;
 

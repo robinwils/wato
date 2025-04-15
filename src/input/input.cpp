@@ -6,6 +6,7 @@
 #include <imgui.h>
 #include <string.h>
 
+#include <cstring>
 #include <vector>
 
 #include "components/camera.hpp"
@@ -16,11 +17,12 @@
 
 void MouseState::Clear()
 {
+    InputState::Clear();
+
     Pos.x    = -1.0f;
     Pos.y    = -1.0f;
     Scroll.x = 0.0f;
     Scroll.y = 0.0f;
-    memset(Buttons, 0, N_BUTTONS);
 }
 
 Mouse::Button to_mouse_button(int32_t aButton)
@@ -570,22 +572,22 @@ std::string Button::State::String() const
 
     std::vector<std::string> modifiers;
 
-    if (Modifiers[ModifierKey::Ctrl]) {
+    if (IsModifierSet(Modifiers, ModifierKey::Ctrl)) {
         modifiers.push_back("Ctrl");
     }
-    if (Modifiers[ModifierKey::Alt]) {
+    if (IsModifierSet(Modifiers, ModifierKey::Alt)) {
         modifiers.push_back("Alt");
     }
-    if (Modifiers[ModifierKey::Shift]) {
+    if (IsModifierSet(Modifiers, ModifierKey::Shift)) {
         modifiers.push_back("Shift");
     }
-    if (Modifiers[ModifierKey::Super]) {
+    if (IsModifierSet(Modifiers, ModifierKey::Super)) {
         modifiers.push_back("Super");
     }
-    if (Modifiers[ModifierKey::CapsLock]) {
+    if (IsModifierSet(Modifiers, ModifierKey::CapsLock)) {
         modifiers.push_back("CapsLock");
     }
-    if (Modifiers[ModifierKey::NumLock]) {
+    if (IsModifierSet(Modifiers, ModifierKey::NumLock)) {
         modifiers.push_back("NumLock");
     }
 
@@ -597,7 +599,7 @@ std::string KeyboardState::String() const
     std::string str;
 
     for (uint32_t i = 0; i < Keyboard::Count; ++i) {
-        auto& state = Keys[i];
+        auto& state = Inputs[i];
         if (state.Action != Button::Unknown) {
             str = fmt::format("{}\n {} {}",
                 str,
@@ -619,40 +621,41 @@ void Input::KeyCallback(GLFWwindow* aWindow,
     Keyboard::Key key   = to_key(aKey);
 
     // don't reset current state, it will discard input and make movement choppy
-    input.SetKey(key, to_action(aAction));
-    fmt::print("key {} is {}\n", key_string(key), to_string(to_action(aAction)));
+    input.KeyboardState.SetKey(key, to_action(aAction));
+    // fmt::print("key {} is {}\n", key_string(key), to_string(to_action(aAction)));
 
     if (aMods & GLFW_MOD_SHIFT) {
-        input.SetKeyModifier(key, ModifierKey::Shift);
+        input.KeyboardState.SetKeyModifier(key, ModifierKey::Shift);
     }
     if (aMods & GLFW_MOD_CONTROL) {
-        input.SetKeyModifier(key, ModifierKey::Ctrl);
+        input.KeyboardState.SetKeyModifier(key, ModifierKey::Ctrl);
     }
     if (aMods & GLFW_MOD_ALT) {
-        input.SetKeyModifier(key, ModifierKey::Alt);
+        input.KeyboardState.SetKeyModifier(key, ModifierKey::Alt);
     }
     if (aMods & GLFW_MOD_SUPER) {
-        input.SetKeyModifier(key, ModifierKey::Super);
+        input.KeyboardState.SetKeyModifier(key, ModifierKey::Super);
     }
     if (aMods & GLFW_MOD_CAPS_LOCK) {
-        input.SetKeyModifier(key, ModifierKey::CapsLock);
+        input.KeyboardState.SetKeyModifier(key, ModifierKey::CapsLock);
     }
     if (aMods & GLFW_MOD_NUM_LOCK) {
-        input.SetKeyModifier(key, ModifierKey::NumLock);
+        input.KeyboardState.SetKeyModifier(key, ModifierKey::NumLock);
     }
-    fmt::print("input: {}\n", win->GetInput().Latest().KeyboardState.String());
-
-    if (win->GetInput().Previous()) {
-        fmt::print("prev input: {}\n", win->GetInput().Previous()->KeyboardState.String());
-    }
+    // fmt::print("input: {}\n", win->GetInput().Latest().KeyboardState.String());
+    //
+    // if (win->GetInput().Previous()) {
+    //     fmt::print("prev input: {}\n", win->GetInput().Previous()->KeyboardState.String());
+    // }
 }
 
-void Input::CursorPosCallback(GLFWwindow* aWindow, double aXpos, double aYpos)
+void Input::CursorPosCallback(GLFWwindow* aWindow, double aX, double aY)
 {
     auto*  win   = static_cast<WatoWindow*>(glfwGetWindowUserPointer(aWindow));
     Input& input = win->GetInput().Latest();
 
-    input.SetMousePos(aXpos, aYpos);
+    input.MouseState.Pos.x = aX;
+    input.MouseState.Pos.y = aY;
 }
 
 void Input::MouseButtonCallback(GLFWwindow* aWindow,
@@ -664,25 +667,25 @@ void Input::MouseButtonCallback(GLFWwindow* aWindow,
     Input&        input  = win->GetInput().Latest();
     Mouse::Button button = to_mouse_button(aButton);
 
-    input.SetMouseButtonPressed(button, to_action(aAction));
+    input.MouseState.SetKey(button, to_action(aAction));
 
     if (aMods & GLFW_MOD_SHIFT) {
-        input.SetMouseButtonModifier(button, ModifierKey::Shift);
+        input.MouseState.SetKeyModifier(button, ModifierKey::Shift);
     }
     if (aMods & GLFW_MOD_CONTROL) {
-        input.SetMouseButtonModifier(button, ModifierKey::Ctrl);
+        input.MouseState.SetKeyModifier(button, ModifierKey::Ctrl);
     }
     if (aMods & GLFW_MOD_ALT) {
-        input.SetMouseButtonModifier(button, ModifierKey::Alt);
+        input.MouseState.SetKeyModifier(button, ModifierKey::Alt);
     }
     if (aMods & GLFW_MOD_SUPER) {
-        input.SetMouseButtonModifier(button, ModifierKey::Super);
+        input.MouseState.SetKeyModifier(button, ModifierKey::Super);
     }
     if (aMods & GLFW_MOD_CAPS_LOCK) {
-        input.SetMouseButtonModifier(button, ModifierKey::CapsLock);
+        input.MouseState.SetKeyModifier(button, ModifierKey::CapsLock);
     }
     if (aMods & GLFW_MOD_NUM_LOCK) {
-        input.SetMouseButtonModifier(button, ModifierKey::NumLock);
+        input.MouseState.SetKeyModifier(button, ModifierKey::NumLock);
     }
 }
 
@@ -691,39 +694,8 @@ void Input::ScrollCallback(GLFWwindow* aWindow, double aXoffset, double aYoffset
     auto*  win   = static_cast<WatoWindow*>(glfwGetWindowUserPointer(aWindow));
     Input& input = win->GetInput().Latest();
 
-    input.SetMouseScroll(aXoffset, aYoffset);
-}
-
-void Input::SetMouseButtonPressed(Mouse::Button aButton, Button::Action aAction)
-{
-    MouseState.Buttons[aButton].Action = aAction;
-}
-
-void Input::SetMouseButtonModifier(Mouse::Button aButton, ModifierKey aMod)
-{
-    MouseState.Buttons[aButton].Modifiers[aMod] = true;
-}
-
-void Input::SetMousePos(double aX, double aY)
-{
-    MouseState.Pos.x = aX;
-    MouseState.Pos.y = aY;
-}
-
-void Input::SetMouseScroll(double aXoffset, double aYoffset)
-{
-    MouseState.Scroll.x = aXoffset;
-    MouseState.Scroll.y = aYoffset;
-}
-
-void Input::SetKey(Keyboard::Key aKey, Button::Action aAction)
-{
-    KeyboardState.Keys[aKey].Action = aAction;
-}
-
-void Input::SetKeyModifier(Keyboard::Key aKey, ModifierKey aMod)
-{
-    KeyboardState.Keys[aKey].Modifiers[aMod] = true;
+    input.MouseState.Scroll.x = aXoffset;
+    input.MouseState.Scroll.y = aYoffset;
 }
 
 void Input::DrawImgui(const Camera& aCam,

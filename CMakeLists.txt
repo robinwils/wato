@@ -308,6 +308,7 @@ target_sources(wato
     src/core/net/enet_client.hpp
     src/core/tile.hpp
     src/core/window.hpp
+    src/input/action.hpp
     src/input/input.hpp
     src/registry/game_registry.hpp
     src/renderer/bgfx_utils.hpp
@@ -332,6 +333,7 @@ target_sources(wato
     src/core/sys/mem.cpp
     src/core/window.cpp
     src/imgui/imgui_helper.cpp
+    src/input/action.cpp
     src/input/input.cpp
     src/main.cpp
     src/registry/game_registry.cpp
