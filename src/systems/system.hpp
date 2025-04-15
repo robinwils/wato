@@ -24,4 +24,9 @@ class System
     }
 
     constexpr const char* Name() const { return Derived::StaticName(); }
+
+   private:
+    System() = default;
+
+    friend Derived;
 };

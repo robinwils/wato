@@ -38,6 +38,7 @@ class Application
     CreepSystem           mCreepSystem;
 
     SystemRegistry mSystems;
+    SystemRegistry mSystemsFT;
 
     std::atomic_bool mRunning;
 };

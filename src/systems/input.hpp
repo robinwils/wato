@@ -18,3 +18,11 @@ class PlayerInputSystem : public System<PlayerInputSystem>
 
     glm::vec3 getMouseRay(Registry& aRegistry) const;
 };
+
+class InputSystem : public System<InputSystem>
+{
+   public:
+    void operator()(Registry& aRegistry, const float aDeltaTime);
+
+    static constexpr const char* StaticName() { return "InputSystem"; }
+};

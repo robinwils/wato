@@ -34,14 +34,17 @@ void Game::Init()
     entt::organizer organizerFixedTime;
     LoadResources(mRegistry);
     mSystems.push_back(RenderImguiSystem::MakeDelegate(mRenderImguiSystem));
-    mSystems.push_back(PlayerInputSystem::MakeDelegate(mPlayerInputSystem));
+    // mSystems.push_back(PlayerInputSystem::MakeDelegate(mPlayerInputSystem));
+    mSystems.push_back(InputSystem::MakeDelegate(mInputSystem));
     mSystems.push_back(CameraSystem::MakeDelegate(mCameraSystem));
-    // mSystems.push_back(PhysicsSystem::MakeDelegate(mPhysicsSystem));
     mSystems.push_back(RenderSystem::MakeDelegate(mRenderSystem));
 
 #if WATO_DEBUG
     mSystems.push_back(PhysicsDebugSystem::MakeDelegate(mPhysicsDbgSystem));
 #endif
+
+    mSystemsFT.push_back(PhysicsSystem::MakeDelegate(mPhysicsSystem));
+
     auto graph = organizerFixedTime.graph();
     INFO("graph size: %ld", graph.size());
     std::unordered_map<std::string, tf::Task> tasks;
@@ -68,13 +71,13 @@ int Game::Run()
     tf::Executor    executor;
     constexpr float timeStep = 1.0f / 60.0f;
 
-    auto& window    = mRegistry.ctx().get<WatoWindow&>();
-    auto& renderer  = mRegistry.ctx().get<Renderer&>();
-    auto& netClient = mRegistry.ctx().get<ENetClient&>();
-    auto& opts      = mRegistry.ctx().get<Options&>();
-    auto& actions   = mRegistry.ctx().get<ActionBuffer&>();
-
-    float accumulator                    = 0.0f;
+    auto&    window                      = mRegistry.ctx().get<WatoWindow&>();
+    auto&    renderer                    = mRegistry.ctx().get<Renderer&>();
+    auto&    netClient                   = mRegistry.ctx().get<ENetClient&>();
+    auto&    opts                        = mRegistry.ctx().get<Options&>();
+    auto&    actions                     = mRegistry.ctx().get<ActionBuffer&>();
+    uint32_t tick                        = 0;
+    float    accumulator                 = 0.0f;
     using clock_type                     = std::chrono::steady_clock;
     auto                        prevTime = clock_type::now();
     std::optional<std::jthread> netPollThread;
@@ -117,11 +120,17 @@ int Game::Run()
         // one or several physics steps
         while (accumulator >= timeStep) {
             // Decrease the accumulated time
-            accumulator -= timeStep;
+            Input& input  = window.GetInput().Latest();
+            accumulator  -= timeStep;
 
-            mPhysicsSystem(mRegistry, timeStep);
+            for (const auto& system : mSystemsFT) {
+                system(mRegistry, timeStep);
+            }
             window.GetInput().Push(window.GetInput().Latest());
             actions.Push();
+            input.PrevKeyboardState = input.KeyboardState;
+            input.PrevMouseState    = input.MouseState;
+            tick++;
         }
 
         mUpdateTransformsSystem(mRegistry, accumulator / timeStep);

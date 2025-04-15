@@ -19,6 +19,7 @@ class Game : public Application
         : Application(aWidth, aHeight, aArgv), mPhysicsEventHandler(&mRegistry)
     {
         mRegistry.ctx().emplace<ActionBuffer>();
+        mRegistry.ctx().emplace<ActionContextStack>();
         mRegistry.ctx().emplace<WatoWindow>(aWidth, aHeight);
         mRegistry.ctx().emplace<Renderer>();
         mRegistry.ctx().emplace<ENetClient>();
@@ -37,6 +38,7 @@ class Game : public Application
     entt::organizer   mFrameTimeOrganizer;
     tf::Taskflow      mTaskflow;
     PlayerInputSystem mPlayerInputSystem;
+    InputSystem       mInputSystem;
     RenderSystem      mRenderSystem;
     RenderImguiSystem mRenderImguiSystem;
     CameraSystem      mCameraSystem;
