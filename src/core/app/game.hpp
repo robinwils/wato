@@ -9,6 +9,7 @@
 #include "core/net/enet_client.hpp"
 #include "input/action.hpp"
 #include "renderer/renderer.hpp"
+#include "systems/action.hpp"
 #include "systems/input.hpp"
 #include "systems/render.hpp"
 
@@ -35,13 +36,15 @@ class Game : public Application
     int  Run() override;
 
    private:
-    entt::organizer   mFrameTimeOrganizer;
-    tf::Taskflow      mTaskflow;
-    PlayerInputSystem mPlayerInputSystem;
-    InputSystem       mInputSystem;
-    RenderSystem      mRenderSystem;
-    RenderImguiSystem mRenderImguiSystem;
-    CameraSystem      mCameraSystem;
+    entt::organizer           mFrameTimeOrganizer;
+    tf::Taskflow              mTaskflow;
+    PlayerInputSystem         mPlayerInputSystem;
+    InputSystem               mInputSystem;
+    DeterministicActionSystem mFTActionSystem;
+    RealTimeActionSystem      mActionSystem;
+    RenderSystem              mRenderSystem;
+    RenderImguiSystem         mRenderImguiSystem;
+    CameraSystem              mCameraSystem;
 #if WATO_DEBUG
     PhysicsDebugSystem mPhysicsDbgSystem;
 #endif

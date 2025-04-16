@@ -29,4 +29,7 @@ class System
     System() = default;
 
     friend Derived;
+
+    template <typename T>
+    friend class ActionSystem;
 };

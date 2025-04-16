@@ -36,6 +36,7 @@ void Game::Init()
     mSystems.push_back(RenderImguiSystem::MakeDelegate(mRenderImguiSystem));
     // mSystems.push_back(PlayerInputSystem::MakeDelegate(mPlayerInputSystem));
     mSystems.push_back(InputSystem::MakeDelegate(mInputSystem));
+    mSystems.push_back(RealTimeActionSystem::MakeDelegate(mActionSystem));
     mSystems.push_back(CameraSystem::MakeDelegate(mCameraSystem));
     mSystems.push_back(RenderSystem::MakeDelegate(mRenderSystem));
 
@@ -43,6 +44,7 @@ void Game::Init()
     mSystems.push_back(PhysicsDebugSystem::MakeDelegate(mPhysicsDbgSystem));
 #endif
 
+    mSystemsFT.push_back(DeterministicActionSystem::MakeDelegate(mFTActionSystem));
     mSystemsFT.push_back(PhysicsSystem::MakeDelegate(mPhysicsSystem));
 
     auto graph = organizerFixedTime.graph();
@@ -102,6 +104,7 @@ int Game::Run()
             renderer.Resize(window);
         }
 
+        Input&                       input      = window.GetInput().Latest();
         auto                         now        = clock_type::now();
         std::chrono::duration<float> frameTime  = (now - prevTime);
         accumulator                            += frameTime.count();
@@ -120,21 +123,20 @@ int Game::Run()
         // one or several physics steps
         while (accumulator >= timeStep) {
             // Decrease the accumulated time
-            Input& input  = window.GetInput().Latest();
-            accumulator  -= timeStep;
+            accumulator -= timeStep;
 
             for (const auto& system : mSystemsFT) {
                 system(mRegistry, timeStep);
             }
             window.GetInput().Push(window.GetInput().Latest());
             actions.Push();
-            input.PrevKeyboardState = input.KeyboardState;
-            input.PrevMouseState    = input.MouseState;
             tick++;
         }
 
         mUpdateTransformsSystem(mRegistry, accumulator / timeStep);
         renderer.Render();
+        input.PrevKeyboardState = input.KeyboardState;
+        input.PrevMouseState    = input.MouseState;
     }
 
     if (opts.Multiplayer()) {

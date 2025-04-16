@@ -318,6 +318,7 @@ target_sources(wato
     src/renderer/plane_primitive.hpp
     src/renderer/primitive.hpp
     src/renderer/renderer.hpp
+    src/systems/action.hpp
     src/systems/input.hpp
     src/systems/render.hpp
 
@@ -340,6 +341,7 @@ target_sources(wato
     src/renderer/bgfx_utils.cpp
     src/renderer/material.cpp
     src/renderer/renderer.cpp
+    src/systems/action.cpp
     src/systems/input.cpp
     src/systems/render.cpp
 )

@@ -9,11 +9,14 @@
 #include "core/queue/ring_buffer.hpp"
 #include "input/input.hpp"
 
+using namespace entt::literals;
+
 enum class ActionType {
     Move,
     SendCreep,
     BuildTower,
-    PopCtx,
+    EnterPlacementMode,
+    ExitPlacementMode,
 };
 
 enum class ActionTag {
@@ -42,11 +45,19 @@ struct BuildTowerPayload {
     entt::hashed_string Tower;
 };
 
+struct PlacementModePayload {
+    bool                CanBuild;
+    entt::hashed_string Tower;
+};
+
 struct Action {
-    using payload_type = std::variant<MovePayload, SendCreepPayload, BuildTowerPayload>;
+    using payload_type =
+        std::variant<MovePayload, SendCreepPayload, BuildTowerPayload, PlacementModePayload>;
     ActionType   Type;
     ActionTag    Tag;
     payload_type Payload;
+
+    std::string String() const;
 };
 
 constexpr Action kMoveLeftAction = Action{.Type = ActionType::Move,
@@ -65,13 +76,17 @@ constexpr Action kMoveBackAction = Action{.Type = ActionType::Move,
     .Tag                                        = ActionTag::FrameTime,
     .Payload = MovePayload{.Direction = MovePayload::Direction::Back}};
 
-constexpr Action kBuildTowerAction = Action{.Type = ActionType::Move,
+constexpr Action kEnterPlacementModeAction = Action{.Type = ActionType::EnterPlacementMode,
+    .Tag                                                  = ActionTag::FixedTime,
+    .Payload = PlacementModePayload{.Tower = "tower_model"_hs}};
+
+constexpr Action kBuildTowerAction = Action{.Type = ActionType::BuildTower,
     .Tag                                          = ActionTag::FixedTime,
     .Payload                                      = BuildTowerPayload{.Tower = ""}};
 
-constexpr Action kPopCtxAction = Action{.Type = ActionType::PopCtx,
-    .Tag                                      = ActionTag::FrameTime,
-    .Payload = MovePayload{.Direction = MovePayload::Direction::Back}};
+constexpr Action kExitPlacementModeAction = Action{.Type = ActionType::ExitPlacementMode,
+    .Tag                                                 = ActionTag::FrameTime,
+    .Payload                                             = PlacementModePayload{}};
 
 struct ActionBinding {
     struct KeyState KeyState;
@@ -96,12 +111,8 @@ class ActionBindings
 struct NormalPayload {
 };
 
-struct PlacementPayload {
-    entt::hashed_string Tower;
-};
-
 struct ActionContext {
-    using payload_type = std::variant<NormalPayload, PlacementPayload>;
+    using payload_type = std::variant<NormalPayload, PlacementModePayload>;
     enum class State {
         Default,  // rename ?
         Placement,

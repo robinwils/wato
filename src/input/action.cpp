@@ -1,5 +1,8 @@
 #include "input/action.hpp"
 
+#include <fmt/base.h>
+#include <fmt/format.h>
+
 ActionBindings ActionBindings::Defaults()
 {
     ActionBindings bindings;
@@ -31,26 +34,33 @@ ActionBindings ActionBindings::Defaults()
             .Modifiers = 0,
         },
         kMoveBackAction);
-    return bindings;
-}
-
-ActionBindings ActionBindings::PlacementDefaults()
-{
-    ActionBindings bindings;
-    bindings.AddBinding("build_tower",
+    bindings.AddBinding("enter_placement_ctx",
         KeyState{
             .Key       = Keyboard::B,
             .State     = KeyState::State::PressOnce,
             .Modifiers = 0,
         },
+        kEnterPlacementModeAction);
+    return bindings;
+}
+
+ActionBindings ActionBindings::PlacementDefaults()
+{
+    ActionBindings bindings = Defaults();
+    bindings.AddBinding("build_tower",
+        KeyState{
+            .Key       = Mouse::Button::Left,
+            .State     = KeyState::State::PressOnce,
+            .Modifiers = 0,
+        },
         kBuildTowerAction);
-    bindings.AddBinding("pop_context",
+    bindings.AddBinding("exit_placement_mode",
         KeyState{
             .Key       = Keyboard::Escape,
             .State     = KeyState::State::PressOnce,
             .Modifiers = 0,
         },
-        kBuildTowerAction);
+        kExitPlacementModeAction);
     return bindings;
 }
 
@@ -58,24 +68,95 @@ ActionBindings::actions_type ActionBindings::ActionsFromInput(const Input& aInpu
 {
     ActionBindings::actions_type actions;
 
+    // fmt::println("keyboard state {}", aInput.KeyboardState.String());
+    // fmt::println("prev keyboard state {}", aInput.PrevKeyboardState.String());
     for (const auto& [_, binding] : mBindings) {
         std::visit(InputButtonVisitor{// handle keyboard binding
                        [&](const Keyboard::Key& aKey) {
                            if (binding.KeyState.State == KeyState::State::Hold
-                               && (aInput.KeyboardState.IsKeyPressed(aKey)
+                               && ((aInput.KeyboardState.IsKeyPressed(aKey)
+                                       && aInput.PrevKeyboardState.IsKeyPressed(aKey))
                                    || aInput.KeyboardState.IsKeyRepeat(aKey))) {
                                actions.push_back(binding.Action);
                            } else if (binding.KeyState.State == KeyState::State::PressOnce
-                                      && aInput.PrevKeyboardState.IsKeyPressed(aKey)
-                                      && aInput.PrevKeyboardState.IsKeyReleased(aKey)) {
+                                      && aInput.KeyboardState.IsKeyPressed(aKey)
+                                      && (aInput.PrevKeyboardState.IsKeyReleased(aKey)
+                                          || aInput.PrevKeyboardState.IsKeyUnknown(aKey))) {
                                actions.push_back(binding.Action);
                            }
                        },
-                       [&](const Mouse::Button& aButton) {}},
+                       [&](const Mouse::Button& aButton) {
+                           fmt::println("MouseState {}", aInput.MouseState.String());
+                           if (binding.KeyState.State == KeyState::State::Hold
+                               && ((aInput.MouseState.IsKeyPressed(aButton)
+                                       && aInput.PrevMouseState.IsKeyPressed(aButton))
+                                   || aInput.MouseState.IsKeyRepeat(aButton))) {
+                               actions.push_back(binding.Action);
+                           } else if (binding.KeyState.State == KeyState::State::PressOnce
+                                      && aInput.MouseState.IsKeyPressed(aButton)
+                                      && (aInput.PrevMouseState.IsKeyReleased(aButton)
+                                          || aInput.PrevMouseState.IsKeyUnknown(aButton))) {
+                               actions.push_back(binding.Action);
+                           }
+                       }},
             binding.KeyState.Key);
     }
 
     return actions;
+}
+
+std::string Action::String() const
+{
+    std::string typeStr;
+    switch (Type) {
+        case ActionType::Move:
+            typeStr = "Move";
+            break;
+        case ActionType::SendCreep:
+            typeStr = "SendCreep";
+            break;
+        case ActionType::BuildTower:
+            typeStr = "BuildTower";
+            break;
+        case ActionType::ExitPlacementMode:
+            typeStr = "ExitPlacement";
+            break;
+        case ActionType::EnterPlacementMode:
+            typeStr = "EnterPlacement";
+            break;
+        default:
+            typeStr = "Unknown";
+            break;
+    }
+
+    std::string tagStr = Tag == ActionTag::FixedTime ? "FixedTime" : "FrameTime";
+
+    std::string payloadStr = std::visit(
+        [](const auto& aPayload) -> std::string {
+            using T = std::decay_t<decltype(aPayload)>;
+            if constexpr (std::is_same_v<T, MovePayload>) {
+                switch (aPayload.Direction) {
+                    case MovePayload::Direction::Left:
+                        return "Left";
+                    case MovePayload::Direction::Right:
+                        return "Right";
+                    case MovePayload::Direction::Front:
+                        return "Front";
+                    case MovePayload::Direction::Back:
+                        return "Back";
+                    default:
+                        return "Unknown";
+                }
+            } else if constexpr (std::is_same_v<T, SendCreepPayload>) {
+                return fmt::format("CreepType: {}", aPayload.Type.data());
+            } else if constexpr (std::is_same_v<T, BuildTowerPayload>) {
+                return fmt::format("TowerType: {}", aPayload.Tower.data());
+            }
+            return "Unknown";
+        },
+        Payload);
+
+    return fmt::format("Action{{Type: {}, Tag: {}, Payload: {}}}", typeStr, tagStr, payloadStr);
 }
 
 void ActionBindings::AddBinding(const std::string& aActionStr,
