@@ -1,6 +1,8 @@
 #include "systems/render.hpp"
 
 #include <bgfx/bgfx.h>
+#include <bgfx/defines.h>
+#include <fmt/base.h>
 
 #include <cstdint>
 #include <glm/ext/matrix_float4x4.hpp>
@@ -11,6 +13,7 @@
 #include "components/scene_object.hpp"
 #include "core/cache.hpp"
 #include "core/physics.hpp"
+#include "core/ray.hpp"
 #include "core/window.hpp"
 #include "imgui_helper.h"
 
@@ -110,6 +113,8 @@ void RenderImguiSystem::operator()(Registry& aRegistry, const float aDeltaTime)
     ImGui::Text("%d debug lines and %d debug triangles", nLines, nTri);
     ImGui::Checkbox("Collider Shapes", &phy.Params.RenderShapes);
     ImGui::Checkbox("Collider AABB", &phy.Params.RenderAabb);
+    ImGui::Checkbox("Contact Points", &phy.Params.RenderContactPoints);
+    ImGui::Checkbox("Contact Normals", &phy.Params.RenderContactNormals);
 
     debugRenderer.setIsDebugItemDisplayed(rp3d::DebugRenderer::DebugItem::COLLISION_SHAPE,
         phy.Params.RenderShapes);
@@ -176,7 +181,7 @@ void PhysicsDebugSystem::operator()(Registry& aRegistry, const float aDeltaTime)
     auto  debugShader = WATO_PROGRAM_CACHE["simple"_hs];
     auto* debugMat    = new Material(debugShader);
     if (nTri > 0) {
-        auto state = BGFX_STATE_DEFAULT;
+        auto state = BGFX_STATE_WRITE_RGB | BGFX_STATE_DEPTH_TEST_ALWAYS;
         if (3 * nTri == bgfx::getAvailTransientVertexBuffer(3 * nTri, PosColor::msLayout)) {
             bgfx::TransientVertexBuffer vb{};
             bgfx::allocTransientVertexBuffer(&vb, 3 * nTri, PosColor::msLayout);
