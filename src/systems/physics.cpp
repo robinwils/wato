@@ -6,6 +6,7 @@
 #include <entt/core/hashed_string.hpp>
 
 #include "components/rigid_body.hpp"
+#include "components/tile.hpp"
 #include "components/transform3d.hpp"
 #include "core/physics.hpp"
 #include "registry/registry.hpp"
@@ -21,7 +22,8 @@ void PhysicsSystem::operator()(Registry& aRegistry, const float aDeltaTime)
 void UpdateTransformsSytem ::operator()(Registry& aRegistry, const float aFactor)
 {
     // update transforms
-    for (auto&& [entity, t, rb] : aRegistry.view<Transform3D, RigidBody>().each()) {
+    for (auto&& [entity, t, rb] :
+        aRegistry.view<Transform3D, RigidBody>(entt::exclude<Tile>).each()) {
         auto updatedTransform = rb.RigidBody->getTransform();
         auto interpolatedTransform =
             reactphysics3d::Transform::interpolateTransforms(t.ToRP3D(), updatedTransform, aFactor);
