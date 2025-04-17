@@ -25,4 +25,7 @@ class InputSystem : public System<InputSystem>
     void operator()(Registry& aRegistry, const float aDeltaTime);
 
     static constexpr const char* StaticName() { return "InputSystem"; }
+
+   private:
+    void handleMouseMovement(Registry& aRegistry, const float aDeltaTime);
 };

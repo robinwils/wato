@@ -10,6 +10,6 @@ struct Ray {
 
     float IntersectPlane(const glm::vec3& aPlaneNormal) const
     {
-        return glm::dot(Orig, aPlaneNormal) / glm::dot(Dir, aPlaneNormal);
+        return glm::dot(-Orig, aPlaneNormal) / glm::dot(Dir, aPlaneNormal);
     }
 };

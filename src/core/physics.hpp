@@ -1,15 +1,17 @@
 #pragma once
 
 #include <fmt/base.h>
+#include <fmt/format.h>
 
 #include <entt/entity/fwd.hpp>
 #include <glm/glm.hpp>
+#include <vector>
 
-#include "components/rigid_body.hpp"
-#include "components/transform3d.hpp"
 #include "config.h"
 #include "core/event_handler.hpp"
-#include "reactphysics3d/reactphysics3d.h"
+
+// Enumeration for categories
+enum Category { PlacementGhostTower = 0x0001, Terrain = 0x0002, Entities = 0x0004 };
 
 struct PhysicsParams {
     bool InfoLogs;
@@ -117,4 +119,31 @@ class Physics
    private:
     rp3d::PhysicsCommon mCommon;
     rp3d::PhysicsWorld* mWorld = nullptr;
+};
+
+inline rp3d::Vector3 ToRP3D(const glm::vec3 aVector)
+{
+    return rp3d::Vector3(aVector.x, aVector.y, aVector.z);
+}
+
+struct WorldRaycastCallback : public rp3d::RaycastCallback {
+    virtual rp3d::decimal notifyRaycastHit(const rp3d::RaycastInfo& aInfo)
+    {
+        if (aInfo.hitFraction == 0.0f) return rp3d::decimal(-1.0f);
+        Hits.push_back(glm::vec3(aInfo.worldPoint.x, aInfo.worldPoint.y, aInfo.worldPoint.z));
+
+        // Return a fraction of 1.0 to gather all hits
+        return aInfo.hitFraction;
+    }
+
+    std::string String() const
+    {
+        std::string res;
+        for (const auto& hit : Hits) {
+            res = fmt::format("{} ({:f}, {:f}, {:f})", res, hit.x, hit.y, hit.z);
+        }
+        return res;
+    }
+
+    std::vector<glm::vec3> Hits;
 };

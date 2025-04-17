@@ -2,9 +2,12 @@
 
 #include <fmt/base.h>
 
+#include <variant>
+
 #include "components/placement_mode.hpp"
 #include "core/window.hpp"
 #include "entt/entity/fwd.hpp"
+#include "input/action.hpp"
 
 void EventHandler::onContact(const rp3d::CollisionCallback::CallbackData& aCallbackData) {}
 
@@ -28,6 +31,7 @@ void EventHandler::onTrigger(const rp3d::OverlapCallback::CallbackData& aCallbac
             switch (pair.getEventType()) {
                 case rp3d::OverlapCallback::OverlapPair::EventType::OverlapStart:
                 case rp3d::OverlapCallback::OverlapPair::EventType::OverlapStay:
+                    fmt::println("cannot build anymore");
                     canBuild = false;
                     break;
                 default:
@@ -35,5 +39,8 @@ void EventHandler::onTrigger(const rp3d::OverlapCallback::CallbackData& aCallbac
             }
         }
     }
-    mRegistry->ctx().get<WatoWindow&>().GetInput().Latest().SetCanBuild(canBuild);
+    auto& actionCtx = mRegistry->ctx().get<ActionContextStack&>().front();
+    if (auto* payload = std::get_if<PlacementModePayload>(&actionCtx.Payload)) {
+        payload->CanBuild = canBuild;
+    }
 }

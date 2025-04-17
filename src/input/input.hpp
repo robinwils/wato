@@ -232,11 +232,13 @@ static constexpr uint32_t kNumButtons = 3;
 struct MouseState : public InputState<kNumButtons> {
     MouseState() : Pos(), Scroll() {}
 
-    void       Clear() override;
-    glm::fvec2 Pos, Scroll;
+    std::string String() const;
+    void        Clear() override;
+    glm::fvec2  Pos, Scroll;
 };
 
 std::string key_string(const Keyboard::Key& aK);
+std::string mouse_button_string(const Mouse::Button& aButton);
 
 // TODO: rework Input in different steps (see if doable):
 // - This class for current and previous raw input (as before...)

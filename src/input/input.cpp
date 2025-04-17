@@ -1,5 +1,6 @@
 #include "input.hpp"
 
+#include <fmt/base.h>
 #include <fmt/core.h>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
@@ -7,13 +8,13 @@
 #include <string.h>
 
 #include <cstring>
+#include <glm/gtx/string_cast.hpp>
 #include <vector>
 
 #include "components/camera.hpp"
 #include "core/queue/ring_buffer.hpp"
 #include "core/sys/log.hpp"
 #include "core/window.hpp"
-#include "glm/gtx/string_cast.hpp"
 
 void MouseState::Clear()
 {
@@ -23,6 +24,22 @@ void MouseState::Clear()
     Pos.y    = -1.0f;
     Scroll.x = 0.0f;
     Scroll.y = 0.0f;
+}
+
+std::string MouseState::String() const
+{
+    std::string str;
+
+    for (uint32_t i = 0; i < MouseState::kCapacity; ++i) {
+        auto& state = Inputs[i];
+        if (state.Action != Button::Unknown) {
+            str = fmt::format("{}\n {} {}",
+                str,
+                mouse_button_string(static_cast<Mouse::Button>(i)),
+                state.String());
+        }
+    }
+    return str;
 }
 
 Mouse::Button to_mouse_button(int32_t aButton)
@@ -564,6 +581,20 @@ std::string key_string(const Keyboard::Key& aKey)
     }
 }
 
+std::string mouse_button_string(const Mouse::Button& aButton)
+{
+    switch (aButton) {
+        case Mouse::Button::Left:
+            return "Left";
+        case Mouse::Button::Right:
+            return "Right";
+        case Mouse::Button::Middle:
+            return "Middle";
+        default:
+            return "Unknown";
+    }
+}
+
 std::string Button::State::String() const
 {
     if (Action == Button::Unknown) {
@@ -687,6 +718,8 @@ void Input::MouseButtonCallback(GLFWwindow* aWindow,
     if (aMods & GLFW_MOD_NUM_LOCK) {
         input.MouseState.SetKeyModifier(button, ModifierKey::NumLock);
     }
+    // fmt::println("mouse state {}", input.MouseState.String());
+    // fmt::println("prev mouse state {}", input.PrevMouseState.String());
 }
 
 void Input::ScrollCallback(GLFWwindow* aWindow, double aXoffset, double aYoffset)
@@ -715,17 +748,13 @@ glm::vec3 Input::WorldMousePos(const Camera& aCam,
     const float                              aWidth,
     const float                              aHeight) const
 {
-    // viewport -> NDC
-    float xNdc = 1.0f - 2.0f * MouseState.Pos.x / aWidth;
-    float yNdc = 1.0f - 2.0f * MouseState.Pos.y / aHeight;
+    float            x        = MouseState.Pos.x;
+    float            y        = aHeight - MouseState.Pos.y;
+    const glm::mat4& view     = aCam.View(aCamPos);
+    const glm::mat4& proj     = aCam.Projection(aWidth, aHeight);
+    const auto&      viewport = glm::vec4(0, 0, aWidth, aHeight);
+    glm::vec3        near     = glm::unProject(glm::vec3(x, y, 0.0f), view, proj, viewport);
+    glm::vec3        far      = glm::unProject(glm::vec3(x, y, 1.0f), view, proj, viewport);
 
-    // NDC -> view
-    const auto& invProj = glm::inverse(aCam.Projection(aWidth, aHeight));
-    glm::vec4   rayNdc(xNdc, yNdc, 1.0f, 1.0f);
-    glm::vec4   rayView = rayNdc * invProj;
-
-    // view -> world
-    const auto& invView = glm::inverse(aCam.View(aCamPos));
-    rayView             = glm::vec4(rayView.x, rayView.y, 1.0f, 0.0f);
-    return glm::normalize(rayView * invView);
+    return far - near;
 }

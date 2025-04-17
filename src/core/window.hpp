@@ -6,6 +6,7 @@
 
 #include "core/queue/ring_buffer.hpp"
 #include "input/input.hpp"
+
 class WatoWindow
 {
    public:
@@ -51,6 +52,9 @@ class WatoWindow
     }
 
     [[nodiscard]] bool IsInitialized() const noexcept { return mIsInit; }
+
+    [[nodiscard]] std::pair<glm::vec3, glm::vec3> MouseUnproject(const Camera& aCam,
+        const glm::vec3&                                                       aCamPos);
 
    private:
     struct GLFWwindowDeleter {
