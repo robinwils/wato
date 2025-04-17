@@ -20,12 +20,14 @@ void CreepSystem::operator()(Registry& aRegistry, const float aDeltaTime)
         aRegistry.emplace<Health>(creep, 100.0f);
         aRegistry.emplace<Creep>(creep, Creep::Simple);
 
-        auto* body = phy.CreateRigidBody(creep,
+        auto*           body = phy.CreateRigidBody(creep,
             aRegistry,
             RigidBodyParams{.Type = rp3d::BodyType::DYNAMIC,
-                .Transform        = t.ToRP3D(),
-                .GravityEnabled   = false});
-        phy.AddBoxCollider(body, rp3d::Vector3(0.35F, 0.65F, 0.35F), true);
+                          .Transform        = t.ToRP3D(),
+                          .GravityEnabled   = false});
+        rp3d::Collider* collider =
+            phy.AddBoxCollider(body, rp3d::Vector3(0.35F, 0.65F, 0.35F), true);
+        collider->setCollisionCategoryBits(Category::Entities);
 
         aRegistry.destroy(cmd);
     }
