@@ -18,11 +18,10 @@
 
 void InputSystem::operator()(Registry& aRegistry, const float aDeltaTime)
 {
-    RingBuffer<Input, 128>& rbuf          = aRegistry.ctx().get<WatoWindow&>().GetInput();
-    auto&                   actionCtx     = aRegistry.ctx().get<ActionContextStack&>().front();
-    auto&                   abuf          = aRegistry.ctx().get<ActionBuffer&>();
-    const Input&            input         = rbuf.Latest();
-    PlayerActions&          latestActions = abuf.Latest();
+    const Input&   input         = aRegistry.ctx().get<WatoWindow&>().GetInput();
+    auto&          actionCtx     = aRegistry.ctx().get<ActionContextStack&>().front();
+    auto&          abuf          = aRegistry.ctx().get<ActionBuffer&>();
+    PlayerActions& latestActions = abuf.Latest();
     const ActionBindings::actions_type& curActions = actionCtx.Bindings.ActionsFromInput(input);
 
     latestActions.Actions.insert(latestActions.Actions.end(), curActions.begin(), curActions.end());

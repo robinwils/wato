@@ -43,7 +43,7 @@ class WatoWindow
         return static_cast<T>(mHeight);
     }
 
-    RingBuffer<Input, 128>& GetInput() { return mInputBuffer; }
+    Input& GetInput() { return mInput; }
 
     void SetSize(int aWidth, int aHeight)
     {
@@ -54,7 +54,7 @@ class WatoWindow
     [[nodiscard]] bool IsInitialized() const noexcept { return mIsInit; }
 
     [[nodiscard]] std::pair<glm::vec3, glm::vec3> MouseUnproject(const Camera& aCam,
-        const glm::vec3&                                                       aCamPos);
+        const glm::vec3&                                                       aCamPos) const;
 
    private:
     struct GLFWwindowDeleter {
@@ -72,7 +72,7 @@ class WatoWindow
 
     glfw_window_ptr mGLFWWindow;
 
-    RingBuffer<Input, 128> mInputBuffer;
+    Input mInput;
 
     bool mIsInit;
 };

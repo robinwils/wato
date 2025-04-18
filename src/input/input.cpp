@@ -648,7 +648,7 @@ void Input::KeyCallback(GLFWwindow* aWindow,
     int32_t                         aMods)
 {
     auto*         win   = static_cast<WatoWindow*>(glfwGetWindowUserPointer(aWindow));
-    Input&        input = win->GetInput().Latest();
+    Input&        input = win->GetInput();
     Keyboard::Key key   = to_key(aKey);
 
     // don't reset current state, it will discard input and make movement choppy
@@ -673,17 +673,12 @@ void Input::KeyCallback(GLFWwindow* aWindow,
     if (aMods & GLFW_MOD_NUM_LOCK) {
         input.KeyboardState.SetKeyModifier(key, ModifierKey::NumLock);
     }
-    // fmt::print("input: {}\n", win->GetInput().Latest().KeyboardState.String());
-    //
-    // if (win->GetInput().Previous()) {
-    //     fmt::print("prev input: {}\n", win->GetInput().Previous()->KeyboardState.String());
-    // }
 }
 
 void Input::CursorPosCallback(GLFWwindow* aWindow, double aX, double aY)
 {
     auto*  win   = static_cast<WatoWindow*>(glfwGetWindowUserPointer(aWindow));
-    Input& input = win->GetInput().Latest();
+    Input& input = win->GetInput();
 
     input.MouseState.Pos.x = aX;
     input.MouseState.Pos.y = aY;
@@ -695,7 +690,7 @@ void Input::MouseButtonCallback(GLFWwindow* aWindow,
     int32_t                                 aMods)
 {
     auto*         win    = static_cast<WatoWindow*>(glfwGetWindowUserPointer(aWindow));
-    Input&        input  = win->GetInput().Latest();
+    Input&        input  = win->GetInput();
     Mouse::Button button = to_mouse_button(aButton);
 
     input.MouseState.SetKey(button, to_action(aAction));
@@ -725,7 +720,7 @@ void Input::MouseButtonCallback(GLFWwindow* aWindow,
 void Input::ScrollCallback(GLFWwindow* aWindow, double aXoffset, double aYoffset)
 {
     auto*  win   = static_cast<WatoWindow*>(glfwGetWindowUserPointer(aWindow));
-    Input& input = win->GetInput().Latest();
+    Input& input = win->GetInput();
 
     input.MouseState.Scroll.x = aXoffset;
     input.MouseState.Scroll.y = aYoffset;
@@ -733,7 +728,7 @@ void Input::ScrollCallback(GLFWwindow* aWindow, double aXoffset, double aYoffset
 
 void Input::DrawImgui(const Camera& aCam, const glm::vec3& aCamPos, WatoWindow& aWin)
 {
-    auto [origin, end] = aWin.MouseUnproject(aCam, aCamPos);
+    const auto& [origin, end] = aWin.MouseUnproject(aCam, aCamPos);
 
     ImGui::Text("Input Information");
     ImGui::Text("Mouse: %s", glm::to_string(MouseState.Pos).c_str());

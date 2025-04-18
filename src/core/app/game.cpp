@@ -103,7 +103,7 @@ int Game::Run()
             renderer.Resize(window);
         }
 
-        Input&                       input      = window.GetInput().Latest();
+        Input&                       input      = window.GetInput();
         auto                         now        = clock_type::now();
         std::chrono::duration<float> frameTime  = (now - prevTime);
         accumulator                            += frameTime.count();
@@ -127,7 +127,6 @@ int Game::Run()
             for (const auto& system : mSystemsFT) {
                 system(mRegistry, timeStep);
             }
-            window.GetInput().Push(window.GetInput().Latest());
             actions.Push();
             tick++;
         }

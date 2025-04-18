@@ -4,10 +4,8 @@
 
 #include <thread>
 
-#include "components/creep_spawn.hpp"
 #include "core/physics.hpp"
-#include "core/queue/ring_buffer.hpp"
-#include "input/input.hpp"
+#include "input/action.hpp"
 #include "systems/system.hpp"
 
 void GameServer::Init()
@@ -34,7 +32,7 @@ int GameServer::Run()
         }
     }};
 
-    RingBuffer<Input, 128> rb;
+    ActionBuffer rb;
 
     while (mRunning) {
         auto                         t  = clock::now();

@@ -70,16 +70,16 @@ void* WatoWindow::GetNativeWindow()
 }
 
 std::pair<glm::vec3, glm::vec3> WatoWindow::MouseUnproject(const Camera& aCam,
-    const glm::vec3&                                                     aCamPos)
+    const glm::vec3&                                                     aCamPos) const
 {
-    MouseState&      mouseState = mInputBuffer.Latest().MouseState;
-    const float      x          = mouseState.Pos.x;
-    const float      y          = Height<float>() - mouseState.Pos.y;
-    const glm::mat4& view       = aCam.View(aCamPos);
-    const glm::mat4& proj       = aCam.Projection(Width<float>(), Height<float>());
-    const auto&      viewport   = glm::vec4(0, 0, Width<float>(), Height<float>());
-    const glm::vec3& near       = glm::unProject(glm::vec3(x, y, 0.0f), view, proj, viewport);
-    const glm::vec3  far        = glm::unProject(glm::vec3(x, y, 1.0f), view, proj, viewport);
+    const MouseState& mouseState = mInput.MouseState;
+    const float       x          = mouseState.Pos.x;
+    const float       y          = Height<float>() - mouseState.Pos.y;
+    const glm::mat4&  view       = aCam.View(aCamPos);
+    const glm::mat4&  proj       = aCam.Projection(Width<float>(), Height<float>());
+    const auto&       viewport   = glm::vec4(0, 0, Width<float>(), Height<float>());
+    const glm::vec3&  near       = glm::unProject(glm::vec3(x, y, 0.0f), view, proj, viewport);
+    const glm::vec3   far        = glm::unProject(glm::vec3(x, y, 1.0f), view, proj, viewport);
 
     return std::make_pair(near, far);
 }
