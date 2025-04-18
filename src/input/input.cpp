@@ -731,30 +731,11 @@ void Input::ScrollCallback(GLFWwindow* aWindow, double aXoffset, double aYoffset
     input.MouseState.Scroll.y = aYoffset;
 }
 
-void Input::DrawImgui(const Camera& aCam,
-    const glm::vec3&                aCamPos,
-    const float                     aWidth,
-    const float                     aHeight) const
+void Input::DrawImgui(const Camera& aCam, const glm::vec3& aCamPos, WatoWindow& aWin)
 {
-    auto dir = WorldMousePos(aCam, aCamPos, aWidth, aHeight);
+    auto [origin, end] = aWin.MouseUnproject(aCam, aCamPos);
 
     ImGui::Text("Input Information");
     ImGui::Text("Mouse: %s", glm::to_string(MouseState.Pos).c_str());
-    ImGui::Text("Ray cast: %s", glm::to_string(dir).c_str());
-}
-
-glm::vec3 Input::WorldMousePos(const Camera& aCam,
-    const glm::vec3&                         aCamPos,
-    const float                              aWidth,
-    const float                              aHeight) const
-{
-    float            x        = MouseState.Pos.x;
-    float            y        = aHeight - MouseState.Pos.y;
-    const glm::mat4& view     = aCam.View(aCamPos);
-    const glm::mat4& proj     = aCam.Projection(aWidth, aHeight);
-    const auto&      viewport = glm::vec4(0, 0, aWidth, aHeight);
-    glm::vec3        near     = glm::unProject(glm::vec3(x, y, 0.0f), view, proj, viewport);
-    glm::vec3        far      = glm::unProject(glm::vec3(x, y, 1.0f), view, proj, viewport);
-
-    return far - near;
+    ImGui::Text("Mouse Ray: %s", glm::to_string(end - origin).c_str());
 }

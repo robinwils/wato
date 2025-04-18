@@ -34,7 +34,6 @@ void Game::Init()
     entt::organizer organizerFixedTime;
     LoadResources(mRegistry);
     mSystems.push_back(RenderImguiSystem::MakeDelegate(mRenderImguiSystem));
-    // mSystems.push_back(PlayerInputSystem::MakeDelegate(mPlayerInputSystem));
     mSystems.push_back(InputSystem::MakeDelegate(mInputSystem));
     mSystems.push_back(RealTimeActionSystem::MakeDelegate(mActionSystem));
     mSystems.push_back(CameraSystem::MakeDelegate(mCameraSystem));

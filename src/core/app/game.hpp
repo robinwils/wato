@@ -38,7 +38,6 @@ class Game : public Application
    private:
     entt::organizer           mFrameTimeOrganizer;
     tf::Taskflow              mTaskflow;
-    PlayerInputSystem         mPlayerInputSystem;
     InputSystem               mInputSystem;
     DeterministicActionSystem mFTActionSystem;
     RealTimeActionSystem      mActionSystem;

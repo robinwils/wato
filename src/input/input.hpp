@@ -9,6 +9,7 @@
 
 #include "components/camera.hpp"
 
+class WatoWindow;
 struct Keyboard {
     enum Key {
         Space,
@@ -277,10 +278,7 @@ class Input
 
     void SetCanBuild(bool aEnable) noexcept { mCanBuild = aEnable; }
 
-    void DrawImgui(const Camera& aCamera,
-        const glm::vec3&         aCamPos,
-        const float              aWidth,
-        const float              aHeight) const;
+    void DrawImgui(const Camera& aCamera, const glm::vec3& aCamPos, WatoWindow& aWin);
 
     /**
      * @brief unproject mouse screen coordinates to world view
