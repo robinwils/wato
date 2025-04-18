@@ -41,6 +41,13 @@ ActionBindings ActionBindings::Defaults()
             .Modifiers = 0,
         },
         kEnterPlacementModeAction);
+    bindings.AddBinding("send_creep",
+        KeyState{
+            .Key       = Keyboard::C,
+            .State     = KeyState::State::PressOnce,
+            .Modifiers = 0,
+        },
+        kSendCreepAction);
     return bindings;
 }
 

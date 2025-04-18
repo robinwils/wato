@@ -88,6 +88,10 @@ constexpr Action kExitPlacementModeAction = Action{.Type = ActionType::ExitPlace
     .Tag                                                 = ActionTag::FrameTime,
     .Payload                                             = PlacementModePayload{}};
 
+constexpr Action kSendCreepAction = Action{.Type = ActionType::SendCreep,
+    .Tag                                         = ActionTag::FixedTime,
+    .Payload                                     = SendCreepPayload{.Type = ""}};
+
 struct ActionBinding {
     struct KeyState KeyState;
     struct Action   Action;

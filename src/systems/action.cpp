@@ -8,6 +8,7 @@
 #include "components/rigid_body.hpp"
 #include "components/scene_object.hpp"
 #include "components/transform3d.hpp"
+#include "core/net/enet_client.hpp"
 #include "core/physics.hpp"
 #include "input/action.hpp"
 #include "registry/registry.hpp"
@@ -52,14 +53,24 @@ void ActionSystem<Derived>::handleDefaultContext(Registry& aRegistry,
     const Action&                                          aAction,
     const float                                            aDeltaTime)
 {
-    if (aAction.Type == ActionType::EnterPlacementMode) {
-        if (const auto* payload = std::get_if<PlacementModePayload>(&aAction.Payload)) {
-            transitionToPlacement(aRegistry, *payload);
+    switch (aAction.Type) {
+        case ActionType::EnterPlacementMode:
+            if (const auto* payload = std::get_if<PlacementModePayload>(&aAction.Payload)) {
+                transitionToPlacement(aRegistry, *payload);
+            }
+            break;
+        case ActionType::Move:
+            if (const auto* payload = std::get_if<MovePayload>(&aAction.Payload)) {
+                handleMovement(aRegistry, *payload, aDeltaTime);
+            }
+            break;
+        case ActionType::SendCreep: {
+            auto& netClient = aRegistry.ctx().get<ENetClient&>();
+            netClient.EnqueueSend(new NetEvent(CreepSpawnEvent()));
+            break;
         }
-    } else if (aAction.Type == ActionType::Move) {
-        if (const auto* payload = std::get_if<MovePayload>(&aAction.Payload)) {
-            handleMovement(aRegistry, *payload, aDeltaTime);
-        }
+        default:
+            break;
     }
 }
 
