@@ -130,7 +130,7 @@ void SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeight)
     rp3d::HeightFieldShape* heightFieldShape = phy.Common().createHeightFieldShape(heightField);
     rp3d::Collider*         collider         = body->addCollider(heightFieldShape, transform);
     collider->setCollisionCategoryBits(Category::Terrain);
-    collider->setCollideWithMaskBits(0xffff);
+    collider->setCollideWithMaskBits(Category::Entities);
 }
 
 void SpawnLight(Registry& aRegistry)
