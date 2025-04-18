@@ -31,7 +31,6 @@ void EventHandler::onTrigger(const rp3d::OverlapCallback::CallbackData& aCallbac
             switch (pair.getEventType()) {
                 case rp3d::OverlapCallback::OverlapPair::EventType::OverlapStart:
                 case rp3d::OverlapCallback::OverlapPair::EventType::OverlapStay:
-                    fmt::println("cannot build anymore");
                     canBuild = false;
                     break;
                 default:

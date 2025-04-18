@@ -40,7 +40,7 @@ void ActionSystem<Derived>::processActions(Registry& aRegistry,
     PlayerActions latestActions = abuf.Latest();
 
     for (const Action& action : latestActions.Actions) {
-        fmt::println("{}", action.String());
+        // fmt::println("{}", action.String());
         if (action.Tag != aFilterTag) {
             continue;
         }

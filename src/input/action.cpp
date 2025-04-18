@@ -75,8 +75,6 @@ ActionBindings::actions_type ActionBindings::ActionsFromInput(const Input& aInpu
 {
     ActionBindings::actions_type actions;
 
-    // fmt::println("keyboard state {}", aInput.KeyboardState.String());
-    // fmt::println("prev keyboard state {}", aInput.PrevKeyboardState.String());
     for (const auto& [_, binding] : mBindings) {
         std::visit(InputButtonVisitor{// handle keyboard binding
                        [&](const Keyboard::Key& aKey) {
@@ -93,7 +91,6 @@ ActionBindings::actions_type ActionBindings::ActionsFromInput(const Input& aInpu
                            }
                        },
                        [&](const Mouse::Button& aButton) {
-                           fmt::println("MouseState {}", aInput.MouseState.String());
                            if (binding.KeyState.State == KeyState::State::Hold
                                && ((aInput.MouseState.IsKeyPressed(aButton)
                                        && aInput.PrevMouseState.IsKeyPressed(aButton))
