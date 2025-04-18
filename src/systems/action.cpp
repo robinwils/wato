@@ -95,6 +95,16 @@ void ActionSystem<Derived>::handleMovement(Registry& aRegistry,
             case MovePayload::Direction::Back:
                 transform.Position -= speed * camera.Front;
                 break;
+            case MovePayload::Direction::Up:
+                if (transform.Position.y <= 10.0F) {
+                    transform.Position += speed * camera.Up;
+                }
+                break;
+            case MovePayload::Direction::Down:
+                if (transform.Position.y >= 1.0F) {
+                    transform.Position -= speed * camera.Up;
+                }
+                break;
         }
     }
 }

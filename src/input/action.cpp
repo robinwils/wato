@@ -106,6 +106,12 @@ ActionBindings::actions_type ActionBindings::ActionsFromInput(const Input& aInpu
             binding.KeyState.Key);
     }
 
+    if (aInput.MouseState.Scroll.y > 0) {
+        actions.push_back(kMoveDownAction);
+    } else if (aInput.MouseState.Scroll.y < 0) {
+        actions.push_back(kMoveUpAction);
+    }
+
     return actions;
 }
 

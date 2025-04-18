@@ -133,8 +133,9 @@ int Game::Run()
 
         mUpdateTransformsSystem(mRegistry, accumulator / timeStep);
         renderer.Render();
-        input.PrevKeyboardState = input.KeyboardState;
-        input.PrevMouseState    = input.MouseState;
+        input.PrevKeyboardState   = input.KeyboardState;
+        input.PrevMouseState      = input.MouseState;
+        input.MouseState.Scroll.y = 0;
     }
 
     if (opts.Multiplayer()) {

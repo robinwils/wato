@@ -33,7 +33,7 @@ struct KeyState {
 };
 
 struct MovePayload {
-    enum class Direction { Left, Right, Front, Back };
+    enum class Direction { Left, Right, Front, Back, Up, Down };
     Direction Direction;
 };
 
@@ -75,6 +75,14 @@ constexpr Action kMoveFrontAction = Action{.Type = ActionType::Move,
 constexpr Action kMoveBackAction = Action{.Type = ActionType::Move,
     .Tag                                        = ActionTag::FrameTime,
     .Payload = MovePayload{.Direction = MovePayload::Direction::Back}};
+
+constexpr Action kMoveUpAction = Action{.Type = ActionType::Move,
+    .Tag                                      = ActionTag::FrameTime,
+    .Payload = MovePayload{.Direction = MovePayload::Direction::Up}};
+
+constexpr Action kMoveDownAction = Action{.Type = ActionType::Move,
+    .Tag                                        = ActionTag::FrameTime,
+    .Payload = MovePayload{.Direction = MovePayload::Direction::Down}};
 
 constexpr Action kEnterPlacementModeAction = Action{
     .Type    = ActionType::EnterPlacementMode,
