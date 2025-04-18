@@ -76,9 +76,11 @@ constexpr Action kMoveBackAction = Action{.Type = ActionType::Move,
     .Tag                                        = ActionTag::FrameTime,
     .Payload = MovePayload{.Direction = MovePayload::Direction::Back}};
 
-constexpr Action kEnterPlacementModeAction = Action{.Type = ActionType::EnterPlacementMode,
-    .Tag                                                  = ActionTag::FixedTime,
-    .Payload = PlacementModePayload{.Tower = "tower_model"_hs}};
+constexpr Action kEnterPlacementModeAction = Action{
+    .Type    = ActionType::EnterPlacementMode,
+    .Tag     = ActionTag::FixedTime,
+    .Payload = PlacementModePayload{.CanBuild = true, .Tower = "tower_model"_hs}
+};
 
 constexpr Action kBuildTowerAction = Action{.Type = ActionType::BuildTower,
     .Tag                                          = ActionTag::FixedTime,
