@@ -1,6 +1,7 @@
 #include "core/net/enet_base.hpp"
 
 #include <enet.h>
+#include <sodium.h>
 
 #include <stdexcept>
 #include <string>
@@ -9,6 +10,17 @@
 #include "core/sys/log.hpp"
 
 ENetBase::~ENetBase() { enet_deinitialize(); }
+
+void ENetBase::Init()
+{
+    if (enet_initialize() != 0) {
+        throw std::runtime_error("failed to initialize Enet");
+    }
+
+    if (sodium_init() == -1) {
+        throw std::runtime_error("failed to initialize Sodium");
+    }
+}
 
 void ENetBase::Poll()
 {

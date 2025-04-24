@@ -14,9 +14,7 @@ using namespace std::literals::chrono_literals;
 
 void ENetClient::Init()
 {
-    if (enet_initialize() != 0) {
-        throw std::runtime_error("failed to initialize Enet");
-    }
+    ENetBase::Init();
 
     mHost = enet_host_ptr{enet_host_create(nullptr /* create a client host */,
         1 /* only allow 1 outgoing connection */,

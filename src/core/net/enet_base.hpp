@@ -19,7 +19,7 @@ class ENetBase
     ENetBase& operator=(const ENetBase&) = delete;
     virtual ~ENetBase();
 
-    virtual void Init() = 0;
+    virtual void Init();
 
     // blocking: meant to be called in a dedicated thread
     virtual void Poll();

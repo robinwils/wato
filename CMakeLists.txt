@@ -14,6 +14,7 @@ endif()
 
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 find_package(ZLIB REQUIRED)
 
 find_program(CLANG_TIDY_BIN clang-tidy REQUIRED)
@@ -91,6 +92,8 @@ FetchContent_Declare(
   FIND_PACKAGE_ARGS NAMES fmt
 )
 
+find_package(Sodium REQUIRED)
+
 set(DEPENDENCY_NAMES assimp
   glfw3
   entt
@@ -109,8 +112,8 @@ message(STATUS "Fetched dependencies information:")
 message(STATUS "----------------------------------")
 
 # For each dependency, show key paths
-foreach(dep ${DEPENDENCY_NAMES})
-  if(${dep}_POPULATED)
+foreach(dep ${DEPENDENCY_NAMES} Sodium)
+  if(${dep}_POPULATED OR ${dep}_FOUND)
     if(${dep}_SOURCE_DIR)  # Was fetched and built
       message(STATUS "Dependency: ${dep} fetched and built")
       message(STATUS "  Source dir: ${${dep}_SOURCE_DIR}")
@@ -121,7 +124,7 @@ foreach(dep ${DEPENDENCY_NAMES})
       message(STATUS "Dependency: ${dep} found on system")
 
       # Try to get common package variables
-      foreach(var IN ITEMS FOUND VERSION DIR INCLUDE_DIRS LIBRARIES LIBS DEFINITIONS)
+      foreach(var IN ITEMS FOUND VERSION DIR INCLUDE_DIR INCLUDE_DIRS LIBRARIES LIBRARY_DIR LIBRARIES_RELEASE LIBS DEFINITIONS)
         if(DEFINED ${dep}_${var})
           message(STATUS "  ${var}: ${${dep}_${var}}")
         endif()
@@ -359,6 +362,7 @@ target_link_libraries(watolib
   bimgDebug
   reactphysics3d
   fmt
+  sodium
 )
 
 target_link_libraries(wato watolib bgfxDebug)

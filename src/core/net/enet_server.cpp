@@ -14,9 +14,7 @@
 
 void ENetServer::Init()
 {
-    if (enet_initialize() != 0) {
-        throw std::runtime_error("failed to initialize Enet");
-    }
+    ENetBase::Init();
 
     // Bind the server to the default localhost.
     ENetAddress address = {.host = ENET_HOST_ANY, .port = 7777, .sin6_scope_id = 0};
