@@ -6,7 +6,10 @@
 #include <variant>
 #include <vector>
 
+#include "components/creep.hpp"
+#include "components/tower.hpp"
 #include "core/queue/ring_buffer.hpp"
+#include "core/snapshot.hpp"
 #include "input/input.hpp"
 
 using namespace entt::literals;
@@ -38,16 +41,21 @@ struct MovePayload {
 };
 
 struct SendCreepPayload {
-    entt::hashed_string Type;
+    CreepType Type;
 };
 
 struct BuildTowerPayload {
-    entt::hashed_string Tower;
+    TowerType Tower;
 };
 
 struct PlacementModePayload {
-    bool                CanBuild;
-    entt::hashed_string Tower;
+    bool      CanBuild;
+    TowerType Tower;
+};
+
+template <class... Ts>
+struct VariantVisitor : Ts... {
+    using Ts::operator()...;
 };
 
 struct Action {
@@ -58,6 +66,78 @@ struct Action {
     payload_type Payload;
 
     std::string String() const;
+
+    constexpr static auto Serialize(auto& aArchive, const auto& aSelf)
+    {
+        aArchive.template Write<int>(&aSelf.Type, 1);
+        aArchive.template Write<int>(&aSelf.Tag, 1);
+
+        // Write payload type index first
+        size_t index = aSelf.Payload.index();
+        aArchive.template Write<size_t>(&index, 1);
+
+        // Then serialize the actual payload based on type
+        std::visit(
+            VariantVisitor{
+                [&](const MovePayload& aPayload) {
+                    aArchive.template Write<int>(&aPayload.Direction, 1);
+                },
+                [&](const SendCreepPayload& aPayload) {
+                    aArchive.template Write<int>(&aPayload.Type, 1);
+                },
+                [&](const BuildTowerPayload& aPayload) {
+                    aArchive.template Write<int>(&aPayload.Tower, 1);
+                },
+                [&](const PlacementModePayload& aPayload) {
+                    aArchive.template Write<bool>(&aPayload.CanBuild, 1);
+                    aArchive.template Write<int>(&aPayload.Tower, 1);
+                },
+            },
+            aSelf.Payload);
+    }
+
+    constexpr static auto Deserialize(auto& aArchive, auto& aSelf)
+    {
+        aArchive.template Read<int>(&aSelf.Type, 1);
+        aArchive.template Read<int>(&aSelf.Tag, 1);
+
+        // Read payload type index
+        size_t index;
+        aArchive.template Read<int>(&index, 1);
+
+        // Deserialize the correct payload type based on index
+        switch (index) {
+            case 0: {  // MovePayload
+                MovePayload payload{};
+                aArchive.template Read<int>(&payload.Direction, 1);
+                aSelf.Payload = payload;
+                break;
+            }
+            case 1: {  // SendCreepPayload
+                SendCreepPayload payload{};
+                aArchive.template Read<int>(&payload.Type, 1);
+                aSelf.Payload = payload;
+                break;
+            }
+            case 2: {  // BuildTowerPayload
+                BuildTowerPayload payload{};
+                aArchive.template Read<int>(&payload.Tower, 1);
+                aSelf.Payload = payload;
+                break;
+            }
+            case 3: {  // PlacementModePayload
+                PlacementModePayload payload{};
+                aArchive.template Read<bool>(&payload.CanBuild, 1);
+                aArchive.template Read<int>(&payload.Tower, 1);
+                aSelf.Payload = payload;
+                break;
+            }
+            default:
+                return false;
+        }
+
+        return true;
+    }
 };
 
 constexpr Action kMoveLeftAction = Action{
@@ -93,20 +173,23 @@ constexpr Action kMoveDownAction = Action{
 constexpr Action kEnterPlacementModeAction = Action{
     .Type    = ActionType::EnterPlacementMode,
     .Tag     = ActionTag::FixedTime,
-    .Payload = PlacementModePayload{.CanBuild = true, .Tower = "tower_model"_hs}
+    .Payload = PlacementModePayload{.CanBuild = true, .Tower = TowerType::Arrow}
 };
 
-constexpr Action kBuildTowerAction = Action{.Type = ActionType::BuildTower,
-    .Tag                                          = ActionTag::FixedTime,
-    .Payload                                      = BuildTowerPayload{.Tower = ""}};
+constexpr Action kBuildTowerAction = Action{
+    .Type    = ActionType::BuildTower,
+    .Tag     = ActionTag::FixedTime,
+    .Payload = BuildTowerPayload{.Tower = TowerType::Arrow}};
 
-constexpr Action kExitPlacementModeAction = Action{.Type = ActionType::ExitPlacementMode,
-    .Tag                                                 = ActionTag::FrameTime,
-    .Payload                                             = PlacementModePayload{}};
+constexpr Action kExitPlacementModeAction = Action{
+    .Type    = ActionType::ExitPlacementMode,
+    .Tag     = ActionTag::FrameTime,
+    .Payload = PlacementModePayload{}};
 
-constexpr Action kSendCreepAction = Action{.Type = ActionType::SendCreep,
-    .Tag                                         = ActionTag::FixedTime,
-    .Payload                                     = SendCreepPayload{.Type = ""}};
+constexpr Action kSendCreepAction = Action{
+    .Type    = ActionType::SendCreep,
+    .Tag     = ActionTag::FixedTime,
+    .Payload = SendCreepPayload{.Type = CreepType::Simple}};
 
 struct ActionBinding {
     struct KeyState KeyState;
@@ -151,8 +234,3 @@ struct PlayerActions {
 
 using ActionContextStack = std::list<ActionContext>;
 using ActionBuffer       = RingBuffer<PlayerActions, 128>;
-
-template <class... Ts>
-struct InputButtonVisitor : Ts... {
-    using Ts::operator()...;
-};

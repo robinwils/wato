@@ -1,9 +1,20 @@
 #pragma once
 
-struct Creep {
-    enum Type {
-        Simple,
-    };
+#include <string_view>
+enum class CreepType {
+    Simple,
+};
 
-    Type Type;
+[[nodiscard]] constexpr std::string_view CreepTypeToString(CreepType aType)
+{
+    switch (aType) {
+        case CreepType::Simple:
+            return "Simple";
+        default:
+            return "Unknown";
+    }
+}
+
+struct Creep {
+    CreepType Type;
 };

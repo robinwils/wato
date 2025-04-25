@@ -167,7 +167,8 @@ void ActionSystem<Derived>::transitionToPlacement(Registry& aRegistry,
     contextStack.push_front(std::move(placementCtx));
 
     auto ghostTower = aRegistry.create();
-    aRegistry.emplace<SceneObject>(ghostTower, aPayload.Tower);
+    aRegistry.emplace<SceneObject>(ghostTower, "tower_model"_hs);
+    aRegistry.emplace<Tower>(ghostTower, aPayload.Tower);
     auto& t = aRegistry.emplace<Transform3D>(ghostTower,
         glm::vec3(0.0f),
         glm::identity<glm::quat>(),

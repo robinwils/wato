@@ -3,6 +3,8 @@
 #include <fmt/base.h>
 #include <fmt/format.h>
 
+#include "components/tower.hpp"
+
 ActionBindings ActionBindings::Defaults()
 {
     ActionBindings bindings;
@@ -76,7 +78,7 @@ ActionBindings::actions_type ActionBindings::ActionsFromInput(const Input& aInpu
     ActionBindings::actions_type actions;
 
     for (const auto& [_, binding] : mBindings) {
-        std::visit(InputButtonVisitor{// handle keyboard binding
+        std::visit(VariantVisitor{// handle keyboard binding
                        [&](const Keyboard::Key& aKey) {
                            if (binding.KeyState.State == KeyState::State::Hold
                                && ((aInput.KeyboardState.IsKeyPressed(aKey)
@@ -158,9 +160,9 @@ std::string Action::String() const
                         return "Unknown";
                 }
             } else if constexpr (std::is_same_v<T, SendCreepPayload>) {
-                return fmt::format("CreepType: {}", aPayload.Type.data());
+                return fmt::format("CreepType: {}", CreepTypeToString(aPayload.Type));
             } else if constexpr (std::is_same_v<T, BuildTowerPayload>) {
-                return fmt::format("TowerType: {}", aPayload.Tower.data());
+                return fmt::format("TowerType: {}", TowerTypeToString(aPayload.Tower));
             }
             return "Unknown";
         },
