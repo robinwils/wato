@@ -54,5 +54,6 @@ struct Transform3D {
         aArchive.template Read<float>(glm::value_ptr(aSelf.Position), 3);
         aArchive.template Read<float>(glm::value_ptr(aSelf.Orientation), 4);
         aArchive.template Read<float>(glm::value_ptr(aSelf.Scale), 3);
+        return true;
     }
 };

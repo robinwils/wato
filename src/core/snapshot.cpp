@@ -3,8 +3,6 @@
 #include <entt/entity/fwd.hpp>
 #include <entt/entity/snapshot.hpp>
 
-#include "fmt/base.h"
-
 template <typename OutArchive>
 void SaveRegistry(const entt::registry& aRegistry, OutArchive& aArchive)
 {

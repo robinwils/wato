@@ -283,7 +283,6 @@ target_sources(watolib
     src/components/tile.hpp
     src/components/transform3d.hpp
     src/core/app/app.hpp
-    src/core/event/event.hpp
     src/core/net/enet_base.hpp
     src/core/physics.hpp
     src/core/queue/ring_buffer.hpp

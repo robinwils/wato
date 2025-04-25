@@ -11,5 +11,6 @@ struct Health {
     constexpr static auto Deserialize(auto& aArchive, auto& aSelf)
     {
         aArchive.template Read<float>(&aSelf.Health, 1);
+        return true;
     }
 };

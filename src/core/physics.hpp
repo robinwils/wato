@@ -117,6 +117,7 @@ class Physics
                     .Transform      = rp3d::Transform(position, orientation),
                     .GravityEnabled = gravity});
         }
+        return true;
     }
 
     PhysicsParams Params;

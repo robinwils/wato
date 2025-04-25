@@ -7,6 +7,7 @@
 #include <optional>
 
 #include "core/net/enet_base.hpp"
+#include "core/serialize.hpp"
 
 class ENetClient : public ENetBase
 {
@@ -19,7 +20,7 @@ class ENetClient : public ENetBase
     ~ENetClient()                            = default;
 
     void Init() override;
-    void EnqueueSend(NetEvent* aEvent) { mQueue.push(aEvent); }
+    void EnqueueSend(NetPacket* aPkt) { mQueue.push(aPkt); }
     bool Connect();
     void Disconnect();
     void ForceDisconnect();
@@ -37,7 +38,7 @@ class ENetClient : public ENetBase
    private:
     using clock_type = std::chrono::steady_clock;
 
-    void send(std::string& aEvStr);
+    void send(const std::vector<uint8_t> aData);
 
     std::optional<clock_type::time_point> mDiscTimerStart;
 

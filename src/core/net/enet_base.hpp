@@ -35,8 +35,8 @@ class ENetBase
     virtual void OnDisconnectTimeout(ENetEvent& aEvent) = 0;
     virtual void OnNone(ENetEvent& aEvent)              = 0;
 
-    std::atomic_bool                  mRunning;
-    enet_host_ptr                     mHost;
-    bx::DefaultAllocator              mAlloc;
-    bx::SpScUnboundedQueueT<NetEvent> mQueue;
+    std::atomic_bool                   mRunning;
+    enet_host_ptr                      mHost;
+    bx::DefaultAllocator               mAlloc;
+    bx::SpScUnboundedQueueT<NetPacket> mQueue;
 };

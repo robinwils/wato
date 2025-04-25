@@ -4,7 +4,6 @@
 #include <sodium.h>
 
 #include <stdexcept>
-#include <string>
 
 #include "core/net/net.hpp"
 #include "core/sys/log.hpp"
@@ -33,7 +32,8 @@ void ENetBase::Poll()
     while (enet_host_service(mHost.get(), &event, 5) > 0) {
         switch (event.type) {
             case ENET_EVENT_TYPE_CONNECT:
-                INFO("A new client connected from %x:%u.\n",
+                INFO(
+                    "A new client connected from %x:%u.\n",
                     event.peer->address.host,
                     event.peer->address.port);
                 /* Store any relevant client information here. */
@@ -41,15 +41,15 @@ void ENetBase::Poll()
                 break;
 
             case ENET_EVENT_TYPE_RECEIVE: {
-                std::string str(reinterpret_cast<char*>(event.packet->data),
-                    event.packet->dataLength);
-                INFO(
-                    "A packet of length %lu containing %s was received from %s on "
-                    "channel %u.\n",
-                    str.size(),
-                    str.c_str(),
-                    static_cast<char*>(event.peer->data),
-                    event.channelID);
+                // std::string str(reinterpret_cast<char*>(event.packet->data),
+                //     event.packet->dataLength);
+                // INFO(
+                //     "A packet of length %lu containing %s was received from %s on "
+                //     "channel %u.\n",
+                //     str.size(),
+                //     str.c_str(),
+                //     static_cast<char*>(event.peer->data),
+                //     event.channelID);
                 OnReceive(event);
 
                 /* Clean up the packet now that we're done using it. */

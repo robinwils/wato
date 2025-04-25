@@ -6,8 +6,8 @@
 #include <stdexcept>
 #include <variant>
 
-#include "core/event/creep_spawn.hpp"
 #include "core/net/net.hpp"
+#include "core/snapshot.hpp"
 #include "core/sys/log.hpp"
 
 using namespace std::literals::chrono_literals;
@@ -40,15 +40,15 @@ bool ENetClient::Connect()
     return mPeer != nullptr;
 }
 
-void ENetClient::send(std::string& aEvStr)
+void ENetClient::send(const std::vector<uint8_t> aData)
 {
     if (mPeer == nullptr) {
         DBG("client peer not initialized");
         return;
     }
+
     /* Create a reliable packet of size 7 containing "packet\0" */
-    ENetPacket* packet =
-        enet_packet_create(aEvStr.c_str(), aEvStr.size(), ENET_PACKET_FLAG_RELIABLE);
+    ENetPacket* packet = enet_packet_create(aData.data(), aData.size(), ENET_PACKET_FLAG_RELIABLE);
 
     /* Send the packet to the peer over channel id 0. */
     /* One could also broadcast the packet by         */
@@ -87,14 +87,21 @@ void ENetClient::ConsumeEvents(Registry* aRegistry)
         }
     }
 
-    EventVisitor visitor{[&](const CreepSpawnEvent& aEvent) {
-        INFO("received creep spawn ev");
-        std::string evStr("creep_spawn");
-        send(evStr);
-    }};
-    NetEvent*    ev = nullptr;
-    while ((ev = mQueue.pop())) {
-        std::visit(visitor, *ev);
+    while (NetPacket* pkt = mQueue.pop()) {
+        // write header
+        ByteOutputArchive archive;
+        archive.Write<int>(&pkt->Type, sizeof(pkt->Type));
+
+        // write payload
+        std::visit(
+            EventVisitor{
+                [&](const PlayerActions& aActions) {
+                    INFO("received player actions ev");
+                    PlayerActions::Serialize(archive, aActions);
+                },
+            },
+            pkt->Payload);
+        send(archive.Bytes());
     }
 }
 

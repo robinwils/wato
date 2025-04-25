@@ -9,7 +9,6 @@
 #include "components/creep.hpp"
 #include "components/tower.hpp"
 #include "core/queue/ring_buffer.hpp"
-#include "core/snapshot.hpp"
 #include "input/input.hpp"
 
 using namespace entt::literals;
@@ -228,6 +227,28 @@ struct ActionContext {
 struct PlayerActions {
     using actions_type = std::vector<Action>;
 
+    constexpr static auto Serialize(auto& aArchive, const auto& aSelf)
+    {
+        actions_type::size_type nActions = aSelf.Actions.size();
+
+        aArchive.template Write<uint32_t>(&aSelf.Tick, 1);
+        aArchive.template Write<actions_type::size_type>(&nActions, 1);
+        for (const Action& action : aSelf.Actions) {
+            Action::Serialize(aArchive, action);
+        }
+    }
+    constexpr static auto Deserialize(auto& aArchive, auto& aSelf)
+    {
+        actions_type::size_type nActions = 0;
+        aArchive.template Read<uint32_t>(&aSelf.Tick, 1);
+        aArchive.template Read<actions_type::size_type>(&nActions, 1);
+        for (actions_type::size_type idx = 0; idx < nActions; idx++) {
+            Action action;
+            Action::Deserialize(aArchive, action);
+            aSelf.Actions.push_back(action);
+        }
+        return true;
+    }
     uint32_t     Tick;
     actions_type Actions;
 };

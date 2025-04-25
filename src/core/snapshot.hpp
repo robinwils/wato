@@ -8,6 +8,7 @@
 #include <cstring>
 #include <glm/gtc/type_ptr.hpp>
 #include <iterator>
+#include <span>
 #include <stdexcept>
 
 #include "components/health.hpp"
@@ -16,15 +17,14 @@
 #include "core/physics.hpp"
 #include "fmt/base.h"
 #include "fmt/format.h"
-#include "registry/registry.hpp"
 
 class ByteInputArchive
 {
     using byte        = uint8_t;
-    using byte_stream = std::vector<byte>;
+    using byte_stream = std::span<byte>;
 
    public:
-    ByteInputArchive(byte_stream& aInStream) : mStorage(aInStream), mIdx(0) {}
+    ByteInputArchive(const byte_stream& aInStream) : mStorage(aInStream), mIdx(0) {}
 
     void operator()(entt::entity& aEntity)
     {
@@ -42,7 +42,6 @@ class ByteInputArchive
     void operator()(T& aObj)
     {
         T::Deserialize(*this, aObj);
-        // fmt::println("in transform");
     }
 
     byte_stream Bytes() const { return mStorage; }
@@ -50,7 +49,8 @@ class ByteInputArchive
     void Read(Out aDestination, std::size_t aN)
     {
         if (mIdx + aN * sizeof(T) > mStorage.size()) {
-            throw std::out_of_range(fmt::format(" mIdx = {:d}, asked = {:d}, size = {:d}",
+            throw std::out_of_range(fmt::format(
+                " mIdx = {:d}, asked = {:d}, size = {:d}",
                 mIdx,
                 aN * sizeof(T),
                 mStorage.size()));
@@ -73,6 +73,7 @@ class ByteOutputArchive
     using byte_stream = std::vector<byte>;
 
    public:
+    ByteOutputArchive() = default;
     ByteOutputArchive(byte_stream& aOutStream) : mStorage(aOutStream) {}
 
     void operator()(entt::entity aEntity)
@@ -130,18 +131,20 @@ TEST_CASE("snapshot.simple")
     src.emplace<Health>(e2, 300.0f);
 
     auto e3 = src.create();
-    phy.CreateRigidBody(e3,
+    phy.CreateRigidBody(
+        e3,
         src,
-        RigidBodyParams{.Type = rp3d::BodyType::STATIC,
-            .Transform        = rp3d::Transform::identity(),
-            .GravityEnabled   = false});
+        RigidBodyParams{
+            .Type           = rp3d::BodyType::STATIC,
+            .Transform      = rp3d::Transform::identity(),
+            .GravityEnabled = false});
 
     std::vector<uint8_t> storage;
     ByteOutputArchive    outAr(storage);
     entt::registry       dest;
     SaveRegistry(src, outAr);
 
-    ByteInputArchive inAr(outAr.Bytes());
+    ByteInputArchive inAr(std::span(outAr.Bytes()));
     LoadRegistry(dest, inAr);
 
     CHECK(dest.valid(e1));

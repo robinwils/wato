@@ -8,15 +8,15 @@
 #include "components/rigid_body.hpp"
 #include "components/scene_object.hpp"
 #include "components/transform3d.hpp"
-#include "core/net/enet_client.hpp"
 #include "core/physics.hpp"
 #include "input/action.hpp"
 #include "registry/registry.hpp"
 
 template <typename Derived>
-void ActionSystem<Derived>::handleAction(Registry& aRegistry,
-    const Action&                                  aAction,
-    const float                                    aDeltaTime)
+void ActionSystem<Derived>::handleAction(
+    Registry&     aRegistry,
+    const Action& aAction,
+    const float   aDeltaTime)
 {
     auto&       contextStack = aRegistry.ctx().get<ActionContextStack&>();
     const auto& currentCtx   = contextStack.front();
@@ -32,9 +32,10 @@ void ActionSystem<Derived>::handleAction(Registry& aRegistry,
 }
 
 template <typename Derived>
-void ActionSystem<Derived>::processActions(Registry& aRegistry,
-    ActionTag                                        aFilterTag,
-    const float                                      aDeltaTime)
+void ActionSystem<Derived>::processActions(
+    Registry&   aRegistry,
+    ActionTag   aFilterTag,
+    const float aDeltaTime)
 {
     auto&         abuf          = aRegistry.ctx().get<ActionBuffer&>();
     PlayerActions latestActions = abuf.Latest();
@@ -49,9 +50,10 @@ void ActionSystem<Derived>::processActions(Registry& aRegistry,
 }
 
 template <typename Derived>
-void ActionSystem<Derived>::handleDefaultContext(Registry& aRegistry,
-    const Action&                                          aAction,
-    const float                                            aDeltaTime)
+void ActionSystem<Derived>::handleDefaultContext(
+    Registry&     aRegistry,
+    const Action& aAction,
+    const float   aDeltaTime)
 {
     switch (aAction.Type) {
         case ActionType::EnterPlacementMode:
@@ -65,8 +67,6 @@ void ActionSystem<Derived>::handleDefaultContext(Registry& aRegistry,
             }
             break;
         case ActionType::SendCreep: {
-            auto& netClient = aRegistry.ctx().get<ENetClient&>();
-            netClient.EnqueueSend(new NetEvent(CreepSpawnEvent()));
             break;
         }
         default:
@@ -75,9 +75,10 @@ void ActionSystem<Derived>::handleDefaultContext(Registry& aRegistry,
 }
 
 template <typename Derived>
-void ActionSystem<Derived>::handleMovement(Registry& aRegistry,
-    const MovePayload&                               aPayload,
-    const float                                      aDeltaTime)
+void ActionSystem<Derived>::handleMovement(
+    Registry&          aRegistry,
+    const MovePayload& aPayload,
+    const float        aDeltaTime)
 {
     for (auto&& [entity, camera, transform] : aRegistry.view<Camera, Transform3D>().each()) {
         float const speed = camera.Speed * aDeltaTime;
@@ -110,9 +111,10 @@ void ActionSystem<Derived>::handleMovement(Registry& aRegistry,
 }
 
 template <typename Derived>
-void ActionSystem<Derived>::handlePlacementContext(Registry& aRegistry,
-    const Action&                                            aAction,
-    const float                                              aDeltaTime)
+void ActionSystem<Derived>::handlePlacementContext(
+    Registry&     aRegistry,
+    const Action& aAction,
+    const float   aDeltaTime)
 {
     switch (aAction.Type) {
         case ActionType::ExitPlacementMode:
@@ -152,8 +154,9 @@ void ActionSystem<Derived>::handlePlacementContext(Registry& aRegistry,
 }
 
 template <typename Derived>
-void ActionSystem<Derived>::transitionToPlacement(Registry& aRegistry,
-    const PlacementModePayload&                             aPayload)
+void ActionSystem<Derived>::transitionToPlacement(
+    Registry&                   aRegistry,
+    const PlacementModePayload& aPayload)
 {
     auto& contextStack = aRegistry.ctx().get<ActionContextStack&>();
     auto& phy          = aRegistry.ctx().get<Physics&>();
@@ -169,18 +172,21 @@ void ActionSystem<Derived>::transitionToPlacement(Registry& aRegistry,
     auto ghostTower = aRegistry.create();
     aRegistry.emplace<SceneObject>(ghostTower, "tower_model"_hs);
     aRegistry.emplace<Tower>(ghostTower, aPayload.Tower);
-    auto& t = aRegistry.emplace<Transform3D>(ghostTower,
+    auto& t = aRegistry.emplace<Transform3D>(
+        ghostTower,
         glm::vec3(0.0f),
         glm::identity<glm::quat>(),
         glm::vec3(0.1f));
     aRegistry.emplace<PlacementMode>(ghostTower);
     aRegistry.emplace<ImguiDrawable>(ghostTower, "Ghost Tower");
-    rp3d::RigidBody* body     = phy.CreateRigidBody(ghostTower,
+    rp3d::RigidBody* body = phy.CreateRigidBody(
+        ghostTower,
         aRegistry,
-        RigidBodyParams{.Type = rp3d::BodyType::DYNAMIC,
-                .Transform        = t.ToRP3D(),
-                .GravityEnabled   = false});
-    rp3d::Collider*  collider = phy.AddBoxCollider(body, rp3d::Vector3(0.35F, 0.65F, 0.35F), true);
+        RigidBodyParams{
+            .Type           = rp3d::BodyType::DYNAMIC,
+            .Transform      = t.ToRP3D(),
+            .GravityEnabled = false});
+    rp3d::Collider* collider = phy.AddBoxCollider(body, rp3d::Vector3(0.35F, 0.65F, 0.35F), true);
     collider->setCollisionCategoryBits(Category::PlacementGhostTower);
     collider->setCollideWithMaskBits(Category::Terrain | Category::Entities);
 }
