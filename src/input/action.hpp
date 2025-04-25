@@ -60,28 +60,34 @@ struct Action {
     std::string String() const;
 };
 
-constexpr Action kMoveLeftAction = Action{.Type = ActionType::Move,
-    .Tag                                        = ActionTag::FrameTime,
+constexpr Action kMoveLeftAction = Action{
+    .Type    = ActionType::Move,
+    .Tag     = ActionTag::FrameTime,
     .Payload = MovePayload{.Direction = MovePayload::Direction::Left}};
 
-constexpr Action kMoveRightAction = Action{.Type = ActionType::Move,
-    .Tag                                         = ActionTag::FrameTime,
+constexpr Action kMoveRightAction = Action{
+    .Type    = ActionType::Move,
+    .Tag     = ActionTag::FrameTime,
     .Payload = MovePayload{.Direction = MovePayload::Direction::Right}};
 
-constexpr Action kMoveFrontAction = Action{.Type = ActionType::Move,
-    .Tag                                         = ActionTag::FrameTime,
+constexpr Action kMoveFrontAction = Action{
+    .Type    = ActionType::Move,
+    .Tag     = ActionTag::FrameTime,
     .Payload = MovePayload{.Direction = MovePayload::Direction::Front}};
 
-constexpr Action kMoveBackAction = Action{.Type = ActionType::Move,
-    .Tag                                        = ActionTag::FrameTime,
+constexpr Action kMoveBackAction = Action{
+    .Type    = ActionType::Move,
+    .Tag     = ActionTag::FrameTime,
     .Payload = MovePayload{.Direction = MovePayload::Direction::Back}};
 
-constexpr Action kMoveUpAction = Action{.Type = ActionType::Move,
-    .Tag                                      = ActionTag::FrameTime,
+constexpr Action kMoveUpAction = Action{
+    .Type    = ActionType::Move,
+    .Tag     = ActionTag::FrameTime,
     .Payload = MovePayload{.Direction = MovePayload::Direction::Up}};
 
-constexpr Action kMoveDownAction = Action{.Type = ActionType::Move,
-    .Tag                                        = ActionTag::FrameTime,
+constexpr Action kMoveDownAction = Action{
+    .Type    = ActionType::Move,
+    .Tag     = ActionTag::FrameTime,
     .Payload = MovePayload{.Direction = MovePayload::Direction::Down}};
 
 constexpr Action kEnterPlacementModeAction = Action{

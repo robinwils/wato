@@ -18,7 +18,8 @@ struct Transform3D {
 
     [[nodiscard]] rp3d::Transform ToRP3D() const
     {
-        return rp3d::Transform(rp3d::Vector3(Position.x, Position.y, Position.z),
+        return rp3d::Transform(
+            rp3d::Vector3(Position.x, Position.y, Position.z),
             rp3d::Quaternion(Orientation.x, Orientation.y, Orientation.z, Orientation.w));
     }
 
@@ -34,7 +35,8 @@ struct Transform3D {
         Position.y = aTransform.getPosition().y;
         Position.z = aTransform.getPosition().z;
 
-        Orientation = glm::quat(aTransform.getOrientation().w,
+        Orientation = glm::quat(
+            aTransform.getOrientation().w,
             aTransform.getOrientation().x,
             aTransform.getOrientation().y,
             aTransform.getOrientation().z);

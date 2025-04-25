@@ -49,13 +49,15 @@ class Physics
     [[nodiscard]] rp3d::PhysicsWorld*  World() const noexcept { return mWorld; }
     [[nodiscard]] rp3d::PhysicsCommon& Common() noexcept { return mCommon; }
 
-    rp3d::RigidBody* CreateRigidBody(const entt::entity& aEntity,
-        Registry&                                        aRegistry,
-        const RigidBodyParams                            aParams);
-    rp3d::Collider*  AddBoxCollider(rp3d::RigidBody* aBody,
-         const rp3d::Vector3&                        aSize,
-         const bool                                  aIsTrigger = false);
-    void             DeleteRigidBody(Registry& aRegistry, entt::entity aEntity);
+    rp3d::RigidBody* CreateRigidBody(
+        const entt::entity&   aEntity,
+        Registry&             aRegistry,
+        const RigidBodyParams aParams);
+    rp3d::Collider* AddBoxCollider(
+        rp3d::RigidBody*     aBody,
+        const rp3d::Vector3& aSize,
+        const bool           aIsTrigger = false);
+    void DeleteRigidBody(Registry& aRegistry, entt::entity aEntity);
 
     static constexpr auto Serialize(auto& aArchive, const auto& aSelf)
     {
@@ -70,7 +72,8 @@ class Physics
             const bool              gravity     = body->isGravityEnabled();
             const RigidBodyData*    data        = static_cast<RigidBodyData*>(body->getUserData());
 
-            fmt::println("serializing rigid body for entity {:d}",
+            fmt::println(
+                "serializing rigid body for entity {:d}",
                 static_cast<ENTT_ID_TYPE>(data->Entity));
             aArchive.template Write<rp3d::BodyType>(&type, 1);
             aArchive.template Write<float>(&position.x, 3);
@@ -106,11 +109,13 @@ class Physics
             aArchive.template Read<float>(&gravity, 1);
             aArchive.template Read<entt::entity>(&entity, 1);
 
-            phy.CreateRigidBody(entity,
+            phy.CreateRigidBody(
+                entity,
                 aRegistry,
-                RigidBodyParams{.Type = type,
-                    .Transform        = rp3d::Transform(position, orientation),
-                    .GravityEnabled   = gravity});
+                RigidBodyParams{
+                    .Type           = type,
+                    .Transform      = rp3d::Transform(position, orientation),
+                    .GravityEnabled = gravity});
         }
     }
 
