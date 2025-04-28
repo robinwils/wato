@@ -167,6 +167,7 @@ if (DEBUG_ENABLE)
 else()
   target_compile_options(wato_common INTERFACE ${RELEASE_FLAGS})
 endif()
+target_compile_options(watolib PRIVATE "-DDOCTEST_CONFIG_DISABLE")
 target_compile_options(wato PRIVATE "-DDOCTEST_CONFIG_DISABLE")
 
 include(cmake/CompilerWarnings.cmake)
