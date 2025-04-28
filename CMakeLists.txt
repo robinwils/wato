@@ -296,6 +296,7 @@ target_sources(watolib
 
   PRIVATE
     src/core/net/enet_base.cpp
+    src/core/snapshot.cpp
     src/core/physics.cpp
     src/systems/physics.cpp
 )
