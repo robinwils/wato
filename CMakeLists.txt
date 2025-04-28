@@ -23,6 +23,8 @@ option(DEBUG_ENABLE "Enable debug features" OFF)
 
 option(wato_WARNINGS_AS_ERRORS "Treat Warnings As Errors" OFF)
 
+option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
+
 set(TF_BUILD_TESTS OFF CACHE BOOL "Disable taskflow test builds" FORCE)
 set(TF_BUILD_EXAMPLES OFF CACHE BOOL "Disable taskflow example builds" FORCE)
 
@@ -151,7 +153,11 @@ endif()
 configure_file(config.h.in config.h @ONLY)
 
 add_library(wato_common INTERFACE)
-add_library(watolib)
+if(BUILD_SHARED_LIBS)
+add_library(watolib SHARED)
+else()
+add_library(watolib STATIC)
+endif()
 add_executable(wato)
 add_subdirectory(src/watod)
 add_subdirectory(test)
