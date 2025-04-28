@@ -323,6 +323,7 @@ target_sources(wato
     src/renderer/primitive.hpp
     src/renderer/renderer.hpp
     src/systems/action.hpp
+    src/systems/sync.hpp
     src/systems/input.hpp
     src/systems/render.hpp
 
@@ -346,6 +347,7 @@ target_sources(wato
     src/renderer/material.cpp
     src/renderer/renderer.cpp
     src/systems/action.cpp
+    src/systems/sync.cpp
     src/systems/input.cpp
     src/systems/render.cpp
 )
