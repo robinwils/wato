@@ -15,8 +15,10 @@ void GameServer::Init()
 
     physics.Init(mRegistry);
 
-    mSystems.push_back(PhysicsSystem::MakeDelegate(mPhysicsSystem));
-    mSystems.push_back(CreepSystem::MakeDelegate(mCreepSystem));
+    mSystemsFT.push_back(PhysicsSystem::MakeDelegate(mPhysicsSystem));
+    mSystemsFT.push_back(CreepSystem::MakeDelegate(mCreepSystem));
+    mSystemsFT.push_back(DeterministicActionSystem::MakeDelegate(mFTActionSystem));
+}
 
 void GameServer::ConsumeNetworkEvents()
 {
@@ -38,7 +40,11 @@ void GameServer::ConsumeNetworkEvents()
 
 int GameServer::Run()
 {
+    constexpr float timeStep = 1.0f / 60.0f;
+
+    uint32_t tick     = 0;
     auto     prevTime = clock_type::now();
+    auto&    actions  = mRegistry.ctx().get<ActionBuffer&>();
 
     mRunning = true;
 
@@ -58,8 +64,17 @@ int GameServer::Run()
 
         ConsumeNetworkEvents();
 
-        for (const auto& system : mSystems) {
-            system(mRegistry, dt.count());
+        // While there is enough accumulated time to take
+        // one or several physics steps
+        while (accumulator >= timeStep) {
+            // Decrease the accumulated time
+            accumulator -= timeStep;
+
+            for (const auto& system : mSystemsFT) {
+                system(mRegistry, timeStep);
+            }
+            actions.Push();
+            actions.Latest().Tick = ++tick;
         }
     }
 

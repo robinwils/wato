@@ -65,6 +65,20 @@ rp3d::Collider* Physics::AddBoxCollider(rp3d::RigidBody* aBody,
 {
     auto* box      = mCommon.createBoxShape(aSize);
     auto* collider = aBody->addCollider(box, rp3d::Transform::identity());
+
+    collider->setIsTrigger(aIsTrigger);
+    return collider;
+}
+
+rp3d::Collider* Physics::AddCapsuleCollider(
+    rp3d::RigidBody* aBody,
+    const float&     aRadius,
+    const float&     aHeight,
+    const bool       aIsTrigger)
+{
+    auto* box      = mCommon.createCapsuleShape(aRadius, aHeight);
+    auto* collider = aBody->addCollider(box, rp3d::Transform::identity());
+
     collider->setIsTrigger(aIsTrigger);
     return collider;
 }

@@ -148,13 +148,13 @@ std::string Action::String() const
             using T = std::decay_t<decltype(aPayload)>;
             if constexpr (std::is_same_v<T, MovePayload>) {
                 switch (aPayload.Direction) {
-                    case MovePayload::Direction::Left:
+                    case MoveDirection::Left:
                         return "Left";
-                    case MovePayload::Direction::Right:
+                    case MoveDirection::Right:
                         return "Right";
-                    case MovePayload::Direction::Front:
+                    case MoveDirection::Front:
                         return "Front";
-                    case MovePayload::Direction::Back:
+                    case MoveDirection::Back:
                         return "Back";
                     default:
                         return "Unknown";

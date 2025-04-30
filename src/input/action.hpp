@@ -2,6 +2,7 @@
 
 #include <entt/core/hashed_string.hpp>
 #include <list>
+#include <stdexcept>
 #include <unordered_map>
 #include <variant>
 #include <vector>
@@ -34,9 +35,10 @@ struct KeyState {
     uint8_t     Modifiers;
 };
 
+enum class MoveDirection { Left, Right, Front, Back, Up, Down };
+
 struct MovePayload {
-    enum class Direction { Left, Right, Front, Back, Up, Down };
-    Direction Direction;
+    MoveDirection Direction;
 };
 
 struct SendCreepPayload {
@@ -71,25 +73,21 @@ struct Action {
         aArchive.template Write<int>(&aSelf.Type, 1);
         aArchive.template Write<int>(&aSelf.Tag, 1);
 
-        // Write payload type index first
-        size_t index = aSelf.Payload.index();
-        aArchive.template Write<size_t>(&index, 1);
-
         // Then serialize the actual payload based on type
         std::visit(
             VariantVisitor{
                 [&](const MovePayload& aPayload) {
-                    aArchive.template Write<int>(&aPayload.Direction, 1);
+                    aArchive.template Write<MoveDirection>(&aPayload.Direction, 1);
                 },
                 [&](const SendCreepPayload& aPayload) {
-                    aArchive.template Write<int>(&aPayload.Type, 1);
+                    aArchive.template Write<CreepType>(&aPayload.Type, 1);
                 },
                 [&](const BuildTowerPayload& aPayload) {
-                    aArchive.template Write<int>(&aPayload.Tower, 1);
+                    aArchive.template Write<TowerType>(&aPayload.Tower, 1);
                 },
                 [&](const PlacementModePayload& aPayload) {
                     aArchive.template Write<bool>(&aPayload.CanBuild, 1);
-                    aArchive.template Write<int>(&aPayload.Tower, 1);
+                    aArchive.template Write<TowerType>(&aPayload.Tower, 1);
                 },
             },
             aSelf.Payload);
@@ -97,37 +95,33 @@ struct Action {
 
     constexpr static auto Deserialize(auto& aArchive, auto& aSelf)
     {
-        aArchive.template Read<int>(&aSelf.Type, 1);
-        aArchive.template Read<int>(&aSelf.Tag, 1);
+        aArchive.template Read<ActionType>(&aSelf.Type, 1);
+        aArchive.template Read<ActionTag>(&aSelf.Tag, 1);
 
-        // Read payload type index
-        size_t index;
-        aArchive.template Read<int>(&index, 1);
-
-        // Deserialize the correct payload type based on index
-        switch (index) {
-            case 0: {  // MovePayload
+        switch (aSelf.Type) {
+            case ActionType::Move: {
                 MovePayload payload{};
-                aArchive.template Read<int>(&payload.Direction, 1);
+                aArchive.template Read<MoveDirection>(&payload.Direction, 1);
                 aSelf.Payload = payload;
                 break;
             }
-            case 1: {  // SendCreepPayload
+            case ActionType::SendCreep: {
                 SendCreepPayload payload{};
-                aArchive.template Read<int>(&payload.Type, 1);
+                aArchive.template Read<CreepType>(&payload.Type, 1);
                 aSelf.Payload = payload;
                 break;
             }
-            case 2: {  // BuildTowerPayload
+            case ActionType::BuildTower: {
                 BuildTowerPayload payload{};
-                aArchive.template Read<int>(&payload.Tower, 1);
+                aArchive.template Read<TowerType>(&payload.Tower, 1);
                 aSelf.Payload = payload;
                 break;
             }
-            case 3: {  // PlacementModePayload
+            case ActionType::EnterPlacementMode:
+            case ActionType::ExitPlacementMode: {
                 PlacementModePayload payload{};
                 aArchive.template Read<bool>(&payload.CanBuild, 1);
-                aArchive.template Read<int>(&payload.Tower, 1);
+                aArchive.template Read<TowerType>(&payload.Tower, 1);
                 aSelf.Payload = payload;
                 break;
             }
@@ -142,36 +136,36 @@ struct Action {
 constexpr Action kMoveLeftAction = Action{
     .Type    = ActionType::Move,
     .Tag     = ActionTag::FrameTime,
-    .Payload = MovePayload{.Direction = MovePayload::Direction::Left}};
+    .Payload = MovePayload{.Direction = MoveDirection::Left}};
 
 constexpr Action kMoveRightAction = Action{
     .Type    = ActionType::Move,
     .Tag     = ActionTag::FrameTime,
-    .Payload = MovePayload{.Direction = MovePayload::Direction::Right}};
+    .Payload = MovePayload{.Direction = MoveDirection::Right}};
 
 constexpr Action kMoveFrontAction = Action{
     .Type    = ActionType::Move,
     .Tag     = ActionTag::FrameTime,
-    .Payload = MovePayload{.Direction = MovePayload::Direction::Front}};
+    .Payload = MovePayload{.Direction = MoveDirection::Front}};
 
 constexpr Action kMoveBackAction = Action{
     .Type    = ActionType::Move,
     .Tag     = ActionTag::FrameTime,
-    .Payload = MovePayload{.Direction = MovePayload::Direction::Back}};
+    .Payload = MovePayload{.Direction = MoveDirection::Back}};
 
 constexpr Action kMoveUpAction = Action{
     .Type    = ActionType::Move,
     .Tag     = ActionTag::FrameTime,
-    .Payload = MovePayload{.Direction = MovePayload::Direction::Up}};
+    .Payload = MovePayload{.Direction = MoveDirection::Up}};
 
 constexpr Action kMoveDownAction = Action{
     .Type    = ActionType::Move,
     .Tag     = ActionTag::FrameTime,
-    .Payload = MovePayload{.Direction = MovePayload::Direction::Down}};
+    .Payload = MovePayload{.Direction = MoveDirection::Down}};
 
 constexpr Action kEnterPlacementModeAction = Action{
     .Type    = ActionType::EnterPlacementMode,
-    .Tag     = ActionTag::FixedTime,
+    .Tag     = ActionTag::FrameTime,
     .Payload = PlacementModePayload{.CanBuild = true, .Tower = TowerType::Arrow}
 };
 
@@ -244,7 +238,9 @@ struct PlayerActions {
         aArchive.template Read<actions_type::size_type>(&nActions, 1);
         for (actions_type::size_type idx = 0; idx < nActions; idx++) {
             Action action;
-            Action::Deserialize(aArchive, action);
+            if (!Action::Deserialize(aArchive, action)) {
+                throw std::runtime_error("cannot deserialize action");
+            }
             aSelf.Actions.push_back(action);
         }
         return true;

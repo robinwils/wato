@@ -2,6 +2,7 @@
 
 #include <fmt/base.h>
 
+#include "components/creep.hpp"
 #include "components/health.hpp"
 #include "components/imgui.hpp"
 #include "components/placement_mode.hpp"
@@ -66,9 +67,32 @@ void ActionSystem<Derived>::handleDefaultContext(
                 handleMovement(aRegistry, *payload, aDeltaTime);
             }
             break;
-        case ActionType::SendCreep: {
+        case ActionType::SendCreep:
+            if (const auto* payload = std::get_if<SendCreepPayload>(&aAction.Payload)) {
+                auto& phy   = aRegistry.ctx().get<Physics&>();
+                auto  creep = aRegistry.create();
+                auto& t     = aRegistry.emplace<Transform3D>(
+                    creep,
+                    glm::vec3(2.0f, 0.0f, 2.0f),
+                    glm::identity<glm::quat>(),
+                    glm::vec3(0.1f));
+
+                aRegistry.emplace<Health>(creep, 100.0f);
+                aRegistry.emplace<Creep>(creep, payload->Type);
+
+                auto* body = phy.CreateRigidBody(
+                    creep,
+                    aRegistry,
+                    RigidBodyParams{
+                        .Type           = rp3d::BodyType::DYNAMIC,
+                        .Transform      = t.ToRP3D(),
+                        .GravityEnabled = false});
+                rp3d::Collider* collider = phy.AddCapsuleCollider(body, 0.1f, 0.05f);
+                collider->setCollisionCategoryBits(Category::Entities);
+
+                fmt::println("got a creep !!");
+            }
             break;
-        }
         default:
             break;
     }
@@ -84,24 +108,24 @@ void ActionSystem<Derived>::handleMovement(
         float const speed = camera.Speed * aDeltaTime;
 
         switch (aPayload.Direction) {
-            case MovePayload::Direction::Left:
+            case MoveDirection::Left:
                 transform.Position += speed * camera.Right();
                 break;
-            case MovePayload::Direction::Right:
+            case MoveDirection::Right:
                 transform.Position -= speed * camera.Right();
                 break;
-            case MovePayload::Direction::Front:
+            case MoveDirection::Front:
                 transform.Position += speed * camera.Front;
                 break;
-            case MovePayload::Direction::Back:
+            case MoveDirection::Back:
                 transform.Position -= speed * camera.Front;
                 break;
-            case MovePayload::Direction::Up:
+            case MoveDirection::Up:
                 if (transform.Position.y <= 10.0F) {
                     transform.Position += speed * camera.Up;
                 }
                 break;
-            case MovePayload::Direction::Down:
+            case MoveDirection::Down:
                 if (transform.Position.y >= 1.0F) {
                     transform.Position -= speed * camera.Up;
                 }

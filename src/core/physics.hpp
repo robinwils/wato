@@ -57,6 +57,11 @@ class Physics
         rp3d::RigidBody*     aBody,
         const rp3d::Vector3& aSize,
         const bool           aIsTrigger = false);
+    rp3d::Collider* AddCapsuleCollider(
+        rp3d::RigidBody* aBody,
+        const float&     aRadius,
+        const float&     aHeight,
+        const bool       aIsTrigger = false);
     void DeleteRigidBody(Registry& aRegistry, entt::entity aEntity);
 
     static constexpr auto Serialize(auto& aArchive, const auto& aSelf)

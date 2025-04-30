@@ -8,7 +8,10 @@
 class GameServer : public Application
 {
    public:
-    explicit GameServer(char** aArgv) : Application(0, 0, aArgv) {}
+    explicit GameServer(char** aArgv) : Application(0, 0, aArgv)
+    {
+        mRegistry.ctx().emplace<ActionBuffer>();
+    }
     virtual ~GameServer() = default;
 
     GameServer(const GameServer&)            = delete;
