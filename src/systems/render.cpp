@@ -13,7 +13,6 @@
 #include "components/scene_object.hpp"
 #include "core/cache.hpp"
 #include "core/physics.hpp"
-#include "core/ray.hpp"
 #include "core/window.hpp"
 #include "imgui_helper.h"
 
@@ -28,9 +27,11 @@ void RenderSystem::operator()(Registry& aRegistry, const float aDeltaTime)
     auto bpShader = WATO_PROGRAM_CACHE["blinnphong"_hs];
     // light
     for (auto&& [light, source] : aRegistry.view<const LightSource>().each()) {
-        bgfx::setUniform(bpShader->Uniform("u_lightDir"),
+        bgfx::setUniform(
+            bpShader->Uniform("u_lightDir"),
             glm::value_ptr(glm::vec4(source.direction, 0.0f)));
-        bgfx::setUniform(bpShader->Uniform("u_lightCol"),
+        bgfx::setUniform(
+            bpShader->Uniform("u_lightCol"),
             glm::value_ptr(glm::vec4(source.color, 0.0f)));
     }
     auto check = aRegistry.view<const PlacementMode>();
@@ -85,7 +86,8 @@ void RenderImguiSystem::operator()(Registry& aRegistry, const float aDeltaTime)
 
         auto* lightSource = aRegistry.try_get<LightSource>(entity);
         if (lightSource) {
-            ImGui::DragFloat3("Light direction",
+            ImGui::DragFloat3(
+                "Light direction",
                 glm::value_ptr(lightSource->direction),
                 0.1f,
                 5.0f);
@@ -113,13 +115,17 @@ void RenderImguiSystem::operator()(Registry& aRegistry, const float aDeltaTime)
     ImGui::Checkbox("Contact Points", &phy.Params.RenderContactPoints);
     ImGui::Checkbox("Contact Normals", &phy.Params.RenderContactNormals);
 
-    debugRenderer.setIsDebugItemDisplayed(rp3d::DebugRenderer::DebugItem::COLLISION_SHAPE,
+    debugRenderer.setIsDebugItemDisplayed(
+        rp3d::DebugRenderer::DebugItem::COLLISION_SHAPE,
         phy.Params.RenderShapes);
-    debugRenderer.setIsDebugItemDisplayed(rp3d::DebugRenderer::DebugItem::COLLIDER_AABB,
+    debugRenderer.setIsDebugItemDisplayed(
+        rp3d::DebugRenderer::DebugItem::COLLIDER_AABB,
         phy.Params.RenderAabb);
-    debugRenderer.setIsDebugItemDisplayed(rp3d::DebugRenderer::DebugItem::CONTACT_POINT,
+    debugRenderer.setIsDebugItemDisplayed(
+        rp3d::DebugRenderer::DebugItem::CONTACT_POINT,
         phy.Params.RenderContactPoints);
-    debugRenderer.setIsDebugItemDisplayed(rp3d::DebugRenderer::DebugItem::CONTACT_NORMAL,
+    debugRenderer.setIsDebugItemDisplayed(
+        rp3d::DebugRenderer::DebugItem::CONTACT_NORMAL,
         phy.Params.RenderContactNormals);
 #endif
 
