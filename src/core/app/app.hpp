@@ -7,7 +7,6 @@
 #include "core/net/net.hpp"
 #include "core/options.hpp"
 #include "core/physics.hpp"
-#include "registry/registry.hpp"
 #include "systems/action.hpp"
 #include "systems/creep.hpp"
 #include "systems/physics.hpp"
@@ -33,7 +32,6 @@ class Application
 
    protected:
     using clock_type = std::chrono::steady_clock;
-    Registry mRegistry;
 
     PhysicsSystem             mPhysicsSystem;
     UpdateTransformsSytem     mUpdateTransformsSystem;

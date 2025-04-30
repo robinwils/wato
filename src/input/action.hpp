@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "components/creep.hpp"
+#include "components/player.hpp"
 #include "components/tower.hpp"
 #include "core/queue/ring_buffer.hpp"
 #include "input/input.hpp"
@@ -70,8 +71,8 @@ struct Action {
 
     constexpr static auto Serialize(auto& aArchive, const auto& aSelf)
     {
-        aArchive.template Write<int>(&aSelf.Type, 1);
-        aArchive.template Write<int>(&aSelf.Tag, 1);
+        aArchive.template Write<ActionType>(&aSelf.Type, 1);
+        aArchive.template Write<ActionTag>(&aSelf.Tag, 1);
 
         // Then serialize the actual payload based on type
         std::visit(
@@ -225,6 +226,7 @@ struct PlayerActions {
     {
         actions_type::size_type nActions = aSelf.Actions.size();
 
+        aArchive.template Write<PlayerID>(&aSelf.Player, 1);
         aArchive.template Write<uint32_t>(&aSelf.Tick, 1);
         aArchive.template Write<actions_type::size_type>(&nActions, 1);
         for (const Action& action : aSelf.Actions) {
@@ -234,6 +236,7 @@ struct PlayerActions {
     constexpr static auto Deserialize(auto& aArchive, auto& aSelf)
     {
         actions_type::size_type nActions = 0;
+        aArchive.template Read<PlayerID>(&aSelf.Player, 1);
         aArchive.template Read<uint32_t>(&aSelf.Tick, 1);
         aArchive.template Read<actions_type::size_type>(&nActions, 1);
         for (actions_type::size_type idx = 0; idx < nActions; idx++) {
@@ -245,6 +248,7 @@ struct PlayerActions {
         }
         return true;
     }
+    PlayerID     Player;
     uint32_t     Tick;
     actions_type Actions;
 };

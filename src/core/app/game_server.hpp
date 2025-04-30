@@ -2,16 +2,16 @@
 
 #include <bx/spscqueue.h>
 
+#include <string>
+#include <unordered_map>
+
 #include "core/app/app.hpp"
 #include "core/net/enet_server.hpp"
 
 class GameServer : public Application
 {
    public:
-    explicit GameServer(char** aArgv) : Application(0, 0, aArgv)
-    {
-        mRegistry.ctx().emplace<ActionBuffer>();
-    }
+    explicit GameServer(char** aArgv) : Application(aArgv) {}
     virtual ~GameServer() = default;
 
     GameServer(const GameServer&)            = delete;
@@ -24,5 +24,6 @@ class GameServer : public Application
     void ConsumeNetworkEvents();
 
    private:
-    ENetServer mServer;
+    ENetServer                                mServer;
+    std::unordered_map<std::string, Registry> mGameInstances;
 };

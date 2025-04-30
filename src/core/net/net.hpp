@@ -5,6 +5,7 @@
 #include <memory>
 #include <variant>
 
+#include "components/player.hpp"
 #include "input/action.hpp"
 
 struct ENetHostDeleter {
@@ -18,6 +19,7 @@ struct ENetHostDeleter {
 using enet_host_ptr = std::unique_ptr<ENetHost, ENetHostDeleter>;
 
 struct NewGamePayload {
+    PlayerID PlayerAID;
 };
 
 // Events are CRTP classes so there is a concrete type underneath, we need

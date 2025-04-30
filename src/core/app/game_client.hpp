@@ -39,6 +39,7 @@ class GameClient : public Application
    private:
     void networkPoll();
 
+    Registry             mRegistry;
     entt::organizer      mFrameTimeOrganizer;
     tf::Taskflow         mTaskflow;
     InputSystem          mInputSystem;

@@ -8,7 +8,6 @@
 
 #include "core/net/enet_base.hpp"
 #include "core/serialize.hpp"
-#include "core/wato.hpp"
 
 class ENetClient : public ENetBase
 {
@@ -39,7 +38,6 @@ class ENetClient : public ENetBase
    private:
     void send(const std::vector<uint8_t> aData);
 
-    ENetPeer*                     mPeer;
-    std::atomic_bool              mConnected;
-    std::vector<WatoGameInstance> mGameInstances;
+    ENetPeer*        mPeer;
+    std::atomic_bool mConnected;
 };
