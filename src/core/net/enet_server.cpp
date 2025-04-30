@@ -2,11 +2,11 @@
 
 #include <bx/spscqueue.h>
 #include <enet.h>
+#include <fmt/base.h>
 
 #include <span>
 #include <stdexcept>
 
-#include "components/creep_spawn.hpp"
 #include "core/net/net.hpp"
 #include "core/snapshot.hpp"
 #include "core/sys/log.hpp"
@@ -25,27 +25,29 @@ void ENetServer::Init()
     }
 }
 
-void ENetServer::ConsumeEvents(Registry* aRegistry)
+void ENetServer::OnConnect(ENetEvent& aEvent)
 {
-    EventVisitor visitor{[&](const PlayerActions& aEvent) {
-        INFO("received creep spawn ev");
-        auto creepSpawn = aRegistry->create();
-        aRegistry->emplace<CreepSpawn>(creepSpawn);
-    }};
-    while (NetPacket* pkt = mQueue.pop()) {
-        std::visit(visitor, pkt->Payload);
-    }
+    mQueue.push(new NetworkEvent{.Type = PacketType::NewGame, .Payload = NewGamePayload{}});
 }
-
-void ENetServer::OnConnect(ENetEvent& aEvent) {}
 
 void ENetServer::OnReceive(ENetEvent& aEvent)
 {
     std::span<uint8_t>(aEvent.packet->data, aEvent.packet->dataLength);
     ByteInputArchive archive(std::span<uint8_t>(aEvent.packet->data, aEvent.packet->dataLength));
-    NetPacket        pkt;
+    auto*            ev = new NetworkEvent();
 
-    archive.Read<PacketType>(&pkt.Type, sizeof(PacketType));
+    archive.Read<PacketType>(&ev->Type, sizeof(PacketType));
+    switch (ev->Type) {
+        case PacketType::Actions: {
+            PlayerActions actions;
+            PlayerActions::Deserialize(archive, actions);
+            ev->Payload = actions;
+            break;
+        }
+        case PacketType::NewGame:
+            break;
+    }
+    mQueue.push(ev);
 }
 
 void ENetServer::OnDisconnect(ENetEvent& aEvent) {}

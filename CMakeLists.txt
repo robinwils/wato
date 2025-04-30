@@ -328,9 +328,9 @@ target_sources(wato
     src/renderer/primitive.hpp
     src/renderer/renderer.hpp
     src/systems/action.hpp
-    src/systems/sync.hpp
     src/systems/input.hpp
     src/systems/render.hpp
+    src/systems/sync.hpp
 
   PRIVATE
     deps/imgui/imgui.cpp
@@ -352,9 +352,9 @@ target_sources(wato
     src/renderer/material.cpp
     src/renderer/renderer.cpp
     src/systems/action.cpp
-    src/systems/sync.cpp
     src/systems/input.cpp
     src/systems/render.cpp
+    src/systems/sync.cpp
 )
 
 target_include_directories(wato_common INTERFACE "${CMAKE_CURRENT_BINARY_DIR}")

@@ -41,15 +41,13 @@ void ENetBase::Poll()
                 break;
 
             case ENET_EVENT_TYPE_RECEIVE: {
-                // std::string str(reinterpret_cast<char*>(event.packet->data),
-                //     event.packet->dataLength);
-                // INFO(
-                //     "A packet of length %lu containing %s was received from %s on "
-                //     "channel %u.\n",
-                //     str.size(),
-                //     str.c_str(),
-                //     static_cast<char*>(event.peer->data),
-                //     event.channelID);
+                INFO(
+                    "A packet of length %lu containing %s was received from %s on "
+                    "channel %u.\n",
+                    event.packet->dataLength,
+                    event.packet->data,
+                    static_cast<char*>(event.peer->data),
+                    event.channelID);
                 OnReceive(event);
 
                 /* Clean up the packet now that we're done using it. */

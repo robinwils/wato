@@ -9,12 +9,15 @@
 
 #include "core/net/enet_client.hpp"
 #include "core/physics.hpp"
+#include "core/snapshot.hpp"
 #include "core/sys/log.hpp"
 #include "core/window.hpp"
 #include "registry/game_registry.hpp"
 #include "renderer/renderer.hpp"
 #include "systems/render.hpp"
 #include "systems/system.hpp"
+
+using namespace std::literals::chrono_literals;
 
 void GameClient::Init()
 {
@@ -45,6 +48,7 @@ void GameClient::Init()
 
     mSystemsFT.push_back(DeterministicActionSystem::MakeDelegate(mFTActionSystem));
     mSystemsFT.push_back(PhysicsSystem::MakeDelegate(mPhysicsSystem));
+    mSystemsFT.push_back(NetworkSyncSystem::MakeDelegate(mNetworkSyncSystem));
 
     auto graph = organizerFixedTime.graph();
     INFO("graph size: %ld", graph.size());
@@ -69,27 +73,22 @@ void GameClient::Init()
 
 int GameClient::Run()
 {
-    tf::Executor    executor;
     constexpr float timeStep = 1.0f / 60.0f;
 
-    auto&    window                      = mRegistry.ctx().get<WatoWindow&>();
-    auto&    renderer                    = mRegistry.ctx().get<Renderer&>();
-    auto&    netClient                   = mRegistry.ctx().get<ENetClient&>();
-    auto&    opts                        = mRegistry.ctx().get<Options&>();
-    auto&    actions                     = mRegistry.ctx().get<ActionBuffer&>();
-    uint32_t tick                        = 0;
-    float    accumulator                 = 0.0f;
-    using clock_type                     = std::chrono::steady_clock;
-    auto                        prevTime = clock_type::now();
+    tf::Executor executor;
+
+    auto&                       window      = mRegistry.ctx().get<WatoWindow&>();
+    auto&                       renderer    = mRegistry.ctx().get<Renderer&>();
+    auto&                       netClient   = mRegistry.ctx().get<ENetClient&>();
+    auto&                       opts        = mRegistry.ctx().get<Options&>();
+    auto&                       actions     = mRegistry.ctx().get<ActionBuffer&>();
+    uint32_t                    tick        = 0;
+    float                       accumulator = 0.0f;
+    auto                        prevTime    = clock_type::now();
     std::optional<std::jthread> netPollThread;
 
     if (opts.Multiplayer()) {
-        netPollThread.emplace([&]() {
-            while (netClient.Running()) {
-                netClient.ConsumeEvents(nullptr);
-                netClient.Poll();
-            }
-        });
+        netPollThread.emplace(&GameClient::networkPoll, this);
 
         if (!netClient.Connect()) {
             throw std::runtime_error("No available peers for initiating an ENet connection.");
@@ -128,7 +127,7 @@ int GameClient::Run()
                 system(mRegistry, timeStep);
             }
             actions.Push();
-            tick++;
+            actions.Latest().Tick = ++tick;
         }
 
         mUpdateTransformsSystem(mRegistry, accumulator / timeStep);
@@ -140,6 +139,22 @@ int GameClient::Run()
 
     if (opts.Multiplayer()) {
         netClient.Disconnect();
+        mDiscTimerStart.emplace(clock_type::now());
     }
     return 0;
+}
+
+void GameClient::networkPoll()
+{
+    auto& netClient = mRegistry.ctx().get<ENetClient&>();
+    while (netClient.Running()) {
+        if (mDiscTimerStart.has_value()) {
+            if (clock_type::now() - mDiscTimerStart.value() > 3s) {
+                netClient.ForceDisconnect();
+            }
+        }
+
+        netClient.ConsumeNetworkEvents();
+        netClient.Poll();
+    }
 }

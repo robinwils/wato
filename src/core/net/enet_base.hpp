@@ -11,6 +11,8 @@
 
 class ENetBase
 {
+    using NetworkEventQueue = bx::SpScUnboundedQueueT<NetworkEvent>;
+
    public:
     ENetBase() : mRunning(true), mQueue(&mAlloc) {}
     ENetBase(ENetBase&&)                 = delete;
@@ -24,9 +26,8 @@ class ENetBase
     // blocking: meant to be called in a dedicated thread
     virtual void Poll();
 
-    virtual void ConsumeEvents(Registry* aRegistry) = 0;
-
-    [[nodiscard]] bool Running() const noexcept { return mRunning; }
+    [[nodiscard]] bool               Running() const noexcept { return mRunning; }
+    [[nodiscard]] NetworkEventQueue& Queue() noexcept { return mQueue; }
 
    protected:
     virtual void OnConnect(ENetEvent& aEvent)           = 0;
@@ -35,8 +36,8 @@ class ENetBase
     virtual void OnDisconnectTimeout(ENetEvent& aEvent) = 0;
     virtual void OnNone(ENetEvent& aEvent)              = 0;
 
-    std::atomic_bool                   mRunning;
-    enet_host_ptr                      mHost;
-    bx::DefaultAllocator               mAlloc;
-    bx::SpScUnboundedQueueT<NetPacket> mQueue;
+    std::atomic_bool     mRunning;
+    enet_host_ptr        mHost;
+    bx::DefaultAllocator mAlloc;
+    NetworkEventQueue    mQueue;
 };

@@ -2,6 +2,7 @@
 
 #include <bx/string.h>
 #include <enet.h>
+#include <fmt/base.h>
 
 #include <stdexcept>
 #include <variant>
@@ -9,8 +10,6 @@
 #include "core/net/net.hpp"
 #include "core/snapshot.hpp"
 #include "core/sys/log.hpp"
-
-using namespace std::literals::chrono_literals;
 
 void ENetClient::Init()
 {
@@ -47,15 +46,12 @@ void ENetClient::send(const std::vector<uint8_t> aData)
         return;
     }
 
-    /* Create a reliable packet of size 7 containing "packet\0" */
     ENetPacket* packet = enet_packet_create(aData.data(), aData.size(), ENET_PACKET_FLAG_RELIABLE);
 
-    /* Send the packet to the peer over channel id 0. */
-    /* One could also broadcast the packet by         */
-    /* enet_host_broadcast (host, 0, packet);         */
-    enet_peer_send(mPeer, 0, packet);
+    if (-1 == enet_peer_send(mPeer, 0, packet)) {
+        enet_packet_destroy(packet);
+    }
 
-    /* One could just use enet_host_service() instead. */
     enet_host_flush(mHost.get());
 }
 
@@ -63,7 +59,6 @@ void ENetClient::Disconnect()
 {
     if (mPeer != nullptr) {
         enet_peer_disconnect(mPeer, 0);
-        mDiscTimerStart.emplace(clock_type::now());
     }
 }
 
@@ -73,34 +68,24 @@ void ENetClient::ForceDisconnect()
         INFO("forcing disconnect");
         enet_peer_reset(mPeer);
     }
+    mConnected = false;
+    mRunning   = false;
 }
 
-// Should not use registry here, the client is consuming events in separate thread,
-// receiving only events that should be sent to the server
-void ENetClient::ConsumeEvents(Registry* aRegistry)
+void ENetClient::ConsumeNetworkEvents()
 {
-    if (mDiscTimerStart.has_value()) {
-        if (clock_type::now() - mDiscTimerStart.value() > 3s) {
-            ForceDisconnect();
-            mConnected = false;
-            mRunning   = false;
-        }
-    }
-
-    while (NetPacket* pkt = mQueue.pop()) {
+    while (NetworkEvent* ev = mQueue.pop()) {
         // write header
         ByteOutputArchive archive;
-        archive.Write<int>(&pkt->Type, sizeof(pkt->Type));
+        archive.Write<int>(&ev->Type, sizeof(ev->Type));
 
         // write payload
         std::visit(
             EventVisitor{
-                [&](const PlayerActions& aActions) {
-                    INFO("received player actions ev");
-                    PlayerActions::Serialize(archive, aActions);
-                },
+                [&](const PlayerActions& aActions) { PlayerActions::Serialize(archive, aActions); },
+                [&](const NewGamePayload& aNGPayloa) {},
             },
-            pkt->Payload);
+            ev->Payload);
         send(archive.Bytes());
     }
 }

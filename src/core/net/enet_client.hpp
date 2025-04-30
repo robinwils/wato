@@ -8,6 +8,7 @@
 
 #include "core/net/enet_base.hpp"
 #include "core/serialize.hpp"
+#include "core/wato.hpp"
 
 class ENetClient : public ENetBase
 {
@@ -20,11 +21,11 @@ class ENetClient : public ENetBase
     ~ENetClient()                            = default;
 
     void Init() override;
-    void EnqueueSend(NetPacket* aPkt) { mQueue.push(aPkt); }
+    void EnqueueSend(NetworkEvent* aPkt) { mQueue.push(aPkt); }
     bool Connect();
     void Disconnect();
     void ForceDisconnect();
-    void ConsumeEvents(Registry* aRegistry) override;
+    void ConsumeNetworkEvents();
 
     [[nodiscard]] bool Connected() const noexcept { return mConnected; }
 
@@ -36,12 +37,9 @@ class ENetClient : public ENetBase
     void OnNone(ENetEvent& aEvent) override;
 
    private:
-    using clock_type = std::chrono::steady_clock;
-
     void send(const std::vector<uint8_t> aData);
 
-    std::optional<clock_type::time_point> mDiscTimerStart;
-
-    ENetPeer*        mPeer;
-    std::atomic_bool mConnected;
+    ENetPeer*                     mPeer;
+    std::atomic_bool              mConnected;
+    std::vector<WatoGameInstance> mGameInstances;
 };

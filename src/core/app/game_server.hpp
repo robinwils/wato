@@ -18,6 +18,7 @@ class GameServer : public Application
 
     void Init();
     int  Run();
+    void ConsumeNetworkEvents();
 
    private:
     ENetServer mServer;

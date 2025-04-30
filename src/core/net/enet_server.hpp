@@ -13,7 +13,6 @@ class ENetServer : public ENetBase
     ~ENetServer()                            = default;
 
     void Init() override;
-    void ConsumeEvents(Registry* aRegistry) override;
 
    protected:
     virtual void OnConnect(ENetEvent& aEvent) override;

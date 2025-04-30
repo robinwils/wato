@@ -12,6 +12,16 @@ void NetworkSyncSystem::operator()(Registry& aRegistry, const float aDeltaTime)
     auto&                netClient     = aRegistry.ctx().get<ENetClient&>();
     const PlayerActions& latestActions = actions.Latest();
     std::vector<uint8_t> storage;
+    PlayerActions        filteredActions;
 
-    netClient.EnqueueSend(new NetPacket{.Type = PacketType::Actions, .Payload = latestActions});
+    for (const Action& action : latestActions.Actions) {
+        if (action.Tag == ActionTag::FixedTime) {
+            filteredActions.Actions.emplace_back(action);
+        }
+    }
+
+    if (!filteredActions.Actions.empty()) {
+        netClient.EnqueueSend(
+            new NetworkEvent{.Type = PacketType::Actions, .Payload = filteredActions});
+    }
 }

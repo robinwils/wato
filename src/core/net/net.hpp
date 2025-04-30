@@ -17,17 +17,21 @@ struct ENetHostDeleter {
 };
 using enet_host_ptr = std::unique_ptr<ENetHost, ENetHostDeleter>;
 
+struct NewGamePayload {
+};
+
 // Events are CRTP classes so there is a concrete type underneath, we need
 // to use a variant to represent different event possibilities
-using NetPayload = std::variant<PlayerActions>;
+using NetworkEventPayload = std::variant<PlayerActions, NewGamePayload>;
 
 enum class PacketType {
     Actions,
+    NewGame,
 };
 
-struct NetPacket {
-    PacketType Type;
-    NetPayload Payload;
+struct NetworkEvent {
+    PacketType          Type;
+    NetworkEventPayload Payload;
 };
 
 template <class... Ts>

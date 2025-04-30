@@ -17,12 +17,28 @@ void GameServer::Init()
 
     mSystems.push_back(PhysicsSystem::MakeDelegate(mPhysicsSystem));
     mSystems.push_back(CreepSystem::MakeDelegate(mCreepSystem));
+
+void GameServer::ConsumeNetworkEvents()
+{
+    auto& actions = mRegistry.ctx().get<ActionBuffer&>().Latest().Actions;
+
+    EventVisitor visitor{
+        [&](const PlayerActions& aActions) {
+            fmt::println("got {} actions", aActions.Actions.size());
+            actions.insert(actions.end(), aActions.Actions.begin(), aActions.Actions.end());
+        },
+        [&](const NewGamePayload& aNewGame) {
+
+        },
+    };
+    while (NetworkEvent* ev = mServer.Queue().pop()) {
+        std::visit(visitor, ev->Payload);
+    }
 }
 
 int GameServer::Run()
 {
-    using clock   = std::chrono::high_resolution_clock;
-    auto prevTime = clock::now();
+    auto     prevTime = clock_type::now();
 
     mRunning = true;
 
@@ -35,11 +51,12 @@ int GameServer::Run()
     ActionBuffer rb;
 
     while (mRunning) {
-        auto                         t  = clock::now();
+        auto                         t  = clock_type::now();
         std::chrono::duration<float> dt = (t - prevTime);
         prevTime                        = t;
+        float accumulator               = 0.0f;
 
-        mServer.ConsumeEvents(&mRegistry);
+        ConsumeNetworkEvents();
 
         for (const auto& system : mSystems) {
             system(mRegistry, dt.count());

@@ -12,6 +12,7 @@
 #include "systems/action.hpp"
 #include "systems/input.hpp"
 #include "systems/render.hpp"
+#include "systems/sync.hpp"
 
 class GameClient : public Application
 {
@@ -36,16 +37,20 @@ class GameClient : public Application
     int  Run() override;
 
    private:
-    entt::organizer           mFrameTimeOrganizer;
-    tf::Taskflow              mTaskflow;
-    InputSystem               mInputSystem;
-    DeterministicActionSystem mFTActionSystem;
-    RealTimeActionSystem      mActionSystem;
-    RenderSystem              mRenderSystem;
-    RenderImguiSystem         mRenderImguiSystem;
-    CameraSystem              mCameraSystem;
+    void networkPoll();
+
+    entt::organizer      mFrameTimeOrganizer;
+    tf::Taskflow         mTaskflow;
+    InputSystem          mInputSystem;
+    RealTimeActionSystem mActionSystem;
+    RenderSystem         mRenderSystem;
+    RenderImguiSystem    mRenderImguiSystem;
+    CameraSystem         mCameraSystem;
+    NetworkSyncSystem    mNetworkSyncSystem;
 #if WATO_DEBUG
     PhysicsDebugSystem mPhysicsDbgSystem;
 #endif
     EventHandler mPhysicsEventHandler;
+
+    std::optional<clock_type::time_point> mDiscTimerStart;
 };

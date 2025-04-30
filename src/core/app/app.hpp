@@ -8,6 +8,7 @@
 #include "core/options.hpp"
 #include "core/physics.hpp"
 #include "registry/registry.hpp"
+#include "systems/action.hpp"
 #include "systems/creep.hpp"
 #include "systems/physics.hpp"
 #include "systems/system.hpp"
@@ -31,11 +32,13 @@ class Application
     virtual int  Run()  = 0;
 
    protected:
+    using clock_type = std::chrono::steady_clock;
     Registry mRegistry;
 
-    PhysicsSystem         mPhysicsSystem;
-    UpdateTransformsSytem mUpdateTransformsSystem;
-    CreepSystem           mCreepSystem;
+    PhysicsSystem             mPhysicsSystem;
+    UpdateTransformsSytem     mUpdateTransformsSystem;
+    CreepSystem               mCreepSystem;
+    DeterministicActionSystem mFTActionSystem;
 
     SystemRegistry mSystems;
     SystemRegistry mSystemsFT;
