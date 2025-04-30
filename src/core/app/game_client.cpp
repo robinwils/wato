@@ -1,4 +1,4 @@
-#include "core/app/game.hpp"
+#include "core/app/game_client.hpp"
 
 #include <bx/bx.h>
 
@@ -16,7 +16,7 @@
 #include "systems/render.hpp"
 #include "systems/system.hpp"
 
-void Game::Init()
+void GameClient::Init()
 {
     auto& window    = mRegistry.ctx().get<WatoWindow>();
     auto& renderer  = mRegistry.ctx().get<Renderer>();
@@ -67,7 +67,7 @@ void Game::Init()
     }
 }
 
-int Game::Run()
+int GameClient::Run()
 {
     tf::Executor    executor;
     constexpr float timeStep = 1.0f / 60.0f;

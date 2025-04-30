@@ -310,7 +310,7 @@ target_sources(wato
   PUBLIC FILE_SET HEADERS
   BASE_DIRS src
   FILES
-    src/core/app/game.hpp
+    src/core/app/game_client.hpp
     src/core/cache.hpp
     src/core/event_handler.hpp
     src/core/model_loader.hpp
@@ -337,7 +337,7 @@ target_sources(wato
     deps/imgui/imgui_draw.cpp
     deps/imgui/imgui_tables.cpp
     deps/imgui/imgui_widgets.cpp
-    src/core/app/game.cpp
+    src/core/app/game_client.cpp
     src/core/event_handler.cpp
     src/core/model_loader.cpp
     src/core/net/enet_client.cpp

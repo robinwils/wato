@@ -1,7 +1,7 @@
 #include <bx/bx.h>
 
 #define ENET_IMPLEMENTATION
-#include "core/app/game.hpp"
+#include "core/app/game_client.hpp"
 
 #if defined(None)  // X11 defines this...
 #undef None
@@ -62,7 +62,7 @@ int main(int, char** argv)
 {
     signal(SIGSEGV, signalHandler);
 
-    Game game(1920, 1080, argv);
+    GameClient game(1920, 1080, argv);
     game.Init();
 
     return game.Run();

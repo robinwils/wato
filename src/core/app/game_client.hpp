@@ -13,10 +13,10 @@
 #include "systems/input.hpp"
 #include "systems/render.hpp"
 
-class Game : public Application
+class GameClient : public Application
 {
    public:
-    explicit Game(int aWidth, int aHeight, char** aArgv)
+    explicit GameClient(int aWidth, int aHeight, char** aArgv)
         : Application(aWidth, aHeight, aArgv), mPhysicsEventHandler(&mRegistry)
     {
         mRegistry.ctx().emplace<ActionBuffer>();
@@ -25,12 +25,12 @@ class Game : public Application
         mRegistry.ctx().emplace<Renderer>();
         mRegistry.ctx().emplace<ENetClient>();
     }
-    virtual ~Game() = default;
+    virtual ~GameClient() = default;
 
-    Game(const Game&)            = delete;
-    Game(Game&&)                 = delete;
-    Game& operator=(const Game&) = delete;
-    Game& operator=(Game&&)      = delete;
+    GameClient(const GameClient&)            = delete;
+    GameClient(GameClient&&)                 = delete;
+    GameClient& operator=(const GameClient&) = delete;
+    GameClient& operator=(GameClient&&)      = delete;
 
     void Init() override;
     int  Run() override;
