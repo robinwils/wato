@@ -1,13 +1,13 @@
 #pragma once
 
-#include "core/snapshot.hpp"
+#include <concepts>
 
-template <typename T>
-concept Serializable = requires(T t, ByteOutputArchive& outArchive) {
-    { T::Serialize(outArchive, t) } -> std::same_as<void>;
+template <typename T, typename Out>
+concept Serializable = requires(T aObj, Out& aOut) {
+    { T::Serialize(aOut, aObj) } -> std::same_as<void>;
 };
 
-template <typename T>
-concept Deserializable = requires(T t, ByteInputArchive& inArchive) {
-    { T::Deserialize(inArchive, t) } -> std::same_as<bool>;
+template <typename T, typename In>
+concept Deserializable = requires(T aObj, In& aIn) {
+    { T::Deserialize(aIn, aObj) } -> std::same_as<bool>;
 };
