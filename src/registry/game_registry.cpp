@@ -27,7 +27,8 @@ void LoadResources(Registry& aRegistry)
 
 void LoadShaders(Registry& aRegistry)
 {
-    auto [bp, pLoaded] = WATO_PROGRAM_CACHE.load("blinnphong"_hs,
+    auto [bp, pLoaded] = WATO_PROGRAM_CACHE.load(
+        "blinnphong"_hs,
         "vs_blinnphong",
         "fs_blinnphong",
         std::unordered_map<std::string, bgfx::UniformType::Enum>{
@@ -38,7 +39,8 @@ void LoadShaders(Registry& aRegistry)
             {"u_lightDir",    bgfx::UniformType::Vec4   },
             {"u_lightCol",    bgfx::UniformType::Vec4   }
     });
-    auto [c, cLoaded]  = WATO_PROGRAM_CACHE.load("simple"_hs,
+    auto [c, cLoaded] = WATO_PROGRAM_CACHE.load(
+        "simple"_hs,
         "vs_cubes",
         "fs_cubes",
         std::unordered_map<std::string, bgfx::UniformType::Enum>{});
@@ -65,7 +67,8 @@ void SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeight)
         throw std::runtime_error("could not load grass/specular texture, invalid handle");
     }
 
-    WATO_MODEL_CACHE.load("grass_tile"_hs,
+    WATO_MODEL_CACHE.load(
+        "grass_tile"_hs,
         new PlanePrimitive(new BlinnPhongMaterial(shader, diffuse, specular)));
     entt::entity first = entt::null;
     for (uint32_t i = 0; i < aWidth; ++i) {
@@ -74,7 +77,8 @@ void SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeight)
             if (first == entt::null) {
                 first = tile;
             }
-            aRegistry.emplace<Transform3D>(tile,
+            aRegistry.emplace<Transform3D>(
+                tile,
                 glm::vec3(i, 0.0f, j),
                 glm::vec3(0.0f),
                 glm::vec3(1.0f));
@@ -88,7 +92,8 @@ void SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeight)
     std::vector<float> heightValues(columns * rows, 0.0f);
 
     std::vector<rp3d::Message> messages;
-    rp3d::HeightField*         heightField = phy.Common().createHeightField(columns,
+    rp3d::HeightField*         heightField = phy.Common().createHeightField(
+        columns,
         rows,
         heightValues.data(),
         rp3d::HeightField::HeightDataType::HEIGHT_FLOAT_TYPE,
@@ -120,13 +125,15 @@ void SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeight)
 
     // by default rp3d heightfield is centered around origin, we need to translate it in our world
     // pos
-    glm::vec3               translate = glm::vec3(columns, 2.0f, rows) / 4.0f - 0.5f;
-    rp3d::Transform         transform(ToRP3D(translate), rp3d::Quaternion::identity());
-    rp3d::RigidBody*        body             = phy.CreateRigidBody(first,
+    glm::vec3        translate = glm::vec3(columns, 2.0f, rows) / 4.0f - 0.5f;
+    rp3d::Transform  transform(ToRP3D(translate), rp3d::Quaternion::identity());
+    rp3d::RigidBody* body = phy.CreateRigidBody(
+        first,
         aRegistry,
-        RigidBodyParams{.Type = rp3d::BodyType::STATIC,
-                               .Transform        = transform,
-                               .GravityEnabled   = false});
+        RigidBodyParams{
+            .Type           = rp3d::BodyType::STATIC,
+            .Transform      = transform,
+            .GravityEnabled = false});
     rp3d::HeightFieldShape* heightFieldShape = phy.Common().createHeightFieldShape(heightField);
     rp3d::Collider*         collider         = body->addCollider(heightFieldShape, transform);
     collider->setCollisionCategoryBits(Category::Terrain);
@@ -142,7 +149,8 @@ void SpawnLight(Registry& aRegistry)
 
 void LoadModels()
 {
-    WATO_MODEL_CACHE.load("tower_model"_hs,
+    WATO_MODEL_CACHE.load(
+        "tower_model"_hs,
         "assets/models/tower.fbx",
         aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_PreTransformVertices
             | aiProcess_GlobalScale);

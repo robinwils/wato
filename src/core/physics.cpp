@@ -42,9 +42,10 @@ void Physics::InitLogger()
     mCommon.setLogger(Params.Logger);
 }
 
-rp3d::RigidBody* Physics::CreateRigidBody(const entt::entity& aEntity,
-    Registry&                                                 aRegistry,
-    const RigidBodyParams                                     aParams)
+rp3d::RigidBody* Physics::CreateRigidBody(
+    const entt::entity&   aEntity,
+    Registry&             aRegistry,
+    const RigidBodyParams aParams)
 {
     auto* body = mWorld->createRigidBody(aParams.Transform);
     body->setType(aParams.Type);
@@ -55,13 +56,13 @@ rp3d::RigidBody* Physics::CreateRigidBody(const entt::entity& aEntity,
 #if WATO_DEBUG
     body->setIsDebugEnabled(true);
 #endif
+
     aRegistry.emplace<RigidBody>(aEntity, body);
     return body;
 }
 
-rp3d::Collider* Physics::AddBoxCollider(rp3d::RigidBody* aBody,
-    const rp3d::Vector3&                                 aSize,
-    const bool                                           aIsTrigger)
+rp3d::Collider*
+Physics::AddBoxCollider(rp3d::RigidBody* aBody, const rp3d::Vector3& aSize, const bool aIsTrigger)
 {
     auto* box      = mCommon.createBoxShape(aSize);
     auto* collider = aBody->addCollider(box, rp3d::Transform::identity());

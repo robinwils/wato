@@ -17,10 +17,11 @@ const bgfx::Memory* loadMem(bx::FileReaderI* aReader, const char* aFilePath)
     return NULL;
 }
 
-void* load(bx::FileReaderI* aReader,
-    bx::AllocatorI*         aAllocator,
-    const char*             aFilePath,
-    uint32_t*               aSize)
+void* load(
+    bx::FileReaderI* aReader,
+    bx::AllocatorI*  aAllocator,
+    const char*      aFilePath,
+    uint32_t*        aSize)
 {
     if (bx::open(aReader, aFilePath)) {
         uint32_t size = (uint32_t)bx::getSize(aReader);

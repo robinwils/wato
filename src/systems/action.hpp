@@ -20,9 +20,10 @@ class ActionSystem : public System<Derived>
     {
         auto& contextStack = aRegistry.ctx().get<ActionContextStack&>();
         if (contextStack.empty()) {
-            contextStack.push_front(ActionContext{.State = ActionContext::State::Default,
-                .Bindings                                = ActionBindings::Defaults(),
-                .Payload                                 = NormalPayload{}});
+            contextStack.push_front(ActionContext{
+                .State    = ActionContext::State::Default,
+                .Bindings = ActionBindings::Defaults(),
+                .Payload  = NormalPayload{}});
         }
     }
 
