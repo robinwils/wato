@@ -4,7 +4,6 @@
 
 #include <glm/ext/vector_float3.hpp>
 
-#include "components/camera.hpp"
 #include "components/imgui.hpp"
 #include "components/light_source.hpp"
 #include "components/scene_object.hpp"
@@ -22,7 +21,6 @@ void LoadResources(Registry& aRegistry)
     SpawnLight(aRegistry);
     SpawnMap(aRegistry, 20, 20);
     LoadModels();
-    SpawnPlayerAndCamera(aRegistry);
 }
 
 void LoadShaders(Registry& aRegistry)
@@ -154,27 +152,4 @@ void LoadModels()
         "assets/models/tower.fbx",
         aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_PreTransformVertices
             | aiProcess_GlobalScale);
-}
-
-void SpawnPlayerAndCamera(Registry& aRegistry)
-{
-    auto player = aRegistry.create();
-
-    auto camera = aRegistry.create();
-    aRegistry.emplace<Camera>(camera,
-        // up, front, dir
-        glm::vec3(0.0f, 1.0f, 0.0f),
-        glm::vec3(0.0f, 0.0f, -1.0f),
-        glm::vec3(0.0f, -1.0f, -1.0f),
-        // speed, fov, near, far
-        2.5f,
-        60.0f,
-        0.1f,
-        100.0f);
-    // pos, rot, scale
-    aRegistry.emplace<Transform3D>(camera,
-        glm::vec3(0.0f, 2.0f, 1.5f),
-        glm::vec3(1.0f),
-        glm::vec3(1.0f));
-    aRegistry.emplace<ImguiDrawable>(camera, "Camera");
 }

@@ -38,6 +38,7 @@ class GameClient : public Application
 
    private:
     void networkPoll();
+    void spawnPlayerAndCamera(Registry& aRegistry);
 
     Registry             mRegistry;
     entt::organizer      mFrameTimeOrganizer;

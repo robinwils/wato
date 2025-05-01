@@ -3,16 +3,17 @@
 #include <bx/bx.h>
 
 #include <chrono>
-#include <sstream>
 #include <taskflow/taskflow.hpp>
 #include <thread>
 
+#include "components/imgui.hpp"
 #include "core/net/enet_client.hpp"
 #include "core/physics.hpp"
 #include "core/snapshot.hpp"
 #include "core/sys/log.hpp"
 #include "core/window.hpp"
 #include "registry/game_registry.hpp"
+#include "registry/registry.hpp"
 #include "renderer/renderer.hpp"
 #include "systems/render.hpp"
 #include "systems/system.hpp"
@@ -87,7 +88,7 @@ int GameClient::Run()
     auto                        prevTime    = clock_type::now();
     std::optional<std::jthread> netPollThread;
 
-    if (opts.Multiplayer()) {
+    if (mOptions.Multiplayer()) {
         netPollThread.emplace(&GameClient::networkPoll, this);
 
         if (!netClient.Connect()) {
@@ -106,10 +107,6 @@ int GameClient::Run()
         auto                         now        = clock_type::now();
         std::chrono::duration<float> frameTime  = (now - prevTime);
         accumulator                            += frameTime.count();
-
-        // std::ostringstream durationStr;
-        // durationStr << std::chrono::duration_cast<std::chrono::milliseconds>(frameTime);
-        // DBG("delta is %s", durationStr.str().c_str());
 
         prevTime = now;
 
@@ -137,7 +134,7 @@ int GameClient::Run()
         input.MouseState.Scroll.y = 0;
     }
 
-    if (opts.Multiplayer()) {
+    if (mOptions.Multiplayer()) {
         netClient.Disconnect();
         mDiscTimerStart.emplace(clock_type::now());
     }
@@ -157,4 +154,31 @@ void GameClient::networkPoll()
         netClient.ConsumeNetworkEvents();
         netClient.Poll();
     }
+}
+
+void GameClient::spawnPlayerAndCamera(Registry& aRegistry)
+{
+    auto camera = aRegistry.create();
+    aRegistry.emplace<Camera>(
+        camera,
+        // up, front, dir
+        glm::vec3(0.0f, 1.0f, 0.0f),
+        glm::vec3(0.0f, 0.0f, -1.0f),
+        glm::vec3(0.0f, -1.0f, -1.0f),
+        // speed, fov, near, far
+        2.5f,
+        60.0f,
+        0.1f,
+        100.0f);
+    // pos, orientation, scale
+    aRegistry.emplace<Transform3D>(
+        camera,
+        glm::vec3(0.0f, 2.0f, 1.5f),
+        glm::identity<glm::quat>(),
+        glm::vec3(1.0f));
+    aRegistry.emplace<ImguiDrawable>(camera, "Camera");
+
+    auto player = aRegistry.create();
+    // TODO: ID should be something coming from outside (menu, DB, etc...)
+    aRegistry.emplace<Player>(player, 0u, "stion", camera);
 }
