@@ -1,6 +1,7 @@
 #include "core/net/enet_base.hpp"
 
 #include <enet.h>
+#include <fmt/base.h>
 #include <sodium.h>
 
 #include <stdexcept>
@@ -41,12 +42,23 @@ void ENetBase::Poll()
                 break;
 
             case ENET_EVENT_TYPE_RECEIVE: {
-                INFO(
-                    "A packet of length %lu containing %s was received from %s on "
-                    "channel %u.\n",
+                std::string userData = "(null)";
+                if (event.packet->data) {
+                    userData = std::string(
+                        reinterpret_cast<char*>(event.packet->data),
+                        event.packet->dataLength);
+                }
+                std::string peerData = "(null)";
+                if (event.peer->data) {
+                    peerData = std::string(reinterpret_cast<char*>(event.peer->data));
+                }
+                fmt::println(
+                    "A packet of length {} was received from peer ID {} with data "
+                    "{} on "
+                    "channel {}.",
                     event.packet->dataLength,
-                    event.packet->data,
-                    static_cast<char*>(event.peer->data),
+                    enet_peer_get_id(event.peer),
+                    peerData,
                     event.channelID);
                 OnReceive(event);
 
