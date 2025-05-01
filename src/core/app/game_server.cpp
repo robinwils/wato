@@ -24,17 +24,18 @@ void GameServer::ConsumeNetworkEvents()
 {
     auto& actions = mRegistry.ctx().get<ActionBuffer&>().Latest().Actions;
 
-    EventVisitor visitor{
-        [&](const PlayerActions& aActions) {
-            fmt::println("got {} actions", aActions.Actions.size());
-            actions.insert(actions.end(), aActions.Actions.begin(), aActions.Actions.end());
-        },
-        [&](const NewGamePayload& aNewGame) {
+    while (const NetworkEvent* ev = mServer.Queue().pop()) {
+        std::visit(
+            EventVisitor{
+                [&](const PlayerActions& aActions) {
+                    fmt::println("got {} actions", aActions.Actions.size());
+                    actions.insert(actions.end(), aActions.Actions.begin(), aActions.Actions.end());
+                },
+                [&](const NewGamePayload& aNewGame) {
 
-        },
-    };
-    while (NetworkEvent* ev = mServer.Queue().pop()) {
-        std::visit(visitor, ev->Payload);
+                },
+            },
+            ev->Payload);
     }
 }
 
