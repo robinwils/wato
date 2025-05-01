@@ -3,10 +3,9 @@
 #include <bx/spscqueue.h>
 
 #include <atomic>
+#include <chrono>
 
-#include "core/net/net.hpp"
 #include "core/options.hpp"
-#include "core/physics.hpp"
 #include "systems/action.hpp"
 #include "systems/creep.hpp"
 #include "systems/physics.hpp"
@@ -15,11 +14,7 @@
 class Application
 {
    public:
-    explicit Application(int aWidth, int aHeight, char** aArgv) : mRunning(false)
-    {
-        mRegistry.ctx().emplace<Options>(aArgv);
-        mRegistry.ctx().emplace<Physics>();
-    }
+    explicit Application(char** aArgv) : mOptions(aArgv), mRunning(false) {}
     virtual ~Application() = default;
 
     Application(const Application&)            = delete;
@@ -32,6 +27,7 @@ class Application
 
    protected:
     using clock_type = std::chrono::steady_clock;
+    Options mOptions;
 
     PhysicsSystem             mPhysicsSystem;
     UpdateTransformsSytem     mUpdateTransformsSystem;

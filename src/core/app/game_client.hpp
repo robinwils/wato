@@ -18,7 +18,7 @@ class GameClient : public Application
 {
    public:
     explicit GameClient(int aWidth, int aHeight, char** aArgv)
-        : Application(aWidth, aHeight, aArgv), mPhysicsEventHandler(&mRegistry)
+        : Application(aArgv), mPhysicsEventHandler(&mRegistry)
     {
         mRegistry.ctx().emplace<ActionBuffer>();
         mRegistry.ctx().emplace<ActionContextStack>();
