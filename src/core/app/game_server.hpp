@@ -19,11 +19,13 @@ class GameServer : public Application
     GameServer& operator=(const GameServer&) = delete;
     GameServer& operator=(GameServer&&)      = delete;
 
-    void Init();
-    int  Run();
+    void Init() override;
+    int  Run() override;
     void ConsumeNetworkEvents();
 
    private:
+    void                                      createGameInstance(const std::string& aGameName);
+    void                                      advanceSimulation(Registry& aRegistry);
     ENetServer                                mServer;
     std::unordered_map<std::string, Registry> mGameInstances;
 };

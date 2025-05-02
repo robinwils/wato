@@ -14,6 +14,8 @@
 class Application
 {
    public:
+    static constexpr float kTimeStep = 1.0f / 60.0f;
+
     explicit Application(char** aArgv) : mOptions(aArgv), mRunning(false) {}
     virtual ~Application() = default;
 

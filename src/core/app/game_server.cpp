@@ -6,15 +6,12 @@
 
 #include "core/physics.hpp"
 #include "input/action.hpp"
+#include "registry/registry.hpp"
 #include "systems/system.hpp"
 
 void GameServer::Init()
 {
     mServer.Init();
-    auto& physics = mRegistry.ctx().get<Physics>();
-
-    physics.Init(mRegistry);
-
     mSystemsFT.push_back(PhysicsSystem::MakeDelegate(mPhysicsSystem));
     mSystemsFT.push_back(CreepSystem::MakeDelegate(mCreepSystem));
     mSystemsFT.push_back(DeterministicActionSystem::MakeDelegate(mFTActionSystem));
@@ -22,9 +19,8 @@ void GameServer::Init()
 
 void GameServer::ConsumeNetworkEvents()
 {
-    auto& actions = mRegistry.ctx().get<ActionBuffer&>().Latest().Actions;
-
     while (const NetworkEvent* ev = mServer.Queue().pop()) {
+        auto& actions = mRegistry.ctx().get<ActionBuffer&>().Latest().Actions;
         std::visit(
             EventVisitor{
                 [&](const PlayerActions& aActions) {
@@ -41,11 +37,7 @@ void GameServer::ConsumeNetworkEvents()
 
 int GameServer::Run()
 {
-    constexpr float timeStep = 1.0f / 60.0f;
-
-    uint32_t tick     = 0;
-    auto     prevTime = clock_type::now();
-    auto&    actions  = mRegistry.ctx().get<ActionBuffer&>();
+    auto prevTime = clock_type::now();
 
     mRunning = true;
 
@@ -61,23 +53,37 @@ int GameServer::Run()
         auto                         t  = clock_type::now();
         std::chrono::duration<float> dt = (t - prevTime);
         prevTime                        = t;
-        float accumulator               = 0.0f;
 
         ConsumeNetworkEvents();
-
-        // While there is enough accumulated time to take
-        // one or several physics steps
-        while (accumulator >= timeStep) {
-            // Decrease the accumulated time
-            accumulator -= timeStep;
-
-            for (const auto& system : mSystemsFT) {
-                system(mRegistry, timeStep);
-            }
-            actions.Push();
-            actions.Latest().Tick = ++tick;
-        }
     }
 
     return 0;
+}
+
+void GameServer::createGameInstance(const std::string& aGameName)
+{
+    if (!mGameInstances.contains(aGameName)) {
+        Registry& registry = mGameInstances[aGameName];
+        auto&     physics  = registry.ctx().emplace<Physics>();
+
+        physics.Init(registry);
+    }
+}
+void GameServer::advanceSimulation(Registry& aRegistry)
+{
+    uint32_t tick        = 0;
+    float    accumulator = 0.0f;
+    auto&    actions     = aRegistry.ctx().get<ActionBuffer&>();
+    // While there is enough accumulated time to take
+    // one or several physics steps
+    while (accumulator >= kTimeStep) {
+        // Decrease the accumulated time
+        accumulator -= kTimeStep;
+
+        for (const auto& system : mSystemsFT) {
+            system(aRegistry, kTimeStep);
+        }
+        actions.Push();
+        actions.Latest().Tick = ++tick;
+    }
 }
