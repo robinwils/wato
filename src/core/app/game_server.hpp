@@ -7,6 +7,7 @@
 
 #include "core/app/app.hpp"
 #include "core/net/enet_server.hpp"
+#include "core/types.hpp"
 
 class GameServer : public Application
 {
@@ -24,8 +25,9 @@ class GameServer : public Application
     void ConsumeNetworkEvents();
 
    private:
-    void                                      createGameInstance(const std::string& aGameName);
-    void                                      advanceSimulation(Registry& aRegistry);
-    ENetServer                                mServer;
-    std::unordered_map<std::string, Registry> mGameInstances;
+    GameInstanceID createGameInstance(const NewGameRequest& aNewGame);
+    void           advanceSimulation(Registry& aRegistry);
+
+    ENetServer                                   mServer;
+    std::unordered_map<GameInstanceID, Registry> mGameInstances;
 };

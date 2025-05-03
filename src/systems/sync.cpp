@@ -21,7 +21,8 @@ void NetworkSyncSystem::operator()(Registry& aRegistry, const float aDeltaTime)
     }
 
     if (!filteredActions.Actions.empty()) {
-        netClient.EnqueueSend(
-            new NetworkEvent{.Type = PacketType::Actions, .Payload = filteredActions});
+        netClient.EnqueueSend(new NetworkEvent<NetworkRequestPayload>{
+            .Type    = PacketType::Actions,
+            .Payload = filteredActions});
     }
 }

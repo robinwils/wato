@@ -6,6 +6,7 @@
 #include <variant>
 
 #include "components/player.hpp"
+#include "core/types.hpp"
 #include "input/action.hpp"
 
 struct ENetHostDeleter {
@@ -18,23 +19,50 @@ struct ENetHostDeleter {
 };
 using enet_host_ptr = std::unique_ptr<ENetHost, ENetHostDeleter>;
 
-struct NewGamePayload {
+struct NewGameRequest {
     PlayerID PlayerAID;
+
+    constexpr static auto Serialize(auto& aArchive, const auto& aSelf)
+    {
+        aArchive.template Write<PlayerID>(&aSelf.PlayerAID, 1);
+    }
+    constexpr static auto Deserialize(auto& aArchive, auto& aSelf)
+    {
+        aArchive.template Read<PlayerID>(&aSelf.PlayerAID, 1);
+        return true;
+    }
 };
 
-// Events are CRTP classes so there is a concrete type underneath, we need
-// to use a variant to represent different event possibilities
-using NetworkEventPayload = std::variant<PlayerActions, NewGamePayload>;
+struct NewGameResponse {
+    GameInstanceID GameID;
+
+    constexpr static auto Serialize(auto& aArchive, const auto& aSelf)
+    {
+        aArchive.template Write<GameInstanceID>(&aSelf.GameID, 1);
+    }
+    constexpr static auto Deserialize(auto& aArchive, auto& aSelf)
+    {
+        aArchive.template Read<GameInstanceID>(&aSelf.GameID, 1);
+        return true;
+    }
+};
+
+using NetworkRequestPayload  = std::variant<PlayerActions, NewGameRequest>;
+using NetworkResponsePayload = std::variant<NewGameResponse>;
 
 enum class PacketType {
     Actions,
     NewGame,
 };
 
+template <typename _Payload>
 struct NetworkEvent {
-    PacketType          Type;
-    NetworkEventPayload Payload;
+    PacketType Type;
+    _Payload   Payload;
 };
+
+template struct NetworkEvent<NetworkRequestPayload>;
+template struct NetworkEvent<NetworkResponsePayload>;
 
 template <class... Ts>
 struct EventVisitor : Ts... {

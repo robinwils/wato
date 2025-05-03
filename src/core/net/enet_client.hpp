@@ -20,7 +20,7 @@ class ENetClient : public ENetBase
     ~ENetClient()                            = default;
 
     void Init() override;
-    void EnqueueSend(NetworkEvent* aPkt) { mQueue.push(aPkt); }
+    void EnqueueSend(NetworkEvent<NetworkRequestPayload>* aPkt) { mQueue.push(aPkt); }
     bool Connect();
     void Disconnect();
     void ForceDisconnect();

@@ -25,16 +25,13 @@ void ENetServer::Init()
     }
 }
 
-void ENetServer::OnConnect(ENetEvent& aEvent)
-{
-    mQueue.push(new NetworkEvent{.Type = PacketType::NewGame, .Payload = NewGamePayload{}});
-}
+void ENetServer::OnConnect(ENetEvent& aEvent) {}
 
 void ENetServer::OnReceive(ENetEvent& aEvent)
 {
     std::span<uint8_t>(aEvent.packet->data, aEvent.packet->dataLength);
     ByteInputArchive archive(std::span<uint8_t>(aEvent.packet->data, aEvent.packet->dataLength));
-    auto*            ev = new NetworkEvent();
+    auto*            ev = new NetworkEvent<NetworkRequestPayload>();
 
     archive.Read<PacketType>(&ev->Type, sizeof(PacketType));
     switch (ev->Type) {
@@ -45,6 +42,12 @@ void ENetServer::OnReceive(ENetEvent& aEvent)
             break;
         }
         case PacketType::NewGame:
+            NewGameRequest payload;
+            NewGameRequest::Deserialize(archive, payload);
+            ev->Payload = payload;
+            if (!mConnectedPeers.contains(payload.PlayerAID)) {
+                mConnectedPeers[payload.PlayerAID] = aEvent.peer;
+            }
             break;
     }
     mQueue.push(ev);

@@ -1,10 +1,13 @@
 #include "core/app/game_server.hpp"
 
 #include <bx/bx.h>
+#include <fmt/base.h>
 
 #include <thread>
 
+#include "core/net/net.hpp"
 #include "core/physics.hpp"
+#include "core/types.hpp"
 #include "input/action.hpp"
 #include "registry/registry.hpp"
 #include "systems/system.hpp"
@@ -19,11 +22,16 @@ void GameServer::Init()
 
 void GameServer::ConsumeNetworkEvents()
 {
-    while (const NetworkEvent* ev = mServer.Queue().pop()) {
-        auto& actions = mRegistry.ctx().get<ActionBuffer&>().Latest().Actions;
+    while (const NetworkEvent<NetworkRequestPayload>* ev = mServer.Queue().pop()) {
         std::visit(
             EventVisitor{
                 [&](const PlayerActions& aActions) {
+                    if (!mGameInstances.contains(aActions.GameID)) {
+                        fmt::println("got event for non existing game {}", aActions.GameID);
+                        return;
+                    }
+                    Registry& registry = mGameInstances[aActions.GameID];
+                    auto&     actions  = registry.ctx().get<ActionBuffer&>().Latest().Actions;
                     fmt::println("got {} actions", aActions.Actions.size());
                     actions.insert(actions.end(), aActions.Actions.begin(), aActions.Actions.end());
                 },

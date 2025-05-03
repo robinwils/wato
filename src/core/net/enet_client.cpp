@@ -74,7 +74,7 @@ void ENetClient::ForceDisconnect()
 
 void ENetClient::ConsumeNetworkEvents()
 {
-    while (NetworkEvent* ev = mQueue.pop()) {
+    while (NetworkEvent<NetworkRequestPayload>* ev = mQueue.pop()) {
         // write header
         ByteOutputArchive archive;
         archive.Write<int>(&ev->Type, sizeof(ev->Type));
@@ -83,7 +83,7 @@ void ENetClient::ConsumeNetworkEvents()
         std::visit(
             EventVisitor{
                 [&](const PlayerActions& aActions) { PlayerActions::Serialize(archive, aActions); },
-                [&](const NewGamePayload& aNGPayloa) {},
+                [&](const NewGameRequest& aNGPayloa) {},
             },
             ev->Payload);
         send(archive.Bytes());

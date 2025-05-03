@@ -11,6 +11,7 @@
 #include "components/player.hpp"
 #include "components/tower.hpp"
 #include "core/queue/ring_buffer.hpp"
+#include "core/types.hpp"
 #include "input/input.hpp"
 
 using namespace entt::literals;
@@ -248,9 +249,10 @@ struct PlayerActions {
         }
         return true;
     }
-    PlayerID     Player;
-    uint32_t     Tick;
-    actions_type Actions;
+    PlayerID       Player;
+    GameInstanceID GameID;
+    uint32_t       Tick;
+    actions_type   Actions;
 };
 
 using ActionContextStack = std::list<ActionContext>;

@@ -9,10 +9,11 @@
 #include "core/net/net.hpp"
 #include "registry/registry.hpp"
 
+using NetworkRequestQueue  = bx::SpScUnboundedQueueT<NetworkEvent<NetworkRequestPayload>>;
+using NetworkResponseQueue = bx::SpScUnboundedQueueT<NetworkEvent<NetworkResponsePayload>>;
+
 class ENetBase
 {
-    using NetworkEventQueue = bx::SpScUnboundedQueueT<NetworkEvent>;
-
    public:
     ENetBase() : mRunning(true), mQueue(&mAlloc) {}
     ENetBase(ENetBase&&)                 = delete;
@@ -26,8 +27,8 @@ class ENetBase
     // blocking: meant to be called in a dedicated thread
     virtual void Poll();
 
-    [[nodiscard]] bool               Running() const noexcept { return mRunning; }
-    [[nodiscard]] NetworkEventQueue& Queue() noexcept { return mQueue; }
+    [[nodiscard]] bool                 Running() const noexcept { return mRunning; }
+    [[nodiscard]] NetworkRequestQueue& Queue() noexcept { return mQueue; }
 
    protected:
     virtual void OnConnect(ENetEvent& aEvent)           = 0;
@@ -39,5 +40,5 @@ class ENetBase
     std::atomic_bool     mRunning;
     enet_host_ptr        mHost;
     bx::DefaultAllocator mAlloc;
-    NetworkEventQueue    mQueue;
+    NetworkRequestQueue  mQueue;
 };
