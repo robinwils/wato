@@ -35,8 +35,11 @@ void GameServer::ConsumeNetworkEvents()
                     fmt::println("got {} actions", aActions.Actions.size());
                     actions.insert(actions.end(), aActions.Actions.begin(), aActions.Actions.end());
                 },
-                [&](const NewGamePayload& aNewGame) {
-
+                [&](const NewGameRequest& aNewGame) {
+                    GameInstanceID gameID = createGameInstance(aNewGame);
+                    mServer.EnqueueResponse(new NetworkEvent<NetworkResponsePayload>{
+                        .Type    = PacketType::NewGame,
+                        .Payload = NewGameResponse{.GameID = gameID}});
                 },
             },
             ev->Payload);
@@ -68,15 +71,21 @@ int GameServer::Run()
     return 0;
 }
 
-void GameServer::createGameInstance(const std::string& aGameName)
+GameInstanceID GameServer::createGameInstance(const NewGameRequest& aNewGame)
 {
-    if (!mGameInstances.contains(aGameName)) {
-        Registry& registry = mGameInstances[aGameName];
-        auto&     physics  = registry.ctx().emplace<Physics>();
+    GameInstanceID gameID;
+    do {
+        gameID = GenerateGameInstanceID();
+    } while (mGameInstances.contains(gameID));
 
-        physics.Init(registry);
-    }
+    Registry& registry = mGameInstances[gameID];
+    auto&     physics  = registry.ctx().emplace<Physics>();
+    registry.ctx().emplace<GameInstanceID>(gameID);
+
+    physics.Init(registry);
+    return gameID;
 }
+
 void GameServer::advanceSimulation(Registry& aRegistry)
 {
     uint32_t tick        = 0;
