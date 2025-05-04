@@ -9,7 +9,7 @@ class ENetServer : public ENetBase
     using peer_map = std::unordered_map<PlayerID, ENetPeer*>;
 
    public:
-    ENetServer() : mRespQueue(&mAlloc) {}
+    ENetServer() {}
     ENetServer(ENetServer&&)                 = delete;
     ENetServer(const ENetServer&)            = delete;
     ENetServer& operator=(ENetServer&&)      = delete;
@@ -27,6 +27,5 @@ class ENetServer : public ENetBase
     virtual void OnNone(ENetEvent& aEvent) override;
 
    private:
-    peer_map             mConnectedPeers;
-    NetworkResponseQueue mRespQueue;
+    peer_map mConnectedPeers;
 };

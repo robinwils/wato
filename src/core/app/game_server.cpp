@@ -43,6 +43,7 @@ void GameServer::ConsumeNetworkEvents()
                 },
             },
             ev->Payload);
+        delete ev;
     }
 }
 

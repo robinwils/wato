@@ -29,7 +29,6 @@ void ENetServer::OnConnect(ENetEvent& aEvent) {}
 
 void ENetServer::OnReceive(ENetEvent& aEvent)
 {
-    std::span<uint8_t>(aEvent.packet->data, aEvent.packet->dataLength);
     ByteInputArchive archive(std::span<uint8_t>(aEvent.packet->data, aEvent.packet->dataLength));
     auto*            ev = new NetworkEvent<NetworkRequestPayload>();
 

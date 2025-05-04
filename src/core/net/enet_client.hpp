@@ -30,6 +30,11 @@ class ENetClient : public ENetBase
 
    protected:
     void OnConnect(ENetEvent& aEvent) override;
+    /**
+     * @brief Raw server response
+     *
+     * @param aEvent enet structure encapsulating the packet received
+     */
     void OnReceive(ENetEvent& aEvent) override;
     void OnDisconnect(ENetEvent& aEvent) override;
     void OnDisconnectTimeout(ENetEvent& aEvent) override;

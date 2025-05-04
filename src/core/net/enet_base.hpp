@@ -15,7 +15,7 @@ using NetworkResponseQueue = bx::SpScUnboundedQueueT<NetworkEvent<NetworkRespons
 class ENetBase
 {
    public:
-    ENetBase() : mRunning(true), mQueue(&mAlloc) {}
+    ENetBase() : mRunning(true), mQueue(&mAlloc), mRespQueue(&mAlloc) {}
     ENetBase(ENetBase&&)                 = delete;
     ENetBase(const ENetBase&)            = delete;
     ENetBase& operator=(ENetBase&&)      = delete;
@@ -27,8 +27,9 @@ class ENetBase
     // blocking: meant to be called in a dedicated thread
     virtual void Poll();
 
-    [[nodiscard]] bool                 Running() const noexcept { return mRunning; }
-    [[nodiscard]] NetworkRequestQueue& Queue() noexcept { return mQueue; }
+    [[nodiscard]] bool                  Running() const noexcept { return mRunning; }
+    [[nodiscard]] NetworkRequestQueue&  Queue() noexcept { return mQueue; }
+    [[nodiscard]] NetworkResponseQueue& ResponseQueue() noexcept { return mRespQueue; }
 
    protected:
     virtual void OnConnect(ENetEvent& aEvent)           = 0;
@@ -41,4 +42,5 @@ class ENetBase
     enet_host_ptr        mHost;
     bx::DefaultAllocator mAlloc;
     NetworkRequestQueue  mQueue;
+    NetworkResponseQueue mRespQueue;
 };

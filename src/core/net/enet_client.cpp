@@ -87,12 +87,30 @@ void ENetClient::ConsumeNetworkEvents()
             },
             ev->Payload);
         send(archive.Bytes());
+        delete ev;
     }
 }
 
 void ENetClient::OnConnect(ENetEvent& aEvent) { mConnected = true; }
 
-void ENetClient::OnReceive(ENetEvent& aEvent) {}
+void ENetClient::OnReceive(ENetEvent& aEvent)
+{
+    ByteInputArchive archive(std::span<uint8_t>(aEvent.packet->data, aEvent.packet->dataLength));
+    auto*            ev = new NetworkEvent<NetworkResponsePayload>();
+
+    archive.Read<PacketType>(&ev->Type, sizeof(PacketType));
+    switch (ev->Type) {
+        case PacketType::NewGame:
+            NewGameResponse resp;
+            NewGameResponse::Deserialize(archive, resp);
+            break;
+        default:
+            fmt::println("unknown packet type");
+            delete ev;
+            return;
+    }
+    mRespQueue.push(ev);
+}
 
 void ENetClient::OnDisconnect(ENetEvent& aEvent)
 {
