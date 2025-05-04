@@ -53,6 +53,7 @@ void GameClient::Init()
 
     auto graph = organizerFixedTime.graph();
     INFO("graph size: %ld", graph.size());
+    // TODO: use these tasks
     std::unordered_map<std::string, tf::Task> tasks;
 
     for (auto&& v : graph) {

@@ -34,7 +34,7 @@ class GameServer : public Application
 
    private:
     GameInstanceID createGameInstance(const NewGameRequest& aNewGame);
-    void           advanceSimulation(Registry& aRegistry);
+    void           advanceSimulations(const float aDeltaTime);
 
     ENetServer                                   mServer;
     std::unordered_map<GameInstanceID, Registry> mGameInstances;

@@ -5,6 +5,7 @@
 
 #include <thread>
 
+#include "components/game.hpp"
 #include "core/net/net.hpp"
 #include "core/physics.hpp"
 #include "core/types.hpp"
@@ -50,8 +51,7 @@ void GameServer::ConsumeNetworkEvents()
 int GameServer::Run()
 {
     auto prevTime = clock_type::now();
-
-    mRunning = true;
+    mRunning      = true;
 
     std::jthread netPollThread{[&]() {
         while (mRunning) {
@@ -59,14 +59,13 @@ int GameServer::Run()
         }
     }};
 
-    ActionBuffer rb;
-
     while (mRunning) {
         auto                         t  = clock_type::now();
         std::chrono::duration<float> dt = (t - prevTime);
         prevTime                        = t;
 
         ConsumeNetworkEvents();
+        advanceSimulations(dt.count());
     }
 
     return 0;
@@ -81,27 +80,35 @@ GameInstanceID GameServer::createGameInstance(const NewGameRequest& aNewGame)
 
     Registry& registry = mGameInstances[gameID];
     auto&     physics  = registry.ctx().emplace<Physics>();
-    registry.ctx().emplace<GameInstanceID>(gameID);
+    registry.ctx().emplace<ActionBuffer>();
+    registry.ctx().emplace<GameInstance>(gameID, 0.0f, 0u);
 
     physics.Init(registry);
     return gameID;
 }
 
-void GameServer::advanceSimulation(Registry& aRegistry)
+void GameServer::advanceSimulations(const float aDeltaTime)
 {
-    uint32_t tick        = 0;
-    float    accumulator = 0.0f;
-    auto&    actions     = aRegistry.ctx().get<ActionBuffer&>();
-    // While there is enough accumulated time to take
-    // one or several physics steps
-    while (accumulator >= kTimeStep) {
-        // Decrease the accumulated time
-        accumulator -= kTimeStep;
+    static constexpr float kTimeStep = 1.0f / 60.0f;
 
-        for (const auto& system : mSystemsFT) {
-            system(aRegistry, kTimeStep);
+    // Update each game instance independently
+    for (auto& [gameId, registry] : mGameInstances) {
+        auto& actions  = registry.ctx().get<ActionBuffer&>();
+        auto& instance = registry.ctx().get<GameInstance&>();
+
+        instance.Accumulator += aDeltaTime;
+
+        // While there is enough accumulated time to take
+        // one or several physics steps
+        while (instance.Accumulator >= kTimeStep) {
+            // Decrease the accumulated time
+            instance.Accumulator -= kTimeStep;
+
+            for (const auto& system : mSystemsFT) {
+                system(registry, kTimeStep);
+            }
+            actions.Push();
+            actions.Latest().Tick = ++instance.Tick;
         }
-        actions.Push();
-        actions.Latest().Tick = ++tick;
     }
 }
