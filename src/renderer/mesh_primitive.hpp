@@ -6,9 +6,12 @@
 class MeshPrimitive : public Primitive<PositionNormalUvVertex>
 {
    public:
-    MeshPrimitive(std::vector<PositionNormalUvVertex> aVertices,
-        std::vector<uint16_t>                         aIndices,
-        Material*                                     aMat)
+    using indice_type = Primitive<PositionNormalUvVertex>::indice_type;
+
+    MeshPrimitive(
+        std::vector<PositionNormalUvVertex> aVertices,
+        std::vector<indice_type>            aIndices,
+        Material*                           aMat)
         : Primitive(aMat, aVertices, aIndices)
     {
         InitializePrimitive();

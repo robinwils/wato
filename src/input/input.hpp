@@ -162,7 +162,7 @@ struct Button {
     };
 };
 
-enum class ModifierKey {
+enum class ModifierKey : uint8_t {
     Shift = 0,
     Ctrl,
     Alt,
@@ -173,7 +173,7 @@ enum class ModifierKey {
 
 constexpr inline uint8_t ModifierMask(const ModifierKey& aMod)
 {
-    return 1 << static_cast<uint8_t>(aMod);
+    return static_cast<uint8_t>(1 << static_cast<uint8_t>(aMod));
 }
 
 inline void SetModifier(uint8_t& aMods, const uint8_t& aMod) { aMods |= aMod; }

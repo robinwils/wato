@@ -138,7 +138,7 @@ inline rp3d::Vector3 ToRP3D(const glm::vec3 aVector)
 }
 
 struct WorldRaycastCallback : public rp3d::RaycastCallback {
-    virtual rp3d::decimal notifyRaycastHit(const rp3d::RaycastInfo& aInfo)
+    virtual rp3d::decimal notifyRaycastHit(const rp3d::RaycastInfo& aInfo) override
     {
         if (aInfo.hitFraction == 0.0f) return rp3d::decimal(-1.0f);
         Hits.push_back(glm::vec3(aInfo.worldPoint.x, aInfo.worldPoint.y, aInfo.worldPoint.z));

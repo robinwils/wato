@@ -16,9 +16,8 @@
 
 using namespace entt::literals;
 
-std::vector<entt::hashed_string> processMaterialTextures(const aiMaterial* aMaterial,
-    aiTextureType                                                          aType,
-    aiString*                                                              aPath)
+std::vector<entt::hashed_string>
+processMaterialTextures(const aiMaterial* aMaterial, aiTextureType aType, aiString* aPath)
 {
     std::vector<entt::hashed_string> textures;
     for (unsigned int i = 0; i < aMaterial->GetTextureCount(aType); ++i) {
@@ -63,7 +62,7 @@ Primitive<PositionNormalUvVertex>* processMesh(const aiMesh* aMesh, const aiScen
         vertices.push_back(vertex);
     }
 
-    std::vector<uint16_t> indices;
+    std::vector<MeshPrimitive::indice_type> indices;
     for (unsigned int i = 0; i < aMesh->mNumFaces; ++i) {
         auto face = aMesh->mFaces[i];
         for (unsigned int j = 0; j < face.mNumIndices; ++j) {
@@ -99,7 +98,8 @@ Primitive<PositionNormalUvVertex>* processMesh(const aiMesh* aMesh, const aiScen
 
             DBG("creating mesh with %d vertices and %d indices", vertices.size(), indices.size());
             auto  program = WATO_PROGRAM_CACHE["blinnphong"_hs];
-            auto* m       = new BlinnPhongMaterial(program,
+            auto* m       = new BlinnPhongMaterial(
+                program,
                 glm::vec3(diffuse.r, diffuse.g, diffuse.b),
                 glm::vec3(specular.r, specular.g, specular.b));
 
@@ -165,13 +165,15 @@ void processMetaData(const aiNode* aNode, const aiScene* /*aScene*/)
     }
 }
 
-std::vector<Primitive<PositionNormalUvVertex>*> processNode(const aiNode* aNode,
-    const aiScene*                                                        aScene)
+std::vector<Primitive<PositionNormalUvVertex>*> processNode(
+    const aiNode*  aNode,
+    const aiScene* aScene)
 {
     auto t         = aNode->mTransformation;
     auto transform = glm::identity<glm::mat4>();
     if (!aNode->mTransformation.IsIdentity()) {
-        transform = glm::mat4(t.a1,
+        transform = glm::mat4(
+            t.a1,
             t.a2,
             t.a3,
             t.a4,

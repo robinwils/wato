@@ -33,12 +33,14 @@ template <typename VL>
 class Primitive
 {
    public:
-    typedef VL layout_type;
+    using indice_type = uint16_t;
+    using layout_type = VL;
 
     Primitive(Material* aMaterial) : mMaterial(aMaterial), mIsInitialized(false) {}
-    Primitive(Material*          aMaterial,
+    Primitive(
+        Material*                aMaterial,
         std::vector<layout_type> aVertices,
-        std::vector<uint16_t>    aIndices)
+        std::vector<indice_type> aIndices)
         : mVertices(aVertices), mIndices(aIndices), mMaterial(aMaterial)
     {
     }
@@ -105,14 +107,14 @@ class Primitive
             bgfx::makeRef(mVertices.data(), sizeof(layout_type) * mVertices.size()),
             vertexLayout);
         mIndexBufferHandle = bgfx::createIndexBuffer(
-            bgfx::makeRef(mIndices.data(), sizeof(uint16_t) * mIndices.size()));
+            bgfx::makeRef(mIndices.data(), sizeof(indice_type) * mIndices.size()));
 
         mIsInitialized = true;
     }
 
    protected:
     std::vector<layout_type> mVertices;
-    std::vector<uint16_t>    mIndices;
+    std::vector<indice_type> mIndices;
     Material*                mMaterial;
 
     bool mIsInitialized;
