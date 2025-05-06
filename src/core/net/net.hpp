@@ -68,8 +68,3 @@ struct NetworkEvent {
 
 template struct NetworkEvent<NetworkRequestPayload>;
 template struct NetworkEvent<NetworkResponsePayload>;
-
-template <class... Ts>
-struct EventVisitor : Ts... {
-    using Ts::operator()...;
-};

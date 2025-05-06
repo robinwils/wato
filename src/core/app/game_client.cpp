@@ -179,7 +179,7 @@ void GameClient::consumeNetworkResponses()
     auto& netClient = mRegistry.ctx().get<ENetClient>();
     while (const NetworkEvent<NetworkResponsePayload>* ev = netClient.ResponseQueue().pop()) {
         std::visit(
-            EventVisitor{
+            VariantVisitor{
                 [&](const ConnectedResponse& aResp) {
                     netClient.EnqueueSend(new NetworkEvent<NetworkRequestPayload>{
                         .Type     = PacketType::NewGame,

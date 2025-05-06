@@ -56,11 +56,6 @@ struct PlacementModePayload {
     TowerType Tower;
 };
 
-template <class... Ts>
-struct VariantVisitor : Ts... {
-    using Ts::operator()...;
-};
-
 struct Action {
     using payload_type =
         std::variant<MovePayload, SendCreepPayload, BuildTowerPayload, PlacementModePayload>;

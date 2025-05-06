@@ -82,7 +82,7 @@ void ENetClient::ConsumeNetworkRequests()
 
         // write payload
         std::visit(
-            EventVisitor{
+            VariantVisitor{
                 [&](const PlayerActions& aActions) { PlayerActions::Serialize(archive, aActions); },
                 [&](const NewGameRequest& aReq) { NewGameRequest::Serialize(archive, aReq); },
             },

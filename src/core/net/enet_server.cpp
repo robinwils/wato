@@ -34,7 +34,7 @@ void ENetServer::ConsumeNetworkResponses()
 
         // write payload
         std::visit(
-            EventVisitor{
+            VariantVisitor{
                 [&](const ConnectedResponse& aResp) {},
                 [&](const NewGameResponse& aResp) { NewGameResponse::Serialize(archive, aResp); },
             },

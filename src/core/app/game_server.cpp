@@ -25,7 +25,7 @@ void GameServer::ConsumeNetworkRequests()
 {
     while (const NetworkEvent<NetworkRequestPayload>* ev = mServer.Queue().pop()) {
         std::visit(
-            EventVisitor{
+            VariantVisitor{
                 [&](const PlayerActions& aActions) {
                     if (!mGameInstances.contains(aActions.GameID)) {
                         fmt::println("got event for non existing game {}", aActions.GameID);

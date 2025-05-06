@@ -6,6 +6,7 @@
 #include <chrono>
 
 #include "core/options.hpp"
+#include "core/types.hpp"
 #include "registry/registry.hpp"
 #include "systems/action.hpp"
 #include "systems/creep.hpp"
