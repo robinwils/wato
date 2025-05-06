@@ -174,3 +174,26 @@ void GameClient::spawnPlayerAndCamera()
     // TODO: ID should be something coming from outside (menu, DB, etc...)
     mRegistry.emplace<Player>(player, 0u, "stion", camera);
 }
+
+void GameClient::consumeNetworkResponses()
+{
+    auto& netClient = mRegistry.ctx().get<ENetClient>();
+    while (const NetworkEvent<NetworkResponsePayload>* ev = netClient.ResponseQueue().pop()) {
+        std::visit(
+            EventVisitor{
+                [&](const ConnectedResponse& aResp) {
+                    netClient.EnqueueSend(new NetworkEvent<NetworkRequestPayload>{
+                        .Type     = PacketType::NewGame,
+                        .PlayerID = 0,
+                        .Payload  = NewGameRequest{.PlayerAID = 0},
+                    });
+                },
+                [&](const NewGameResponse& aResp) {
+                    StartGameInstance(mRegistry, aResp.GameID);
+                    spawnPlayerAndCamera();
+                },
+            },
+            ev->Payload);
+        delete ev;
+    }
+}

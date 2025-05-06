@@ -78,6 +78,7 @@ void ENetClient::ConsumeNetworkRequests()
         // write header
         ByteOutputArchive archive;
         archive.Write<int>(&ev->Type, sizeof(ev->Type));
+        archive.Write<int>(&ev->PlayerID, sizeof(ev->PlayerID));
 
         // write payload
         std::visit(

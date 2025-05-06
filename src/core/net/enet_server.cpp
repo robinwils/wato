@@ -55,6 +55,7 @@ void ENetServer::OnReceive(ENetEvent& aEvent)
     auto*            ev = new NetworkEvent<NetworkRequestPayload>();
 
     archive.Read<PacketType>(&ev->Type, sizeof(PacketType));
+    archive.Read<PlayerID>(&ev->PlayerID, sizeof(PlayerID));
     switch (ev->Type) {
         case PacketType::Actions: {
             PlayerActions actions;
@@ -69,6 +70,8 @@ void ENetServer::OnReceive(ENetEvent& aEvent)
             if (!mConnectedPeers.contains(payload.PlayerAID)) {
                 mConnectedPeers[payload.PlayerAID] = aEvent.peer;
             }
+            break;
+        default:
             break;
     }
     mQueue.push(ev);
