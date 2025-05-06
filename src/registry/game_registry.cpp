@@ -19,7 +19,7 @@ void LoadResources(Registry& aRegistry)
 {
     LoadShaders(aRegistry);
     SpawnLight(aRegistry);
-    SpawnMap(aRegistry, 20, 20);
+    LoadTextures(aRegistry, 20, 20);
     LoadModels();
 }
 
@@ -44,7 +44,7 @@ void LoadShaders(Registry& aRegistry)
         std::unordered_map<std::string, bgfx::UniformType::Enum>{});
 }
 
-void SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeight)
+void LoadTextures(Registry& aRegistry, uint32_t aWidth, uint32_t aHeight)
 {
     auto [diff, dLoaded] =
         WATO_TEXTURE_CACHE.load("grass/diffuse"_hs, "assets/textures/TreeTop_COLOR.png");
@@ -68,74 +68,6 @@ void SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeight)
     WATO_MODEL_CACHE.load(
         "grass_tile"_hs,
         new PlanePrimitive(new BlinnPhongMaterial(shader, diffuse, specular)));
-    entt::entity first = entt::null;
-    for (uint32_t i = 0; i < aWidth; ++i) {
-        for (uint32_t j = 0; j < aHeight; ++j) {
-            auto tile = aRegistry.create();
-            if (first == entt::null) {
-                first = tile;
-            }
-            aRegistry.emplace<Transform3D>(
-                tile,
-                glm::vec3(i, 0.0f, j),
-                glm::vec3(0.0f),
-                glm::vec3(1.0f));
-            aRegistry.emplace<SceneObject>(tile, "grass_tile"_hs);
-            aRegistry.emplace<Tile>(tile);
-        }
-    }
-
-    auto&              phy     = aRegistry.ctx().get<Physics&>();
-    int                columns = aWidth + 1, rows = aHeight + 1;
-    std::vector<float> heightValues(columns * rows, 0.0f);
-
-    std::vector<rp3d::Message> messages;
-    rp3d::HeightField*         heightField = phy.Common().createHeightField(
-        columns,
-        rows,
-        heightValues.data(),
-        rp3d::HeightField::HeightDataType::HEIGHT_FLOAT_TYPE,
-        messages);
-
-    // Display the messages (info, warning and errors)
-    if (messages.size() > 0) {
-        for (const rp3d::Message& message : messages) {
-            std::string messageType;
-
-            switch (message.type) {
-                case rp3d::Message::Type::Information:
-                    messageType = "info";
-                    break;
-                case rp3d::Message::Type::Warning:
-                    messageType = "warning";
-                    break;
-                case rp3d::Message::Type::Error:
-                    messageType = "error";
-                    break;
-            }
-
-            fmt::println("Message ({}): {}", messageType, message.text);
-        }
-    }
-
-    // Make sure there was no errors during the height field creation
-    assert(heightField != nullptr);
-
-    // by default rp3d heightfield is centered around origin, we need to translate it in our world
-    // pos
-    glm::vec3        translate = glm::vec3(columns, 2.0f, rows) / 4.0f - 0.5f;
-    rp3d::Transform  transform(ToRP3D(translate), rp3d::Quaternion::identity());
-    rp3d::RigidBody* body = phy.CreateRigidBody(
-        first,
-        aRegistry,
-        RigidBodyParams{
-            .Type           = rp3d::BodyType::STATIC,
-            .Transform      = transform,
-            .GravityEnabled = false});
-    rp3d::HeightFieldShape* heightFieldShape = phy.Common().createHeightFieldShape(heightField);
-    rp3d::Collider*         collider         = body->addCollider(heightFieldShape, transform);
-    collider->setCollisionCategoryBits(Category::Terrain);
-    collider->setCollideWithMaskBits(Category::Entities);
 }
 
 void SpawnLight(Registry& aRegistry)

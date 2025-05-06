@@ -47,17 +47,22 @@ struct NewGameResponse {
     }
 };
 
+struct ConnectedResponse {
+};
+
 using NetworkRequestPayload  = std::variant<PlayerActions, NewGameRequest>;
-using NetworkResponsePayload = std::variant<NewGameResponse>;
+using NetworkResponsePayload = std::variant<NewGameResponse, ConnectedResponse>;
 
 enum class PacketType {
     Actions,
     NewGame,
+    Connected,
 };
 
 template <typename _Payload>
 struct NetworkEvent {
     PacketType Type;
+    PlayerID   PlayerID;
     _Payload   Payload;
 };
 

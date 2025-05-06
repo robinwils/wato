@@ -18,6 +18,7 @@ class ENetServer : public ENetBase
 
     void Init() override;
     void EnqueueResponse(NetworkEvent<NetworkResponsePayload>* aPkt) { mRespQueue.push(aPkt); }
+    void ConsumeNetworkResponses();
 
    protected:
     virtual void OnConnect(ENetEvent& aEvent) override;

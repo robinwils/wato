@@ -21,7 +21,7 @@ void GameServer::Init()
     mSystemsFT.push_back(DeterministicActionSystem::MakeDelegate(mFTActionSystem));
 }
 
-void GameServer::ConsumeNetworkEvents()
+void GameServer::ConsumeNetworkRequests()
 {
     while (const NetworkEvent<NetworkRequestPayload>* ev = mServer.Queue().pop()) {
         std::visit(
@@ -38,6 +38,7 @@ void GameServer::ConsumeNetworkEvents()
                 },
                 [&](const NewGameRequest& aNewGame) {
                     GameInstanceID gameID = createGameInstance(aNewGame);
+                    fmt::println("sending new game created response");
                     mServer.EnqueueResponse(new NetworkEvent<NetworkResponsePayload>{
                         .Type    = PacketType::NewGame,
                         .Payload = NewGameResponse{.GameID = gameID}});
@@ -55,6 +56,7 @@ int GameServer::Run()
 
     std::jthread netPollThread{[&]() {
         while (mRunning) {
+            mServer.ConsumeNetworkResponses();
             mServer.Poll();
         }
     }};
@@ -64,8 +66,11 @@ int GameServer::Run()
         std::chrono::duration<float> dt = (t - prevTime);
         prevTime                        = t;
 
-        ConsumeNetworkEvents();
-        advanceSimulations(dt.count());
+        ConsumeNetworkRequests();
+        // Update each game instance independently
+        for (auto& [gameId, registry] : mGameInstances) {
+            AdvanceSimulation(registry, dt.count());
+        }
     }
 
     return 0;
@@ -79,36 +84,7 @@ GameInstanceID GameServer::createGameInstance(const NewGameRequest& aNewGame)
     } while (mGameInstances.contains(gameID));
 
     Registry& registry = mGameInstances[gameID];
-    auto&     physics  = registry.ctx().emplace<Physics>();
-    registry.ctx().emplace<ActionBuffer>();
-    registry.ctx().emplace<GameInstance>(gameID, 0.0f, 0u);
 
-    physics.Init(registry);
+    StartGameInstance(registry, gameID);
     return gameID;
-}
-
-void GameServer::advanceSimulations(const float aDeltaTime)
-{
-    static constexpr float kTimeStep = 1.0f / 60.0f;
-
-    // Update each game instance independently
-    for (auto& [gameId, registry] : mGameInstances) {
-        auto& actions  = registry.ctx().get<ActionBuffer&>();
-        auto& instance = registry.ctx().get<GameInstance&>();
-
-        instance.Accumulator += aDeltaTime;
-
-        // While there is enough accumulated time to take
-        // one or several physics steps
-        while (instance.Accumulator >= kTimeStep) {
-            // Decrease the accumulated time
-            instance.Accumulator -= kTimeStep;
-
-            for (const auto& system : mSystemsFT) {
-                system(registry, kTimeStep);
-            }
-            actions.Push();
-            actions.Latest().Tick = ++instance.Tick;
-        }
-    }
 }

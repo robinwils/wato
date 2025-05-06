@@ -5,8 +5,6 @@
 #include <variant>
 
 #include "components/placement_mode.hpp"
-#include "core/window.hpp"
-#include "entt/entity/fwd.hpp"
 #include "input/action.hpp"
 
 void EventHandler::onContact(const rp3d::CollisionCallback::CallbackData& aCallbackData) {}

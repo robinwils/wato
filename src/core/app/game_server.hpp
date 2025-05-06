@@ -22,7 +22,7 @@ class GameServer : public Application
 
     void Init() override;
     int  Run() override;
-    void ConsumeNetworkEvents();
+    void ConsumeNetworkRequests();
 
     static GameInstanceID GenerateGameInstanceID()
     {
@@ -34,7 +34,6 @@ class GameServer : public Application
 
    private:
     GameInstanceID createGameInstance(const NewGameRequest& aNewGame);
-    void           advanceSimulations(const float aDeltaTime);
 
     ENetServer                                   mServer;
     std::unordered_map<GameInstanceID, Registry> mGameInstances;

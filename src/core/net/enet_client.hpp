@@ -24,7 +24,7 @@ class ENetClient : public ENetBase
     bool Connect();
     void Disconnect();
     void ForceDisconnect();
-    void ConsumeNetworkEvents();
+    void ConsumeNetworkRequests();
 
     [[nodiscard]] bool Connected() const noexcept { return mConnected; }
 

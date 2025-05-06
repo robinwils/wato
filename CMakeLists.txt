@@ -290,6 +290,7 @@ target_sources(watolib
     src/components/tile.hpp
     src/components/transform3d.hpp
     src/core/app/app.hpp
+    src/core/event_handler.hpp
     src/core/net/enet_base.hpp
     src/core/physics.hpp
     src/core/queue/ring_buffer.hpp
@@ -301,9 +302,11 @@ target_sources(watolib
     src/systems/system.hpp
 
   PRIVATE
+    src/core/app/app.cpp
+    src/core/event_handler.cpp
     src/core/net/enet_base.cpp
-    src/core/snapshot.cpp
     src/core/physics.cpp
+    src/core/snapshot.cpp
     src/core/sys/backtrace.cpp
     src/systems/physics.cpp
 )
@@ -314,7 +317,6 @@ target_sources(wato
   FILES
     src/core/app/game_client.hpp
     src/core/cache.hpp
-    src/core/event_handler.hpp
     src/core/model_loader.hpp
     src/core/net/enet_client.hpp
     src/core/tile.hpp
@@ -340,7 +342,6 @@ target_sources(wato
     deps/imgui/imgui_tables.cpp
     deps/imgui/imgui_widgets.cpp
     src/core/app/game_client.cpp
-    src/core/event_handler.cpp
     src/core/model_loader.cpp
     src/core/net/enet_client.cpp
     src/core/sys/mem.cpp

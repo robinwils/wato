@@ -1,15 +1,17 @@
 #include "core/app/game_client.hpp"
 
 #include <bx/bx.h>
+#include <fmt/base.h>
 
 #include <chrono>
 #include <taskflow/taskflow.hpp>
 #include <thread>
 
+#include "components/game.hpp"
 #include "components/imgui.hpp"
+#include "components/tile.hpp"
 #include "core/net/enet_client.hpp"
-#include "core/physics.hpp"
-#include "core/snapshot.hpp"
+#include "core/net/net.hpp"
 #include "core/sys/log.hpp"
 #include "core/window.hpp"
 #include "registry/game_registry.hpp"
@@ -24,16 +26,11 @@ void GameClient::Init()
 {
     auto& window    = mRegistry.ctx().get<WatoWindow>();
     auto& renderer  = mRegistry.ctx().get<Renderer>();
-    auto& physics   = mRegistry.ctx().get<Physics>();
     auto& netClient = mRegistry.ctx().get<ENetClient>();
 
     window.Init();
     renderer.Init(window);
-    physics.Init(mRegistry);
     netClient.Init();
-
-    // TODO: leak ?
-    physics.World()->setEventListener(new EventHandler(&mRegistry));
 
     entt::organizer organizerFixedTime;
     LoadResources(mRegistry);
@@ -75,26 +72,23 @@ void GameClient::Init()
 
 int GameClient::Run()
 {
-    constexpr float timeStep = 1.0f / 60.0f;
-
     tf::Executor executor;
 
-    auto&                       window      = mRegistry.ctx().get<WatoWindow&>();
-    auto&                       renderer    = mRegistry.ctx().get<Renderer&>();
-    auto&                       netClient   = mRegistry.ctx().get<ENetClient&>();
-    auto&                       opts        = mRegistry.ctx().get<Options&>();
-    auto&                       actions     = mRegistry.ctx().get<ActionBuffer&>();
-    uint32_t                    tick        = 0;
-    float                       accumulator = 0.0f;
-    auto                        prevTime    = clock_type::now();
+    auto&                       window    = mRegistry.ctx().get<WatoWindow&>();
+    auto&                       renderer  = mRegistry.ctx().get<Renderer&>();
+    auto&                       netClient = mRegistry.ctx().get<ENetClient&>();
+    auto                        prevTime  = clock_type::now();
     std::optional<std::jthread> netPollThread;
 
     if (mOptions.Multiplayer()) {
-        netPollThread.emplace(&GameClient::networkPoll, this);
+        netPollThread.emplace(&GameClient::networkThread, this);
 
         if (!netClient.Connect()) {
             throw std::runtime_error("No available peers for initiating an ENet connection.");
         }
+    } else {
+        StartGameInstance(mRegistry, 0);
+        spawnPlayerAndCamera();
     }
 
     while (!window.ShouldClose()) {
@@ -104,31 +98,28 @@ int GameClient::Run()
             renderer.Resize(window);
         }
 
-        Input&                       input      = window.GetInput();
-        auto                         now        = clock_type::now();
-        std::chrono::duration<float> frameTime  = (now - prevTime);
-        accumulator                            += frameTime.count();
+        Input&                       input     = window.GetInput();
+        auto                         now       = clock_type::now();
+        std::chrono::duration<float> frameTime = (now - prevTime);
 
         prevTime = now;
 
-        for (const auto& system : mSystems) {
-            system(mRegistry, frameTime.count());
+        if (mOptions.Multiplayer()) {
+            consumeNetworkResponses();
         }
 
-        // While there is enough accumulated time to take
-        // one or several physics steps
-        while (accumulator >= timeStep) {
-            // Decrease the accumulated time
-            accumulator -= timeStep;
+        if (mRegistry.ctx().contains<GameInstance>()) {
+            fmt::println("game started, lets gooo");
+            auto& instance = mRegistry.ctx().get<GameInstance&>();
 
-            for (const auto& system : mSystemsFT) {
-                system(mRegistry, timeStep);
+            for (const auto& system : mSystems) {
+                system(mRegistry, frameTime.count());
             }
-            actions.Push();
-            actions.Latest().Tick = ++tick;
-        }
 
-        mUpdateTransformsSystem(mRegistry, accumulator / timeStep);
+            AdvanceSimulation(mRegistry, frameTime.count());
+
+            mUpdateTransformsSystem(mRegistry, instance.Accumulator / kTimeStep);
+        }
         renderer.Render();
         input.PrevKeyboardState   = input.KeyboardState;
         input.PrevMouseState      = input.MouseState;
@@ -142,7 +133,7 @@ int GameClient::Run()
     return 0;
 }
 
-void GameClient::networkPoll()
+void GameClient::networkThread()
 {
     auto& netClient = mRegistry.ctx().get<ENetClient&>();
     while (netClient.Running()) {
@@ -152,15 +143,15 @@ void GameClient::networkPoll()
             }
         }
 
-        netClient.ConsumeNetworkEvents();
+        netClient.ConsumeNetworkRequests();
         netClient.Poll();
     }
 }
 
-void GameClient::spawnPlayerAndCamera(Registry& aRegistry)
+void GameClient::spawnPlayerAndCamera()
 {
-    auto camera = aRegistry.create();
-    aRegistry.emplace<Camera>(
+    auto camera = mRegistry.create();
+    mRegistry.emplace<Camera>(
         camera,
         // up, front, dir
         glm::vec3(0.0f, 1.0f, 0.0f),
@@ -172,14 +163,14 @@ void GameClient::spawnPlayerAndCamera(Registry& aRegistry)
         0.1f,
         100.0f);
     // pos, orientation, scale
-    aRegistry.emplace<Transform3D>(
+    mRegistry.emplace<Transform3D>(
         camera,
         glm::vec3(0.0f, 2.0f, 1.5f),
         glm::identity<glm::quat>(),
         glm::vec3(1.0f));
-    aRegistry.emplace<ImguiDrawable>(camera, "Camera");
+    mRegistry.emplace<ImguiDrawable>(camera, "Camera");
 
-    auto player = aRegistry.create();
+    auto player = mRegistry.create();
     // TODO: ID should be something coming from outside (menu, DB, etc...)
-    aRegistry.emplace<Player>(player, 0u, "stion", camera);
+    mRegistry.emplace<Player>(player, 0u, "stion", camera);
 }

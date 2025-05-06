@@ -25,6 +25,28 @@ void ENetServer::Init()
     }
 }
 
+void ENetServer::ConsumeNetworkResponses()
+{
+    while (NetworkEvent<NetworkResponsePayload>* ev = mRespQueue.pop()) {
+        // write header
+        ByteOutputArchive archive;
+        archive.Write<int>(&ev->Type, sizeof(ev->Type));
+
+        // write payload
+        std::visit(
+            EventVisitor{
+                [&](const ConnectedResponse& aResp) {},
+                [&](const NewGameResponse& aResp) { NewGameResponse::Serialize(archive, aResp); },
+            },
+            ev->Payload);
+
+        // TODO: need to get the peer to send to
+        // send(archive.Bytes());
+        throw std::runtime_error("not implemented");
+        delete ev;
+    }
+}
+
 void ENetServer::OnConnect(ENetEvent& aEvent) {}
 
 void ENetServer::OnReceive(ENetEvent& aEvent)

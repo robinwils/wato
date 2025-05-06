@@ -72,7 +72,7 @@ void ENetClient::ForceDisconnect()
     mRunning   = false;
 }
 
-void ENetClient::ConsumeNetworkEvents()
+void ENetClient::ConsumeNetworkRequests()
 {
     while (NetworkEvent<NetworkRequestPayload>* ev = mQueue.pop()) {
         // write header
@@ -83,7 +83,7 @@ void ENetClient::ConsumeNetworkEvents()
         std::visit(
             EventVisitor{
                 [&](const PlayerActions& aActions) { PlayerActions::Serialize(archive, aActions); },
-                [&](const NewGameRequest& aNGPayloa) {},
+                [&](const NewGameRequest& aReq) { NewGameRequest::Serialize(archive, aReq); },
             },
             ev->Payload);
         send(archive.Bytes());
@@ -91,7 +91,13 @@ void ENetClient::ConsumeNetworkEvents()
     }
 }
 
-void ENetClient::OnConnect(ENetEvent& aEvent) { mConnected = true; }
+void ENetClient::OnConnect(ENetEvent& aEvent)
+{
+    mRespQueue.push(new NetworkEvent<NetworkResponsePayload>{
+        .Type    = PacketType::Connected,
+        .Payload = ConnectedResponse{},
+    });
+}
 
 void ENetClient::OnReceive(ENetEvent& aEvent)
 {

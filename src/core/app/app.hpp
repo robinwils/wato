@@ -6,6 +6,7 @@
 #include <chrono>
 
 #include "core/options.hpp"
+#include "registry/registry.hpp"
 #include "systems/action.hpp"
 #include "systems/creep.hpp"
 #include "systems/physics.hpp"
@@ -29,6 +30,11 @@ class Application
 
    protected:
     using clock_type = std::chrono::steady_clock;
+
+    void StartGameInstance(Registry& aRegistry, const GameInstanceID aGameID);
+    void AdvanceSimulation(Registry& aRegistry, const float aDeltaTime);
+    void SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeight);
+
     Options mOptions;
 
     PhysicsSystem             mPhysicsSystem;

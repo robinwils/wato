@@ -20,7 +20,6 @@ class GameClient : public Application
     explicit GameClient(int aWidth, int aHeight, char** aArgv)
         : Application(aArgv), mPhysicsEventHandler(&mRegistry)
     {
-        mRegistry.ctx().emplace<ActionBuffer>();
         mRegistry.ctx().emplace<ActionContextStack>();
         mRegistry.ctx().emplace<WatoWindow>(aWidth, aHeight);
         mRegistry.ctx().emplace<Renderer>();
@@ -37,8 +36,9 @@ class GameClient : public Application
     int  Run() override;
 
    private:
-    void networkPoll();
-    void spawnPlayerAndCamera(Registry& aRegistry);
+    void networkThread();
+    void consumeNetworkResponses();
+    void spawnPlayerAndCamera();
 
     Registry             mRegistry;
     entt::organizer      mFrameTimeOrganizer;
