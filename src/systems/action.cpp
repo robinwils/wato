@@ -134,6 +134,8 @@ void ActionSystem<Derived>::handleSendCreep(Registry& aRegistry, const SendCreep
 template <typename Derived>
 void ActionSystem<Derived>::handleBuildTower(Registry& aRegistry, const BuildTowerPayload& aPayload)
 {
+    // TODO: no context stack in server, we cannot check collision with ghost tower, need to think
+    // of something else
     auto& contextStack = aRegistry.ctx().get<ActionContextStack&>();
     if (auto* payload = std::get_if<PlacementModePayload>(&contextStack.front().Payload);
         !payload->CanBuild) {

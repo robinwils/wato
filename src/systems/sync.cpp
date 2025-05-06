@@ -12,8 +12,9 @@ void NetworkSyncSystem::operator()(Registry& aRegistry, const float aDeltaTime)
     auto&                netClient     = aRegistry.ctx().get<ENetClient&>();
     const PlayerActions& latestActions = actions.Latest();
     std::vector<uint8_t> storage;
-    PlayerActions        filteredActions;
+    PlayerActions        filteredActions = latestActions;
 
+    filteredActions.Actions.clear();
     for (const Action& action : latestActions.Actions) {
         if (action.Tag == ActionTag::FixedTime) {
             filteredActions.Actions.emplace_back(action);
@@ -22,7 +23,8 @@ void NetworkSyncSystem::operator()(Registry& aRegistry, const float aDeltaTime)
 
     if (!filteredActions.Actions.empty()) {
         netClient.EnqueueSend(new NetworkEvent<NetworkRequestPayload>{
-            .Type    = PacketType::Actions,
-            .Payload = filteredActions});
+            .Type     = PacketType::Actions,
+            .PlayerID = 0,
+            .Payload  = filteredActions});
     }
 }
