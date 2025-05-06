@@ -9,6 +9,9 @@
 #include "components/transform3d.hpp"
 #include "core/event_handler.hpp"
 #include "core/physics.hpp"
+#include "input/action.hpp"
+
+using namespace entt::literals;
 
 void Application::StartGameInstance(Registry& aRegistry, const GameInstanceID aGameID)
 {

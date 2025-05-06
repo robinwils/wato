@@ -8,6 +8,7 @@
 #include "core/app/app.hpp"
 #include "core/net/enet_server.hpp"
 #include "core/types.hpp"
+#include "systems/action.hpp"
 
 class GameServer : public Application
 {
@@ -37,4 +38,7 @@ class GameServer : public Application
 
     ENetServer                                   mServer;
     std::unordered_map<GameInstanceID, Registry> mGameInstances;
+
+    // systems
+    ServerActionSystem mActionSystem;
 };

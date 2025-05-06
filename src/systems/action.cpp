@@ -2,6 +2,8 @@
 
 #include <fmt/base.h>
 
+#include <variant>
+
 #include "components/creep.hpp"
 #include "components/health.hpp"
 #include "components/imgui.hpp"
@@ -56,46 +58,16 @@ void ActionSystem<Derived>::handleDefaultContext(
     const Action& aAction,
     const float   aDeltaTime)
 {
-    switch (aAction.Type) {
-        case ActionType::EnterPlacementMode:
-            if (const auto* payload = std::get_if<PlacementModePayload>(&aAction.Payload)) {
-                transitionToPlacement(aRegistry, *payload);
-            }
-            break;
-        case ActionType::Move:
-            if (const auto* payload = std::get_if<MovePayload>(&aAction.Payload)) {
-                handleMovement(aRegistry, *payload, aDeltaTime);
-            }
-            break;
-        case ActionType::SendCreep:
-            if (const auto* payload = std::get_if<SendCreepPayload>(&aAction.Payload)) {
-                auto& phy   = aRegistry.ctx().get<Physics&>();
-                auto  creep = aRegistry.create();
-                auto& t     = aRegistry.emplace<Transform3D>(
-                    creep,
-                    glm::vec3(2.0f, 0.0f, 2.0f),
-                    glm::identity<glm::quat>(),
-                    glm::vec3(0.1f));
-
-                aRegistry.emplace<Health>(creep, 100.0f);
-                aRegistry.emplace<Creep>(creep, payload->Type);
-
-                auto* body = phy.CreateRigidBody(
-                    creep,
-                    aRegistry,
-                    RigidBodyParams{
-                        .Type           = rp3d::BodyType::DYNAMIC,
-                        .Transform      = t.ToRP3D(),
-                        .GravityEnabled = false});
-                rp3d::Collider* collider = phy.AddCapsuleCollider(body, 0.1f, 0.05f);
-                collider->setCollisionCategoryBits(Category::Entities);
-
-                fmt::println("got a creep !!");
-            }
-            break;
-        default:
-            break;
-    }
+    std::visit(
+        VariantVisitor{
+            [&](const PlacementModePayload& aPayload) {
+                transitionToPlacement(aRegistry, aPayload);
+            },
+            [&](const MovePayload& aPayload) { handleMovement(aRegistry, aPayload, aDeltaTime); },
+            [&](const SendCreepPayload& aPayload) { handleSendCreep(aRegistry, aPayload); },
+            [&](const BuildTowerPayload&) {},
+        },
+        aAction.Payload);
 }
 
 template <typename Derived>
@@ -135,46 +107,68 @@ void ActionSystem<Derived>::handleMovement(
 }
 
 template <typename Derived>
+void ActionSystem<Derived>::handleSendCreep(Registry& aRegistry, const SendCreepPayload& aPayload)
+{
+    auto& phy   = aRegistry.ctx().get<Physics&>();
+    auto  creep = aRegistry.create();
+    auto& t     = aRegistry.emplace<Transform3D>(
+        creep,
+        glm::vec3(2.0f, 0.0f, 2.0f),
+        glm::identity<glm::quat>(),
+        glm::vec3(0.1f));
+
+    aRegistry.emplace<Health>(creep, 100.0f);
+    aRegistry.emplace<Creep>(creep, aPayload.Type);
+
+    auto* body = phy.CreateRigidBody(
+        creep,
+        aRegistry,
+        RigidBodyParams{
+            .Type           = rp3d::BodyType::DYNAMIC,
+            .Transform      = t.ToRP3D(),
+            .GravityEnabled = false});
+    rp3d::Collider* collider = phy.AddCapsuleCollider(body, 0.1f, 0.05f);
+    collider->setCollisionCategoryBits(Category::Entities);
+}
+
+template <typename Derived>
+void ActionSystem<Derived>::handleBuildTower(Registry& aRegistry, const BuildTowerPayload& aPayload)
+{
+    auto& contextStack = aRegistry.ctx().get<ActionContextStack&>();
+    if (auto* payload = std::get_if<PlacementModePayload>(&contextStack.front().Payload);
+        !payload->CanBuild) {
+        return;
+    }
+    for (auto tower : aRegistry.view<PlacementMode>()) {
+        auto& rb = aRegistry.get<RigidBody>(tower);
+
+        rb.RigidBody->getCollider(0)->setIsSimulationCollider(true);
+        rb.RigidBody->getCollider(0)->setCollisionCategoryBits(Category::Entities);
+        rb.RigidBody->getCollider(0)->setCollideWithMaskBits(
+            Category::Terrain | Category::PlacementGhostTower);
+        rb.RigidBody->setType(rp3d::BodyType::STATIC);
+
+        aRegistry.emplace<Health>(tower, 100.0F);
+        aRegistry.remove<PlacementMode>(tower);
+        aRegistry.remove<ImguiDrawable>(tower);
+    }
+    exitPlacement(aRegistry);
+}
+
+template <typename Derived>
 void ActionSystem<Derived>::handlePlacementContext(
     Registry&     aRegistry,
     const Action& aAction,
     const float   aDeltaTime)
 {
-    switch (aAction.Type) {
-        case ActionType::ExitPlacementMode:
-            exitPlacement(aRegistry);
-            break;
-        case ActionType::Move: {
-            if (const auto* payload = std::get_if<MovePayload>(&aAction.Payload)) {
-                handleMovement(aRegistry, *payload, aDeltaTime);
-            }
-            break;
-        }
-        case ActionType::BuildTower: {
-            auto& contextStack = aRegistry.ctx().get<ActionContextStack&>();
-            if (auto* payload = std::get_if<PlacementModePayload>(&contextStack.front().Payload);
-                !payload->CanBuild) {
-                break;
-            }
-            for (auto tower : aRegistry.view<PlacementMode>()) {
-                auto& rb = aRegistry.get<RigidBody>(tower);
-
-                rb.RigidBody->getCollider(0)->setIsSimulationCollider(true);
-                rb.RigidBody->getCollider(0)->setCollisionCategoryBits(Category::Entities);
-                rb.RigidBody->getCollider(0)->setCollideWithMaskBits(
-                    Category::Terrain | Category::PlacementGhostTower);
-                rb.RigidBody->setType(rp3d::BodyType::STATIC);
-
-                aRegistry.emplace<Health>(tower, 100.0F);
-                aRegistry.remove<PlacementMode>(tower);
-                aRegistry.remove<ImguiDrawable>(tower);
-            }
-            exitPlacement(aRegistry);
-            break;
-        }
-        default:
-            break;
-    }
+    std::visit(
+        VariantVisitor{
+            [&](const PlacementModePayload&) { exitPlacement(aRegistry); },
+            [&](const MovePayload& aPayload) { handleMovement(aRegistry, aPayload, aDeltaTime); },
+            [&](const BuildTowerPayload& aPayload) { handleBuildTower(aRegistry, aPayload); },
+            [&](const SendCreepPayload&) {},
+        },
+        aAction.Payload);
 }
 
 template <typename Derived>
@@ -233,3 +227,4 @@ void ActionSystem<Derived>::exitPlacement(Registry& aRegistry)
 // Explicit template instantiations
 template class ActionSystem<RealTimeActionSystem>;
 template class ActionSystem<DeterministicActionSystem>;
+template class ActionSystem<ServerActionSystem>;

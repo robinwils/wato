@@ -8,7 +8,6 @@
 #include "core/options.hpp"
 #include "core/types.hpp"
 #include "registry/registry.hpp"
-#include "systems/action.hpp"
 #include "systems/creep.hpp"
 #include "systems/physics.hpp"
 #include "systems/system.hpp"
@@ -38,10 +37,9 @@ class Application
 
     Options mOptions;
 
-    PhysicsSystem             mPhysicsSystem;
-    UpdateTransformsSytem     mUpdateTransformsSystem;
-    CreepSystem               mCreepSystem;
-    DeterministicActionSystem mFTActionSystem;
+    PhysicsSystem         mPhysicsSystem;
+    UpdateTransformsSytem mUpdateTransformsSystem;
+    CreepSystem           mCreepSystem;
 
     SystemRegistry mSystems;
     SystemRegistry mSystemsFT;

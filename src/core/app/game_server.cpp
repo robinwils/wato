@@ -5,9 +5,7 @@
 
 #include <thread>
 
-#include "components/game.hpp"
 #include "core/net/net.hpp"
-#include "core/physics.hpp"
 #include "core/types.hpp"
 #include "input/action.hpp"
 #include "registry/registry.hpp"
@@ -18,7 +16,7 @@ void GameServer::Init()
     mServer.Init();
     mSystemsFT.push_back(PhysicsSystem::MakeDelegate(mPhysicsSystem));
     mSystemsFT.push_back(CreepSystem::MakeDelegate(mCreepSystem));
-    mSystemsFT.push_back(DeterministicActionSystem::MakeDelegate(mFTActionSystem));
+    mSystemsFT.push_back(ServerActionSystem::MakeDelegate(mActionSystem));
 }
 
 void GameServer::ConsumeNetworkRequests()

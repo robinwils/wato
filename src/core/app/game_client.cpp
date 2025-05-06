@@ -36,7 +36,7 @@ void GameClient::Init()
     LoadResources(mRegistry);
     mSystems.push_back(RenderImguiSystem::MakeDelegate(mRenderImguiSystem));
     mSystems.push_back(InputSystem::MakeDelegate(mInputSystem));
-    mSystems.push_back(RealTimeActionSystem::MakeDelegate(mActionSystem));
+    mSystems.push_back(RealTimeActionSystem::MakeDelegate(mRTActionSystem));
     mSystems.push_back(CameraSystem::MakeDelegate(mCameraSystem));
     mSystems.push_back(RenderSystem::MakeDelegate(mRenderSystem));
 

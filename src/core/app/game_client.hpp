@@ -40,15 +40,18 @@ class GameClient : public Application
     void consumeNetworkResponses();
     void spawnPlayerAndCamera();
 
-    Registry             mRegistry;
-    entt::organizer      mFrameTimeOrganizer;
-    tf::Taskflow         mTaskflow;
-    InputSystem          mInputSystem;
-    RealTimeActionSystem mActionSystem;
-    RenderSystem         mRenderSystem;
-    RenderImguiSystem    mRenderImguiSystem;
-    CameraSystem         mCameraSystem;
-    NetworkSyncSystem    mNetworkSyncSystem;
+    Registry        mRegistry;
+    entt::organizer mFrameTimeOrganizer;
+    tf::Taskflow    mTaskflow;
+
+    // systems
+    InputSystem               mInputSystem;
+    RealTimeActionSystem      mRTActionSystem;
+    DeterministicActionSystem mFTActionSystem;
+    RenderSystem              mRenderSystem;
+    RenderImguiSystem         mRenderImguiSystem;
+    CameraSystem              mCameraSystem;
+    NetworkSyncSystem         mNetworkSyncSystem;
 #if WATO_DEBUG
     PhysicsDebugSystem mPhysicsDbgSystem;
 #endif
