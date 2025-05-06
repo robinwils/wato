@@ -7,6 +7,7 @@
 #include <span>
 #include <stdexcept>
 
+#include "components/player.hpp"
 #include "core/net/net.hpp"
 #include "core/snapshot.hpp"
 #include "core/sys/log.hpp"
@@ -30,7 +31,8 @@ void ENetServer::ConsumeNetworkResponses()
     while (NetworkEvent<NetworkResponsePayload>* ev = mRespQueue.pop()) {
         // write header
         ByteOutputArchive archive;
-        archive.Write<int>(&ev->Type, sizeof(ev->Type));
+        archive.Write<PacketType>(&ev->Type, sizeof(ev->Type));
+        archive.Write<PlayerID>(&ev->PlayerID, sizeof(ev->PlayerID));
 
         // write payload
         std::visit(
@@ -40,9 +42,11 @@ void ENetServer::ConsumeNetworkResponses()
             },
             ev->Payload);
 
-        // TODO: need to get the peer to send to
-        // send(archive.Bytes());
-        throw std::runtime_error("not implemented");
+        if (!mConnectedPeers.contains(ev->PlayerID)) {
+            throw std::runtime_error(fmt::format("player {} is not connected", ev->PlayerID));
+        } else {
+            Send(mConnectedPeers[ev->PlayerID], archive.Bytes());
+        }
         delete ev;
     }
 }

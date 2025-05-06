@@ -32,6 +32,8 @@ class ENetBase
     [[nodiscard]] NetworkResponseQueue& ResponseQueue() noexcept { return mRespQueue; }
 
    protected:
+    bool Send(ENetPeer* aPeer, const std::vector<uint8_t> aData);
+
     virtual void OnConnect(ENetEvent& aEvent)           = 0;
     virtual void OnReceive(ENetEvent& aEvent)           = 0;
     virtual void OnDisconnect(ENetEvent& aEvent)        = 0;

@@ -36,10 +36,11 @@ void GameServer::ConsumeNetworkRequests()
                 },
                 [&](const NewGameRequest& aNewGame) {
                     GameInstanceID gameID = createGameInstance(aNewGame);
-                    fmt::println("sending new game created response");
+                    fmt::println("Created game {}", gameID);
                     mServer.EnqueueResponse(new NetworkEvent<NetworkResponsePayload>{
-                        .Type    = PacketType::NewGame,
-                        .Payload = NewGameResponse{.GameID = gameID}});
+                        .Type     = PacketType::NewGame,
+                        .PlayerID = 0,
+                        .Payload  = NewGameResponse{.GameID = gameID}});
                 },
             },
             ev->Payload);

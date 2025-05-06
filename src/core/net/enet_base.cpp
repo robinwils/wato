@@ -22,6 +22,24 @@ void ENetBase::Init()
     }
 }
 
+bool ENetBase::Send(ENetPeer* aPeer, const std::vector<uint8_t> aData)
+{
+    if (aPeer == nullptr) {
+        DBG("client peer not initialized");
+        return false;
+    }
+
+    ENetPacket* packet = enet_packet_create(aData.data(), aData.size(), ENET_PACKET_FLAG_RELIABLE);
+
+    if (-1 == enet_peer_send(aPeer, 0, packet)) {
+        enet_packet_destroy(packet);
+        return false;
+    }
+
+    enet_host_flush(mHost.get());
+    return true;
+}
+
 void ENetBase::Poll()
 {
     if (!mHost) {

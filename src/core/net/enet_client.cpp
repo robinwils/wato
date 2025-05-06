@@ -39,22 +39,6 @@ bool ENetClient::Connect()
     return mPeer != nullptr;
 }
 
-void ENetClient::send(const std::vector<uint8_t> aData)
-{
-    if (mPeer == nullptr) {
-        DBG("client peer not initialized");
-        return;
-    }
-
-    ENetPacket* packet = enet_packet_create(aData.data(), aData.size(), ENET_PACKET_FLAG_RELIABLE);
-
-    if (-1 == enet_peer_send(mPeer, 0, packet)) {
-        enet_packet_destroy(packet);
-    }
-
-    enet_host_flush(mHost.get());
-}
-
 void ENetClient::Disconnect()
 {
     if (mPeer != nullptr) {
@@ -87,16 +71,18 @@ void ENetClient::ConsumeNetworkRequests()
                 [&](const NewGameRequest& aReq) { NewGameRequest::Serialize(archive, aReq); },
             },
             ev->Payload);
-        send(archive.Bytes());
+        Send(mPeer, archive.Bytes());
         delete ev;
     }
 }
 
 void ENetClient::OnConnect(ENetEvent& aEvent)
 {
+    // TODO: better player ID handling
     mRespQueue.push(new NetworkEvent<NetworkResponsePayload>{
-        .Type    = PacketType::Connected,
-        .Payload = ConnectedResponse{},
+        .Type     = PacketType::Connected,
+        .PlayerID = 0,
+        .Payload  = ConnectedResponse{},
     });
 }
 
