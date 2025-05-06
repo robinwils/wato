@@ -294,6 +294,7 @@ target_sources(watolib
     src/core/physics.hpp
     src/core/queue/ring_buffer.hpp
     src/core/snapshot.hpp
+    src/core/sys/backtrace.hpp
     src/core/sys/log.hpp
     src/registry/registry.hpp
     src/systems/physics.hpp
@@ -303,6 +304,7 @@ target_sources(watolib
     src/core/net/enet_base.cpp
     src/core/snapshot.cpp
     src/core/physics.cpp
+    src/core/sys/backtrace.cpp
     src/systems/physics.cpp
 )
 
