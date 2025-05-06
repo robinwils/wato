@@ -109,7 +109,6 @@ int GameClient::Run()
         }
 
         if (mRegistry.ctx().contains<GameInstance>()) {
-            fmt::println("game started, lets gooo");
             auto& instance = mRegistry.ctx().get<GameInstance&>();
 
             for (const auto& system : mSystems) {
@@ -191,6 +190,7 @@ void GameClient::consumeNetworkResponses()
                 [&](const NewGameResponse& aResp) {
                     StartGameInstance(mRegistry, aResp.GameID);
                     spawnPlayerAndCamera();
+                    fmt::println("game {} created", aResp.GameID);
                 },
             },
             ev->Payload);

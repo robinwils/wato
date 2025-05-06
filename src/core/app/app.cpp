@@ -41,7 +41,8 @@ void Application::AdvanceSimulation(Registry& aRegistry, const float aDeltaTime)
             system(aRegistry, kTimeStep);
         }
         actions.Push();
-        actions.Latest().Tick = ++instance.Tick;
+        actions.Latest().GameID = instance.GameID;
+        actions.Latest().Tick   = ++instance.Tick;
     }
 }
 

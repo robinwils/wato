@@ -228,6 +228,7 @@ struct PlayerActions {
         actions_type::size_type nActions = aSelf.Actions.size();
 
         aArchive.template Write<PlayerID>(&aSelf.Player, 1);
+        aArchive.template Write<GameInstanceID>(&aSelf.GameID, 1);
         aArchive.template Write<uint32_t>(&aSelf.Tick, 1);
         aArchive.template Write<actions_type::size_type>(&nActions, 1);
         for (const Action& action : aSelf.Actions) {
@@ -238,6 +239,7 @@ struct PlayerActions {
     {
         actions_type::size_type nActions = 0;
         aArchive.template Read<PlayerID>(&aSelf.Player, 1);
+        aArchive.template Read<GameInstanceID>(&aSelf.GameID, 1);
         aArchive.template Read<uint32_t>(&aSelf.Tick, 1);
         aArchive.template Read<actions_type::size_type>(&nActions, 1);
         for (actions_type::size_type idx = 0; idx < nActions; idx++) {
