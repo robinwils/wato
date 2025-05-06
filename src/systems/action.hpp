@@ -18,6 +18,11 @@ class ActionSystem : public System<Derived>
     // Small function kept inline
     void initializeContextStack(Registry& aRegistry)
     {
+        // TODO: Huge problem on server: actions are dependant on context, but we don't want that
+        if (!aRegistry.ctx().contains<ActionContextStack>()) {
+            return;
+        }
+
         auto& contextStack = aRegistry.ctx().get<ActionContextStack&>();
         if (contextStack.empty()) {
             contextStack.push_front(ActionContext{
