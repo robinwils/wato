@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.31)
+cmake_minimum_required(VERSION 3.25)
 
 project(
   WaTo
@@ -53,6 +53,9 @@ FetchContent_Declare(
   GIT_TAG v0.10.2
   FIND_PACKAGE_ARGS NAMES reactphysics3d
 )
+
+set(ASSIMP_BUILD_ASSIMP_TOOLS OFF CACHE BOOL INTERNAL "Build assimp tools")
+set(ASSIMP_INSTALL OFF CACHE BOOL INTERNAL "Install assimp")
 
 FetchContent_MakeAvailable(assimp)
 FetchContent_MakeAvailable(glfw3)
