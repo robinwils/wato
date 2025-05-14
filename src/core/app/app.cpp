@@ -18,6 +18,7 @@ void Application::StartGameInstance(Registry& aRegistry, const GameInstanceID aG
     fmt::println("spawning game instance");
     auto& physics = aRegistry.ctx().emplace<Physics>();
     aRegistry.ctx().emplace<ActionBuffer>();
+    aRegistry.ctx().emplace<ActionContextStack>();
     aRegistry.ctx().emplace<GameInstance>(aGameID, 0.0f, 0u);
 
     physics.Init(aRegistry);

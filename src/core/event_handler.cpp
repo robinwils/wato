@@ -5,9 +5,8 @@
 #include <variant>
 
 #include "components/placement_mode.hpp"
+#include "core/physics.hpp"
 #include "input/action.hpp"
-
-void EventHandler::onContact(const rp3d::CollisionCallback::CallbackData& aCallbackData) {}
 
 void EventHandler::onTrigger(const rp3d::OverlapCallback::CallbackData& aCallbackData)
 {
@@ -39,5 +38,17 @@ void EventHandler::onTrigger(const rp3d::OverlapCallback::CallbackData& aCallbac
     auto& actionCtx = mRegistry->ctx().get<ActionContextStack&>().front();
     if (auto* payload = std::get_if<PlacementModePayload>(&actionCtx.Payload)) {
         payload->CanBuild = canBuild;
+    }
+}
+
+void TowerBuildingHandler::onContact(const rp3d::CollisionCallback::CallbackData& aCallbackData)
+{
+    for (uint32_t pairIdx = 0; pairIdx < aCallbackData.getNbContactPairs(); ++pairIdx) {
+        rp3d::CollisionCallback::ContactPair pair = aCallbackData.getContactPair(pairIdx);
+        if (pair.getCollider1()->getCollisionCategoryBits() == Category::Entities
+            || pair.getCollider2()->getCollisionCategoryBits() == Category::Entities) {
+            CanBuildTower = true;
+            break;
+        }
     }
 }

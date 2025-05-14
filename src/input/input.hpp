@@ -241,12 +241,6 @@ struct MouseState : public InputState<kNumButtons> {
 std::string key_string(const Keyboard::Key& aK);
 std::string mouse_button_string(const Mouse::Button& aButton);
 
-// TODO: rework Input in different steps (see if doable):
-// - This class for current and previous raw input (as before...)
-// - detect actions and derive action components (dedicated entity?) inside an input system
-//   - double check if Single component struct for input or dedicated action components
-// - dedicated separated systems for each if dedicated action components ?
-// - only sync actions to server
 class Input
 {
    public:
@@ -257,18 +251,17 @@ class Input
     void Init();
 
     // raw callback handlers
-    static void KeyCallback(GLFWwindow* aWindow,
-        int32_t                         aKey,
-        int32_t                         aScancode,
-        int32_t                         aAction,
-        int32_t                         aMods);
+    static void KeyCallback(
+        GLFWwindow* aWindow,
+        int32_t     aKey,
+        int32_t     aScancode,
+        int32_t     aAction,
+        int32_t     aMods);
 
     static void ScrollCallback(GLFWwindow* aWindow, double aXoffset, double aYoffset);
     static void CursorPosCallback(GLFWwindow* aWindow, double aXpos, double aYpos);
-    static void MouseButtonCallback(GLFWwindow* aWindow,
-        int32_t                                 aButton,
-        int32_t                                 aAction,
-        int32_t                                 aMods);
+    static void
+    MouseButtonCallback(GLFWwindow* aWindow, int32_t aButton, int32_t aAction, int32_t aMods);
 
     void ExitTowerPlacementMode() { mTowerPlacementMode = false; }
     void EnterTowerPlacementMode() { mTowerPlacementMode = true; }
@@ -288,10 +281,11 @@ class Input
      * @param w screen width
      * @param h screen height
      */
-    glm::vec3 WorldMousePos(const Camera& aCam,
-        const glm::vec3&                  aCamPos,
-        const float                       aWidth,
-        const float                       aHeight) const;
+    glm::vec3 WorldMousePos(
+        const Camera&    aCam,
+        const glm::vec3& aCamPos,
+        const float      aWidth,
+        const float      aHeight) const;
 
     struct MouseState    MouseState, PrevMouseState;
     struct KeyboardState KeyboardState, PrevKeyboardState;

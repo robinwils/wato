@@ -1,6 +1,9 @@
 #pragma once
 
+#include <fmt/base.h>
+
 #include <entt/core/hashed_string.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <list>
 #include <stdexcept>
 #include <unordered_map>
@@ -49,6 +52,7 @@ struct SendCreepPayload {
 
 struct BuildTowerPayload {
     TowerType Tower;
+    glm::vec3 Position;
 };
 
 struct PlacementModePayload {
@@ -81,6 +85,7 @@ struct Action {
                 },
                 [&](const BuildTowerPayload& aPayload) {
                     aArchive.template Write<TowerType>(&aPayload.Tower, 1);
+                    aArchive.template Write<float>(&aPayload.Position, 3);
                 },
                 [&](const PlacementModePayload& aPayload) {
                     aArchive.template Write<bool>(&aPayload.CanBuild, 1);
@@ -111,6 +116,7 @@ struct Action {
             case ActionType::BuildTower: {
                 BuildTowerPayload payload{};
                 aArchive.template Read<TowerType>(&payload.Tower, 1);
+                aArchive.template Read<float>(glm::value_ptr(payload.Position), 3);
                 aSelf.Payload = payload;
                 break;
             }
@@ -209,6 +215,7 @@ struct ActionContext {
     enum class State {
         Default,  // rename ?
         Placement,
+        Server,
     };
     State          State;
     ActionBindings Bindings;
@@ -224,6 +231,7 @@ struct PlayerActions {
 
         aArchive.template Write<PlayerID>(&aSelf.Player, 1);
         aArchive.template Write<GameInstanceID>(&aSelf.GameID, 1);
+        fmt::println("game instance ID serialized = {}", aSelf.GameID);
         aArchive.template Write<uint32_t>(&aSelf.Tick, 1);
         aArchive.template Write<actions_type::size_type>(&nActions, 1);
         for (const Action& action : aSelf.Actions) {
@@ -235,6 +243,7 @@ struct PlayerActions {
         actions_type::size_type nActions = 0;
         aArchive.template Read<PlayerID>(&aSelf.Player, 1);
         aArchive.template Read<GameInstanceID>(&aSelf.GameID, 1);
+        fmt::println("game instance ID deserialized = {}", aSelf.GameID);
         aArchive.template Read<uint32_t>(&aSelf.Tick, 1);
         aArchive.template Read<actions_type::size_type>(&nActions, 1);
         for (actions_type::size_type idx = 0; idx < nActions; idx++) {

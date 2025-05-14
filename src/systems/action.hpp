@@ -5,27 +5,73 @@
 #include "input/action.hpp"
 #include "systems/system.hpp"
 
+class ActionContextHandler
+{
+   public:
+    ActionContextHandler()          = default;
+    virtual ~ActionContextHandler() = default;
+
+    virtual void
+    operator()(Registry& aRegistry, const MovePayload& aPayload, const float aDeltaTime) = 0;
+    virtual void operator()(Registry& aRegistry, const SendCreepPayload& aPayload)       = 0;
+    virtual void operator()(Registry& aRegistry, const BuildTowerPayload& aPayload)      = 0;
+    virtual void operator()(Registry& aRegistry, const PlacementModePayload& aPayload)   = 0;
+};
+
+class DefaultContextHandler : public ActionContextHandler
+{
+   public:
+    DefaultContextHandler()  = default;
+    ~DefaultContextHandler() = default;
+
+    void operator()(Registry& aRegistry, const MovePayload& aPayload, const float aDeltaTime)
+        override;
+    void operator()(Registry& aRegistry, const SendCreepPayload& aPayload) override;
+    void operator()(Registry&, const BuildTowerPayload&) override {};
+    void operator()(Registry& aRegistry, const PlacementModePayload& aPayload) override;
+    void ExitPlacement(Registry& aRegistry);
+};
+
+class PlacementModeContextHandler : public DefaultContextHandler
+{
+   public:
+    PlacementModeContextHandler()  = default;
+    ~PlacementModeContextHandler() = default;
+
+    void operator()(Registry&, const SendCreepPayload&) override {};
+    void operator()(Registry& aRegistry, const BuildTowerPayload& aPayload) override;
+    void operator()(Registry& aRegistry, const PlacementModePayload& aPayload) override;
+};
+
+class ServerContextHandler : public ActionContextHandler
+{
+   public:
+    ServerContextHandler()  = default;
+    ~ServerContextHandler() = default;
+
+    void operator()(Registry&, const SendCreepPayload&) override {};
+    void operator()(Registry& aRegistry, const BuildTowerPayload& aPayload) override;
+    void operator()(Registry&, const PlacementModePayload&) override {}
+    void operator()(Registry&, const MovePayload&, const float) override {}
+};
+
 template <typename Derived>
 class ActionSystem : public System<Derived>
 {
    private:
     void handleAction(Registry& aRegistry, const Action& aAction, const float aDeltaTime);
     void processActions(Registry& aRegistry, ActionTag aFilterTag, const float aDeltaTime);
-    void handleDefaultContext(Registry& aRegistry, const Action& aAction, const float aDeltaTime);
-    void handlePlacementContext(Registry& aRegistry, const Action& aAction, const float aDeltaTime);
-    void handleMovement(Registry& aRegistry, const MovePayload& aPayload, const float aDeltaTime);
-    void handleSendCreep(Registry& aRegistry, const SendCreepPayload& aPayload);
-    void handleBuildTower(Registry& aRegistry, const BuildTowerPayload& aPayload);
-    void transitionToPlacement(Registry& aRegistry, const PlacementModePayload& aPayload);
+    void handleContext(
+        Registry&             aRegistry,
+        const Action&         aAction,
+        ActionContextHandler& aCtxHandler,
+        const float           aDeltaTime);
+
     void exitPlacement(Registry& aRegistry);
 
     // Small function kept inline
     void initializeContextStack(Registry& aRegistry)
     {
-        if (!aRegistry.ctx().contains<ActionContextStack>()) {
-            throw std::runtime_error("no action context stack");
-        }
-
         auto& contextStack = aRegistry.ctx().get<ActionContextStack&>();
         if (contextStack.empty()) {
             contextStack.push_front(ActionContext{
@@ -67,29 +113,16 @@ class DeterministicActionSystem : public ActionSystem<DeterministicActionSystem>
 class ServerActionSystem : public ActionSystem<ServerActionSystem>
 {
    public:
-    // Small operator kept inline
     void operator()(Registry& aRegistry, const float aDeltaTime)
     {
-        auto&         abuf          = aRegistry.ctx().get<ActionBuffer&>();
-        PlayerActions latestActions = abuf.Latest();
-
-        for (const Action& action : latestActions.Actions) {
-            // fmt::println("{}", action.String());
-            if (action.Tag != ActionTag::FixedTime) {
-                continue;
-            }
-            std::visit(
-                VariantVisitor{
-                    [&](const PlacementModePayload&) {},
-                    [&](const MovePayload&) {},
-                    [&](const BuildTowerPayload& aPayload) {
-                        handleBuildTower(aRegistry, aPayload);
-                    },
-                    [&](const SendCreepPayload& aPayload) { handleSendCreep(aRegistry, aPayload); },
-
-                },
-                action.Payload);
+        auto& contextStack = aRegistry.ctx().get<ActionContextStack&>();
+        if (contextStack.empty()) {
+            contextStack.push_front(ActionContext{
+                .State    = ActionContext::State::Server,
+                .Bindings = ActionBindings::Defaults(),
+                .Payload  = NormalPayload{}});
         }
+        processActions(aRegistry, ActionTag::FixedTime, aDeltaTime);
     }
 
     static constexpr const char* StaticName() { return "ServerActionSystem"; }
