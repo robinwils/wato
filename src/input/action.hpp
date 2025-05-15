@@ -27,9 +27,41 @@ enum class ActionType {
     ExitPlacementMode,
 };
 
+template <>
+struct fmt::formatter<ActionType> : fmt::formatter<std::string> {
+    auto format(ActionType aObj, format_context& aCtx) const -> decltype(aCtx.out())
+    {
+        switch (aObj) {
+            case ActionType::Move:
+                return fmt::format_to(aCtx.out(), "Move");
+            case ActionType::SendCreep:
+                return fmt::format_to(aCtx.out(), "Send Creep");
+            case ActionType::BuildTower:
+                return fmt::format_to(aCtx.out(), "Build Tower");
+            case ActionType::EnterPlacementMode:
+                return fmt::format_to(aCtx.out(), "Enter Placement Mode");
+            case ActionType::ExitPlacementMode:
+                return fmt::format_to(aCtx.out(), "Exit Placement Mode");
+        }
+    }
+};
+
 enum class ActionTag {
     FixedTime,
     FrameTime,
+};
+
+template <>
+struct fmt::formatter<ActionTag> : fmt::formatter<std::string> {
+    auto format(ActionTag aObj, format_context& aCtx) const -> decltype(aCtx.out())
+    {
+        switch (aObj) {
+            case ActionTag::FixedTime:
+                return fmt::format_to(aCtx.out(), "Fixed Time");
+            case ActionTag::FrameTime:
+                return fmt::format_to(aCtx.out(), "Frame Time");
+        }
+    }
 };
 
 struct KeyState {
@@ -66,8 +98,6 @@ struct Action {
     ActionType   Type;
     ActionTag    Tag;
     payload_type Payload;
-
-    std::string String() const;
 
     constexpr static auto Serialize(auto& aArchive, const auto& aSelf)
     {
@@ -133,6 +163,58 @@ struct Action {
         }
 
         return true;
+    }
+};
+
+template <>
+struct fmt::formatter<Action::payload_type> : fmt::formatter<std::string> {
+    auto format(Action::payload_type aObj, format_context& aCtx) const -> decltype(aCtx.out())
+    {
+        return std::visit(
+            [&](const auto& aPayload) -> decltype(aCtx.out()) {
+                using T = std::decay_t<decltype(aPayload)>;
+                if constexpr (std::is_same_v<T, MovePayload>) {
+                    switch (aPayload.Direction) {
+                        case MoveDirection::Left:
+                            return fmt::format_to(aCtx.out(), "Left");
+                        case MoveDirection::Right:
+                            return fmt::format_to(aCtx.out(), "Right");
+                        case MoveDirection::Front:
+                            return fmt::format_to(aCtx.out(), "Front");
+                        case MoveDirection::Back:
+                            return fmt::format_to(aCtx.out(), "Back");
+                        case MoveDirection::Up:
+                            return fmt::format_to(aCtx.out(), "Up");
+                        case MoveDirection::Down:
+                            return fmt::format_to(aCtx.out(), "Down");
+                    }
+                } else if constexpr (std::is_same_v<T, SendCreepPayload>) {
+                    return fmt::format_to(
+                        aCtx.out(),
+                        "CreepType: {}",
+                        CreepTypeToString(aPayload.Type));
+                } else if constexpr (std::is_same_v<T, BuildTowerPayload>) {
+                    return fmt::format_to(
+                        aCtx.out(),
+                        "TowerType: {}",
+                        TowerTypeToString(aPayload.Tower));
+                } else if constexpr (std::is_same_v<T, PlacementModePayload>) {
+                    return fmt::format_to(
+                        aCtx.out(),
+                        "{} Tower",
+                        TowerTypeToString(aPayload.Tower));
+                }
+                return fmt::format_to(aCtx.out(), "Unknown");
+            },
+            aObj);
+    }
+};
+
+template <>
+struct fmt::formatter<Action> : fmt::formatter<std::string> {
+    auto format(Action aObj, format_context& aCtx) const -> decltype(aCtx.out())
+    {
+        return fmt::format_to(aCtx.out(), "{} {} Action <{}>", aObj.Type, aObj.Tag, aObj.Payload);
     }
 };
 

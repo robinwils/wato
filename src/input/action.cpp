@@ -127,60 +127,6 @@ ActionBindings::actions_type ActionBindings::ActionsFromInput(const Input& aInpu
     return actions;
 }
 
-std::string Action::String() const
-{
-    std::string typeStr;
-    switch (Type) {
-        case ActionType::Move:
-            typeStr = "Move";
-            break;
-        case ActionType::SendCreep:
-            typeStr = "SendCreep";
-            break;
-        case ActionType::BuildTower:
-            typeStr = "BuildTower";
-            break;
-        case ActionType::ExitPlacementMode:
-            typeStr = "ExitPlacement";
-            break;
-        case ActionType::EnterPlacementMode:
-            typeStr = "EnterPlacement";
-            break;
-        default:
-            typeStr = "Unknown";
-            break;
-    }
-
-    std::string tagStr = Tag == ActionTag::FixedTime ? "FixedTime" : "FrameTime";
-
-    std::string payloadStr = std::visit(
-        [](const auto& aPayload) -> std::string {
-            using T = std::decay_t<decltype(aPayload)>;
-            if constexpr (std::is_same_v<T, MovePayload>) {
-                switch (aPayload.Direction) {
-                    case MoveDirection::Left:
-                        return "Left";
-                    case MoveDirection::Right:
-                        return "Right";
-                    case MoveDirection::Front:
-                        return "Front";
-                    case MoveDirection::Back:
-                        return "Back";
-                    default:
-                        return "Unknown";
-                }
-            } else if constexpr (std::is_same_v<T, SendCreepPayload>) {
-                return fmt::format("CreepType: {}", CreepTypeToString(aPayload.Type));
-            } else if constexpr (std::is_same_v<T, BuildTowerPayload>) {
-                return fmt::format("TowerType: {}", TowerTypeToString(aPayload.Tower));
-            }
-            return "Unknown";
-        },
-        Payload);
-
-    return fmt::format("Action{{Type: {}, Tag: {}, Payload: {}}}", typeStr, tagStr, payloadStr);
-}
-
 void ActionBindings::AddBinding(
     const std::string& aActionStr,
     const KeyState&    aState,
