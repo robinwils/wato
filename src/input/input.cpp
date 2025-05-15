@@ -29,7 +29,8 @@ std::string MouseState::String() const
     for (uint32_t i = 0; i < MouseState::kCapacity; ++i) {
         auto& state = Inputs[i];
         if (state.Action != Button::Unknown) {
-            str = fmt::format("{}\n {} {}",
+            str = fmt::format(
+                "{}\n {} {}",
                 str,
                 mouse_button_string(static_cast<Mouse::Button>(i)),
                 state.String());
@@ -628,7 +629,8 @@ std::string KeyboardState::String() const
     for (uint32_t i = 0; i < Keyboard::Count; ++i) {
         auto& state = Inputs[i];
         if (state.Action != Button::Unknown) {
-            str = fmt::format("{}\n {} {}",
+            str = fmt::format(
+                "{}\n {} {}",
                 str,
                 key_string(static_cast<Keyboard::Key>(i)),
                 state.String());
@@ -637,11 +639,12 @@ std::string KeyboardState::String() const
     return str;
 }
 
-void Input::KeyCallback(GLFWwindow* aWindow,
-    int32_t                         aKey,
-    int32_t                         aScancode,
-    int32_t                         aAction,
-    int32_t                         aMods)
+void Input::KeyCallback(
+    GLFWwindow* aWindow,
+    int32_t     aKey,
+    int32_t     aScancode,
+    int32_t     aAction,
+    int32_t     aMods)
 {
     auto*         win   = static_cast<WatoWindow*>(glfwGetWindowUserPointer(aWindow));
     Input&        input = win->GetInput();
@@ -680,10 +683,11 @@ void Input::CursorPosCallback(GLFWwindow* aWindow, double aX, double aY)
     input.MouseState.Pos.y = aY;
 }
 
-void Input::MouseButtonCallback(GLFWwindow* aWindow,
-    int32_t                                 aButton,
-    int32_t                                 aAction,
-    int32_t                                 aMods)
+void Input::MouseButtonCallback(
+    GLFWwindow* aWindow,
+    int32_t     aButton,
+    int32_t     aAction,
+    int32_t     aMods)
 {
     auto*         win    = static_cast<WatoWindow*>(glfwGetWindowUserPointer(aWindow));
     Input&        input  = win->GetInput();

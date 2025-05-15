@@ -45,9 +45,7 @@ void InputSystem::handleMouseMovement(Registry& aRegistry, const float aDeltaTim
     }
 
     switch (currentCtx.State) {
-        case ActionContext::State::Default:
-            break;
-        case ActionContext::State::Placement:
+        case ActionContext::State::Placement: {
             WorldRaycastCallback raycastCb;
 
             // rp3d wants a start and end vector3, multiply normalized dir by 1000 (arbitrary)
@@ -57,15 +55,20 @@ void InputSystem::handleMouseMovement(Registry& aRegistry, const float aDeltaTim
             if (!raycastCb.Hits.empty()) {
                 auto placementModeView = aRegistry.view<PlacementMode>();
                 for (auto ghostTower : placementModeView) {
-                    aRegistry.patch<Transform3D>(ghostTower,
+                    aRegistry.patch<Transform3D>(
+                        ghostTower,
                         [raycastCb, &aRegistry, ghostTower](Transform3D& aT) {
                             aT.Position.x = raycastCb.Hits[0].x;
                             aT.Position.z = raycastCb.Hits[0].z;
-                            aRegistry.patch<RigidBody>(ghostTower,
-                                [aT](RigidBody& aRb) { aRb.RigidBody->setTransform(aT.ToRP3D()); });
+                            aRegistry.patch<RigidBody>(ghostTower, [aT](RigidBody& aRb) {
+                                aRb.RigidBody->setTransform(aT.ToRP3D());
+                            });
                         });
                 }
             }
+            break;
+        }
+        default:
             break;
     }
 }
