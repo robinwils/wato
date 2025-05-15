@@ -1,7 +1,7 @@
 #include "core/app/game_client.hpp"
 
 #include <bx/bx.h>
-#include <fmt/base.h>
+#include <spdlog/spdlog.h>
 
 #include <chrono>
 #include <taskflow/taskflow.hpp>
@@ -24,6 +24,7 @@ using namespace std::literals::chrono_literals;
 
 void GameClient::Init()
 {
+    Application::Init();
     auto& window    = mRegistry.ctx().get<WatoWindow>();
     auto& renderer  = mRegistry.ctx().get<Renderer>();
     auto& netClient = mRegistry.ctx().get<ENetClient>();
@@ -190,7 +191,7 @@ void GameClient::consumeNetworkResponses()
                 [&](const NewGameResponse& aResp) {
                     StartGameInstance(mRegistry, aResp.GameID);
                     spawnPlayerAndCamera();
-                    fmt::println("game {} created", aResp.GameID);
+                    spdlog::info("game {} created", aResp.GameID);
                 },
             },
             ev->Payload);

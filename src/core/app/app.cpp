@@ -1,7 +1,7 @@
 #include "core/app/app.hpp"
 
 #include <assimp/types.h>
-#include <fmt/base.h>
+#include <spdlog/spdlog.h>
 
 #include "components/game.hpp"
 #include "components/scene_object.hpp"
@@ -13,9 +13,17 @@
 
 using namespace entt::literals;
 
+void Application::Init()
+{
+    spdlog::set_level(spdlog::level::debug);
+    // FIXME: weird segfault when using %s and %# instead of %@
+    // or puting the thread info in separate []
+    spdlog::set_pattern("[%H:%M:%S %z thread %t] [%^%L%$] %v %@");
+}
+
 void Application::StartGameInstance(Registry& aRegistry, const GameInstanceID aGameID)
 {
-    fmt::println("spawning game instance");
+    spdlog::info("spawning game instance");
     auto& physics = aRegistry.ctx().emplace<Physics>();
     aRegistry.ctx().emplace<ActionBuffer>();
     aRegistry.ctx().emplace<ActionContextStack>();
@@ -25,7 +33,7 @@ void Application::StartGameInstance(Registry& aRegistry, const GameInstanceID aG
     // TODO: leak ?
     physics.World()->setEventListener(new EventHandler(&aRegistry));
     SpawnMap(aRegistry, 20, 20);
-    fmt::println("spawned game instance");
+    spdlog::info("spawned game instance");
 }
 
 void Application::AdvanceSimulation(Registry& aRegistry, const float aDeltaTime)

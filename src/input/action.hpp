@@ -1,6 +1,6 @@
 #pragma once
 
-#include <fmt/base.h>
+#include <spdlog/spdlog.h>
 
 #include <entt/core/hashed_string.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -231,7 +231,7 @@ struct PlayerActions {
 
         aArchive.template Write<PlayerID>(&aSelf.Player, 1);
         aArchive.template Write<GameInstanceID>(&aSelf.GameID, 1);
-        fmt::println("game instance ID serialized = {}", aSelf.GameID);
+        spdlog::info("game instance ID serialized = {}", aSelf.GameID);
         aArchive.template Write<uint32_t>(&aSelf.Tick, 1);
         aArchive.template Write<actions_type::size_type>(&nActions, 1);
         for (const Action& action : aSelf.Actions) {
@@ -243,7 +243,7 @@ struct PlayerActions {
         actions_type::size_type nActions = 0;
         aArchive.template Read<PlayerID>(&aSelf.Player, 1);
         aArchive.template Read<GameInstanceID>(&aSelf.GameID, 1);
-        fmt::println("game instance ID deserialized = {}", aSelf.GameID);
+        spdlog::info("game instance ID deserialized = {}", aSelf.GameID);
         aArchive.template Read<uint32_t>(&aSelf.Tick, 1);
         aArchive.template Read<actions_type::size_type>(&nActions, 1);
         for (actions_type::size_type idx = 0; idx < nActions; idx++) {

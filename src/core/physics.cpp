@@ -1,6 +1,6 @@
 #include "core/physics.hpp"
 
-#include <fmt/base.h>
+#include <spdlog/spdlog.h>
 
 #include "components/rigid_body.hpp"
 #include "core/event_handler.hpp"

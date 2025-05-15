@@ -1,6 +1,6 @@
 #include "systems/action.hpp"
 
-#include <fmt/base.h>
+#include <spdlog/spdlog.h>
 
 #include <variant>
 
@@ -76,6 +76,7 @@ void DefaultContextHandler::operator()(Registry& aRegistry, const SendCreepPaylo
 
 void DefaultContextHandler::operator()(Registry& aRegistry, const PlacementModePayload& aPayload)
 {
+    spdlog::info("entering placement mode");
     auto& contextStack = aRegistry.ctx().get<ActionContextStack&>();
     auto& phy          = aRegistry.ctx().get<Physics&>();
 
@@ -143,17 +144,18 @@ void PlacementModeContextHandler::operator()(Registry& aRegistry, const BuildTow
         aRegistry.remove<PlacementMode>(tower);
         aRegistry.remove<ImguiDrawable>(tower);
     }
+    SPDLOG_DEBUG("exiting placement mode");
     ExitPlacement(aRegistry);
 }
 
 void PlacementModeContextHandler::operator()(Registry& aRegistry, const PlacementModePayload&)
 {
+    SPDLOG_DEBUG("exiting placement mode");
     ExitPlacement(aRegistry);
 }
 
 void ServerContextHandler::operator()(Registry& aRegistry, const BuildTowerPayload& aPayload)
 {
-    fmt::println("we are here !");
     auto  tower = aRegistry.create();
     auto& phy   = aRegistry.ctx().get<Physics>();
 
@@ -227,13 +229,17 @@ void ActionSystem<Derived>::processActions(
     auto&         abuf          = aRegistry.ctx().get<ActionBuffer&>();
     PlayerActions latestActions = abuf.Latest();
 
+    if (!latestActions.Actions.empty()) {
+        spdlog::info("processing {} actions", latestActions.Actions.size());
+    }
     for (const Action& action : latestActions.Actions) {
-        // fmt::println("{}", action.String());
         if (action.Tag != aFilterTag) {
             continue;
         }
         handleAction(aRegistry, action, aDeltaTime);
     }
+
+    // TODO: mark action as processed, otherwise the real time loop will re execute it
 }
 
 template <typename Derived>

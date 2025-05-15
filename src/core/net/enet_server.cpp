@@ -2,7 +2,7 @@
 
 #include <bx/spscqueue.h>
 #include <enet.h>
-#include <fmt/base.h>
+#include <spdlog/spdlog.h>
 
 #include <span>
 #include <stdexcept>

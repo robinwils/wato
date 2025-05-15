@@ -88,10 +88,10 @@ FetchContent_Declare(
 )
 
 FetchContent_Declare(
-  fmt
-  GIT_REPOSITORY https://github.com/fmtlib/fmt.git
-  GIT_TAG 11.1.4
-  FIND_PACKAGE_ARGS NAMES fmt
+  spdlog
+  GIT_REPOSITORY https://github.com/gabime/spdlog
+  GIT_TAG v1.15.3
+  FIND_PACKAGE_ARGS NAMES spdlog
 )
 
 find_package(Sodium REQUIRED)
@@ -105,7 +105,7 @@ set(DEPENDENCY_NAMES assimp
   argh
   taskflow
   doctest
-  fmt
+  spdlog
 )
 
 FetchContent_MakeAvailable(${DEPENDENCY_NAMES})
@@ -246,10 +246,10 @@ if(DEFINED taskflow_SOURCE_DIR)
   )
 endif()
 
-if(DEFINED fmt_SOURCE_DIR)
+if(DEFINED spdlog_SOURCE_DIR)
   target_include_directories(wato_common
   SYSTEM INTERFACE
-    ${fmt_SOURCE_DIR}/include
+    ${spdlog_SOURCE_DIR}/include
   )
 endif()
 
@@ -372,7 +372,7 @@ target_link_libraries(watolib
   bimg_encodeDebug
   bimgDebug
   reactphysics3d
-  fmt
+  spdlog
   sodium
 )
 

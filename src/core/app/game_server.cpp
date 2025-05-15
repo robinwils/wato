@@ -1,7 +1,7 @@
 #include "core/app/game_server.hpp"
 
 #include <bx/bx.h>
-#include <fmt/base.h>
+#include <spdlog/spdlog.h>
 
 #include <thread>
 
@@ -13,6 +13,7 @@
 
 void GameServer::Init()
 {
+    Application::Init();
     mServer.Init();
     mSystemsFT.push_back(PhysicsSystem::MakeDelegate(mPhysicsSystem));
     mSystemsFT.push_back(CreepSystem::MakeDelegate(mCreepSystem));
@@ -26,17 +27,17 @@ void GameServer::ConsumeNetworkRequests()
             VariantVisitor{
                 [&](const PlayerActions& aActions) {
                     if (!mGameInstances.contains(aActions.GameID)) {
-                        fmt::println("got event for non existing game {}", aActions.GameID);
+                        spdlog::info("got event for non existing game {}", aActions.GameID);
                         return;
                     }
                     Registry& registry = mGameInstances[aActions.GameID];
                     auto&     actions  = registry.ctx().get<ActionBuffer&>().Latest().Actions;
-                    fmt::println("got {} actions", aActions.Actions.size());
+                    spdlog::info("got {} actions", aActions.Actions.size());
                     actions.insert(actions.end(), aActions.Actions.begin(), aActions.Actions.end());
                 },
                 [&](const NewGameRequest& aNewGame) {
                     GameInstanceID gameID = createGameInstance(aNewGame);
-                    fmt::println("Created game {}", gameID);
+                    spdlog::info("Created game {}", gameID);
                     mServer.EnqueueResponse(new NetworkEvent<NetworkResponsePayload>{
                         .Type     = PacketType::NewGame,
                         .PlayerID = 0,

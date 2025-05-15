@@ -25,8 +25,8 @@ class Application
     Application& operator=(const Application&) = delete;
     Application& operator=(Application&&)      = delete;
 
-    virtual void Init() = 0;
-    virtual int  Run()  = 0;
+    virtual void Init();
+    virtual int  Run() = 0;
 
    protected:
     using clock_type = std::chrono::steady_clock;

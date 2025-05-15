@@ -2,7 +2,7 @@
 
 #include <bgfx/bgfx.h>
 #include <bgfx/defines.h>
-#include <fmt/base.h>
+#include <spdlog/spdlog.h>
 
 #include <cstdint>
 #include <glm/ext/matrix_float4x4.hpp>

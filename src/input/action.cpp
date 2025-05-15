@@ -1,7 +1,6 @@
 #include "input/action.hpp"
 
-#include <fmt/base.h>
-#include <fmt/format.h>
+#include <spdlog/spdlog.h>
 
 #include "components/tower.hpp"
 

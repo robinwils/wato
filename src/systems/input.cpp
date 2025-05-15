@@ -1,11 +1,9 @@
 #include "input/input.hpp"
 
-#include <fmt/base.h>
-#include <fmt/ranges.h>
 #include <reactphysics3d/collision/RaycastInfo.h>
 #include <reactphysics3d/mathematics/Ray.h>
+#include <spdlog/fmt/bundled/ranges.h>
 
-#include "components/health.hpp"
 #include "components/placement_mode.hpp"
 #include "components/rigid_body.hpp"
 #include "components/tile.hpp"

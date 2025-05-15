@@ -1,6 +1,6 @@
 #include "core/event_handler.hpp"
 
-#include <fmt/base.h>
+#include <spdlog/spdlog.h>
 
 #include <variant>
 

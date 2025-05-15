@@ -2,6 +2,7 @@
 
 #include <bx/debug.h>
 #include <bx/string.h>
+#include <spdlog/spdlog.h>
 
 // TODO: real class/lib for logger
 #define LOG_PREFIX "" __FILE__ "(" BX_STRINGIZE(__LINE__) "): WATO"

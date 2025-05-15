@@ -1,7 +1,6 @@
 #pragma once
 
-#include <fmt/base.h>
-#include <fmt/format.h>
+#include <spdlog/spdlog.h>
 
 #include <entt/entity/fwd.hpp>
 #include <glm/glm.hpp>
@@ -77,7 +76,7 @@ class Physics
             const bool              gravity     = body->isGravityEnabled();
             const RigidBodyData*    data        = static_cast<RigidBodyData*>(body->getUserData());
 
-            fmt::println(
+            spdlog::info(
                 "serializing rigid body for entity {:d}",
                 static_cast<ENTT_ID_TYPE>(data->Entity));
             aArchive.template Write<rp3d::BodyType>(&type, 1);

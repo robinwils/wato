@@ -1,11 +1,7 @@
 #include "input.hpp"
 
-#include <fmt/base.h>
-#include <fmt/core.h>
-#include <fmt/format.h>
-#include <fmt/ranges.h>
 #include <imgui.h>
-#include <string.h>
+#include <spdlog/fmt/bundled/ranges.h>
 
 #include <cstring>
 #include <glm/gtx/string_cast.hpp>
@@ -713,8 +709,8 @@ void Input::MouseButtonCallback(GLFWwindow* aWindow,
     if (aMods & GLFW_MOD_NUM_LOCK) {
         input.MouseState.SetKeyModifier(button, ModifierKey::NumLock);
     }
-    // fmt::println("mouse state {}", input.MouseState.String());
-    // fmt::println("prev mouse state {}", input.PrevMouseState.String());
+    // spdlog::info("mouse state {}", input.MouseState.String());
+    // spdlog::info("prev mouse state {}", input.PrevMouseState.String());
 }
 
 void Input::ScrollCallback(GLFWwindow* aWindow, double aXoffset, double aYoffset)

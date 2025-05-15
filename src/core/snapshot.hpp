@@ -2,6 +2,7 @@
 
 #include <bx/bx.h>
 #include <reactphysics3d/engine/PhysicsCommon.h>
+#include <spdlog/spdlog.h>
 
 #include <algorithm>
 #include <cstddef>
@@ -15,8 +16,6 @@
 #include "components/rigid_body.hpp"
 #include "components/transform3d.hpp"
 #include "core/physics.hpp"
-#include "fmt/base.h"
-#include "fmt/format.h"
 
 class ByteInputArchive
 {
@@ -29,13 +28,13 @@ class ByteInputArchive
     void operator()(entt::entity& aEntity)
     {
         Read<entt::entity>(&aEntity, 1);
-        // fmt::println("in entity {:d}", static_cast<ENTT_ID_TYPE>(aEntity));
+        // spdlog::info("in entity {:d}", static_cast<ENTT_ID_TYPE>(aEntity));
     }
 
     void operator()(std::underlying_type_t<entt::entity>& aEntity)
     {
         Read<std::underlying_type_t<entt::entity>>(&aEntity, 1);
-        // fmt::println("in underlying type entity {:d}", aEntity);
+        // spdlog::info("in underlying type entity {:d}", aEntity);
     }
 
     template <typename T>
@@ -56,7 +55,7 @@ class ByteInputArchive
                 mStorage.size()));
         }
 
-        // fmt::println("reading {:d} elts with type size {:d}", aN, sizeof(T));
+        // spdlog::info("reading {:d} elts with type size {:d}", aN, sizeof(T));
         // bx::memCopy(aDestination, &mStorage[mIdx], aN * sizeof(T));
         std::copy_n(reinterpret_cast<const T*>(&mStorage[mIdx]), aN, aDestination);
         mIdx += aN * sizeof(T);
@@ -78,20 +77,20 @@ class ByteOutputArchive
 
     void operator()(entt::entity aEntity)
     {
-        fmt::println("out entity {:d}", static_cast<ENTT_ID_TYPE>(aEntity));
+        spdlog::info("out entity {:d}", static_cast<ENTT_ID_TYPE>(aEntity));
         Write<entt::entity>(&aEntity, 1);
     }
 
     void operator()(std::underlying_type_t<entt::entity> aEntity)
     {
-        fmt::println("out underlying type entity {:d}", aEntity);
+        spdlog::info("out underlying type entity {:d}", aEntity);
         Write<std::underlying_type_t<entt::entity>>(&aEntity, 1);
     }
 
     template <typename T>
     void operator()(const T& aObj)
     {
-        fmt::println("got a component of size {:d}", sizeof(T));
+        spdlog::info("got a component of size {:d}", sizeof(T));
         T::Serialize(*this, aObj);
     }
 
