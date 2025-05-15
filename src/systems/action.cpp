@@ -198,6 +198,7 @@ void ActionSystem<Derived>::handleAction(
     const Action& aAction,
     const float   aDeltaTime)
 {
+    spdlog::info("handlig {}", aAction);
     auto&       contextStack = aRegistry.ctx().get<ActionContextStack&>();
     const auto& currentCtx   = contextStack.front();
 

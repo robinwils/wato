@@ -139,19 +139,6 @@ endforeach()
 
 include(CTest)
 
-set(DEBUG_FLAGS "-DBX_CONFIG_DEBUG")
-set(RELEASE_FLAGS "")
-
-
-if(DEBUG_ENABLE)
-  set(WATO_DEBUG 1)
-else()
-  set(WATO_DEBUG 0)
-endif()
-
-# Configure the file using the provided (or default) value
-configure_file(config.h.in config.h @ONLY)
-
 add_library(wato_common INTERFACE)
 if(BUILD_SHARED_LIBS)
 add_library(watolib SHARED)
@@ -162,13 +149,18 @@ add_executable(wato)
 add_subdirectory(src/watod)
 add_subdirectory(test)
 
-if (DEBUG_ENABLE)
-  target_compile_options(wato_common INTERFACE ${DEBUG_FLAGS})
-else()
-  target_compile_options(wato_common INTERFACE ${RELEASE_FLAGS})
-endif()
 target_compile_options(watolib PRIVATE "-DDOCTEST_CONFIG_DISABLE")
 target_compile_options(wato PRIVATE "-DDOCTEST_CONFIG_DISABLE")
+if(DEBUG_ENABLE)
+  target_compile_definitions(wato_common INTERFACE SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE BX_CONFIG_DEBUG)
+  set(WATO_DEBUG 1)
+else()
+  set(WATO_DEBUG 0)
+endif()
+
+# Configure the file using the provided (or default) value
+configure_file(config.h.in config.h @ONLY)
+
 
 include(cmake/CompilerWarnings.cmake)
 wato_set_project_warnings(wato_common

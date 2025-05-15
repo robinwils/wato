@@ -22,7 +22,13 @@ void InputSystem::operator()(Registry& aRegistry, const float aDeltaTime)
     PlayerActions& latestActions = abuf.Latest();
     const ActionBindings::actions_type& curActions = actionCtx.Bindings.ActionsFromInput(input);
 
-    latestActions.Actions.insert(latestActions.Actions.end(), curActions.begin(), curActions.end());
+    if (!curActions.empty()) {
+        spdlog::info("inserting latest {} actions: {}", curActions.size(), curActions);
+        latestActions.Actions.insert(
+            latestActions.Actions.end(),
+            curActions.begin(),
+            curActions.end());
+    }
     handleMouseMovement(aRegistry, aDeltaTime);
 }
 
