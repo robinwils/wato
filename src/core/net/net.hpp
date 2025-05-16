@@ -62,7 +62,7 @@ enum class PacketType {
 template <typename _Payload>
 struct NetworkEvent {
     PacketType Type;
-    PlayerID   PlayerID;
+    ::PlayerID PlayerID;
     _Payload   Payload;
 };
 
