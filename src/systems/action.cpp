@@ -198,7 +198,7 @@ void ActionSystem<Derived>::handleAction(
     const Action& aAction,
     const float   aDeltaTime)
 {
-    spdlog::info("handlig {}", aAction);
+    spdlog::info("handling {}", aAction);
     auto&       contextStack = aRegistry.ctx().get<ActionContextStack&>();
     const auto& currentCtx   = contextStack.front();
 
@@ -234,13 +234,15 @@ void ActionSystem<Derived>::processActions(
         spdlog::info("processing {} actions", latestActions.Actions.size());
     }
     for (const Action& action : latestActions.Actions) {
-        if (action.Tag != aFilterTag) {
+        if (action.Tag != aFilterTag || action.IsProcessed) {
             continue;
         }
         handleAction(aRegistry, action, aDeltaTime);
     }
 
-    // TODO: mark action as processed, otherwise the real time loop will re execute it
+    for (Action& action : latestActions.Actions) {
+        action.IsProcessed = true;
+    }
 }
 
 template <typename Derived>

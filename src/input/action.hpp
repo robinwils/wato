@@ -98,6 +98,7 @@ struct Action {
     ActionType   Type;
     ActionTag    Tag;
     payload_type Payload;
+    bool         IsProcessed;
 
     constexpr static auto Serialize(auto& aArchive, const auto& aSelf)
     {
