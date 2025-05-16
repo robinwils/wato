@@ -33,7 +33,6 @@ void Application::StartGameInstance(Registry& aRegistry, const GameInstanceID aG
     // TODO: leak ?
     physics.World()->setEventListener(new EventHandler(&aRegistry));
     SpawnMap(aRegistry, 20, 20);
-    spdlog::info("spawned game instance");
 }
 
 void Application::AdvanceSimulation(Registry& aRegistry, const float aDeltaTime)

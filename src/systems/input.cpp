@@ -23,7 +23,7 @@ void InputSystem::operator()(Registry& aRegistry, const float aDeltaTime)
     const ActionBindings::actions_type& curActions = actionCtx.Bindings.ActionsFromInput(input);
 
     if (!curActions.empty()) {
-        spdlog::info("inserting latest {} actions: {}", curActions.size(), curActions);
+        spdlog::trace("inserting latest {} actions: {}", curActions.size(), curActions);
         latestActions.Actions.insert(
             latestActions.Actions.end(),
             curActions.begin(),

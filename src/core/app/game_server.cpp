@@ -1,7 +1,7 @@
 #include "core/app/game_server.hpp"
 
 #include <bx/bx.h>
-#include <spdlog/spdlog.h>
+#include <spdlog/fmt/bundled/ranges.h>
 
 #include <thread>
 
@@ -27,12 +27,12 @@ void GameServer::ConsumeNetworkRequests()
             VariantVisitor{
                 [&](const PlayerActions& aActions) {
                     if (!mGameInstances.contains(aActions.GameID)) {
-                        spdlog::info("got event for non existing game {}", aActions.GameID);
+                        spdlog::warn("got event for non existing game {}", aActions.GameID);
                         return;
                     }
                     Registry& registry = mGameInstances[aActions.GameID];
                     auto&     actions  = registry.ctx().get<ActionBuffer&>().Latest().Actions;
-                    spdlog::info("got {} actions", aActions.Actions.size());
+                    spdlog::debug("got {} actions: {}", aActions.Actions.size(), aActions.Actions);
                     actions.insert(actions.end(), aActions.Actions.begin(), aActions.Actions.end());
                 },
                 [&](const NewGameRequest& aNewGame) {

@@ -76,7 +76,7 @@ void DefaultContextHandler::operator()(Registry& aRegistry, const SendCreepPaylo
 
 void DefaultContextHandler::operator()(Registry& aRegistry, const PlacementModePayload& aPayload)
 {
-    spdlog::info("entering placement mode");
+    spdlog::trace("entering placement mode");
     auto& contextStack = aRegistry.ctx().get<ActionContextStack&>();
     auto& phy          = aRegistry.ctx().get<Physics&>();
 
@@ -198,7 +198,7 @@ void ActionSystem<Derived>::handleAction(
     const Action& aAction,
     const float   aDeltaTime)
 {
-    spdlog::info("handling {}", aAction);
+    spdlog::trace("handling {}", aAction);
     auto&       contextStack = aRegistry.ctx().get<ActionContextStack&>();
     const auto& currentCtx   = contextStack.front();
 
@@ -231,7 +231,7 @@ void ActionSystem<Derived>::processActions(
     PlayerActions latestActions = abuf.Latest();
 
     if (!latestActions.Actions.empty()) {
-        spdlog::info("processing {} actions", latestActions.Actions.size());
+        spdlog::trace("processing {} actions", latestActions.Actions.size());
     }
     for (const Action& action : latestActions.Actions) {
         if (action.Tag != aFilterTag || action.IsProcessed) {

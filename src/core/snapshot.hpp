@@ -75,22 +75,16 @@ class ByteOutputArchive
     ByteOutputArchive() = default;
     ByteOutputArchive(byte_stream& aOutStream) : mStorage(aOutStream) {}
 
-    void operator()(entt::entity aEntity)
-    {
-        spdlog::info("out entity {:d}", static_cast<ENTT_ID_TYPE>(aEntity));
-        Write<entt::entity>(&aEntity, 1);
-    }
+    void operator()(entt::entity aEntity) { Write<entt::entity>(&aEntity, 1); }
 
     void operator()(std::underlying_type_t<entt::entity> aEntity)
     {
-        spdlog::info("out underlying type entity {:d}", aEntity);
         Write<std::underlying_type_t<entt::entity>>(&aEntity, 1);
     }
 
     template <typename T>
     void operator()(const T& aObj)
     {
-        spdlog::info("got a component of size {:d}", sizeof(T));
         T::Serialize(*this, aObj);
     }
 
@@ -98,7 +92,6 @@ class ByteOutputArchive
     void Write(const In& aData, std::size_t aN)
     {
         auto* p = reinterpret_cast<const byte*>(aData);
-        // std::copy(p, p + aN, mStorage.end());
         mStorage.insert(mStorage.end(), p, p + aN * sizeof(T));
     }
 

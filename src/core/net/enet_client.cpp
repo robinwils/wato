@@ -2,6 +2,7 @@
 
 #include <bx/string.h>
 #include <enet.h>
+#include <spdlog/fmt/bundled/format.h>
 #include <spdlog/spdlog.h>
 
 #include <stdexcept>
@@ -98,7 +99,7 @@ void ENetClient::OnReceive(ENetEvent& aEvent)
             NewGameResponse::Deserialize(archive, resp);
             break;
         default:
-            spdlog::info("unknown packet type");
+            spdlog::error("unknown packet type {}", fmt::underlying(ev->Type));
             delete ev;
             return;
     }

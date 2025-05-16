@@ -76,9 +76,6 @@ class Physics
             const bool              gravity     = body->isGravityEnabled();
             const RigidBodyData*    data        = static_cast<RigidBodyData*>(body->getUserData());
 
-            spdlog::info(
-                "serializing rigid body for entity {:d}",
-                static_cast<ENTT_ID_TYPE>(data->Entity));
             aArchive.template Write<rp3d::BodyType>(&type, 1);
             aArchive.template Write<float>(&position.x, 3);
             aArchive.template Write<float>(&orientation.x, 4);

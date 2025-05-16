@@ -1,8 +1,8 @@
 #include "core/net/enet_base.hpp"
 
 #include <enet.h>
-#include <spdlog/spdlog.h>
 #include <sodium.h>
+#include <spdlog/spdlog.h>
 
 #include <stdexcept>
 
@@ -70,7 +70,7 @@ void ENetBase::Poll()
                 if (event.peer->data) {
                     peerData = std::string(reinterpret_cast<char*>(event.peer->data));
                 }
-                spdlog::info(
+                spdlog::debug(
                     "A packet of length {} was received from peer ID {} with data "
                     "{} on "
                     "channel {}.",
