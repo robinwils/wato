@@ -64,8 +64,6 @@ class ModelLoader final
         return std::make_shared<mesh_container>(meshes);
     }
 
-    const std::vector<std::string> kSearchPaths = {"asset/models", "asset/textures"};
-
    private:
     std::vector<entt::hashed_string>
     processMaterialTextures(const aiMaterial* aMaterial, aiTextureType aType, aiString* aPath);

@@ -15,10 +15,10 @@
 #include "bx/allocator.h"
 #include "bx/bx.h"
 #include "bx/file.h"
-#include "core/model_loader.hpp"
 #include "core/sys/log.hpp"
 #include "core/sys/mem.hpp"
 #include "renderer/material.hpp"
+#include "renderer/model_loader.hpp"
 #include "renderer/primitive.hpp"
 #include "renderer/shader.hpp"
 

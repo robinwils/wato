@@ -9,7 +9,7 @@
 #include "components/scene_object.hpp"
 #include "components/tile.hpp"
 #include "components/transform3d.hpp"
-#include "core/cache.hpp"
+#include "renderer/cache.hpp"
 #include "core/physics.hpp"
 #include "registry/registry.hpp"
 #include "renderer/blinn_phong_material.hpp"
