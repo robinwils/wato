@@ -39,11 +39,12 @@ struct TextureLoader final {
     using result_type = std::shared_ptr<bgfx::TextureHandle>;
 
     template <typename... Args>
-    result_type operator()(const char* aName,
-        uint64_t                       aFlags       = BGFX_TEXTURE_NONE | BGFX_SAMPLER_NONE,
-        uint8_t                        aSkip        = 0,
-        bgfx::TextureInfo*             aInfo        = nullptr,
-        bimg::Orientation::Enum*       aOrientation = nullptr)
+    result_type operator()(
+        const char*              aName,
+        uint64_t                 aFlags       = BGFX_TEXTURE_NONE | BGFX_SAMPLER_NONE,
+        uint8_t                  aSkip        = 0,
+        bgfx::TextureInfo*       aInfo        = nullptr,
+        bimg::Orientation::Enum* aOrientation = nullptr)
     {
         BX_UNUSED(aSkip);
         bgfx::TextureHandle handle = BGFX_INVALID_HANDLE;
@@ -58,33 +59,38 @@ struct TextureLoader final {
                     *aOrientation = imageContainer->m_orientation;
                 }
 
-                const bgfx::Memory* mem = bgfx::makeRef(imageContainer->m_data,
+                const bgfx::Memory* mem = bgfx::makeRef(
+                    imageContainer->m_data,
                     imageContainer->m_size,
                     imageReleaseCb,
                     imageContainer);
                 bx::free(&mallocator, data);
 
                 if (imageContainer->m_cubeMap) {
-                    handle = bgfx::createTextureCube(uint16_t(imageContainer->m_width),
+                    handle = bgfx::createTextureCube(
+                        uint16_t(imageContainer->m_width),
                         1 < imageContainer->m_numMips,
                         imageContainer->m_numLayers,
                         bgfx::TextureFormat::Enum(imageContainer->m_format),
                         aFlags,
                         mem);
                 } else if (1 < imageContainer->m_depth) {
-                    handle = bgfx::createTexture3D(uint16_t(imageContainer->m_width),
+                    handle = bgfx::createTexture3D(
+                        uint16_t(imageContainer->m_width),
                         uint16_t(imageContainer->m_height),
                         uint16_t(imageContainer->m_depth),
                         1 < imageContainer->m_numMips,
                         bgfx::TextureFormat::Enum(imageContainer->m_format),
                         aFlags,
                         mem);
-                } else if (bgfx::isTextureValid(0,
+                } else if (bgfx::isTextureValid(
+                               0,
                                false,
                                imageContainer->m_numLayers,
                                bgfx::TextureFormat::Enum(imageContainer->m_format),
                                aFlags)) {
-                    handle = bgfx::createTexture2D(uint16_t(imageContainer->m_width),
+                    handle = bgfx::createTexture2D(
+                        uint16_t(imageContainer->m_width),
                         uint16_t(imageContainer->m_height),
                         1 < imageContainer->m_numMips,
                         imageContainer->m_numLayers,
@@ -99,7 +105,8 @@ struct TextureLoader final {
                 }
 
                 if (nullptr != aInfo) {
-                    bgfx::calcTextureSize(*aInfo,
+                    bgfx::calcTextureSize(
+                        *aInfo,
                         uint16_t(imageContainer->m_width),
                         uint16_t(imageContainer->m_height),
                         uint16_t(imageContainer->m_depth),
@@ -123,7 +130,8 @@ struct ProgramLoader final {
     using result_type = std::shared_ptr<Shader>;
 
     template <typename... Args>
-    result_type operator()(const char*                                  aVsName,
+    result_type operator()(
+        const char*                                                     aVsName,
         const char*                                                     aFsName,
         const std::unordered_map<std::string, bgfx::UniformType::Enum>& aUniforms)
     {
