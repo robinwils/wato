@@ -17,6 +17,7 @@
 #include "bx/file.h"
 #include "core/sys/log.hpp"
 #include "core/sys/mem.hpp"
+#include "renderer/asset.hpp"
 #include "renderer/material.hpp"
 #include "renderer/model_loader.hpp"
 #include "renderer/primitive.hpp"
@@ -49,8 +50,13 @@ struct TextureLoader final {
         BX_UNUSED(aSkip);
         bgfx::TextureHandle handle = BGFX_INVALID_HANDLE;
 
-        uint32_t size = 0;
-        void*    data = load(&mfr, &mallocator, aName, &size);
+        uint32_t    size      = 0;
+        std::string assetPath = FindAsset(aName);
+        if (assetPath == "") {
+            throw std::runtime_error(fmt::format("cannot find asset {}", aName));
+        }
+
+        void* data = load(&mfr, &mallocator, assetPath.c_str(), &size);
         if (nullptr != data) {
             bimg::ImageContainer* imageContainer = bimg::imageParse(&mallocator, data, size);
 
@@ -100,8 +106,8 @@ struct TextureLoader final {
                 }
 
                 if (bgfx::isValid(handle)) {
-                    DBG("Loaded texture {}", aName);
-                    bgfx::setName(handle, aName);
+                    DBG("Loaded texture {}", assetPath);
+                    bgfx::setName(handle, assetPath.c_str());
                 }
 
                 if (nullptr != aInfo) {

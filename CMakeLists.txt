@@ -314,6 +314,7 @@ target_sources(wato
     src/input/action.hpp
     src/input/input.hpp
     src/registry/game_registry.hpp
+    src/renderer/asset.hpp
     src/renderer/bgfx_utils.hpp
     src/renderer/blinn_phong_material.hpp
     src/renderer/cache.hpp
@@ -342,6 +343,7 @@ target_sources(wato
     src/input/input.cpp
     src/main.cpp
     src/registry/game_registry.cpp
+    src/renderer/asset.cpp
     src/renderer/bgfx_utils.cpp
     src/renderer/material.cpp
     src/renderer/model_loader.cpp
