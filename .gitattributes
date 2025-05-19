@@ -2,7 +2,7 @@
 *.fbx filter=lfs diff=lfs merge=lfs -text
 *.obj filter=lfs diff=lfs merge=lfs -text
 *.jpg filter=lfs diff=lfs merge=lfs -text
-
 * linguist-vendored
 src/**/*.cpp linguist-vendored=false
 src/**/*.hpp linguist-vendored=false
+*.tga filter=lfs diff=lfs merge=lfs -text
