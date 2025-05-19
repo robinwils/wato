@@ -2,7 +2,6 @@
 #include <assimp/postprocess.h>  // Post processing flags
 #include <assimp/scene.h>        // Output data structure
 
-#include <entt/core/hashed_string.hpp>
 #include <glm/gtx/string_cast.hpp>
 #include <stdexcept>
 #include <vector>
@@ -16,15 +15,18 @@
 
 using namespace entt::literals;
 
-std::vector<entt::hashed_string>
-processMaterialTextures(const aiMaterial* aMaterial, aiTextureType aType, aiString* aPath)
+std::vector<entt::hashed_string> ModelLoader::processMaterialTextures(
+    const aiMaterial* aMaterial,
+    aiTextureType     aType,
+    aiString*         aPath)
 {
     std::vector<entt::hashed_string> textures;
     for (unsigned int i = 0; i < aMaterial->GetTextureCount(aType); ++i) {
-        auto res = aMaterial->GetTexture(aType, i, aPath);
+        aiReturn res = aMaterial->GetTexture(aType, i, aPath);
         if (AI_SUCCESS != res) {
             throw std::runtime_error("could not get texture");
         }
+
         auto hs          = entt::hashed_string{aPath->C_Str()};
         auto [_, loaded] = WATO_TEXTURE_CACHE.load(hs, aPath->C_Str());
         if (!loaded) {
@@ -42,7 +44,7 @@ processMaterialTextures(const aiMaterial* aMaterial, aiTextureType aType, aiStri
     return textures;
 }
 
-Primitive<PositionNormalUvVertex>* processMesh(const aiMesh* aMesh, const aiScene* aScene)
+ModelLoader::mesh_type* ModelLoader::processMesh(const aiMesh* aMesh, const aiScene* aScene)
 {
     std::vector<PositionNormalUvVertex> vertices;
     for (unsigned int i = 0; i < aMesh->mNumVertices; ++i) {
@@ -112,7 +114,7 @@ Primitive<PositionNormalUvVertex>* processMesh(const aiMesh* aMesh, const aiScen
     return mp;
 }
 
-void processMetaData(const aiNode* aNode, const aiScene* /*aScene*/)
+void ModelLoader::processMetaData(const aiNode* aNode, const aiScene* /*aScene*/)
 {
     if (!aNode->mMetaData) {
         DBG("node {} metadata is null", aNode->mName);
@@ -165,9 +167,7 @@ void processMetaData(const aiNode* aNode, const aiScene* /*aScene*/)
     }
 }
 
-std::vector<Primitive<PositionNormalUvVertex>*> processNode(
-    const aiNode*  aNode,
-    const aiScene* aScene)
+ModelLoader::mesh_container ModelLoader::processNode(const aiNode* aNode, const aiScene* aScene)
 {
     auto t         = aNode->mTransformation;
     auto transform = glm::identity<glm::mat4>();
@@ -195,14 +195,14 @@ std::vector<Primitive<PositionNormalUvVertex>*> processNode(
     }
 
     processMetaData(aNode, aScene);
-    std::vector<Primitive<PositionNormalUvVertex>*> meshes;
+    mesh_container meshes;
     for (unsigned int i = 0; i < aNode->mNumMeshes; ++i) {
         auto* mesh = processMesh(aScene->mMeshes[aNode->mMeshes[i]], aScene);
         meshes.push_back(mesh);
     }
     for (unsigned int i = 0; i < aNode->mNumChildren; i++) {
-        auto child_meshes = processNode(aNode->mChildren[i], aScene);
-        meshes.insert(meshes.end(), child_meshes.begin(), child_meshes.end());
+        auto childMeshes = processNode(aNode->mChildren[i], aScene);
+        meshes.insert(meshes.end(), childMeshes.begin(), childMeshes.end());
     }
     return meshes;
 }
