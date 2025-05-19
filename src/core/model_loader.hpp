@@ -4,6 +4,7 @@
 #include <assimp/scene.h>        // Output data structure
 
 #include <assimp/Importer.hpp>  // C++ importer interface
+#include <entt/core/hashed_string.hpp>
 
 #include "core/sys/log.hpp"
 #include "renderer/primitive.hpp"
@@ -16,12 +17,12 @@ struct fmt::formatter<aiString> : fmt::formatter<std::string> {
     }
 };
 
-std::vector<Primitive<PositionNormalUvVertex>*> processNode(
-    const aiNode*  aNode,
-    const aiScene* aScene);
-
-struct ModelLoader final {
-    using result_type = std::shared_ptr<std::vector<Primitive<PositionNormalUvVertex>*>>;
+class ModelLoader final
+{
+   public:
+    using mesh_type      = Primitive<PositionNormalUvVertex>;
+    using mesh_container = std::vector<mesh_type*>;
+    using result_type    = std::shared_ptr<mesh_container>;
 
     template <typename... Args>
     result_type operator()(const char* aName, unsigned int aPostProcessFlags)
@@ -43,7 +44,7 @@ struct ModelLoader final {
         if (nullptr == scene) {
             // TODO: handle error
             DBG("could not load {}", aName);
-            return std::make_shared<std::vector<Primitive<PositionNormalUvVertex>*>>();
+            return std::make_shared<mesh_container>();
         }
         DBG("scene {} has:", scene->mName);
         DBG("  {} meshes", scene->mNumMeshes);
@@ -53,13 +54,23 @@ struct ModelLoader final {
 
         auto meshes = processNode(scene->mRootNode, scene);
 
-        return std::make_shared<std::vector<Primitive<PositionNormalUvVertex>*>>(meshes);
+        return std::make_shared<mesh_container>(meshes);
     }
 
     template <typename... Args>
-    result_type operator()(Primitive<PositionNormalUvVertex>* aPrimitive)
+    result_type operator()(mesh_type* aPrimitive)
     {
         auto meshes = std::vector({aPrimitive});
-        return std::make_shared<std::vector<Primitive<PositionNormalUvVertex>*>>(meshes);
+        return std::make_shared<mesh_container>(meshes);
     }
+
+    const std::vector<std::string> kSearchPaths = {"asset/models", "asset/textures"};
+
+   private:
+    std::vector<entt::hashed_string>
+    processMaterialTextures(const aiMaterial* aMaterial, aiTextureType aType, aiString* aPath);
+
+    mesh_container processNode(const aiNode* aNode, const aiScene* aScene);
+    mesh_type*     processMesh(const aiMesh* aMesh, const aiScene* aScene);
+    void           processMetaData(const aiNode* aNode, const aiScene* /*aScene*/);
 };
