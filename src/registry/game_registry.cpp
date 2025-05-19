@@ -84,4 +84,8 @@ void LoadModels()
         "assets/models/tower.fbx",
         aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_PreTransformVertices
             | aiProcess_GlobalScale);
+    WATO_MODEL_CACHE.load(
+        "phoenix"_hs,
+        "assets/models/phoenix.fbx",
+        aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_GlobalScale | aiProcess_FlipUVs);
 }

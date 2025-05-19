@@ -5,8 +5,10 @@
 
 #include <assimp/Importer.hpp>  // C++ importer interface
 #include <entt/core/hashed_string.hpp>
+#include <stdexcept>
 
 #include "core/sys/log.hpp"
+#include "renderer/asset.hpp"
 #include "renderer/primitive.hpp"
 
 template <>
@@ -38,12 +40,17 @@ class ModelLoader final
         //     aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs |
         //     aiProcess_JoinIdenticalVertices);
 
-        const aiScene* scene = importer.ReadFile(aName, aPostProcessFlags);
+        std::string assetPath = FindAsset(aName);
+        if (assetPath == "") {
+            throw std::runtime_error(fmt::format("cannot find asset {}", aName));
+        }
+
+        const aiScene* scene = importer.ReadFile(assetPath, aPostProcessFlags);
 
         // If the import failed, report it
         if (nullptr == scene) {
             // TODO: handle error
-            DBG("could not load {}", aName);
+            DBG("could not load {}", assetPath);
             return std::make_shared<mesh_container>();
         }
         DBG("scene {} has:", scene->mName);
