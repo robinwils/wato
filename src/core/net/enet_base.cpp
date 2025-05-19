@@ -51,10 +51,7 @@ void ENetBase::Poll()
     while (enet_host_service(mHost.get(), &event, 5) > 0) {
         switch (event.type) {
             case ENET_EVENT_TYPE_CONNECT:
-                INFO(
-                    "A new client connected from %x:%u.\n",
-                    event.peer->address.host,
-                    event.peer->address.port);
+                spdlog::info("A new client connected from {}.\n", event.peer->address);
                 /* Store any relevant client information here. */
                 OnConnect(event);
                 break;
@@ -86,14 +83,14 @@ void ENetBase::Poll()
             }
 
             case ENET_EVENT_TYPE_DISCONNECT:
-                INFO("%s disconnected.\n", (char*)event.peer->data);
+                spdlog::info("{} disconnected.\n", (char*)event.peer->data);
                 OnDisconnect(event);
                 /* Reset the peer's client information. */
                 event.peer->data = NULL;
                 break;
 
             case ENET_EVENT_TYPE_DISCONNECT_TIMEOUT:
-                INFO("%s disconnected due to timeout.\n", (char*)event.peer->data);
+                spdlog::info("{} disconnected due to timeout.\n", (char*)event.peer->data);
                 /* Reset the peer's client information. */
                 OnDisconnectTimeout(event);
                 event.peer->data = NULL;

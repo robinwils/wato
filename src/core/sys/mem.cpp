@@ -13,7 +13,7 @@ const bgfx::Memory* loadMem(bx::FileReaderI* aReader, const char* aFilePath)
         return mem;
     }
 
-    DBG("Failed to load %s.", aFilePath);
+    DBG("Failed to load {}.", aFilePath);
     return NULL;
 }
 
@@ -33,7 +33,7 @@ void* load(
         }
         return data;
     } else {
-        DBG("Failed to open: %s.", aFilePath);
+        DBG("Failed to open: {}.", aFilePath);
     }
 
     if (NULL != aSize) {

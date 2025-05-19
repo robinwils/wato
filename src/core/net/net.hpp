@@ -1,5 +1,6 @@
 #pragma once
 
+#define ENET_FEATURE_ADDRESS_MAPPING
 #include <enet.h>
 
 #include <memory>
@@ -68,3 +69,17 @@ struct NetworkEvent {
 
 template struct NetworkEvent<NetworkRequestPayload>;
 template struct NetworkEvent<NetworkResponsePayload>;
+
+template <>
+struct fmt::formatter<ENetAddress> : fmt::formatter<std::string> {
+    auto format(ENetAddress aObj, format_context& aCtx) const -> decltype(aCtx.out())
+    {
+        char host[INET6_ADDRSTRLEN] = {0};
+
+        if (enet_address_get_host(&aObj, host, INET6_ADDRSTRLEN) != 0) {
+            return fmt::format_to(aCtx.out(), "(null):{}", aObj.port);
+        } else {
+            return fmt::format_to(aCtx.out(), "{}:{}", host, aObj.port);
+        }
+    }
+};

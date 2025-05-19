@@ -1,7 +1,6 @@
 #include "core/app/game_client.hpp"
 
 #include <bx/bx.h>
-#include <spdlog/spdlog.h>
 
 #include <chrono>
 #include <taskflow/taskflow.hpp>
@@ -12,7 +11,6 @@
 #include "components/tile.hpp"
 #include "core/net/enet_client.hpp"
 #include "core/net/net.hpp"
-#include "core/sys/log.hpp"
 #include "core/window.hpp"
 #include "registry/game_registry.hpp"
 #include "registry/registry.hpp"
@@ -50,7 +48,7 @@ void GameClient::Init()
     mSystemsFT.push_back(NetworkSyncSystem::MakeDelegate(mNetworkSyncSystem));
 
     auto graph = organizerFixedTime.graph();
-    INFO("graph size: %ld", graph.size());
+    spdlog::info("graph size: {}", graph.size());
     // TODO: use these tasks
     std::unordered_map<std::string, tf::Task> tasks;
 
