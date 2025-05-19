@@ -11,7 +11,7 @@
 
 #include "components/imgui.hpp"
 #include "components/scene_object.hpp"
-#include "core/cache.hpp"
+#include "renderer/cache.hpp"
 #include "core/physics.hpp"
 #include "core/window.hpp"
 #include "imgui_helper.h"

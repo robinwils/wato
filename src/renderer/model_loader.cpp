@@ -6,10 +6,10 @@
 #include <stdexcept>
 #include <vector>
 
-#include "core/cache.hpp"
 #include "core/sys/mem.hpp"
 #include "glm/ext/matrix_transform.hpp"
 #include "renderer/blinn_phong_material.hpp"
+#include "renderer/cache.hpp"
 #include "renderer/mesh_primitive.hpp"
 #include "renderer/primitive.hpp"
 

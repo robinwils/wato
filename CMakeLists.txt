@@ -308,8 +308,6 @@ target_sources(wato
   BASE_DIRS src
   FILES
     src/core/app/game_client.hpp
-    src/core/cache.hpp
-    src/core/model_loader.hpp
     src/core/net/enet_client.hpp
     src/core/tile.hpp
     src/core/window.hpp
@@ -318,8 +316,10 @@ target_sources(wato
     src/registry/game_registry.hpp
     src/renderer/bgfx_utils.hpp
     src/renderer/blinn_phong_material.hpp
+    src/renderer/cache.hpp
     src/renderer/material.hpp
     src/renderer/mesh_primitive.hpp
+    src/renderer/model_loader.hpp
     src/renderer/plane_primitive.hpp
     src/renderer/primitive.hpp
     src/renderer/renderer.hpp
@@ -334,7 +334,6 @@ target_sources(wato
     deps/imgui/imgui_tables.cpp
     deps/imgui/imgui_widgets.cpp
     src/core/app/game_client.cpp
-    src/core/model_loader.cpp
     src/core/net/enet_client.cpp
     src/core/sys/mem.cpp
     src/core/window.cpp
@@ -345,6 +344,7 @@ target_sources(wato
     src/registry/game_registry.cpp
     src/renderer/bgfx_utils.cpp
     src/renderer/material.cpp
+    src/renderer/model_loader.cpp
     src/renderer/renderer.cpp
     src/systems/action.cpp
     src/systems/input.cpp
