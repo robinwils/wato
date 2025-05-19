@@ -126,7 +126,7 @@ class Primitive
     virtual void destroyPrimitive()
     {
         if (mIsInitialized) {
-            DBG("destroying vertex buffer %d and index buffer %d",
+            DBG("destroying vertex buffer {} and index buffer {}",
                 mVertexBufferHandle.idx,
                 mIndexBufferHandle.idx);
             bgfx::destroy(mVertexBufferHandle);

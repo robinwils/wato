@@ -94,7 +94,7 @@ struct TextureLoader final {
                 }
 
                 if (bgfx::isValid(handle)) {
-                    DBG("Loaded texture %s", aName);
+                    DBG("Loaded texture {}", aName);
                     bgfx::setName(handle, aName);
                 }
 
@@ -131,7 +131,7 @@ struct ProgramLoader final {
 
         auto uniformHandles = std::unordered_map<std::string, bgfx::UniformHandle>();
         for (auto&& [name, type] : aUniforms) {
-            DBG("creating uniform '%s'", name.c_str());
+            DBG("creating uniform '{}'", name);
             uniformHandles[name] = bgfx::createUniform(name.c_str(), type);
         }
 

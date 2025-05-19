@@ -81,7 +81,7 @@ Primitive<PositionNormalUvVertex>* processMesh(const aiMesh* aMesh, const aiScen
             processMaterialTextures(material, aiTextureType_SPECULAR, &specularPath);
 
         if (textures.size() > 0 || specTextures.size() > 0) {
-            DBG("mesh %s has %d material textures", aMesh->mName.C_Str(), textures.size());
+            DBG("mesh {} has {} material textures", aMesh->mName, textures.size());
             textures.reserve(textures.size() + specTextures.size());
             textures.insert(textures.end(), specTextures.begin(), specTextures.end());
             throw std::runtime_error("not implemented");
@@ -89,14 +89,14 @@ Primitive<PositionNormalUvVertex>* processMesh(const aiMesh* aMesh, const aiScen
             // no material textures, get material info via properties
             aiColor3D diffuse;
             if (material->Get(AI_MATKEY_COLOR_DIFFUSE, diffuse) != AI_SUCCESS) {
-                DBG("failed to get diffuse color for mesh %s", aMesh->mName.C_Str());
+                DBG("failed to get diffuse color for mesh {}", aMesh->mName);
             }
             aiColor3D specular;
             if (material->Get(AI_MATKEY_COLOR_SPECULAR, specular) != AI_SUCCESS) {
-                DBG("failed to get specular color for mesh %s", aMesh->mName.C_Str());
+                DBG("failed to get specular color for mesh {}", aMesh->mName);
             }
 
-            DBG("creating mesh with %d vertices and %d indices", vertices.size(), indices.size());
+            DBG("creating mesh with {} vertices and {} indices", vertices.size(), indices.size());
             auto  program = WATO_PROGRAM_CACHE["blinnphong"_hs];
             auto* m       = new BlinnPhongMaterial(
                 program,
@@ -106,7 +106,7 @@ Primitive<PositionNormalUvVertex>* processMesh(const aiMesh* aMesh, const aiScen
             mp = new MeshPrimitive(std::move(vertices), std::move(indices), m);
         }
     } else {
-        DBG("no material in mesh %s", aMesh->mName.C_Str());
+        DBG("no material in mesh {}", aMesh->mName);
         throw std::runtime_error("no material in mesh");
     }
     return mp;
@@ -115,10 +115,10 @@ Primitive<PositionNormalUvVertex>* processMesh(const aiMesh* aMesh, const aiScen
 void processMetaData(const aiNode* aNode, const aiScene* /*aScene*/)
 {
     if (!aNode->mMetaData) {
-        DBG("node %s metadata is null", aNode->mName.C_Str());
+        DBG("node {} metadata is null", aNode->mName);
         return;
     }
-    DBG("node %s has %d metadata", aNode->mName.C_Str(), aNode->mMetaData->mNumProperties);
+    DBG("node {} has {} metadata", aNode->mName, aNode->mMetaData->mNumProperties);
     auto* mdata = aNode->mMetaData;
     for (unsigned int propIdx = 0; propIdx < mdata->mNumProperties; ++propIdx) {
         auto& key = mdata->mKeys[propIdx];
@@ -126,40 +126,40 @@ void processMetaData(const aiNode* aNode, const aiScene* /*aScene*/)
 
         switch (val.mType) {
             case AI_BOOL:
-                DBG("%s: bool", key.C_Str());
+                DBG("{}: bool", key);
                 break;
             case AI_INT32:
-                DBG("%s: int32", key.C_Str());
+                DBG("{}: int32", key);
                 break;
             case AI_UINT64:
-                DBG("%s: uint64", key.C_Str());
+                DBG("{}: uint64", key);
                 break;
             case AI_FLOAT:
-                DBG("%s: float", key.C_Str());
+                DBG("{}: float", key);
                 break;
             case AI_DOUBLE:
-                DBG("%s: double", key.C_Str());
+                DBG("{}: double", key);
                 break;
             case AI_AISTRING:
-                DBG("%s: aistring", key.C_Str());
+                DBG("{}: aistring", key);
                 break;
             case AI_AIVECTOR3D:
-                DBG("%s: vector3", key.C_Str());
+                DBG("{}: vector3", key);
                 break;
             case AI_AIMETADATA:
-                DBG("%s: mdata", key.C_Str());
+                DBG("{}: mdata", key);
                 break;
             case AI_INT64:
-                DBG("%s: int64", key.C_Str());
+                DBG("{}: int64", key);
                 break;
             case AI_UINT32:
-                DBG("%s: uint32", key.C_Str());
+                DBG("{}: uint32", key);
                 break;
             case AI_META_MAX:
-                DBG("%s: meta max", key.C_Str());
+                DBG("{}: meta max", key);
                 break;
             case FORCE_32BIT:
-                DBG("%s: force 32bit", key.C_Str());
+                DBG("{}: force 32bit", key);
                 break;
         }
     }
@@ -189,11 +189,9 @@ std::vector<Primitive<PositionNormalUvVertex>*> processNode(
             t.d2,
             t.d3,
             t.d4);
-        DBG("node %s has transformation %s",
-            aNode->mName.C_Str(),
-            glm::to_string(transform).c_str());
+        DBG("node {} has transformation {}", aNode->mName, glm::to_string(transform));
     } else {
-        DBG("node %s has identity transform", aNode->mName.C_Str());
+        DBG("node {} has identity transform", aNode->mName);
     }
 
     processMetaData(aNode, aScene);
