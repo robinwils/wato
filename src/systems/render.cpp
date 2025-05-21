@@ -11,10 +11,10 @@
 
 #include "components/imgui.hpp"
 #include "components/scene_object.hpp"
-#include "renderer/cache.hpp"
 #include "core/physics.hpp"
 #include "core/window.hpp"
 #include "imgui_helper.h"
+#include "renderer/cache.hpp"
 
 void RenderSystem::operator()(Registry& aRegistry, const float aDeltaTime)
 {
@@ -37,25 +37,32 @@ void RenderSystem::operator()(Registry& aRegistry, const float aDeltaTime)
     auto check = aRegistry.view<const PlacementMode>();
 
     for (auto&& [entity, obj, t] : aRegistry.view<SceneObject, Transform3D>().each()) {
+        if (check.contains(entity)) {
+            // DBG("GOT Placement mode entity!")
+        }
+
         auto model  = glm::identity<glm::mat4>();
         model       = glm::translate(model, t.Position);
         model      *= glm::mat4_cast(t.Orientation);
         model       = glm::scale(model, t.Scale);
-
-        if (check.contains(entity)) {
-            // DBG("GOT Placement mode entity!")
-        }
 
         if (auto primitives = WATO_MODEL_CACHE[obj.ModelHash]; primitives) {
             for (const auto* p : *primitives) {
                 // Set model matrix for rendering.
                 bgfx::setTransform(glm::value_ptr(model));
 
-                // kinda awkward place to put that...
-                // obj.material.drawImgui();
+                // Set render states.
+                bgfx::setState(state);
+                p->Submit();
+            }
+        } else if (auto primitives = WATO_PRIMITIVE_CACHE[obj.ModelHash]; primitives) {
+            for (const auto* p : *primitives) {
+                // Set model matrix for rendering.
+                bgfx::setTransform(glm::value_ptr(model));
 
                 // Set render states.
                 bgfx::setState(state);
+                // Set render states.
                 p->Submit();
             }
         }

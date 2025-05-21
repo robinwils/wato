@@ -25,9 +25,10 @@
 
 using namespace entt::literals;
 
-#define WATO_TEXTURE_CACHE (ResourceCache::Instance().TextureCache)
-#define WATO_PROGRAM_CACHE (ResourceCache::Instance().ShaderCache)
-#define WATO_MODEL_CACHE   (ResourceCache::Instance().ModelCache)
+#define WATO_TEXTURE_CACHE   (ResourceCache::Instance().TextureCache)
+#define WATO_PROGRAM_CACHE   (ResourceCache::Instance().ShaderCache)
+#define WATO_MODEL_CACHE     (ResourceCache::Instance().ModelCache)
+#define WATO_PRIMITIVE_CACHE (ResourceCache::Instance().PrimitiveCache)
 
 inline static void imageReleaseCb(void* aPtr, void* aUserData)
 {
@@ -39,7 +40,6 @@ inline static void imageReleaseCb(void* aPtr, void* aUserData)
 struct TextureLoader final {
     using result_type = std::shared_ptr<bgfx::TextureHandle>;
 
-    template <typename... Args>
     result_type operator()(
         const char*              aName,
         uint64_t                 aFlags       = BGFX_TEXTURE_NONE | BGFX_SAMPLER_NONE,
@@ -135,7 +135,6 @@ struct TextureLoader final {
 struct ProgramLoader final {
     using result_type = std::shared_ptr<Shader>;
 
-    template <typename... Args>
     result_type operator()(
         const char*                                                     aVsName,
         const char*                                                     aFsName,
@@ -156,9 +155,10 @@ struct ProgramLoader final {
     bx::FileReader mfr;
 };
 
-using TexCache = entt::resource_cache<bgfx::TextureHandle, TextureLoader>;
-using ShCache  = entt::resource_cache<Shader, ProgramLoader>;
-using MCache   = entt::resource_cache<ModelLoader::mesh_container, ModelLoader>;
+using TexCache       = entt::resource_cache<bgfx::TextureHandle, TextureLoader>;
+using ShCache        = entt::resource_cache<Shader, ProgramLoader>;
+using ModelCache     = entt::resource_cache<ModelLoader::mesh_container, ModelLoader>;
+using PrimitiveCache = entt::resource_cache<PrimitiveLoader::mesh_container, PrimitiveLoader>;
 
 struct ResourceCache {
     static ResourceCache& Instance()
@@ -171,9 +171,10 @@ struct ResourceCache {
     ResourceCache(ResourceCache const&)  = delete;
     void operator=(ResourceCache const&) = delete;
 
-    TexCache TextureCache;
-    ShCache  ShaderCache;
-    MCache   ModelCache;
+    TexCache         TextureCache;
+    ShCache          ShaderCache;
+    ::ModelCache     ModelCache;
+    ::PrimitiveCache PrimitiveCache;
 
    private:
     ResourceCache() {};

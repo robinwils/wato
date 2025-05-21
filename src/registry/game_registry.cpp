@@ -9,10 +9,10 @@
 #include "components/scene_object.hpp"
 #include "components/tile.hpp"
 #include "components/transform3d.hpp"
-#include "renderer/cache.hpp"
 #include "core/physics.hpp"
 #include "registry/registry.hpp"
 #include "renderer/blinn_phong_material.hpp"
+#include "renderer/cache.hpp"
 #include "renderer/plane_primitive.hpp"
 
 void LoadResources(Registry& aRegistry)
@@ -65,7 +65,7 @@ void LoadTextures(Registry& aRegistry, uint32_t aWidth, uint32_t aHeight)
         throw std::runtime_error("could not load grass/specular texture, invalid handle");
     }
 
-    WATO_MODEL_CACHE.load(
+    WATO_PRIMITIVE_CACHE.load(
         "grass_tile"_hs,
         new PlanePrimitive(new BlinnPhongMaterial(shader, diffuse, specular)));
 }
