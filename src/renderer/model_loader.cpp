@@ -1,8 +1,10 @@
 #include <assimp/material.h>
 #include <assimp/postprocess.h>  // Post processing flags
 #include <assimp/scene.h>        // Output data structure
+#include <bx/bx.h>
 
 #include <glm/gtx/string_cast.hpp>
+#include <span>
 #include <stdexcept>
 #include <vector>
 
@@ -10,8 +12,6 @@
 #include "glm/ext/matrix_transform.hpp"
 #include "renderer/blinn_phong_material.hpp"
 #include "renderer/cache.hpp"
-#include "renderer/mesh_primitive.hpp"
-#include "renderer/primitive.hpp"
 
 using namespace entt::literals;
 
@@ -44,11 +44,51 @@ std::vector<entt::hashed_string> ModelLoader::processMaterialTextures(
     return textures;
 }
 
+void ModelLoader::processBones(
+    const aiMesh*               aMesh,
+    const aiScene*              aScene,
+    std::vector<vertex_layout>& aVertices)
+{
+    for (unsigned int boneIdx = 0; boneIdx < aMesh->mNumBones; ++boneIdx) {
+        const aiBone* bone = aMesh->mBones[boneIdx];
+        // const aiNode* node = aScene->mRootNode->FindNode(bone->mName);
+        TRACE("  bone {} with {} vertex weights", bone->mName, bone->mNumWeights);
+        if (bone->mNumWeights > 0) {
+            float totalW = 0.0f;
+            for (unsigned int wIdx = 0; wIdx < bone->mNumWeights; ++wIdx) {
+                const aiVertexWeight& vertexW = bone->mWeights[wIdx];
+
+                BX_ASSERT(
+                    vertexW.mVertexId < aVertices.size(),
+                    "vertex ID bigger than vertices parsed");
+
+                // setting bone influence inside vertex layout, with a maximum of 4 per vertex.
+                vertex_layout& vertex = aVertices[vertexW.mVertexId];
+                for (int i = 0; i < 4; ++i) {
+                    if (vertex.BoneWeights[i] < 0) {
+                        vertex.BoneIndices[i] = static_cast<uint16_t>(vertexW.mVertexId);
+                        vertex.BoneWeights[i] = vertexW.mWeight;
+                        break;
+                    }
+                }
+
+                // TRACE(
+                //     "    vertex weight {} with {} vertex weights",
+                //     vertexW.mVertexId,
+                //     vertexW.mWeight);
+
+                totalW += vertexW.mWeight;
+            }
+            TRACE("    total weight = {}", totalW);
+        }
+    }
+}
+
 ModelLoader::mesh_type* ModelLoader::processMesh(const aiMesh* aMesh, const aiScene* aScene)
 {
-    std::vector<PositionNormalUvVertex> vertices;
+    std::vector<vertex_layout> vertices;
     for (unsigned int i = 0; i < aMesh->mNumVertices; ++i) {
-        PositionNormalUvVertex vertex{};
+        vertex_layout vertex;
         vertex.Position.x = aMesh->mVertices[i].x;
         vertex.Position.y = aMesh->mVertices[i].y;
         vertex.Position.z = aMesh->mVertices[i].z;
@@ -72,7 +112,7 @@ ModelLoader::mesh_type* ModelLoader::processMesh(const aiMesh* aMesh, const aiSc
         }
     }
 
-    MeshPrimitive* mp = nullptr;
+    BlinnPhongMaterial* m = nullptr;
     if (aMesh->mMaterialIndex >= 0) {
         auto        diffusePath  = aiString("texture_diffuse");
         auto        specularPath = aiString("texture_specular");
@@ -81,46 +121,55 @@ ModelLoader::mesh_type* ModelLoader::processMesh(const aiMesh* aMesh, const aiSc
         auto textures = processMaterialTextures(material, aiTextureType_DIFFUSE, &diffusePath);
         auto specTextures =
             processMaterialTextures(material, aiTextureType_SPECULAR, &specularPath);
+        auto program = WATO_PROGRAM_CACHE["blinnphong"_hs];
 
+        TRACE(
+            "mesh {} has {} vertices, {} indices, {} bones, {} diffuse and {} specular textures",
+            aMesh->mName,
+            aMesh->mNumVertices,
+            aMesh->mNumFaces,
+            aMesh->mNumBones,
+            textures.size(),
+            specTextures.size());
         if (textures.size() > 0 || specTextures.size() > 0) {
-            DBG("mesh {} has {} material textures", aMesh->mName, textures.size());
-            textures.reserve(textures.size() + specTextures.size());
-            textures.insert(textures.end(), specTextures.begin(), specTextures.end());
-            throw std::runtime_error("not implemented");
+            m = new BlinnPhongMaterial(
+                program,
+                WATO_TEXTURE_CACHE[textures.front()],
+                WATO_TEXTURE_CACHE[specTextures.front()]);
         } else {
             // no material textures, get material info via properties
             aiColor3D diffuse;
             if (material->Get(AI_MATKEY_COLOR_DIFFUSE, diffuse) != AI_SUCCESS) {
-                DBG("failed to get diffuse color for mesh {}", aMesh->mName);
+                WARN("failed to get diffuse color for mesh {}", aMesh->mName);
             }
             aiColor3D specular;
             if (material->Get(AI_MATKEY_COLOR_SPECULAR, specular) != AI_SUCCESS) {
-                DBG("failed to get specular color for mesh {}", aMesh->mName);
+                WARN("failed to get specular color for mesh {}", aMesh->mName);
             }
 
-            DBG("creating mesh with {} vertices and {} indices", vertices.size(), indices.size());
-            auto  program = WATO_PROGRAM_CACHE["blinnphong"_hs];
-            auto* m       = new BlinnPhongMaterial(
+            m = new BlinnPhongMaterial(
                 program,
                 glm::vec3(diffuse.r, diffuse.g, diffuse.b),
                 glm::vec3(specular.r, specular.g, specular.b));
-
-            mp = new MeshPrimitive(std::move(vertices), std::move(indices), m);
         }
     } else {
-        DBG("no material in mesh {}", aMesh->mName);
         throw std::runtime_error("no material in mesh");
     }
-    return mp;
+
+    if (aMesh->HasBones()) {
+        processBones(aMesh, aScene, vertices);
+    }
+
+    return new MeshPrimitive(std::move(vertices), std::move(indices), m);
 }
 
 void ModelLoader::processMetaData(const aiNode* aNode, const aiScene* /*aScene*/)
 {
     if (!aNode->mMetaData) {
-        DBG("node {} metadata is null", aNode->mName);
+        TRACE("  node {} metadata is null", aNode->mName);
         return;
     }
-    DBG("node {} has {} metadata", aNode->mName, aNode->mMetaData->mNumProperties);
+    TRACE("  node {} has {} metadata", aNode->mName, aNode->mMetaData->mNumProperties);
     auto* mdata = aNode->mMetaData;
     for (unsigned int propIdx = 0; propIdx < mdata->mNumProperties; ++propIdx) {
         auto& key = mdata->mKeys[propIdx];
@@ -128,40 +177,40 @@ void ModelLoader::processMetaData(const aiNode* aNode, const aiScene* /*aScene*/
 
         switch (val.mType) {
             case AI_BOOL:
-                DBG("{}: bool", key);
+                TRACE("  {}: bool", key);
                 break;
             case AI_INT32:
-                DBG("{}: int32", key);
+                TRACE("  {}: int32", key);
                 break;
             case AI_UINT64:
-                DBG("{}: uint64", key);
+                TRACE("  {}: uint64", key);
                 break;
             case AI_FLOAT:
-                DBG("{}: float", key);
+                TRACE("  {}: float", key);
                 break;
             case AI_DOUBLE:
-                DBG("{}: double", key);
+                TRACE("  {}: double", key);
                 break;
             case AI_AISTRING:
-                DBG("{}: aistring", key);
+                TRACE("  {}: aistring", key);
                 break;
             case AI_AIVECTOR3D:
-                DBG("{}: vector3", key);
+                TRACE("  {}: vector3", key);
                 break;
             case AI_AIMETADATA:
-                DBG("{}: mdata", key);
+                TRACE("  {}: mdata", key);
                 break;
             case AI_INT64:
-                DBG("{}: int64", key);
+                TRACE("  {}: int64", key);
                 break;
             case AI_UINT32:
-                DBG("{}: uint32", key);
+                TRACE("  {}: uint32", key);
                 break;
             case AI_META_MAX:
-                DBG("{}: meta max", key);
+                TRACE("  {}: meta max", key);
                 break;
             case FORCE_32BIT:
-                DBG("{}: force 32bit", key);
+                TRACE("  {}: force 32bit", key);
                 break;
         }
     }
@@ -189,13 +238,14 @@ ModelLoader::mesh_container ModelLoader::processNode(const aiNode* aNode, const 
             t.d2,
             t.d3,
             t.d4);
-        DBG("node {} has transformation {}", aNode->mName, glm::to_string(transform));
+        TRACE("node {} has transformation {}", aNode->mName, glm::to_string(transform));
     } else {
-        DBG("node {} has identity transform", aNode->mName);
+        TRACE("node {} has identity transform", aNode->mName);
     }
 
     processMetaData(aNode, aScene);
     mesh_container meshes;
+    meshes.reserve(aNode->mNumMeshes);
     for (unsigned int i = 0; i < aNode->mNumMeshes; ++i) {
         auto* mesh = processMesh(aScene->mMeshes[aNode->mMeshes[i]], aScene);
         meshes.push_back(mesh);
@@ -205,4 +255,35 @@ ModelLoader::mesh_container ModelLoader::processNode(const aiNode* aNode, const 
         meshes.insert(meshes.end(), childMeshes.begin(), childMeshes.end());
     }
     return meshes;
+}
+
+void ModelLoader::processChannels(const aiAnimation* aAnimation)
+{
+    for (unsigned int i = 0; i < aAnimation->mNumChannels; ++i) {
+        const aiNodeAnim* nodeAnim = aAnimation->mChannels[i];
+        TRACE(
+            "  node anim {} with {} position keys, {} rotation keys, {} scaling keys",
+            nodeAnim->mNodeName,
+            nodeAnim->mNumPositionKeys,
+            nodeAnim->mNumRotationKeys,
+            nodeAnim->mNumRotationKeys);
+    }
+}
+
+void ModelLoader::processAnimations(const aiScene* aScene)
+{
+    for (unsigned int i = 0; i < aScene->mNumAnimations; ++i) {
+        const aiAnimation* animation = aScene->mAnimations[i];
+        TRACE(
+            "animation {} with duration {}, {} ticks/s",
+            animation->mName,
+            animation->mDuration,
+            animation->mTicksPerSecond);
+
+        std::string animName(animation->mName.C_Str());
+
+        if (animation->mNumChannels > 0) {
+            processChannels(animation);
+        }
+    }
 }

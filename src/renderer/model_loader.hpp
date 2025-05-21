@@ -9,6 +9,7 @@
 
 #include "core/sys/log.hpp"
 #include "renderer/asset.hpp"
+#include "renderer/mesh_primitive.hpp"
 #include "renderer/primitive.hpp"
 
 template <>
@@ -22,7 +23,8 @@ struct fmt::formatter<aiString> : fmt::formatter<std::string> {
 class ModelLoader final
 {
    public:
-    using mesh_type      = Primitive<PositionNormalUvVertex>;
+    using vertex_layout  = PositionNormalUvBoneVertex;
+    using mesh_type      = Primitive<vertex_layout>;
     using mesh_container = std::vector<mesh_type*>;
     using result_type    = std::shared_ptr<mesh_container>;
 
@@ -59,6 +61,9 @@ class ModelLoader final
         DBG("  {} animations", scene->mNumAnimations);
 
         auto meshes = processNode(scene->mRootNode, scene);
+        if (scene->HasAnimations()) {
+            processAnimations(scene);
+        }
 
         return std::make_shared<mesh_container>(meshes);
     }
@@ -70,6 +75,10 @@ class ModelLoader final
     mesh_container processNode(const aiNode* aNode, const aiScene* aScene);
     mesh_type*     processMesh(const aiMesh* aMesh, const aiScene* aScene);
     void           processMetaData(const aiNode* aNode, const aiScene* /*aScene*/);
+    void           processAnimations(const aiScene* aScene);
+    void           processChannels(const aiAnimation* aAnimation);
+    void
+    processBones(const aiMesh* aMesh, const aiScene* aScene, std::vector<vertex_layout>& aVertices);
 };
 
 class PrimitiveLoader final
