@@ -26,7 +26,6 @@ class ModelLoader final
     using mesh_container = std::vector<mesh_type*>;
     using result_type    = std::shared_ptr<mesh_container>;
 
-    template <typename... Args>
     result_type operator()(const char* aName, unsigned int aPostProcessFlags)
     {
         Assimp::Importer importer;
@@ -50,24 +49,17 @@ class ModelLoader final
         // If the import failed, report it
         if (nullptr == scene) {
             // TODO: handle error
-            DBG("could not load {}", assetPath);
+            DBG("could not load {}: {}", assetPath, importer.GetErrorString());
             return std::make_shared<mesh_container>();
         }
         DBG("scene {} has:", scene->mName);
         DBG("  {} meshes", scene->mNumMeshes);
-        DBG("  {} textures", scene->mNumTextures);
+        DBG("  {} embedded textures", scene->mNumTextures);
         DBG("  {} materials", scene->mNumMaterials);
         DBG("  {} animations", scene->mNumAnimations);
 
         auto meshes = processNode(scene->mRootNode, scene);
 
-        return std::make_shared<mesh_container>(meshes);
-    }
-
-    template <typename... Args>
-    result_type operator()(mesh_type* aPrimitive)
-    {
-        auto meshes = std::vector({aPrimitive});
         return std::make_shared<mesh_container>(meshes);
     }
 
@@ -78,4 +70,20 @@ class ModelLoader final
     mesh_container processNode(const aiNode* aNode, const aiScene* aScene);
     mesh_type*     processMesh(const aiMesh* aMesh, const aiScene* aScene);
     void           processMetaData(const aiNode* aNode, const aiScene* /*aScene*/);
+};
+
+class PrimitiveLoader final
+{
+   public:
+    using vertex_layout  = PositionNormalUvVertex;
+    using mesh_type      = Primitive<vertex_layout>;
+    using mesh_container = std::vector<mesh_type*>;
+    using result_type    = std::shared_ptr<mesh_container>;
+
+    result_type operator()(mesh_type* aPrimitive)
+    {
+        mesh_container meshes;
+        meshes.push_back(std::move(aPrimitive));
+        return std::make_shared<mesh_container>(meshes);
+    }
 };
