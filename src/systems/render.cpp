@@ -46,7 +46,7 @@ void RenderSystem::operator()(Registry& aRegistry, const float aDeltaTime)
             // DBG("GOT Placement mode entity!")
         }
 
-        if (auto primitives = WATO_MODEL_CACHE[obj.model_hash]; primitives) {
+        if (auto primitives = WATO_MODEL_CACHE[obj.ModelHash]; primitives) {
             for (const auto* p : *primitives) {
                 // Set model matrix for rendering.
                 bgfx::setTransform(glm::value_ptr(model));

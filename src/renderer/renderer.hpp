@@ -9,14 +9,14 @@ class Renderer
 {
    public:
     Renderer() {}
-    Renderer(Renderer &&)                 = default;
-    Renderer(const Renderer &)            = default;
-    Renderer &operator=(Renderer &&)      = delete;
-    Renderer &operator=(const Renderer &) = delete;
-    ~Renderer()                           = default;
+    Renderer(Renderer&&)                 = default;
+    Renderer(const Renderer&)            = default;
+    Renderer& operator=(Renderer&&)      = delete;
+    Renderer& operator=(const Renderer&) = delete;
+    ~Renderer()                          = default;
 
-    void Init(WatoWindow &aWin);
-    void Resize(WatoWindow &aWin);
+    void Init(WatoWindow& aWin);
+    void Resize(WatoWindow& aWin);
     void Clear();
     void Render();
 
