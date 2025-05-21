@@ -58,10 +58,11 @@ void DefaultContextHandler::operator()(Registry& aRegistry, const SendCreepPaylo
         creep,
         glm::vec3(2.0f, 0.0f, 2.0f),
         glm::identity<glm::quat>(),
-        glm::vec3(0.1f));
+        glm::vec3(0.5f));
 
     aRegistry.emplace<Health>(creep, 100.0f);
     aRegistry.emplace<Creep>(creep, aPayload.Type);
+    aRegistry.emplace<SceneObject>(creep, "phoenix"_hs);
 
     auto* body = phy.CreateRigidBody(
         creep,
