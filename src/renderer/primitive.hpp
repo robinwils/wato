@@ -41,7 +41,7 @@ class Primitive
         Material*                aMaterial,
         std::vector<layout_type> aVertices,
         std::vector<indice_type> aIndices)
-        : mVertices(aVertices), mIndices(aIndices), mMaterial(aMaterial)
+        : mVertices(std::move(aVertices)), mIndices(std::move(aIndices)), mMaterial(aMaterial)
     {
     }
     Primitive(const Primitive& aOther) noexcept

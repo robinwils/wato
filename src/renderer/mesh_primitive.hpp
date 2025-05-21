@@ -12,7 +12,7 @@ class MeshPrimitive : public Primitive<PositionNormalUvVertex>
         std::vector<PositionNormalUvVertex> aVertices,
         std::vector<indice_type>            aIndices,
         Material*                           aMat)
-        : Primitive(aMat, aVertices, aIndices)
+        : Primitive(aMat, std::move(aVertices), std::move(aIndices))
     {
         InitializePrimitive();
     }
