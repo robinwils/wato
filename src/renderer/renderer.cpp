@@ -6,7 +6,7 @@
 #include "core/window.hpp"
 #include "imgui_helper.h"
 
-void Renderer::Init(WatoWindow &aWin)
+void Renderer::Init(WatoWindow& aWin)
 {
     if (!aWin.IsInitialized()) {
         throw std::runtime_error("window not initialized");
@@ -47,7 +47,7 @@ void Renderer::Init(WatoWindow &aWin)
     mIsInit = true;
 }
 
-void Renderer::Resize(WatoWindow &aWin)
+void Renderer::Resize(WatoWindow& aWin)
 {
     bgfx::reset(aWin.Width<uint32_t>(), aWin.Height<uint32_t>(), BGFX_RESET_VSYNC);
     bgfx::setViewRect(CLEAR_VIEW, 0, 0, bgfx::BackbufferRatio::Equal);
