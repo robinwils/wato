@@ -124,7 +124,12 @@ ModelLoader::mesh_type ModelLoader::processMesh(const aiMesh* aMesh, const aiSce
         auto textures = processMaterialTextures(material, aiTextureType_DIFFUSE, &diffusePath);
         auto specTextures =
             processMaterialTextures(material, aiTextureType_SPECULAR, &specularPath);
-        auto program = WATO_PROGRAM_CACHE["blinnphong"_hs];
+        entt::resource<Shader> shader;
+        if constexpr (std::is_same_v<VL, PositionNormalUvBoneVertex>) {
+            shader = WATO_PROGRAM_CACHE["blinnphong"_hs];
+        } else {
+            shader = WATO_PROGRAM_CACHE["blinnphong"_hs];
+        }
 
         TRACE(
             "mesh {} has {} vertices, {} indices, {} bones, {} diffuse and {} specular textures",
@@ -136,7 +141,7 @@ ModelLoader::mesh_type ModelLoader::processMesh(const aiMesh* aMesh, const aiSce
             specTextures.size());
         if (textures.size() > 0 || specTextures.size() > 0) {
             m = new BlinnPhongMaterial(
-                program,
+                shader,
                 WATO_TEXTURE_CACHE[textures.front()],
                 WATO_TEXTURE_CACHE[specTextures.front()]);
         } else {
@@ -151,7 +156,7 @@ ModelLoader::mesh_type ModelLoader::processMesh(const aiMesh* aMesh, const aiSce
             }
 
             m = new BlinnPhongMaterial(
-                program,
+                shader,
                 glm::vec3(diffuse.r, diffuse.g, diffuse.b),
                 glm::vec3(specular.r, specular.g, specular.b));
         }
