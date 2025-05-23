@@ -1,4 +1,8 @@
+#ifdef SKINNED
+$input a_position, a_normal, a_texcoord0, a_indices, a_weight
+#else
 $input a_position, a_normal, a_texcoord0
+#endif
 $output v_worldPos, v_view, v_normal, v_texcoord0
 
 #include "common/common.sh"
