@@ -25,7 +25,7 @@ void LoadResources(Registry& aRegistry)
 
 void LoadShaders(Registry& aRegistry)
 {
-    auto [bp, pLoaded] = WATO_PROGRAM_CACHE.load(
+    WATO_PROGRAM_CACHE.load(
         "blinnphong"_hs,
         "vs_blinnphong",
         "fs_blinnphong",
@@ -37,7 +37,19 @@ void LoadShaders(Registry& aRegistry)
             {"u_lightDir",    bgfx::UniformType::Vec4   },
             {"u_lightCol",    bgfx::UniformType::Vec4   }
     });
-    auto [c, cLoaded] = WATO_PROGRAM_CACHE.load(
+    WATO_PROGRAM_CACHE.load(
+        "blinnphong_skinned"_hs,
+        "vs_blinnphong_skinned",
+        "fs_blinnphong",
+        std::unordered_map<std::string, bgfx::UniformType::Enum>{
+            {"s_diffuseTex",  bgfx::UniformType::Sampler},
+            {"s_specularTex", bgfx::UniformType::Sampler},
+            {"u_diffuse",     bgfx::UniformType::Vec4   },
+            {"u_specular",    bgfx::UniformType::Vec4   },
+            {"u_lightDir",    bgfx::UniformType::Vec4   },
+            {"u_lightCol",    bgfx::UniformType::Vec4   }
+    });
+    WATO_PROGRAM_CACHE.load(
         "simple"_hs,
         "vs_cubes",
         "fs_cubes",
@@ -65,7 +77,7 @@ void LoadTextures(Registry& aRegistry, uint32_t aWidth, uint32_t aHeight)
         throw std::runtime_error("could not load grass/specular texture, invalid handle");
     }
 
-    WATO_PRIMITIVE_CACHE.load(
+    WATO_MODEL_CACHE.load(
         "grass_tile"_hs,
         new PlanePrimitive(new BlinnPhongMaterial(shader, diffuse, specular)));
 }
