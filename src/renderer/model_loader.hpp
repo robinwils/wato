@@ -9,8 +9,8 @@
 
 #include "core/sys/log.hpp"
 #include "renderer/asset.hpp"
-#include "renderer/mesh_primitive.hpp"
 #include "renderer/primitive.hpp"
+#include "renderer/vertex_layout.hpp"
 
 template <>
 struct fmt::formatter<aiString> : fmt::formatter<std::string> {
@@ -23,9 +23,8 @@ struct fmt::formatter<aiString> : fmt::formatter<std::string> {
 class ModelLoader final
 {
    public:
-    using vertex_layout  = PositionNormalUvBoneVertex;
-    using mesh_type      = Primitive<vertex_layout>;
-    using mesh_container = std::vector<mesh_type*>;
+    using mesh_type      = PrimitiveVariant;
+    using mesh_container = std::vector<mesh_type>;
     using result_type    = std::shared_ptr<mesh_container>;
 
     result_type operator()(const char* aName, unsigned int aPostProcessFlags)
@@ -68,31 +67,26 @@ class ModelLoader final
         return std::make_shared<mesh_container>(meshes);
     }
 
-   private:
-    std::vector<entt::hashed_string>
-    processMaterialTextures(const aiMaterial* aMaterial, aiTextureType aType, aiString* aPath);
-
-    mesh_container processNode(const aiNode* aNode, const aiScene* aScene);
-    mesh_type*     processMesh(const aiMesh* aMesh, const aiScene* aScene);
-    void           processMetaData(const aiNode* aNode, const aiScene* /*aScene*/);
-    void           processAnimations(const aiScene* aScene);
-    void           processChannels(const aiAnimation* aAnimation);
-    void
-    processBones(const aiMesh* aMesh, const aiScene* aScene, std::vector<vertex_layout>& aVertices);
-};
-
-class PrimitiveLoader final
-{
-   public:
-    using vertex_layout  = PositionNormalUvVertex;
-    using mesh_type      = Primitive<vertex_layout>;
-    using mesh_container = std::vector<mesh_type*>;
-    using result_type    = std::shared_ptr<mesh_container>;
-
-    result_type operator()(mesh_type* aPrimitive)
+    result_type operator()(mesh_type aPrimitive)
     {
         mesh_container meshes;
         meshes.push_back(std::move(aPrimitive));
         return std::make_shared<mesh_container>(meshes);
     }
+
+   private:
+    std::vector<entt::hashed_string>
+    processMaterialTextures(const aiMaterial* aMaterial, aiTextureType aType, aiString* aPath);
+
+    mesh_container processNode(const aiNode* aNode, const aiScene* aScene);
+
+    template <typename VL>
+    mesh_type processMesh(const aiMesh* aMesh, const aiScene* aScene);
+    void      processMetaData(const aiNode* aNode, const aiScene* /*aScene*/);
+    void      processAnimations(const aiScene* aScene);
+    void      processChannels(const aiAnimation* aAnimation);
+    void      processBones(
+             const aiMesh*                            aMesh,
+             const aiScene*                           aScene,
+             std::vector<PositionNormalUvBoneVertex>& aVertices);
 };
