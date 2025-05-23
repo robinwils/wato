@@ -324,6 +324,7 @@ target_sources(wato
     src/renderer/plane_primitive.hpp
     src/renderer/primitive.hpp
     src/renderer/renderer.hpp
+    src/renderer/vertex_layout.hpp
     src/systems/action.hpp
     src/systems/input.hpp
     src/systems/render.hpp

@@ -25,10 +25,9 @@
 
 using namespace entt::literals;
 
-#define WATO_TEXTURE_CACHE   (ResourceCache::Instance().TextureCache)
-#define WATO_PROGRAM_CACHE   (ResourceCache::Instance().ShaderCache)
-#define WATO_MODEL_CACHE     (ResourceCache::Instance().ModelCache)
-#define WATO_PRIMITIVE_CACHE (ResourceCache::Instance().PrimitiveCache)
+#define WATO_TEXTURE_CACHE (ResourceCache::Instance().TextureCache)
+#define WATO_PROGRAM_CACHE (ResourceCache::Instance().ShaderCache)
+#define WATO_MODEL_CACHE   (ResourceCache::Instance().ModelCache)
 
 inline static void imageReleaseCb(void* aPtr, void* aUserData)
 {
@@ -155,10 +154,9 @@ struct ProgramLoader final {
     bx::FileReader mfr;
 };
 
-using TexCache       = entt::resource_cache<bgfx::TextureHandle, TextureLoader>;
-using ShCache        = entt::resource_cache<Shader, ProgramLoader>;
-using ModelCache     = entt::resource_cache<ModelLoader::mesh_container, ModelLoader>;
-using PrimitiveCache = entt::resource_cache<PrimitiveLoader::mesh_container, PrimitiveLoader>;
+using TexCache   = entt::resource_cache<bgfx::TextureHandle, TextureLoader>;
+using ShCache    = entt::resource_cache<Shader, ProgramLoader>;
+using ModelCache = entt::resource_cache<ModelLoader::mesh_container, ModelLoader>;
 
 struct ResourceCache {
     static ResourceCache& Instance()
@@ -171,10 +169,9 @@ struct ResourceCache {
     ResourceCache(ResourceCache const&)  = delete;
     void operator=(ResourceCache const&) = delete;
 
-    TexCache         TextureCache;
-    ShCache          ShaderCache;
-    ::ModelCache     ModelCache;
-    ::PrimitiveCache PrimitiveCache;
+    TexCache     TextureCache;
+    ShCache      ShaderCache;
+    ::ModelCache ModelCache;
 
    private:
     ResourceCache() {};

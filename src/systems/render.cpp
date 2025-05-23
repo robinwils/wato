@@ -8,10 +8,12 @@
 #include <glm/ext/matrix_float4x4.hpp>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <variant>
 
 #include "components/imgui.hpp"
 #include "components/scene_object.hpp"
 #include "core/physics.hpp"
+#include "core/types.hpp"
 #include "core/window.hpp"
 #include "imgui_helper.h"
 #include "renderer/cache.hpp"
@@ -47,23 +49,17 @@ void RenderSystem::operator()(Registry& aRegistry, const float aDeltaTime)
         model       = glm::scale(model, t.Scale);
 
         if (auto primitives = WATO_MODEL_CACHE[obj.ModelHash]; primitives) {
-            for (const auto* p : *primitives) {
+            for (const auto& p : *primitives) {
                 // Set model matrix for rendering.
                 bgfx::setTransform(glm::value_ptr(model));
 
                 // Set render states.
                 bgfx::setState(state);
-                p->Submit();
-            }
-        } else if (auto primitives = WATO_PRIMITIVE_CACHE[obj.ModelHash]; primitives) {
-            for (const auto* p : *primitives) {
-                // Set model matrix for rendering.
-                bgfx::setTransform(glm::value_ptr(model));
-
-                // Set render states.
-                bgfx::setState(state);
-                // Set render states.
-                p->Submit();
+                std::visit(
+                    VariantVisitor{
+                        [&](const auto& aPrimitive) { aPrimitive->Submit(); },
+                    },
+                    p);
             }
         }
     }
