@@ -12,6 +12,8 @@
 #include "glm/ext/matrix_transform.hpp"
 #include "renderer/blinn_phong_material.hpp"
 #include "renderer/cache.hpp"
+#include "renderer/mesh_primitive.hpp"
+#include "renderer/shader.hpp"
 
 using namespace entt::literals;
 
@@ -45,9 +47,9 @@ std::vector<entt::hashed_string> ModelLoader::processMaterialTextures(
 }
 
 void ModelLoader::processBones(
-    const aiMesh*               aMesh,
-    const aiScene*              aScene,
-    std::vector<vertex_layout>& aVertices)
+    const aiMesh*                            aMesh,
+    const aiScene*                           aScene,
+    std::vector<PositionNormalUvBoneVertex>& aVertices)
 {
     for (unsigned int boneIdx = 0; boneIdx < aMesh->mNumBones; ++boneIdx) {
         const aiBone* bone = aMesh->mBones[boneIdx];
@@ -63,7 +65,7 @@ void ModelLoader::processBones(
                     "vertex ID bigger than vertices parsed");
 
                 // setting bone influence inside vertex layout, with a maximum of 4 per vertex.
-                vertex_layout& vertex = aVertices[vertexW.mVertexId];
+                PositionNormalUvBoneVertex& vertex = aVertices[vertexW.mVertexId];
                 for (int i = 0; i < 4; ++i) {
                     if (vertex.BoneWeights[i] < 0) {
                         vertex.BoneIndices[i] = static_cast<uint16_t>(vertexW.mVertexId);
@@ -84,11 +86,12 @@ void ModelLoader::processBones(
     }
 }
 
-ModelLoader::mesh_type* ModelLoader::processMesh(const aiMesh* aMesh, const aiScene* aScene)
+template <typename VL>
+ModelLoader::mesh_type ModelLoader::processMesh(const aiMesh* aMesh, const aiScene* aScene)
 {
-    std::vector<vertex_layout> vertices;
+    std::vector<VL> vertices;
     for (unsigned int i = 0; i < aMesh->mNumVertices; ++i) {
-        vertex_layout vertex;
+        VL vertex;
         vertex.Position.x = aMesh->mVertices[i].x;
         vertex.Position.y = aMesh->mVertices[i].y;
         vertex.Position.z = aMesh->mVertices[i].z;
@@ -104,7 +107,7 @@ ModelLoader::mesh_type* ModelLoader::processMesh(const aiMesh* aMesh, const aiSc
         vertices.push_back(vertex);
     }
 
-    std::vector<MeshPrimitive::indice_type> indices;
+    std::vector<typename Primitive<VL>::indice_type> indices;
     for (unsigned int i = 0; i < aMesh->mNumFaces; ++i) {
         auto face = aMesh->mFaces[i];
         for (unsigned int j = 0; j < face.mNumIndices; ++j) {
@@ -156,8 +159,10 @@ ModelLoader::mesh_type* ModelLoader::processMesh(const aiMesh* aMesh, const aiSc
         throw std::runtime_error("no material in mesh");
     }
 
-    if (aMesh->HasBones()) {
-        processBones(aMesh, aScene, vertices);
+    if constexpr (std::is_same_v<VL, PositionNormalUvBoneVertex>) {
+        if (aMesh->HasBones()) {
+            processBones(aMesh, aScene, vertices);
+        }
     }
 
     return new MeshPrimitive(std::move(vertices), std::move(indices), m);
@@ -247,12 +252,21 @@ ModelLoader::mesh_container ModelLoader::processNode(const aiNode* aNode, const 
     mesh_container meshes;
     meshes.reserve(aNode->mNumMeshes);
     for (unsigned int i = 0; i < aNode->mNumMeshes; ++i) {
-        auto* mesh = processMesh(aScene->mMeshes[aNode->mMeshes[i]], aScene);
+        mesh_type mesh;
+        if (aScene->HasAnimations()) {
+            mesh =
+                processMesh<PositionNormalUvBoneVertex>(aScene->mMeshes[aNode->mMeshes[i]], aScene);
+        } else {
+            mesh = processMesh<PositionNormalUvVertex>(aScene->mMeshes[aNode->mMeshes[i]], aScene);
+        }
         meshes.push_back(mesh);
     }
     for (unsigned int i = 0; i < aNode->mNumChildren; i++) {
         auto childMeshes = processNode(aNode->mChildren[i], aScene);
-        meshes.insert(meshes.end(), childMeshes.begin(), childMeshes.end());
+        meshes.insert(
+            meshes.end(),
+            std::make_move_iterator(childMeshes.begin()),
+            std::make_move_iterator(childMeshes.end()));
     }
     return meshes;
 }

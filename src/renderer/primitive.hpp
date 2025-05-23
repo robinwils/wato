@@ -6,28 +6,11 @@
 #include <glm/ext/vector_float2.hpp>
 #include <glm/ext/vector_float3.hpp>
 #include <renderer/material.hpp>
-#include <string>
 #include <utility>
+#include <variant>
 #include <vector>
 
-#include "glm/fwd.hpp"
-
-struct PositionNormalUvVertex {
-    glm::vec3 Position;
-    glm::vec3 Normal;
-    glm::vec2 Uv;
-
-    static bgfx::VertexLayout GetVertexLayout()
-    {
-        bgfx::VertexLayout vertexLayout;
-        vertexLayout.begin()
-            .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
-            .add(bgfx::Attrib::Normal, 3, bgfx::AttribType::Float)
-            .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
-            .end();
-        return vertexLayout;
-    }
-};
+#include "renderer/vertex_layout.hpp"
 
 template <typename VL>
 class Primitive
@@ -134,3 +117,6 @@ class Primitive
         }
     }
 };
+
+using PrimitiveVariant =
+    std::variant<Primitive<PositionNormalUvVertex>*, Primitive<PositionNormalUvBoneVertex>*>;
