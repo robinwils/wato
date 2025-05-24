@@ -38,14 +38,19 @@ endef
 
 $(eval $(call SHADER_TARGET,windows,spirv))
 $(eval $(call SHADER_TARGET,linux,spirv))
+$(eval $(call SHADER_TARGET,linux,440))
 $(eval $(call SHADER_TARGET,osx,metal))
 
+linux_glsl_SHADERS=$(patsubst %.sc,%_linux_glsl.bin,$(SHADERS))
+%_glsl.bin: %_440.bin
+	mv $< $@
+
 windows-shaders: $(windows_spirv_SHADERS)
-linux-shaders: $(linux_spirv_SHADERS)
+linux-shaders: $(linux_spirv_SHADERS) $(linux_glsl_SHADERS)
 osx-shaders: $(osx_metal_SHADERS)
 all: windows-shaders linux-shaders osx-shaders
 
 clean:
-	$(RM) $(windows_spirv_SHADERS) $(linux_spirv_SHADERS) $(osx_metal_SHADERS) *.bin.d
+	$(RM) $(windows_spirv_SHADERS) $(linux_spirv_SHADERS) $(linux_glsl_SHADERS) $(linux_440_SHADERS) $(osx_metal_SHADERS) *.bin.d
 
 .PHONY: clean
