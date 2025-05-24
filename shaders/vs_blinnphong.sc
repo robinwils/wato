@@ -7,6 +7,10 @@ $output v_worldPos, v_view, v_normal, v_texcoord0
 
 #include "common/common.sh"
 
+#ifdef SKINNED
+uniform mat4 u_bones[128];
+#endif
+
 void main()
 {
 	// lighting calculations are done in world space, so we send the
