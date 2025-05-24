@@ -364,17 +364,20 @@ target_link_options(wato_common INTERFACE -rdynamic)
 
 # Link libraries
 target_link_libraries(watolib
-  wato_common
-  bxDebug
-  bimg_decodeDebug
-  bimg_encodeDebug
-  bimgDebug
-  reactphysics3d
-  spdlog
-  sodium
+  PUBLIC
+    wato_common
+    bxDebug
+    sodium
+    spdlog
+    reactphysics3d
 )
 
-target_link_libraries(wato watolib bgfxDebug)
+target_link_libraries(wato
+  watolib
+  bgfxDebug bimg_decodeDebug
+  bimg_encodeDebug
+  bimgDebug
+)
 
 if(WIN32)
   target_link_libraries(wato
