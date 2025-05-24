@@ -15,7 +15,8 @@ using namespace entt::literals;
 
 void Application::Init()
 {
-    spdlog::set_level(spdlog::level::debug);
+    std::string logLevel = mOptions.LogLevel();
+    spdlog::set_level(spdlog::level::from_str(logLevel));
     // FIXME: weird segfault when using %s and %# instead of %@
     // or puting the thread info in separate []
     spdlog::set_pattern("[%H:%M:%S %z thread %t] [%^%L%$] %v %@");
