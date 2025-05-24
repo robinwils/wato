@@ -322,6 +322,7 @@ target_sources(wato
     src/renderer/material.hpp
     src/renderer/mesh_primitive.hpp
     src/renderer/model_loader.hpp
+    src/renderer/model.hpp
     src/renderer/plane_primitive.hpp
     src/renderer/primitive.hpp
     src/renderer/renderer.hpp
@@ -348,6 +349,7 @@ target_sources(wato
     src/renderer/asset.cpp
     src/renderer/bgfx_utils.cpp
     src/renderer/material.cpp
+    src/renderer/model.cpp
     src/renderer/model_loader.cpp
     src/renderer/renderer.cpp
     src/systems/action.cpp
