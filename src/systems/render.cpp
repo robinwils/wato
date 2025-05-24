@@ -43,24 +43,13 @@ void RenderSystem::operator()(Registry& aRegistry, const float aDeltaTime)
             // DBG("GOT Placement mode entity!")
         }
 
-        auto model  = glm::identity<glm::mat4>();
-        model       = glm::translate(model, t.Position);
-        model      *= glm::mat4_cast(t.Orientation);
-        model       = glm::scale(model, t.Scale);
+        auto modelMat  = glm::identity<glm::mat4>();
+        modelMat       = glm::translate(modelMat, t.Position);
+        modelMat      *= glm::mat4_cast(t.Orientation);
+        modelMat       = glm::scale(modelMat, t.Scale);
 
-        if (auto primitives = WATO_MODEL_CACHE[obj.ModelHash]; primitives) {
-            for (const auto& p : *primitives) {
-                // Set model matrix for rendering.
-                bgfx::setTransform(glm::value_ptr(model));
-
-                // Set render states.
-                bgfx::setState(state);
-                std::visit(
-                    VariantVisitor{
-                        [&](const auto& aPrimitive) { aPrimitive->Submit(); },
-                    },
-                    p);
-            }
+        if (auto model = WATO_MODEL_CACHE[obj.ModelHash]; model) {
+            model->Submit(modelMat, state);
         }
     }
 }

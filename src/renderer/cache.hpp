@@ -156,7 +156,7 @@ struct ProgramLoader final {
 
 using TexCache   = entt::resource_cache<bgfx::TextureHandle, TextureLoader>;
 using ShCache    = entt::resource_cache<Shader, ProgramLoader>;
-using ModelCache = entt::resource_cache<ModelLoader::mesh_container, ModelLoader>;
+using ModelCache = entt::resource_cache<Model, ModelLoader>;
 
 struct ResourceCache {
     static ResourceCache& Instance()
