@@ -17,6 +17,11 @@
 
 using namespace entt::literals;
 
+constexpr inline glm::vec3 toGLMVec3(const aiVector3D& aVector)
+{
+    return glm::vec3(aVector.x, aVector.y, aVector.z);
+}
+
 std::vector<entt::hashed_string> ModelLoader::processMaterialTextures(
     const aiMaterial* aMaterial,
     aiTextureType     aType,
@@ -92,13 +97,8 @@ ModelLoader::mesh_type ModelLoader::processMesh(const aiMesh* aMesh, const aiSce
     std::vector<VL> vertices;
     for (unsigned int i = 0; i < aMesh->mNumVertices; ++i) {
         VL vertex;
-        vertex.Position.x = aMesh->mVertices[i].x;
-        vertex.Position.y = aMesh->mVertices[i].y;
-        vertex.Position.z = aMesh->mVertices[i].z;
-
-        vertex.Normal.x = aMesh->mNormals[i].x;
-        vertex.Normal.y = aMesh->mNormals[i].y;
-        vertex.Normal.z = aMesh->mNormals[i].z;
+        vertex.Position = toGLMVec3(aMesh->mVertices[i]);
+        vertex.Normal   = toGLMVec3(aMesh->mNormals[i]);
 
         if (aMesh->mTextureCoords[0]) {
             vertex.Uv.x = aMesh->mTextureCoords[0][i].x;
@@ -276,33 +276,60 @@ ModelLoader::mesh_container ModelLoader::processNode(const aiNode* aNode, const 
     return meshes;
 }
 
-void ModelLoader::processChannels(const aiAnimation* aAnimation)
+Animation ModelLoader::processAnimation(const aiAnimation* aAnimation)
 {
+    Animation::node_animation_map nodeAnimations;
     for (unsigned int i = 0; i < aAnimation->mNumChannels; ++i) {
-        const aiNodeAnim* nodeAnim = aAnimation->mChannels[i];
+        const aiNodeAnim* channel = aAnimation->mChannels[i];
+        NodeAnimation     nodeAnimation;
         TRACE(
             "  node anim {} with {} position keys, {} rotation keys, {} scaling keys",
-            nodeAnim->mNodeName,
-            nodeAnim->mNumPositionKeys,
-            nodeAnim->mNumRotationKeys,
-            nodeAnim->mNumRotationKeys);
+            channel->mNodeName,
+            channel->mNumPositionKeys,
+            channel->mNumRotationKeys,
+            channel->mNumScalingKeys);
+
+        nodeAnimation.Name = channel->mNodeName.C_Str();
+        for (unsigned int posIdx = 0; posIdx < channel->mNumPositionKeys; ++posIdx) {
+            const aiVectorKey& posKey = channel->mPositionKeys[posIdx];
+            nodeAnimation.Positions.emplace_back(toGLMVec3(posKey.mValue), posKey.mTime);
+        }
+        for (unsigned int rotIdx = 0; rotIdx < channel->mNumRotationKeys; ++rotIdx) {
+            const aiQuatKey& rotationKey = channel->mRotationKeys[rotIdx];
+            nodeAnimation.Rotations.emplace_back(
+                glm::quat(
+                    rotationKey.mValue.x,
+                    rotationKey.mValue.y,
+                    rotationKey.mValue.z,
+                    rotationKey.mValue.w),
+                rotationKey.mTime);
+        }
+        for (unsigned int scKey = 0; scKey < channel->mNumScalingKeys; ++scKey) {
+            const aiVectorKey& scalingKey = channel->mScalingKeys[scKey];
+            nodeAnimation.Scales.emplace_back(toGLMVec3(scalingKey.mValue), scalingKey.mTime);
+        }
+        nodeAnimations[channel->mNodeName.C_Str()] = std::move(nodeAnimation);
     }
+    return Animation(
+        aAnimation->mName.C_Str(),
+        aAnimation->mDuration,
+        aAnimation->mTicksPerSecond,
+        std::move(nodeAnimations));
 }
 
-void ModelLoader::processAnimations(const aiScene* aScene)
+ModelLoader::animation_map ModelLoader::processAnimations(const aiScene* aScene)
 {
-    for (unsigned int i = 0; i < aScene->mNumAnimations; ++i) {
-        const aiAnimation* animation = aScene->mAnimations[i];
+    ModelLoader::animation_map animations;
+    for (unsigned int animIdx = 0; animIdx < aScene->mNumAnimations; ++animIdx) {
+        const aiAnimation* anim = aScene->mAnimations[animIdx];
         TRACE(
             "animation {} with duration {}, {} ticks/s",
-            animation->mName,
-            animation->mDuration,
-            animation->mTicksPerSecond);
+            anim->mName,
+            anim->mDuration,
+            anim->mTicksPerSecond);
 
-        std::string animName(animation->mName.C_Str());
-
-        if (animation->mNumChannels > 0) {
-            processChannels(animation);
-        }
+        animations.insert_or_assign(anim->mName.C_Str(), processAnimation(anim));
     }
+
+    return animations;
 }
