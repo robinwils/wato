@@ -8,8 +8,9 @@
 #include <stdexcept>
 
 #include "core/sys/log.hpp"
+#include "renderer/animation.hpp"
 #include "renderer/asset.hpp"
-#include "renderer/primitive.hpp"
+#include "renderer/model.hpp"
 #include "renderer/vertex_layout.hpp"
 
 template <>
@@ -23,9 +24,10 @@ struct fmt::formatter<aiString> : fmt::formatter<std::string> {
 class ModelLoader final
 {
    public:
-    using mesh_type      = PrimitiveVariant;
-    using mesh_container = std::vector<mesh_type>;
-    using result_type    = std::shared_ptr<mesh_container>;
+    using mesh_type      = Model::mesh_type;
+    using mesh_container = Model::mesh_container;
+    using animation_map  = Model::animation_map;
+    using result_type    = std::shared_ptr<Model>;
 
     result_type operator()(const char* aName, unsigned int aPostProcessFlags)
     {
@@ -49,9 +51,8 @@ class ModelLoader final
 
         // If the import failed, report it
         if (nullptr == scene) {
-            // TODO: handle error
-            DBG("could not load {}: {}", assetPath, importer.GetErrorString());
-            return std::make_shared<mesh_container>();
+            throw std::runtime_error(
+                fmt::format("could not load {}: {}", assetPath, importer.GetErrorString()));
         }
         DBG("scene {} has:", scene->mName);
         DBG("  {} meshes", scene->mNumMeshes);
@@ -59,19 +60,20 @@ class ModelLoader final
         DBG("  {} materials", scene->mNumMaterials);
         DBG("  {} animations", scene->mNumAnimations);
 
-        auto meshes = processNode(scene->mRootNode, scene);
+        auto          meshes = processNode(scene->mRootNode, scene);
+        animation_map animations;
         if (scene->HasAnimations()) {
-            processAnimations(scene);
+            animations = processAnimations(scene);
         }
 
-        return std::make_shared<mesh_container>(meshes);
+        return std::make_shared<Model>(std::move(meshes), std::move(animations));
     }
 
     result_type operator()(mesh_type aPrimitive)
     {
         mesh_container meshes;
         meshes.push_back(std::move(aPrimitive));
-        return std::make_shared<mesh_container>(meshes);
+        return std::make_shared<Model>(meshes, animation_map{});
     }
 
    private:
@@ -81,12 +83,12 @@ class ModelLoader final
     mesh_container processNode(const aiNode* aNode, const aiScene* aScene);
 
     template <typename VL>
-    mesh_type processMesh(const aiMesh* aMesh, const aiScene* aScene);
-    void      processMetaData(const aiNode* aNode, const aiScene* /*aScene*/);
-    void      processAnimations(const aiScene* aScene);
-    void      processChannels(const aiAnimation* aAnimation);
-    void      processBones(
-             const aiMesh*                            aMesh,
-             const aiScene*                           aScene,
-             std::vector<PositionNormalUvBoneVertex>& aVertices);
+    mesh_type     processMesh(const aiMesh* aMesh, const aiScene* aScene);
+    void          processMetaData(const aiNode* aNode, const aiScene* /*aScene*/);
+    animation_map processAnimations(const aiScene* aScene);
+    Animation     processAnimation(const aiAnimation* aAnimation);
+    void          processBones(
+                 const aiMesh*                            aMesh,
+                 const aiScene*                           aScene,
+                 std::vector<PositionNormalUvBoneVertex>& aVertices);
 };
