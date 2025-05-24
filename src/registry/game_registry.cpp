@@ -47,7 +47,8 @@ void LoadShaders(Registry& aRegistry)
             {"u_diffuse",     bgfx::UniformType::Vec4   },
             {"u_specular",    bgfx::UniformType::Vec4   },
             {"u_lightDir",    bgfx::UniformType::Vec4   },
-            {"u_lightCol",    bgfx::UniformType::Vec4   }
+            {"u_lightCol",    bgfx::UniformType::Vec4   },
+            {"u_bones",       bgfx::UniformType::Mat4   }
     });
     WATO_PROGRAM_CACHE.load(
         "simple"_hs,
