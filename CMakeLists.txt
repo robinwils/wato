@@ -314,6 +314,7 @@ target_sources(wato
     src/input/action.hpp
     src/input/input.hpp
     src/registry/game_registry.hpp
+    src/renderer/animation.hpp
     src/renderer/asset.hpp
     src/renderer/bgfx_utils.hpp
     src/renderer/blinn_phong_material.hpp
