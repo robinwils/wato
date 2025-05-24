@@ -1,5 +1,5 @@
 #ifdef SKINNED
-$input a_position, a_normal, a_texcoord0, a_indices, a_weight
+$input a_position, a_normal, a_texcoord0, a_weight, a_indices
 #else
 $input a_position, a_normal, a_texcoord0
 #endif
@@ -23,6 +23,6 @@ void main()
 	// v_view = mul(weyepos - wpos, tbn);
 
 
-	v_normal = normalize(a_normal);
+	v_normal = normalize(a_normal.xyz);
 	v_texcoord0 = a_texcoord0;
 }
