@@ -17,14 +17,17 @@ bgfx::ProgramHandle loadProgram(bx::FileReader* aFr, const char* aVsName, const 
 class BlinnPhongMaterial : public Material
 {
    public:
-    BlinnPhongMaterial(entt::resource<Shader> aShader,
-        entt::resource<bgfx::TextureHandle>   aDiffuse,
-        entt::resource<bgfx::TextureHandle>   aSpecular)
+    BlinnPhongMaterial(
+        entt::resource<Shader>              aShader,
+        entt::resource<bgfx::TextureHandle> aDiffuse,
+        entt::resource<bgfx::TextureHandle> aSpecular,
+        bool                                aSkinned = false)
         : Material(aShader),
           mUseDiffuseTexture(true),
           mDiffuseTexture(aDiffuse),
           mUseSpecularTexture(true),
-          mSpecularTexture(aSpecular)
+          mSpecularTexture(aSpecular),
+          mSkinned(aSkinned)
     {
     }
     virtual ~BlinnPhongMaterial() {}
@@ -42,19 +45,23 @@ class BlinnPhongMaterial : public Material
     {
         if (mUseDiffuseTexture) {
             bgfx::setTexture(0, mShader->Uniform("s_diffuseTex"), mDiffuseTexture);
-            bgfx::setUniform(mShader->Uniform("u_diffuse"),
+            bgfx::setUniform(
+                mShader->Uniform("u_diffuse"),
                 glm::value_ptr(glm::vec4(mDiffuse, 1.0f)));
         } else {
-            bgfx::setUniform(mShader->Uniform("u_diffuse"),
+            bgfx::setUniform(
+                mShader->Uniform("u_diffuse"),
                 glm::value_ptr(glm::vec4(mDiffuse, 0.0f)));
         }
 
         if (mUseSpecularTexture) {
             bgfx::setTexture(1, mShader->Uniform("s_specularTex"), mSpecularTexture);
-            bgfx::setUniform(mShader->Uniform("u_specular"),
+            bgfx::setUniform(
+                mShader->Uniform("u_specular"),
                 glm::value_ptr(glm::vec4(mSpecular, 1.0f)));
         } else {
-            bgfx::setUniform(mShader->Uniform("u_specular"),
+            bgfx::setUniform(
+                mShader->Uniform("u_specular"),
                 glm::value_ptr(glm::vec4(mSpecular, 0.0f)));
         }
     }
@@ -67,4 +74,6 @@ class BlinnPhongMaterial : public Material
     glm::vec3                           mSpecular;
     bool                                mUseSpecularTexture;
     entt::resource<bgfx::TextureHandle> mSpecularTexture;
+
+    bool mSkinned;
 };
