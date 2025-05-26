@@ -271,6 +271,7 @@ target_sources(watolib
   PUBLIC FILE_SET HEADERS
   BASE_DIRS src
   FILES
+    src/components/animator.hpp
     src/components/camera.hpp
     src/components/color.hpp
     src/components/direction.hpp
@@ -326,6 +327,7 @@ target_sources(wato
     src/renderer/plane_primitive.hpp
     src/renderer/primitive.hpp
     src/renderer/renderer.hpp
+    src/renderer/skeleton.hpp
     src/renderer/vertex_layout.hpp
     src/systems/action.hpp
     src/systems/input.hpp
