@@ -115,7 +115,8 @@ ModelLoader::mesh_type ModelLoader::processMesh(const aiMesh* aMesh, const aiSce
         }
     }
 
-    BlinnPhongMaterial* m = nullptr;
+    BlinnPhongMaterial* m       = nullptr;
+    bool                skinned = false;
     if (aMesh->mMaterialIndex >= 0) {
         auto        diffusePath  = aiString("texture_diffuse");
         auto        specularPath = aiString("texture_specular");
@@ -126,7 +127,8 @@ ModelLoader::mesh_type ModelLoader::processMesh(const aiMesh* aMesh, const aiSce
             processMaterialTextures(material, aiTextureType_SPECULAR, &specularPath);
         entt::resource<Shader> shader;
         if constexpr (std::is_same_v<VL, PositionNormalUvBoneVertex>) {
-            shader = WATO_PROGRAM_CACHE["blinnphong"_hs];
+            shader  = WATO_PROGRAM_CACHE["blinnphong_skinned"_hs];
+            skinned = true;
         } else {
             shader = WATO_PROGRAM_CACHE["blinnphong"_hs];
         }
@@ -143,7 +145,8 @@ ModelLoader::mesh_type ModelLoader::processMesh(const aiMesh* aMesh, const aiSce
             m = new BlinnPhongMaterial(
                 shader,
                 WATO_TEXTURE_CACHE[textures.front()],
-                WATO_TEXTURE_CACHE[specTextures.front()]);
+                WATO_TEXTURE_CACHE[specTextures.front()],
+                skinned);
         } else {
             // no material textures, get material info via properties
             aiColor3D diffuse;
