@@ -4,12 +4,14 @@
 #include <bgfx/defines.h>
 #include <spdlog/spdlog.h>
 
+#include <algorithm>
 #include <cstdint>
 #include <glm/ext/matrix_float4x4.hpp>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <variant>
 
+#include "components/animator.hpp"
 #include "components/imgui.hpp"
 #include "components/scene_object.hpp"
 #include "core/physics.hpp"
@@ -26,7 +28,9 @@ void RenderSystem::operator()(Registry& aRegistry, const float aDeltaTime)
 
     uint64_t state = BGFX_STATE_DEFAULT;
 
-    auto bpShader = WATO_PROGRAM_CACHE["blinnphong"_hs];
+    auto bpShader        = WATO_PROGRAM_CACHE["blinnphong"_hs];
+    auto bpSkinnedShader = WATO_PROGRAM_CACHE["blinnphong_skinned"_hs];
+
     // light
     for (auto&& [light, source] : aRegistry.view<const LightSource>().each()) {
         bgfx::setUniform(
@@ -34,6 +38,12 @@ void RenderSystem::operator()(Registry& aRegistry, const float aDeltaTime)
             glm::value_ptr(glm::vec4(source.direction, 0.0f)));
         bgfx::setUniform(
             bpShader->Uniform("u_lightCol"),
+            glm::value_ptr(glm::vec4(source.color, 0.0f)));
+        bgfx::setUniform(
+            bpSkinnedShader->Uniform("u_lightDir"),
+            glm::value_ptr(glm::vec4(source.direction, 0.0f)));
+        bgfx::setUniform(
+            bpSkinnedShader->Uniform("u_lightCol"),
             glm::value_ptr(glm::vec4(source.color, 0.0f)));
     }
     auto check = aRegistry.view<const PlacementMode>();
@@ -44,6 +54,17 @@ void RenderSystem::operator()(Registry& aRegistry, const float aDeltaTime)
         }
 
         if (auto model = WATO_MODEL_CACHE[obj.ModelHash]; model) {
+            if (const Animator* animator = aRegistry.try_get<Animator>(entity);
+                animator && !animator->FinalBonesMatrices.empty()) {
+                uint16_t numBones = static_cast<uint16_t>(animator->FinalBonesMatrices.size());
+                if (numBones > 128) {
+                    numBones = 128;
+                }
+                bgfx::setUniform(
+                    bpSkinnedShader->Uniform("u_bones"),
+                    glm::value_ptr(animator->FinalBonesMatrices[0]),
+                    numBones);
+            }
             model->Submit(t.ModelMat(), state);
         }
     }
