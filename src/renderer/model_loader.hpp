@@ -5,12 +5,14 @@
 
 #include <assimp/Importer.hpp>  // C++ importer interface
 #include <entt/core/hashed_string.hpp>
+#include <optional>
 #include <stdexcept>
 
 #include "core/sys/log.hpp"
 #include "renderer/animation.hpp"
 #include "renderer/asset.hpp"
 #include "renderer/model.hpp"
+#include "renderer/skeleton.hpp"
 #include "renderer/vertex_layout.hpp"
 
 template <>
@@ -54,17 +56,23 @@ class ModelLoader final
             throw std::runtime_error(
                 fmt::format("could not load {}: {}", assetPath, importer.GetErrorString()));
         }
-        DBG("scene {} has:", scene->mName);
+        DBG("model {} has:", aName);
         DBG("  {} meshes", scene->mNumMeshes);
         DBG("  {} embedded textures", scene->mNumTextures);
         DBG("  {} materials", scene->mNumMaterials);
         DBG("  {} animations", scene->mNumAnimations);
 
-        auto          meshes = processNode(scene->mRootNode, scene);
+        Skeleton skeleton;
+        if (scene->HasAnimations()) {
+            buildSkeleton(scene->mRootNode, scene, skeleton, 0);
+        }
+        auto          meshes = processNode(scene->mRootNode, scene, skeleton);
         animation_map animations;
         if (scene->HasAnimations()) {
             animations = processAnimations(scene);
         }
+
+        PrintSkeleton(skeleton);
 
         return std::make_shared<Model>(std::move(meshes), std::move(animations));
     }
@@ -80,15 +88,23 @@ class ModelLoader final
     std::vector<entt::hashed_string>
     processMaterialTextures(const aiMaterial* aMaterial, aiTextureType aType, aiString* aPath);
 
-    mesh_container processNode(const aiNode* aNode, const aiScene* aScene);
+    mesh_container processNode(const aiNode* aNode, const aiScene* aScene, Skeleton& aSkeleton);
 
     template <typename VL>
-    mesh_type     processMesh(const aiMesh* aMesh, const aiScene* aScene);
+    mesh_type     processMesh(const aiMesh* aMesh, const aiScene* aScene, Skeleton& aSkeleton);
     void          processMetaData(const aiNode* aNode, const aiScene* /*aScene*/);
     animation_map processAnimations(const aiScene* aScene);
     Animation     processAnimation(const aiAnimation* aAnimation);
     void          processBones(
                  const aiMesh*                            aMesh,
                  const aiScene*                           aScene,
-                 std::vector<PositionNormalUvBoneVertex>& aVertices);
+                 std::vector<PositionNormalUvBoneVertex>& aVertices,
+                 Skeleton&                                aSkeleton);
+    std::size_t buildSkeleton(
+        const aiNode*  aNode,
+        const aiScene* aScene,
+        Skeleton&      aSkeleton,
+        std::size_t    aIndent);
+
+    std::unordered_map<std::string, std::size_t> mBonesMap;
 };

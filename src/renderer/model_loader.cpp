@@ -2,14 +2,13 @@
 #include <assimp/postprocess.h>  // Post processing flags
 #include <assimp/scene.h>        // Output data structure
 #include <bx/bx.h>
+#include <tinystl/buffer.h>
 
 #include <glm/gtx/string_cast.hpp>
-#include <span>
 #include <stdexcept>
 #include <vector>
 
-#include "core/sys/mem.hpp"
-#include "glm/ext/matrix_transform.hpp"
+#include "core/sys/log.hpp"
 #include "renderer/blinn_phong_material.hpp"
 #include "renderer/cache.hpp"
 #include "renderer/shader.hpp"
@@ -19,6 +18,18 @@ using namespace entt::literals;
 constexpr inline glm::vec3 toGLMVec3(const aiVector3D& aVector)
 {
     return glm::vec3(aVector.x, aVector.y, aVector.z);
+}
+
+constexpr inline glm::mat4 toGLMMat4(const aiMatrix4x4& aMat)
+{
+    // clang-format off
+    return glm::mat4(
+        aMat.a1, aMat.b1, aMat.c1, aMat.d1,
+        aMat.a2, aMat.b2, aMat.c2, aMat.d2,
+        aMat.a3, aMat.b3, aMat.c3, aMat.d3,
+        aMat.a4, aMat.b4, aMat.c4, aMat.d4
+    );
+    // clang-format on
 }
 
 std::vector<entt::hashed_string> ModelLoader::processMaterialTextures(
@@ -53,12 +64,14 @@ std::vector<entt::hashed_string> ModelLoader::processMaterialTextures(
 void ModelLoader::processBones(
     const aiMesh*                            aMesh,
     const aiScene*                           aScene,
-    std::vector<PositionNormalUvBoneVertex>& aVertices)
+    std::vector<PositionNormalUvBoneVertex>& aVertices,
+    Skeleton&                                aSkeleton)
 {
     for (unsigned int boneIdx = 0; boneIdx < aMesh->mNumBones; ++boneIdx) {
         const aiBone* bone = aMesh->mBones[boneIdx];
-        // const aiNode* node = aScene->mRootNode->FindNode(bone->mName);
+
         TRACE("  bone {} with {} vertex weights", bone->mName, bone->mNumWeights);
+
         if (bone->mNumWeights > 0) {
             float totalW = 0.0f;
             for (unsigned int wIdx = 0; wIdx < bone->mNumWeights; ++wIdx) {
@@ -72,7 +85,8 @@ void ModelLoader::processBones(
                 PositionNormalUvBoneVertex& vertex = aVertices[vertexW.mVertexId];
                 for (int i = 0; i < 4; ++i) {
                     if (vertex.BoneWeights[i] < 0) {
-                        vertex.BoneIndices[i] = static_cast<uint16_t>(vertexW.mVertexId);
+                        vertex.BoneIndices[i] =
+                            static_cast<int>(aSkeleton.BonesMap[bone->mName.C_Str()]);
                         vertex.BoneWeights[i] = vertexW.mWeight;
                         break;
                     }
@@ -91,7 +105,8 @@ void ModelLoader::processBones(
 }
 
 template <typename VL>
-ModelLoader::mesh_type ModelLoader::processMesh(const aiMesh* aMesh, const aiScene* aScene)
+ModelLoader::mesh_type
+ModelLoader::processMesh(const aiMesh* aMesh, const aiScene* aScene, Skeleton& aSkeleton)
 {
     std::vector<VL> vertices;
     for (unsigned int i = 0; i < aMesh->mNumVertices; ++i) {
@@ -110,7 +125,7 @@ ModelLoader::mesh_type ModelLoader::processMesh(const aiMesh* aMesh, const aiSce
     for (unsigned int i = 0; i < aMesh->mNumFaces; ++i) {
         auto face = aMesh->mFaces[i];
         for (unsigned int j = 0; j < face.mNumIndices; ++j) {
-            indices.push_back(face.mIndices[j]);
+            indices.push_back(static_cast<uint16_t>(face.mIndices[j]));
         }
     }
 
@@ -168,7 +183,7 @@ ModelLoader::mesh_type ModelLoader::processMesh(const aiMesh* aMesh, const aiSce
 
     if constexpr (std::is_same_v<VL, PositionNormalUvBoneVertex>) {
         if (aMesh->HasBones()) {
-            processBones(aMesh, aScene, vertices);
+            processBones(aMesh, aScene, vertices, aSkeleton);
         }
     }
 
@@ -228,48 +243,35 @@ void ModelLoader::processMetaData(const aiNode* aNode, const aiScene* /*aScene*/
     }
 }
 
-ModelLoader::mesh_container ModelLoader::processNode(const aiNode* aNode, const aiScene* aScene)
+ModelLoader::mesh_container
+ModelLoader::processNode(const aiNode* aNode, const aiScene* aScene, Skeleton& aSkeleton)
 {
-    auto t         = aNode->mTransformation;
-    auto transform = glm::identity<glm::mat4>();
-    if (!aNode->mTransformation.IsIdentity()) {
-        transform = glm::mat4(
-            t.a1,
-            t.a2,
-            t.a3,
-            t.a4,
-            t.b1,
-            t.b2,
-            t.b3,
-            t.b4,
-            t.c1,
-            t.c2,
-            t.c3,
-            t.c4,
-            t.d1,
-            t.d2,
-            t.d3,
-            t.d4);
-        TRACE("node {} has transformation {}", aNode->mName, glm::to_string(transform));
-    } else {
-        TRACE("node {} has identity transform", aNode->mName);
-    }
+    TRACE(
+        "node {} with {} meshes, {} children",
+        aNode->mName,
+        aNode->mNumMeshes,
+        aNode->mNumChildren);
 
-    processMetaData(aNode, aScene);
+    // processMetaData(aNode, aScene);
     mesh_container meshes;
     meshes.reserve(aNode->mNumMeshes);
     for (unsigned int i = 0; i < aNode->mNumMeshes; ++i) {
-        mesh_type mesh;
+        std::optional<mesh_type> mesh;
         if (aScene->HasAnimations()) {
-            mesh =
-                processMesh<PositionNormalUvBoneVertex>(aScene->mMeshes[aNode->mMeshes[i]], aScene);
+            mesh = processMesh<PositionNormalUvBoneVertex>(
+                aScene->mMeshes[aNode->mMeshes[i]],
+                aScene,
+                aSkeleton);
         } else {
-            mesh = processMesh<PositionNormalUvVertex>(aScene->mMeshes[aNode->mMeshes[i]], aScene);
+            mesh = processMesh<PositionNormalUvVertex>(
+                aScene->mMeshes[aNode->mMeshes[i]],
+                aScene,
+                aSkeleton);
         }
-        meshes.push_back(mesh);
+        meshes.push_back(*mesh);
     }
     for (unsigned int i = 0; i < aNode->mNumChildren; i++) {
-        auto childMeshes = processNode(aNode->mChildren[i], aScene);
+        auto childMeshes = processNode(aNode->mChildren[i], aScene, aSkeleton);
         meshes.insert(
             meshes.end(),
             std::make_move_iterator(childMeshes.begin()),
@@ -334,4 +336,45 @@ ModelLoader::animation_map ModelLoader::processAnimations(const aiScene* aScene)
     }
 
     return animations;
+}
+
+std::size_t ModelLoader::buildSkeleton(
+    const aiNode*  aNode,
+    const aiScene* aScene,
+    Skeleton&      aSkeleton,
+    std::size_t    aIndent)
+{
+    std::size_t currentBoneIdx = aSkeleton.Bones.size();
+    std::string indent(aIndent, ' ');
+
+    TRACE("{}building node {} with {} children", indent, aNode->mName, aNode->mNumChildren);
+
+    aSkeleton.Bones.emplace_back(aNode->mName.C_Str());
+    mBonesMap[aNode->mName.C_Str()] = currentBoneIdx;
+
+    for (unsigned int meshIdx = 0; meshIdx < aNode->mNumMeshes; ++meshIdx) {
+        const aiMesh* mesh = aScene->mMeshes[aNode->mMeshes[meshIdx]];
+
+        for (unsigned int boneIdx = 0; boneIdx < mesh->mNumBones; ++boneIdx) {
+            const aiBone* bone = mesh->mBones[boneIdx];
+
+            auto it = mBonesMap.find(bone->mName.C_Str());
+            if (it == mBonesMap.end()) {
+                TRACE("{}adding bone {} to skeleton", indent, bone->mName);
+                std::size_t currentIdx = aSkeleton.Bones.size();
+                mBonesMap.emplace(bone->mName.C_Str(), currentIdx);
+                aSkeleton.Bones.emplace_back(bone->mName.C_Str(), toGLMMat4(bone->mOffsetMatrix));
+            } else {
+                TRACE("{}patching bone {} in skeleton", indent, bone->mName);
+                aSkeleton.Bones[it->second].Offset = toGLMMat4(bone->mOffsetMatrix);
+            }
+        }
+    }
+
+    for (unsigned int childIdx = 0; childIdx < aNode->mNumChildren; childIdx++) {
+        std::size_t childNodeIndex =
+            buildSkeleton(aNode->mChildren[childIdx], aScene, aSkeleton, aIndent + 2);
+        aSkeleton.Bones[currentBoneIdx].Children.push_back(childNodeIndex);
+    }
+    return currentBoneIdx;
 }
