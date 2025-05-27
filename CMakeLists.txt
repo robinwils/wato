@@ -353,6 +353,7 @@ target_sources(wato
     src/renderer/model.cpp
     src/renderer/model_loader.cpp
     src/renderer/renderer.cpp
+    src/renderer/skeleton.cpp
     src/systems/action.cpp
     src/systems/input.cpp
     src/systems/render.cpp
