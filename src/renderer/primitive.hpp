@@ -10,6 +10,7 @@
 #include <variant>
 #include <vector>
 
+#include "core/sys/log.hpp"
 #include "renderer/vertex_layout.hpp"
 
 template <typename VL>
@@ -19,13 +20,16 @@ class Primitive
     using indice_type = uint16_t;
     using layout_type = VL;
 
-    Primitive(Material* aMaterial) : mMaterial(aMaterial), mIsInitialized(false) {}
     Primitive(
-        Material*                aMaterial,
         std::vector<layout_type> aVertices,
-        std::vector<indice_type> aIndices)
-        : mVertices(std::move(aVertices)), mIndices(std::move(aIndices)), mMaterial(aMaterial)
+        std::vector<indice_type> aIndices,
+        Material*                aMaterial)
+        : mVertices(std::move(aVertices)),
+          mIndices(std::move(aIndices)),
+          mMaterial(aMaterial),
+          mIsInitialized(false)
     {
+        InitializePrimitive();
     }
     Primitive(const Primitive& aOther) noexcept
         : mVertices(aOther.mVertices),
@@ -40,10 +44,9 @@ class Primitive
         : mVertices(std::move(aOther.mVertices)),
           mIndices(std::move(aOther.mIndices)),
           mMaterial(std::move(aOther.mMaterial)),
+          mIsInitialized(aOther.mIsInitialized),
           mVertexBufferHandle(aOther.mVertexBufferHandle),
-          mIndexBufferHandle(aOther.mIndexBufferHandle),
-
-          mIsInitialized(aOther.mIsInitialized)
+          mIndexBufferHandle(aOther.mIndexBufferHandle)
     {
         aOther.mVertexBufferHandle.idx = bgfx::kInvalidHandle;
         aOther.mIndexBufferHandle.idx  = bgfx::kInvalidHandle;
@@ -52,18 +55,22 @@ class Primitive
 
     Primitive& operator=(Primitive& aOther)
     {
-        mVertexBufferHandle = aOther.mVertexBufferHandle;
-        mIndexBufferHandle  = aOther.mIndexBufferHandle;
         mVertices           = std::move(aOther.mVertices);
         mIndices            = std::move(aOther.mIndices);
+        mMaterial           = aOther.mMaterial;
+        mIsInitialized      = aOther.mIsInitialized;
+        mVertexBufferHandle = aOther.mVertexBufferHandle;
+        mIndexBufferHandle  = aOther.mIndexBufferHandle;
         return *this;
     }
     Primitive& operator=(Primitive&& aOther)
     {
-        mVertexBufferHandle = aOther.mVertexBufferHandle;
-        mIndexBufferHandle  = aOther.mIndexBufferHandle;
         mVertices           = std::move(aOther.mVertices);
         mIndices            = std::move(aOther.mIndices);
+        mMaterial           = aOther.mMaterial;
+        mIsInitialized      = aOther.mIsInitialized;
+        mVertexBufferHandle = aOther.mVertexBufferHandle;
+        mIndexBufferHandle  = aOther.mIndexBufferHandle;
         return *this;
     }
     virtual ~Primitive() { destroyPrimitive(); }
@@ -84,8 +91,15 @@ class Primitive
         assert(!mVertices.empty());
         assert(!mIndices.empty());
 
+        if (mIsInitialized) {
+            return;
+        }
+
         const bgfx::VertexLayout vertexLayout = layout_type::GetVertexLayout();
 
+        DBG("initializing primitive with {} vertices and {} vertex layout data size",
+            mVertices.size(),
+            sizeof(layout_type));
         mVertexBufferHandle = bgfx::createVertexBuffer(
             bgfx::makeRef(mVertices.data(), sizeof(layout_type) * mVertices.size()),
             vertexLayout);
