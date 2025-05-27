@@ -321,7 +321,6 @@ target_sources(wato
     src/renderer/blinn_phong_material.hpp
     src/renderer/cache.hpp
     src/renderer/material.hpp
-    src/renderer/mesh_primitive.hpp
     src/renderer/model_loader.hpp
     src/renderer/model.hpp
     src/renderer/plane_primitive.hpp

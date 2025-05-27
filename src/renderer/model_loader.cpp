@@ -12,7 +12,6 @@
 #include "glm/ext/matrix_transform.hpp"
 #include "renderer/blinn_phong_material.hpp"
 #include "renderer/cache.hpp"
-#include "renderer/mesh_primitive.hpp"
 #include "renderer/shader.hpp"
 
 using namespace entt::literals;
@@ -173,7 +172,7 @@ ModelLoader::mesh_type ModelLoader::processMesh(const aiMesh* aMesh, const aiSce
         }
     }
 
-    return new MeshPrimitive(std::move(vertices), std::move(indices), m);
+    return new Primitive(std::move(vertices), std::move(indices), m);
 }
 
 void ModelLoader::processMetaData(const aiNode* aNode, const aiScene* /*aScene*/)

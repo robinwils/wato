@@ -19,26 +19,24 @@ class PlanePrimitive : public Primitive<PositionNormalUvVertex>
     PlanePrimitive& operator=(const PlanePrimitive&) = delete;
     PlanePrimitive& operator=(PlanePrimitive&&)      = default;
 
-    explicit PlanePrimitive(Material* aMaterial) : Primitive<PositionNormalUvVertex>(aMaterial)
+    explicit PlanePrimitive(Material* aMaterial)
+        : Primitive<PositionNormalUvVertex>(
+              {
+                  {{+0.5F, +0.0F, -0.5F}, {0.0F, +1.0F, 0.0F}, {0.0F, 1.0F}},
+                  {{-0.5F, +0.0F, -0.5F}, {0.0F, +1.0F, 0.0F}, {0.0F, 0.0F}},
+                  {{-0.5F, +0.0F, +0.5F}, {0.0F, +1.0F, 0.0F}, {1.0F, 0.0F}},
+                  {{+0.5F, +0.0F, +0.5F}, {0.0F, +1.0F, 0.0F}, {1.0F, 1.0F}}
+    },
+              {
+                  0,
+                  1,
+                  2,
+                  0,
+                  2,
+                  3,
+              },
+              aMaterial)
     {
-        mVertices = {
-            {{+0.5F, +0.0F, -0.5F}, {0.0F, +1.0F, 0.0F}, {0.0F, 1.0F}},
-            {{-0.5F, +0.0F, -0.5F}, {0.0F, +1.0F, 0.0F}, {0.0F, 0.0F}},
-            {{-0.5F, +0.0F, +0.5F}, {0.0F, +1.0F, 0.0F}, {1.0F, 0.0F}},
-            {{+0.5F, +0.0F, +0.5F}, {0.0F, +1.0F, 0.0F}, {1.0F, 1.0F}},
-        };
-
-        mIndices = {
-            0,
-            1,
-            2,  //
-
-            0,
-            2,
-            3,  //
-        };
-
-        Primitive::InitializePrimitive();
     }
 
     [[nodiscard]] glm::vec3 Normal(const glm::quat& aOrientation) const
