@@ -5,7 +5,10 @@
 #include <tinystl/buffer.h>
 
 #include <glm/gtx/string_cast.hpp>
+#include <list>
+#include <map>
 #include <stdexcept>
+#include <utility>
 #include <vector>
 
 #include "core/sys/log.hpp"
@@ -67,39 +70,54 @@ void ModelLoader::processBones(
     std::vector<PositionNormalUvBoneVertex>& aVertices,
     Skeleton&                                aSkeleton)
 {
+    std::vector<std::vector<std::pair<float, int>>> boneInfluences(aVertices.size());
     for (unsigned int boneIdx = 0; boneIdx < aMesh->mNumBones; ++boneIdx) {
         const aiBone* bone = aMesh->mBones[boneIdx];
 
         TRACE("  bone {} with {} vertex weights", bone->mName, bone->mNumWeights);
 
         if (bone->mNumWeights > 0) {
-            float totalW = 0.0f;
+            std::vector<std::pair<aiVertexWeight, int>> influences;
+            float                                       totalWeight = 0.0f;
             for (unsigned int wIdx = 0; wIdx < bone->mNumWeights; ++wIdx) {
                 const aiVertexWeight& vertexW = bone->mWeights[wIdx];
 
-                BX_ASSERT(
-                    vertexW.mVertexId < aVertices.size(),
-                    "vertex ID bigger than vertices parsed");
+        for (unsigned int wIdx = 0; wIdx < bone->mNumWeights; ++wIdx) {
+            const aiVertexWeight& vertexW = bone->mWeights[wIdx];
 
-                // setting bone influence inside vertex layout, with a maximum of 4 per vertex.
-                PositionNormalUvBoneVertex& vertex = aVertices[vertexW.mVertexId];
-                for (int i = 0; i < 4; ++i) {
-                    if (vertex.BoneWeights[i] < 0) {
-                        vertex.BoneIndices[i] =
-                            static_cast<int>(aSkeleton.BonesMap[bone->mName.C_Str()]);
-                        vertex.BoneWeights[i] = vertexW.mWeight;
-                        break;
-                    }
-                }
+                influences.emplace_back(vertexW, static_cast<int>(mBonesMap[bone->mName.C_Str()]));
 
-                // TRACE(
-                //     "    vertex weight {} with {} vertex weights",
-                //     vertexW.mVertexId,
-                //     vertexW.mWeight);
+            boneInfluences[vertexW.mVertexId].emplace_back(vertexW.mWeight, *skBoneIdx);
 
-                totalW += vertexW.mWeight;
+            TRACE(
+                "    vertex weight {} with {} vertex weights",
+                vertexW.mVertexId,
+                vertexW.mWeight);
+        }
+    }
+
+    for (unsigned int i = 0; i < boneInfluences.size(); ++i) {
+        std::vector<std::pair<float, int>> influences = boneInfluences[i];
+        PositionNormalUvBoneVertex&        vertex     = aVertices[i];
+
+        std::sort(influences.begin(), influences.end(), [](const auto& a, const auto& b) {
+            return a.first > b.first;
+        });
+
+        float totalWeight = 0.0f;
+        for (int j = 0; j < influences.size() && j < 4; ++j) {
+            vertex.BoneWeights[j] = influences[j].first;
+            vertex.BoneIndices[j] = influences[j].second;
+            DBG("keeping normalized vertex weight for bone index {}: {}",
+                vertex.BoneIndices[j],
+                vertex.BoneWeights[j]);
+            totalWeight += vertex.BoneWeights[j];
+        }
+
+        if (totalWeight > 0.0f) {
+            for (int j = 0; j < 4 && vertex.BoneWeights[j] != -1; ++j) {
+                vertex.BoneWeights[j] /= totalWeight;
             }
-            TRACE("    total weight = {}", totalW);
         }
     }
 }
