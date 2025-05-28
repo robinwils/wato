@@ -56,11 +56,11 @@ class ModelLoader final
             throw std::runtime_error(
                 fmt::format("could not load {}: {}", assetPath, importer.GetErrorString()));
         }
-        DBG("model {} has:", aName);
-        DBG("  {} meshes", scene->mNumMeshes);
-        DBG("  {} embedded textures", scene->mNumTextures);
-        DBG("  {} materials", scene->mNumMaterials);
-        DBG("  {} animations", scene->mNumAnimations);
+        spdlog::debug("model {} has:", aName);
+        spdlog::debug("  {} meshes", scene->mNumMeshes);
+        spdlog::debug("  {} embedded textures", scene->mNumTextures);
+        spdlog::debug("  {} materials", scene->mNumMaterials);
+        spdlog::debug("  {} animations", scene->mNumAnimations);
 
         Skeleton skeleton;
         if (scene->HasAnimations()) {
