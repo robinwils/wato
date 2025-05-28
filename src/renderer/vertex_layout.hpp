@@ -29,7 +29,7 @@ struct PositionNormalUvBoneVertex {
     glm::vec3  Position;
     glm::vec3  Normal;
     glm::vec2  Uv;
-    glm::vec4  BoneWeights{0};
+    glm::vec4  BoneWeights{-1};
     glm::ivec4 BoneIndices{-1};
 
     static bgfx::VertexLayout GetVertexLayout()
