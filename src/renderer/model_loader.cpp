@@ -126,6 +126,12 @@ template <typename VL>
 ModelLoader::mesh_type
 ModelLoader::processMesh(const aiMesh* aMesh, const aiScene* aScene, Skeleton& aSkeleton)
 {
+    TRACE(
+        "mesh {} has {} vertices, {} indices, {} bones",
+        aMesh->mName,
+        aMesh->mNumVertices,
+        aMesh->mNumFaces,
+        aMesh->mNumBones);
     std::vector<VL> vertices;
     for (unsigned int i = 0; i < aMesh->mNumVertices; ++i) {
         VL vertex;
@@ -165,14 +171,7 @@ ModelLoader::processMesh(const aiMesh* aMesh, const aiScene* aScene, Skeleton& a
             shader = WATO_PROGRAM_CACHE["blinnphong"_hs];
         }
 
-        TRACE(
-            "mesh {} has {} vertices, {} indices, {} bones, {} diffuse and {} specular textures",
-            aMesh->mName,
-            aMesh->mNumVertices,
-            aMesh->mNumFaces,
-            aMesh->mNumBones,
-            textures.size(),
-            specTextures.size());
+        TRACE("  {} diffuse and {} specular textures", textures.size(), specTextures.size());
         if (textures.size() > 0 || specTextures.size() > 0) {
             m = new BlinnPhongMaterial(
                 shader,
@@ -286,6 +285,7 @@ ModelLoader::processNode(const aiNode* aNode, const aiScene* aScene, Skeleton& a
                 aScene,
                 aSkeleton);
         }
+        assert(mesh.has_value());
         meshes.push_back(*mesh);
     }
     for (unsigned int i = 0; i < aNode->mNumChildren; i++) {
