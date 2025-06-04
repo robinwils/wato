@@ -2,7 +2,22 @@
 
 #include <bx/debug.h>
 #include <bx/string.h>
+#include <spdlog/fmt/ranges.h>
 #include <spdlog/spdlog.h>
+
+#include <optional>
+
+template <typename T>
+struct fmt::formatter<std::optional<T>> : fmt::formatter<std::string> {
+    auto format(std::optional<T> aObj, format_context& aCtx) const -> decltype(aCtx.out())
+    {
+        if (aObj.has_value()) {
+            return fmt::format_to(aCtx.out(), "optional with value {}", *aObj);
+        } else {
+            return fmt::format_to(aCtx.out(), "(null optional)");
+        }
+    }
+};
 
 // TODO: real class/lib for logger
 #define LOG_PREFIX "" __FILE__ "(" BX_STRINGIZE(__LINE__) "): WATO"

@@ -4,6 +4,7 @@
 
 #include "renderer/animation.hpp"
 #include "renderer/primitive.hpp"
+#include "renderer/skeleton.hpp"
 
 class Model final
 {
@@ -17,9 +18,18 @@ class Model final
     {
     }
 
+    Model(mesh_container aMeshes, animation_map aAnimations, Skeleton aSkeleton)
+        : mMeshes(std::move(aMeshes)),
+          mAnimations(std::move(aAnimations)),
+          mSkeleton(std::move(aSkeleton))
+    {
+    }
+
     void Submit(glm::mat4 aModelMatrix, uint64_t aState = BGFX_STATE_DEFAULT);
 
+    const Skeleton&                Skeleton() const { return mSkeleton; }
    private:
     mesh_container mMeshes;
     animation_map  mAnimations;
+    ::Skeleton     mSkeleton;  // bind pose
 };
