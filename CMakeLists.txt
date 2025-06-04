@@ -153,6 +153,7 @@ target_compile_options(watolib PRIVATE "-DDOCTEST_CONFIG_DISABLE")
 target_compile_options(wato PRIVATE "-DDOCTEST_CONFIG_DISABLE")
 if(DEBUG_ENABLE)
   target_compile_definitions(wato_common INTERFACE SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE BX_CONFIG_DEBUG)
+  target_compile_options(wato_common INTERFACE "-ggdb" "-O0")
   set(WATO_DEBUG 1)
 else()
   set(WATO_DEBUG 0)
@@ -329,6 +330,7 @@ target_sources(wato
     src/renderer/skeleton.hpp
     src/renderer/vertex_layout.hpp
     src/systems/action.hpp
+    src/systems/animation.hpp
     src/systems/input.hpp
     src/systems/render.hpp
     src/systems/sync.hpp
@@ -355,6 +357,7 @@ target_sources(wato
     src/renderer/renderer.cpp
     src/renderer/skeleton.cpp
     src/systems/action.cpp
+    src/systems/animation.cpp
     src/systems/input.cpp
     src/systems/render.cpp
     src/systems/sync.cpp

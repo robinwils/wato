@@ -1,24 +1,30 @@
 #pragma once
 
+#include <glm/ext/quaternion_common.hpp>
 #include <glm/ext/vector_float3.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
-struct PositionKey {
-    glm::vec3 Position;
-    double    Time;
-};
+template <typename KT>
+struct AnimationKeyFrame {
+    using key_type = KT;
+    key_type Key;
+    double   Time;
 
-struct QuatKey {
-    glm::quat Rotation;
-    double    Time;
-};
+    constexpr key_type Interpolate(
+        const AnimationKeyFrame<key_type>& aOther,
+        const double                       aAnimTime) const
+    {
+        double f = (aAnimTime - Time) / (aOther.Time - Time);
 
-struct ScalingKey {
-    glm::vec3 Scaling;
-    double    Time;
+        if constexpr (std::is_same_v<key_type, glm::vec3>) {
+            return glm::mix(aOther.Key, Key, static_cast<float>(f));
+        } else {
+            return glm::slerp(aOther.Key, Key, static_cast<float>(f));
+        }
+    }
 };
 
 struct NodeAnimation {
@@ -50,8 +56,12 @@ class Animation
     Animation& operator=(Animation&&)      = default;
     virtual ~Animation()                   = default;
 
-    constexpr auto Duration() { return mDuration; }
-    constexpr auto TicksPerSecond() { return mTicksPerSecond; }
+    constexpr auto                 Duration() { return mDuration; }
+    constexpr auto                 TicksPerSecond() { return mTicksPerSecond; }
+    constexpr const NodeAnimation& GetNodeAnimation(const std::string& aBoneName) const
+    {
+        return mNodeAnimations.at(aBoneName);
+    }
 
    private:
     std::string        mName;

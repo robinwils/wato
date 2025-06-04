@@ -1,5 +1,6 @@
 #pragma once
 
+#include <optional>
 #include <unordered_map>
 
 #include "renderer/animation.hpp"
@@ -28,6 +29,15 @@ class Model final
     void Submit(glm::mat4 aModelMatrix, uint64_t aState = BGFX_STATE_DEFAULT);
 
     const Skeleton&                Skeleton() const { return mSkeleton; }
+    const std::optional<Animation> GetAnimation(const std::string& aName) const
+    {
+        auto it = mAnimations.find(aName);
+        if (it != mAnimations.end()) {
+            return it->second;
+        }
+        return std::nullopt;
+    }
+
    private:
     mesh_container mMeshes;
     animation_map  mAnimations;

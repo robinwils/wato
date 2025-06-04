@@ -10,6 +10,7 @@
 #include "input/action.hpp"
 #include "renderer/renderer.hpp"
 #include "systems/action.hpp"
+#include "systems/animation.hpp"
 #include "systems/input.hpp"
 #include "systems/render.hpp"
 #include "systems/sync.hpp"
@@ -48,6 +49,7 @@ class GameClient : public Application
     InputSystem               mInputSystem;
     RealTimeActionSystem      mRTActionSystem;
     DeterministicActionSystem mFTActionSystem;
+    AnimationSystem           mAnimationSystem;
     RenderSystem              mRenderSystem;
     RenderImguiSystem         mRenderImguiSystem;
     CameraSystem              mCameraSystem;
