@@ -22,28 +22,11 @@ struct ScalingKey {
 };
 
 struct NodeAnimation {
-    NodeAnimation() {}
-    NodeAnimation(NodeAnimation&& aOther) noexcept
-        : Name(std::move(aOther.Name)),
-          Positions(std::move(aOther.Positions)),
-          Rotations(std::move(aOther.Rotations)),
-          Scales(std::move(aOther.Scales))
-    {
-    }
+    std::string Name;
 
-    // Move assignment operator
-    NodeAnimation& operator=(NodeAnimation&& aOther) noexcept
-    {
-        Name      = std::move(aOther.Name);
-        Positions = std::move(aOther.Positions);
-        Rotations = std::move(aOther.Rotations);
-        Scales    = std::move(aOther.Scales);
-        return *this;
-    }
-    std::string              Name;
-    std::vector<PositionKey> Positions;
-    std::vector<QuatKey>     Rotations;
-    std::vector<ScalingKey>  Scales;
+    std::vector<AnimationKeyFrame<glm::vec3>> Positions;
+    std::vector<AnimationKeyFrame<glm::quat>> Rotations;
+    std::vector<AnimationKeyFrame<glm::vec3>> Scales;
 };
 
 class Animation
