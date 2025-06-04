@@ -75,7 +75,7 @@ void ModelLoader::processBones(
         const aiBone*                     bone      = aMesh->mBones[boneIdx];
         const std::optional<std::size_t>& skBoneIdx = mBonesMap[bone->mName.C_Str()];
 
-        TRACE("  bone {} with {} vertex weights", bone->mName, bone->mNumWeights);
+        DBG("  bone {} with {} vertex weights", bone->mName, bone->mNumWeights);
 
         if (bone->mNumWeights > 0) {
             std::vector<std::pair<aiVertexWeight, int>> influences;
@@ -127,8 +127,7 @@ template <typename VL>
 ModelLoader::mesh_type
 ModelLoader::processMesh(const aiMesh* aMesh, const aiScene* aScene, Skeleton& aSkeleton)
 {
-    TRACE(
-        "mesh {} has {} vertices, {} indices, {} bones",
+    DBG("mesh {} has {} vertices, {} indices, {} bones",
         aMesh->mName,
         aMesh->mNumVertices,
         aMesh->mNumFaces,
@@ -172,7 +171,7 @@ ModelLoader::processMesh(const aiMesh* aMesh, const aiScene* aScene, Skeleton& a
             shader = WATO_PROGRAM_CACHE["blinnphong"_hs];
         }
 
-        TRACE("  {} diffuse and {} specular textures", textures.size(), specTextures.size());
+        DBG("  {} diffuse and {} specular textures", textures.size(), specTextures.size());
         if (textures.size() > 0 || specTextures.size() > 0) {
             m = new BlinnPhongMaterial(
                 shader,
@@ -264,8 +263,7 @@ void ModelLoader::processMetaData(const aiNode* aNode, const aiScene* /*aScene*/
 ModelLoader::mesh_container
 ModelLoader::processNode(const aiNode* aNode, const aiScene* aScene, Skeleton& aSkeleton)
 {
-    TRACE(
-        "node {} with {} meshes, {} children",
+    DBG("node {} with {} meshes, {} children",
         aNode->mName,
         aNode->mNumMeshes,
         aNode->mNumChildren);
@@ -305,8 +303,7 @@ Animation ModelLoader::processAnimation(const aiAnimation* aAnimation)
     for (unsigned int i = 0; i < aAnimation->mNumChannels; ++i) {
         const aiNodeAnim* channel = aAnimation->mChannels[i];
         NodeAnimation     nodeAnimation;
-        TRACE(
-            "  node anim {} with {} position keys, {} rotation keys, {} scaling keys",
+        DBG("  node anim {} with {} position keys, {} rotation keys, {} scaling keys",
             channel->mNodeName,
             channel->mNumPositionKeys,
             channel->mNumRotationKeys,
@@ -345,8 +342,7 @@ ModelLoader::animation_map ModelLoader::processAnimations(const aiScene* aScene)
     ModelLoader::animation_map animations;
     for (unsigned int animIdx = 0; animIdx < aScene->mNumAnimations; ++animIdx) {
         const aiAnimation* anim = aScene->mAnimations[animIdx];
-        TRACE(
-            "animation {} with duration {}, {} ticks/s",
+        DBG("animation {} with duration {}, {} ticks/s",
             anim->mName,
             anim->mDuration,
             anim->mTicksPerSecond);
