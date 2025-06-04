@@ -4,6 +4,7 @@
 
 #include <variant>
 
+#include "components/animator.hpp"
 #include "components/creep.hpp"
 #include "components/health.hpp"
 #include "components/imgui.hpp"
@@ -63,6 +64,7 @@ void DefaultContextHandler::operator()(Registry& aRegistry, const SendCreepPaylo
     aRegistry.emplace<Health>(creep, 100.0f);
     aRegistry.emplace<Creep>(creep, aPayload.Type);
     aRegistry.emplace<SceneObject>(creep, "phoenix"_hs);
+    aRegistry.emplace<Animator>(creep, 0.0f, "Take 001");
 
     auto* body = phy.CreateRigidBody(
         creep,
