@@ -28,6 +28,7 @@ class ModelLoader final
    public:
     using mesh_type      = Model::mesh_type;
     using mesh_container = Model::mesh_container;
+    using bone_index_map = std::unordered_map<std::string, std::optional<std::size_t>>;
     using animation_map  = Model::animation_map;
     using result_type    = std::shared_ptr<Model>;
 
@@ -64,6 +65,12 @@ class ModelLoader final
 
         Skeleton skeleton;
         if (scene->HasAnimations()) {
+            populateBoneNames(scene->mRootNode, scene);
+            if (!mBonesMap.empty()) {
+                spdlog::debug("got bones: {}", fmt::join(mBonesMap, ", "));
+            } else {
+                spdlog::warn("got animations but no bones");
+            }
             buildSkeleton(scene->mRootNode, scene, skeleton, 0);
         }
         auto          meshes = processNode(scene->mRootNode, scene, skeleton);
@@ -74,7 +81,10 @@ class ModelLoader final
 
         PrintSkeleton(skeleton);
 
-        return std::make_shared<Model>(std::move(meshes), std::move(animations));
+        return std::make_shared<Model>(
+            std::move(meshes),
+            std::move(animations),
+            std::move(skeleton));
     }
 
     result_type operator()(mesh_type aPrimitive)
@@ -100,11 +110,12 @@ class ModelLoader final
                  const aiScene*                           aScene,
                  std::vector<PositionNormalUvBoneVertex>& aVertices,
                  Skeleton&                                aSkeleton);
+    void        populateBoneNames(const aiNode* aNode, const aiScene* aScene);
     std::size_t buildSkeleton(
         const aiNode*  aNode,
         const aiScene* aScene,
         Skeleton&      aSkeleton,
         std::size_t    aIndent);
 
-    std::unordered_map<std::string, std::size_t> mBonesMap;
+    bone_index_map mBonesMap;
 };
