@@ -51,9 +51,9 @@ class Animation
     {
     }
 
-    constexpr auto                 Duration() { return mDuration; }
-    constexpr auto                 TicksPerSecond() { return mTicksPerSecond; }
-    constexpr const NodeAnimation& GetNodeAnimation(const std::string& aBoneName) const
+    constexpr auto       Duration() { return mDuration; }
+    constexpr auto       TicksPerSecond() { return mTicksPerSecond; }
+    const NodeAnimation& GetNodeAnimation(const std::string& aBoneName) const
     {
         return mNodeAnimations.at(aBoneName);
     }
