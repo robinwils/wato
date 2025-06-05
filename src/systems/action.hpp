@@ -8,7 +8,6 @@
 class ActionContextHandler
 {
    public:
-    ActionContextHandler()          = default;
     virtual ~ActionContextHandler() = default;
 
     virtual void
@@ -21,9 +20,6 @@ class ActionContextHandler
 class DefaultContextHandler : public ActionContextHandler
 {
    public:
-    DefaultContextHandler()  = default;
-    ~DefaultContextHandler() = default;
-
     void operator()(Registry& aRegistry, const MovePayload& aPayload, const float aDeltaTime)
         override;
     void operator()(Registry& aRegistry, const SendCreepPayload& aPayload) override;
@@ -35,9 +31,6 @@ class DefaultContextHandler : public ActionContextHandler
 class PlacementModeContextHandler : public DefaultContextHandler
 {
    public:
-    PlacementModeContextHandler()  = default;
-    ~PlacementModeContextHandler() = default;
-
     void operator()(Registry&, const SendCreepPayload&) override {};
     void operator()(Registry& aRegistry, const BuildTowerPayload& aPayload) override;
     void operator()(Registry& aRegistry, const PlacementModePayload& aPayload) override;
@@ -46,9 +39,6 @@ class PlacementModeContextHandler : public DefaultContextHandler
 class ServerContextHandler : public ActionContextHandler
 {
    public:
-    ServerContextHandler()  = default;
-    ~ServerContextHandler() = default;
-
     void operator()(Registry&, const SendCreepPayload&) override {};
     void operator()(Registry& aRegistry, const BuildTowerPayload& aPayload) override;
     void operator()(Registry&, const PlacementModePayload&) override {}
