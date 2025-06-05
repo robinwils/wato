@@ -28,7 +28,7 @@ class Model final
 
     void Submit(glm::mat4 aModelMatrix, uint64_t aState = BGFX_STATE_DEFAULT);
 
-    const Skeleton&                Skeleton() const { return mSkeleton; }
+    const ::Skeleton&              Skeleton() const { return mSkeleton; }
     const std::optional<Animation> GetAnimation(const std::string& aName) const
     {
         auto it = mAnimations.find(aName);
