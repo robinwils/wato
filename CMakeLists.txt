@@ -379,8 +379,8 @@ target_link_libraries(watolib
 
 target_link_libraries(wato
   watolib
-  bgfxDebug bimg_decodeDebug
-  bimg_encodeDebug
+  bgfxDebug
+  bimg_decodeDebug
   bimgDebug
 )
 
