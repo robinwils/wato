@@ -26,8 +26,7 @@ class GameClient : public Application
         mRegistry.ctx().emplace<Renderer>();
         mRegistry.ctx().emplace<ENetClient>();
     }
-    virtual ~GameClient() = default;
-
+    virtual ~GameClient()                    = default;
     GameClient(const GameClient&)            = delete;
     GameClient(GameClient&&)                 = delete;
     GameClient& operator=(const GameClient&) = delete;

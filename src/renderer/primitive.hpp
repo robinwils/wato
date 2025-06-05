@@ -31,48 +31,7 @@ class Primitive
     {
         InitializePrimitive();
     }
-    Primitive(const Primitive& aOther) noexcept
-        : mVertices(aOther.mVertices),
-          mIndices(aOther.mIndices),
-          mMaterial(aOther.mMaterial),
-          mIsInitialized(aOther.mIsInitialized),
-          mVertexBufferHandle(aOther.mVertexBufferHandle),
-          mIndexBufferHandle(aOther.mIndexBufferHandle)
-    {
-    }
-    Primitive(Primitive&& aOther) noexcept
-        : mVertices(std::move(aOther.mVertices)),
-          mIndices(std::move(aOther.mIndices)),
-          mMaterial(std::move(aOther.mMaterial)),
-          mIsInitialized(aOther.mIsInitialized),
-          mVertexBufferHandle(aOther.mVertexBufferHandle),
-          mIndexBufferHandle(aOther.mIndexBufferHandle)
-    {
-        aOther.mVertexBufferHandle.idx = bgfx::kInvalidHandle;
-        aOther.mIndexBufferHandle.idx  = bgfx::kInvalidHandle;
-        aOther.mIsInitialized          = false;
-    }
 
-    Primitive& operator=(Primitive& aOther)
-    {
-        mVertices           = std::move(aOther.mVertices);
-        mIndices            = std::move(aOther.mIndices);
-        mMaterial           = aOther.mMaterial;
-        mIsInitialized      = aOther.mIsInitialized;
-        mVertexBufferHandle = aOther.mVertexBufferHandle;
-        mIndexBufferHandle  = aOther.mIndexBufferHandle;
-        return *this;
-    }
-    Primitive& operator=(Primitive&& aOther)
-    {
-        mVertices           = std::move(aOther.mVertices);
-        mIndices            = std::move(aOther.mIndices);
-        mMaterial           = aOther.mMaterial;
-        mIsInitialized      = aOther.mIsInitialized;
-        mVertexBufferHandle = aOther.mVertexBufferHandle;
-        mIndexBufferHandle  = aOther.mIndexBufferHandle;
-        return *this;
-    }
     virtual ~Primitive() { destroyPrimitive(); }
 
     virtual void Submit(uint8_t aDiscardStates = BGFX_DISCARD_ALL) const

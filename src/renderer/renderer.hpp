@@ -8,13 +8,6 @@
 class Renderer
 {
    public:
-    Renderer() {}
-    Renderer(Renderer&&)                 = default;
-    Renderer(const Renderer&)            = default;
-    Renderer& operator=(Renderer&&)      = delete;
-    Renderer& operator=(const Renderer&) = delete;
-    ~Renderer()                          = default;
-
     void Init(WatoWindow& aWin);
     void Resize(WatoWindow& aWin);
     void Clear();
@@ -29,7 +22,7 @@ class Renderer
     [[nodiscard]] bool IsInitialized() const noexcept { return mIsInit; }
 
    private:
-    const bgfx::ViewId CLEAR_VIEW = 0;
-    bgfx::Init         mInitParams;
-    bool               mIsInit;
+    static constexpr bgfx::ViewId kClearView = 0;
+    bgfx::Init                    mInitParams;
+    bool                          mIsInit;
 };

@@ -50,11 +50,6 @@ class Animation
           mNodeAnimations(std::move(aNodeAnimations))
     {
     }
-    Animation(const Animation&)            = default;
-    Animation(Animation&&)                 = default;
-    Animation& operator=(const Animation&) = default;
-    Animation& operator=(Animation&&)      = default;
-    virtual ~Animation()                   = default;
 
     constexpr auto                 Duration() { return mDuration; }
     constexpr auto                 TicksPerSecond() { return mTicksPerSecond; }

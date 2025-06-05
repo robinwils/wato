@@ -14,11 +14,6 @@
 class PlanePrimitive : public Primitive<PositionNormalUvVertex>
 {
    public:
-    PlanePrimitive(const PlanePrimitive&)            = delete;
-    PlanePrimitive(PlanePrimitive&&)                 = default;
-    PlanePrimitive& operator=(const PlanePrimitive&) = delete;
-    PlanePrimitive& operator=(PlanePrimitive&&)      = default;
-
     explicit PlanePrimitive(Material* aMaterial)
         : Primitive<PositionNormalUvVertex>(
               {

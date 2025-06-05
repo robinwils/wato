@@ -79,12 +79,6 @@ struct RingBuffer {
 
     RingBuffer() : mPrevious(kCapacity - 1), mCtrl(kCapacity) {}
 
-    RingBuffer(const RingBuffer&)            = delete;
-    RingBuffer(RingBuffer&&)                 = delete;
-    RingBuffer& operator=(const RingBuffer&) = delete;
-    RingBuffer& operator=(RingBuffer&&)      = delete;
-    ~RingBuffer()                            = default;
-
     inline void Push(const element_type& aElt = std::nullopt)
     {
         ensureReserved();

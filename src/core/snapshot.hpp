@@ -73,7 +73,7 @@ class ByteOutputArchive
 
    public:
     ByteOutputArchive() = default;
-    ByteOutputArchive(byte_stream& aOutStream) : mStorage(aOutStream) {}
+    explicit ByteOutputArchive(byte_stream& aOutStream) : mStorage(aOutStream) {}
 
     void operator()(entt::entity aEntity) { Write<entt::entity>(&aEntity, 1); }
 

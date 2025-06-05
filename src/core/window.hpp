@@ -11,11 +11,8 @@ class WatoWindow
 {
    public:
     WatoWindow(int aWidth, int aHeight) : mWidth(aWidth), mHeight(aHeight), mIsInit(false) {}
-    ~WatoWindow() = default;
 
-    WatoWindow(WatoWindow&&)                 = default;
     WatoWindow(const WatoWindow&)            = delete;
-    WatoWindow& operator=(WatoWindow&&)      = default;
     WatoWindow& operator=(const WatoWindow&) = delete;
 
     void Init();
@@ -53,8 +50,9 @@ class WatoWindow
 
     [[nodiscard]] bool IsInitialized() const noexcept { return mIsInit; }
 
-    [[nodiscard]] std::pair<glm::vec3, glm::vec3> MouseUnproject(const Camera& aCam,
-        const glm::vec3&                                                       aCamPos) const;
+    [[nodiscard]] std::pair<glm::vec3, glm::vec3> MouseUnproject(
+        const Camera&    aCam,
+        const glm::vec3& aCamPos) const;
 
    private:
     struct GLFWwindowDeleter {

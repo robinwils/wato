@@ -50,12 +50,12 @@ void Renderer::Init(WatoWindow& aWin)
 void Renderer::Resize(WatoWindow& aWin)
 {
     bgfx::reset(aWin.Width<uint32_t>(), aWin.Height<uint32_t>(), BGFX_RESET_VSYNC);
-    bgfx::setViewRect(CLEAR_VIEW, 0, 0, bgfx::BackbufferRatio::Equal);
+    bgfx::setViewRect(kClearView, 0, 0, bgfx::BackbufferRatio::Equal);
 }
 
 void Renderer::Clear()
 {
-    bgfx::touch(CLEAR_VIEW);
+    bgfx::touch(kClearView);
     // Use debug font to print information about this example.
     bgfx::dbgTextClear();
 }
