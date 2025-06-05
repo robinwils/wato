@@ -10,7 +10,10 @@
 class WatoWindow
 {
    public:
-    WatoWindow(int aWidth, int aHeight) : mWidth(aWidth), mHeight(aHeight), mIsInit(false) {}
+    WatoWindow(int aWidth, int aHeight)
+        : mWidth(aWidth), mHeight(aHeight), mIsInit(false), mWayland(false)
+    {
+    }
 
     WatoWindow(const WatoWindow&)            = delete;
     WatoWindow& operator=(const WatoWindow&) = delete;
@@ -48,7 +51,8 @@ class WatoWindow
         mHeight = aHeight;
     }
 
-    [[nodiscard]] bool IsInitialized() const noexcept { return mIsInit; }
+    [[nodiscard]] constexpr bool IsInitialized() const noexcept { return mIsInit; }
+    [[nodiscard]] constexpr bool UseWayland() const noexcept { return mWayland; }
 
     [[nodiscard]] std::pair<glm::vec3, glm::vec3> MouseUnproject(
         const Camera&    aCam,
@@ -73,4 +77,5 @@ class WatoWindow
     Input mInput;
 
     bool mIsInit;
+    bool mWayland;
 };

@@ -2,11 +2,13 @@
 
 #include <GLFW/glfw3.h>
 #include <bx/bx.h>
+#include <spdlog/spdlog.h>
 
 #include <glm/ext/matrix_projection.hpp>
 
 #if BX_PLATFORM_LINUX
 #define GLFW_EXPOSE_NATIVE_X11
+#define GLFW_EXPOSE_NATIVE_WAYLAND
 #elif BX_PLATFORM_WINDOWS
 #define GLFW_EXPOSE_NATIVE_WIN32
 #elif BX_PLATFORM_OSX
@@ -50,7 +52,13 @@ void WatoWindow::Init()
 void* WatoWindow::GetNativeDisplay()
 {
 #if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
-    return glfwGetX11Display();
+    void* display = glfwGetX11Display();
+    if (display == nullptr) {
+        spdlog::warn("cannot get X11 display, trying wayland");
+        display  = glfwGetWaylandDisplay();
+        mWayland = mWayland || (display != nullptr);
+    }
+    return display;
 #else
     return nullptr;
 #endif
@@ -59,7 +67,14 @@ void* WatoWindow::GetNativeDisplay()
 void* WatoWindow::GetNativeWindow()
 {
 #if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
-    return reinterpret_cast<void*>(static_cast<uintptr_t>(glfwGetX11Window(mGLFWWindow.get())));
+    void* native =
+        reinterpret_cast<void*>(static_cast<uintptr_t>(glfwGetX11Window(mGLFWWindow.get())));
+    if (nullptr == native) {
+        spdlog::warn("cannot get X11 native window, trying wayland");
+        native   = glfwGetWaylandWindow(mGLFWWindow.get());
+        mWayland = mWayland || (native != nullptr);
+    }
+    return native;
 #elif BX_PLATFORM_OSX
     return glfwGetCocoaWindow(mGLFWWindow.get());
 #elif BX_PLATFORM_WINDOWS
@@ -69,8 +84,9 @@ void* WatoWindow::GetNativeWindow()
 #endif
 }
 
-std::pair<glm::vec3, glm::vec3> WatoWindow::MouseUnproject(const Camera& aCam,
-    const glm::vec3&                                                     aCamPos) const
+std::pair<glm::vec3, glm::vec3> WatoWindow::MouseUnproject(
+    const Camera&    aCam,
+    const glm::vec3& aCamPos) const
 {
     const MouseState& mouseState = mInput.MouseState;
     const float       x          = mouseState.Pos.x;

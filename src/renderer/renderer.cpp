@@ -18,6 +18,9 @@ void Renderer::Init(WatoWindow& aWin)
 
     mInitParams.platformData.ndt = aWin.GetNativeDisplay();
     mInitParams.platformData.nwh = aWin.GetNativeWindow();
+    if (aWin.UseWayland()) {
+        mInitParams.platformData.type = bgfx::NativeWindowHandleType::Wayland;
+    }
 
     if (mInitParams.platformData.ndt == nullptr && mInitParams.platformData.nwh == nullptr) {
         throw std::runtime_error("cannot get native window and display");
