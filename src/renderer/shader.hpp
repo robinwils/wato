@@ -5,20 +5,26 @@
 
 #include "bgfx/bgfx.h"
 
+struct UniformDesc {
+    bgfx::UniformType::Enum Type;
+    uint16_t                Number{1};
+};
+
 class Shader
 {
    public:
-    Shader(bgfx::ProgramHandle                               &aHandle,
-        std::unordered_map<std::string, bgfx::UniformHandle> &aUniforms)
+    using uniform_map = std::unordered_map<std::string, bgfx::UniformHandle>;
+
+    Shader(bgfx::ProgramHandle& aHandle, const uniform_map& aUniforms)
         : mUniforms(aUniforms), mHandle(aHandle)
     {
     }
 
-    bgfx::UniformHandle Uniform(const char *const aName) const { return mUniforms.at(aName); }
+    bgfx::UniformHandle Uniform(const char* const aName) const { return mUniforms.at(aName); }
 
     bgfx::ProgramHandle Program() const { return mHandle; }
 
    private:
-    std::unordered_map<std::string, bgfx::UniformHandle> mUniforms;
-    bgfx::ProgramHandle                                  mHandle;
+    uniform_map         mUniforms;
+    bgfx::ProgramHandle mHandle;
 };

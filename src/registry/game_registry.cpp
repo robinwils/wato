@@ -6,10 +6,7 @@
 
 #include "components/imgui.hpp"
 #include "components/light_source.hpp"
-#include "components/scene_object.hpp"
 #include "components/tile.hpp"
-#include "components/transform3d.hpp"
-#include "core/physics.hpp"
 #include "registry/registry.hpp"
 #include "renderer/blinn_phong_material.hpp"
 #include "renderer/cache.hpp"
@@ -29,32 +26,28 @@ void LoadShaders(Registry& aRegistry)
         "blinnphong"_hs,
         "vs_blinnphong",
         "fs_blinnphong",
-        std::unordered_map<std::string, bgfx::UniformType::Enum>{
-            {"s_diffuseTex",  bgfx::UniformType::Sampler},
-            {"s_specularTex", bgfx::UniformType::Sampler},
-            {"u_diffuse",     bgfx::UniformType::Vec4   },
-            {"u_specular",    bgfx::UniformType::Vec4   },
-            {"u_lightDir",    bgfx::UniformType::Vec4   },
-            {"u_lightCol",    bgfx::UniformType::Vec4   }
+        ProgramLoader::uniform_desc_map{
+            {"s_diffuseTex",  {bgfx::UniformType::Sampler}},
+            {"s_specularTex", {bgfx::UniformType::Sampler}},
+            {"u_diffuse",     {bgfx::UniformType::Vec4}   },
+            {"u_specular",    {bgfx::UniformType::Vec4}   },
+            {"u_lightDir",    {bgfx::UniformType::Vec4}   },
+            {"u_lightCol",    {bgfx::UniformType::Vec4}   }
     });
     WATO_PROGRAM_CACHE.load(
         "blinnphong_skinned"_hs,
         "vs_blinnphong_skinned",
         "fs_blinnphong",
-        std::unordered_map<std::string, bgfx::UniformType::Enum>{
-            {"s_diffuseTex",  bgfx::UniformType::Sampler},
-            {"s_specularTex", bgfx::UniformType::Sampler},
-            {"u_diffuse",     bgfx::UniformType::Vec4   },
-            {"u_specular",    bgfx::UniformType::Vec4   },
-            {"u_lightDir",    bgfx::UniformType::Vec4   },
-            {"u_lightCol",    bgfx::UniformType::Vec4   },
-            {"u_bones",       bgfx::UniformType::Mat4   }
+        ProgramLoader::uniform_desc_map{
+            {"s_diffuseTex",  {bgfx::UniformType::Sampler}  },
+            {"s_specularTex", {bgfx::UniformType::Sampler}  },
+            {"u_diffuse",     {bgfx::UniformType::Vec4}     },
+            {"u_specular",    {bgfx::UniformType::Vec4}     },
+            {"u_lightDir",    {bgfx::UniformType::Vec4}     },
+            {"u_lightCol",    {bgfx::UniformType::Vec4}     },
+            {"u_bones",       {bgfx::UniformType::Mat4, 128}}
     });
-    WATO_PROGRAM_CACHE.load(
-        "simple"_hs,
-        "vs_cubes",
-        "fs_cubes",
-        std::unordered_map<std::string, bgfx::UniformType::Enum>{});
+    WATO_PROGRAM_CACHE.load("simple"_hs, "vs_cubes", "fs_cubes", ProgramLoader::uniform_desc_map{});
 }
 
 void LoadTextures(Registry& aRegistry, uint32_t aWidth, uint32_t aHeight)

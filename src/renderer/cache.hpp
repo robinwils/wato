@@ -132,19 +132,18 @@ struct TextureLoader final {
 };
 
 struct ProgramLoader final {
-    using result_type = std::shared_ptr<Shader>;
+    using uniform_desc_map = std::unordered_map<std::string, UniformDesc>;
+    using result_type      = std::shared_ptr<Shader>;
 
-    result_type operator()(
-        const char*                                                     aVsName,
-        const char*                                                     aFsName,
-        const std::unordered_map<std::string, bgfx::UniformType::Enum>& aUniforms)
+    result_type
+    operator()(const char* aVsName, const char* aFsName, const uniform_desc_map& aUniforms)
     {
         auto handle = loadProgram(&mfr, aVsName, aFsName);
 
-        auto uniformHandles = std::unordered_map<std::string, bgfx::UniformHandle>();
-        for (auto&& [name, type] : aUniforms) {
+        auto uniformHandles = Shader::uniform_map{};
+        for (auto&& [name, desc] : aUniforms) {
             DBG("creating uniform '{}'", name);
-            uniformHandles[name] = bgfx::createUniform(name.c_str(), type);
+            uniformHandles[name] = bgfx::createUniform(name.c_str(), desc.Type, desc.Number);
         }
 
         return std::make_shared<Shader>(handle, uniformHandles);
