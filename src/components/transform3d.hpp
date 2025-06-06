@@ -42,6 +42,15 @@ struct Transform3D {
             aTransform.getOrientation().z);
     }
 
+    [[nodiscard]] constexpr glm::mat4 ModelMat() const
+    {
+        auto modelMat  = glm::identity<glm::mat4>();
+        modelMat       = glm::translate(modelMat, Position);
+        modelMat      *= glm::mat4_cast(Orientation);
+
+        return glm::scale(modelMat, Scale);
+    }
+
     constexpr static auto Serialize(auto& aArchive, const auto& aSelf)
     {
         aArchive.template Write<float>(glm::value_ptr(aSelf.Position), 3);
