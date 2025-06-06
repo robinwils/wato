@@ -43,13 +43,8 @@ void RenderSystem::operator()(Registry& aRegistry, const float aDeltaTime)
             // DBG("GOT Placement mode entity!")
         }
 
-        auto modelMat  = glm::identity<glm::mat4>();
-        modelMat       = glm::translate(modelMat, t.Position);
-        modelMat      *= glm::mat4_cast(t.Orientation);
-        modelMat       = glm::scale(modelMat, t.Scale);
-
         if (auto model = WATO_MODEL_CACHE[obj.ModelHash]; model) {
-            model->Submit(modelMat, state);
+            model->Submit(t.ModelMat(), state);
         }
     }
 }
