@@ -69,6 +69,19 @@ class WatoWindow
     };
     using glfw_window_ptr = std::unique_ptr<GLFWwindow, GLFWwindowDeleter>;
 
+    // raw callback handlers
+    static void keyCallback(
+        GLFWwindow* aWindow,
+        int32_t     aKey,
+        int32_t     aScancode,
+        int32_t     aAction,
+        int32_t     aMods);
+
+    static void scrollCallback(GLFWwindow* aWindow, double aXoffset, double aYoffset);
+    static void cursorPosCallback(GLFWwindow* aWindow, double aXpos, double aYpos);
+    static void
+    mouseButtonCallback(GLFWwindow* aWindow, int32_t aButton, int32_t aAction, int32_t aMods);
+
     int mWidth;
     int mHeight;
 

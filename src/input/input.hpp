@@ -1,7 +1,5 @@
 #pragma once
 
-#include <GLFW/glfw3.h>
-
 #include <array>
 #include <cstring>
 #include <glm/glm.hpp>
@@ -10,6 +8,7 @@
 #include "components/camera.hpp"
 
 class WatoWindow;
+
 struct Keyboard {
     enum Key {
         Space,
@@ -249,19 +248,6 @@ class Input
     Input() : MouseState(), mTowerPlacementMode(false), mCanBuild(true) {}
 
     void Init();
-
-    // raw callback handlers
-    static void KeyCallback(
-        GLFWwindow* aWindow,
-        int32_t     aKey,
-        int32_t     aScancode,
-        int32_t     aAction,
-        int32_t     aMods);
-
-    static void ScrollCallback(GLFWwindow* aWindow, double aXoffset, double aYoffset);
-    static void CursorPosCallback(GLFWwindow* aWindow, double aXpos, double aYpos);
-    static void
-    MouseButtonCallback(GLFWwindow* aWindow, int32_t aButton, int32_t aAction, int32_t aMods);
 
     void ExitTowerPlacementMode() { mTowerPlacementMode = false; }
     void EnterTowerPlacementMode() { mTowerPlacementMode = true; }
