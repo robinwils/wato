@@ -48,9 +48,7 @@ std::vector<entt::hashed_string> ModelLoader::processMaterialTextures(
 
 void ModelLoader::processBones(
     const aiMesh*                            aMesh,
-    const aiScene*                           aScene,
-    std::vector<PositionNormalUvBoneVertex>& aVertices,
-    Skeleton&                                aSkeleton)
+    std::vector<PositionNormalUvBoneVertex>& aVertices)
 {
     std::vector<std::vector<std::pair<float, int>>> boneInfluences(aVertices.size());
     for (unsigned int boneIdx = 0; boneIdx < aMesh->mNumBones; ++boneIdx) {
@@ -59,16 +57,21 @@ void ModelLoader::processBones(
 
         DBG("  bone {} with {} vertex weights", bone->mName, bone->mNumWeights);
 
-        if (bone->mNumWeights > 0) {
-            std::vector<std::pair<aiVertexWeight, int>> influences;
-            float                                       totalWeight = 0.0f;
-            for (unsigned int wIdx = 0; wIdx < bone->mNumWeights; ++wIdx) {
-                const aiVertexWeight& vertexW = bone->mWeights[wIdx];
+        if (bone->mNumWeights == 0) {
+            continue;
+        }
 
         for (unsigned int wIdx = 0; wIdx < bone->mNumWeights; ++wIdx) {
             const aiVertexWeight& vertexW = bone->mWeights[wIdx];
 
-                influences.emplace_back(vertexW, static_cast<int>(*skBoneIdx));
+            BX_ASSERT(
+                vertexW.mVertexId < aVertices.size(),
+                "vertex ID bigger than vertices parsed");
+
+            TRACE(
+                "    vertex weight {} with {} vertex weights",
+                vertexW.mVertexId,
+                vertexW.mWeight);
 
             boneInfluences[vertexW.mVertexId].emplace_back(vertexW.mWeight, *skBoneIdx);
 
@@ -182,7 +185,7 @@ ModelLoader::processMesh(const aiMesh* aMesh, const aiScene* aScene, Skeleton& a
 
     if constexpr (std::is_same_v<VL, PositionNormalUvBoneVertex>) {
         if (aMesh->HasBones()) {
-            processBones(aMesh, aScene, vertices, aSkeleton);
+            processBones(aMesh, vertices);
         }
     }
 
@@ -314,7 +317,7 @@ Animation ModelLoader::processAnimation(const aiAnimation* aAnimation)
     }
     return Animation(
         aAnimation->mName.C_Str(),
-        aAnimation->mDuration,
+        aAnimation->mDuration != 0 ? aAnimation->mDuration : 25.0,
         aAnimation->mTicksPerSecond,
         std::move(nodeAnimations));
 }
