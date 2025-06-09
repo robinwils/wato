@@ -31,7 +31,7 @@ class Application
    protected:
     using clock_type = std::chrono::steady_clock;
 
-    void StartGameInstance(Registry& aRegistry, const GameInstanceID aGameID);
+    void StartGameInstance(Registry& aRegistry, const GameInstanceID aGameID, const bool aIsServer);
     void AdvanceSimulation(Registry& aRegistry, const float aDeltaTime);
     void SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeight);
 

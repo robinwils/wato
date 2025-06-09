@@ -22,17 +22,30 @@ void Application::Init()
     spdlog::set_pattern("[%H:%M:%S %z thread %t] [%^%L%$] %v %@");
 }
 
-void Application::StartGameInstance(Registry& aRegistry, const GameInstanceID aGameID)
+void Application::StartGameInstance(
+    Registry&            aRegistry,
+    const GameInstanceID aGameID,
+    const bool           aIsServer)
 {
     spdlog::info("spawning game instance");
     auto& physics = aRegistry.ctx().emplace<Physics>();
+    auto& stack   = aRegistry.ctx().emplace<ActionContextStack>();
+
     aRegistry.ctx().emplace<ActionBuffer>();
-    aRegistry.ctx().emplace<ActionContextStack>();
     aRegistry.ctx().emplace<GameInstance>(aGameID, 0.0f, 0u);
 
     physics.Init(aRegistry);
     // TODO: leak ?
     physics.World()->setEventListener(new EventHandler(&aRegistry));
+
+    enum ActionContext::State actionContextState = ActionContext::State::Default;
+    if (aIsServer) {
+        actionContextState = ActionContext::State::Server;
+    }
+    stack.push_back(ActionContext{
+        .State    = actionContextState,
+        .Bindings = ActionBindings::Defaults(),
+        .Payload  = NormalPayload{}});
     SpawnMap(aRegistry, 20, 20);
 }
 

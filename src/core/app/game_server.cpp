@@ -85,6 +85,6 @@ GameInstanceID GameServer::createGameInstance(const NewGameRequest& aNewGame)
 
     Registry& registry = mGameInstances[gameID];
 
-    StartGameInstance(registry, gameID);
+    StartGameInstance(registry, gameID, true);
     return gameID;
 }
