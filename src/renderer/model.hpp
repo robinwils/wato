@@ -19,10 +19,15 @@ class Model final
     {
     }
 
-    Model(mesh_container aMeshes, animation_map aAnimations, Skeleton aSkeleton)
+    Model(
+        mesh_container aMeshes,
+        animation_map  aAnimations,
+        Skeleton       aSkeleton,
+        glm::mat4      aTransform)
         : mMeshes(std::move(aMeshes)),
           mAnimations(std::move(aAnimations)),
-          mSkeleton(std::move(aSkeleton))
+          mSkeleton(std::move(aSkeleton)),
+          mGlobalInverseTransform(std::move(aTransform))
     {
     }
 
@@ -37,9 +42,11 @@ class Model final
         }
         return std::nullopt;
     }
+    const glm::mat4 GlobalInverse() const { return mGlobalInverseTransform; }
 
    private:
     mesh_container mMeshes;
     animation_map  mAnimations;
     ::Skeleton     mSkeleton;  // bind pose
+    glm::mat4      mGlobalInverseTransform;
 };

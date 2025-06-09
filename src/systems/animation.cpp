@@ -48,6 +48,7 @@ void AnimationSystem::operator()(Registry& aRegistry, const float aDeltaTime)
                     .Skeleton      = &skeleton,
                     .Animator      = &animator,
                     .Time          = animationTime,
+                    .GlobalInverse = model->GlobalInverse(),
                 },
                 0,
                 glm::identity<glm::mat4>());
@@ -92,7 +93,8 @@ void AnimationSystem::animateBone(
 
     spdlog::trace("got global mat {}", glm::to_string(global));
 
-    aAnimCtx.Animator->FinalBonesMatrices[aBoneIdx] = global;
+    aAnimCtx.Animator->FinalBonesMatrices[aBoneIdx] =
+        aAnimCtx.GlobalInverse * global * bone.Offset.value();
 
     for (const Bone::index_type cIdx : bone.Children) {
         animateBone(aAnimCtx, cIdx, global);

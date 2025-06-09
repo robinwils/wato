@@ -17,6 +17,7 @@ class AnimationSystem : public System<AnimationSystem>
         const Skeleton* Skeleton;
         Animator*       Animator;
         double          Time;
+        glm::mat4       GlobalInverse;
     };
 
     void animateBone(
