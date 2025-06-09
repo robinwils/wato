@@ -65,8 +65,14 @@ struct fmt::formatter<ActionTag> : fmt::formatter<std::string> {
 };
 
 struct KeyState {
-    using InputButton = std::variant<Keyboard::Key, Mouse::Button>;
     enum class State { PressOnce, Hold };
+    using InputButton = std::variant<Keyboard::Key, Mouse::Button>;
+
+    KeyState() = delete;
+    KeyState(InputButton aKey, State aState, uint8_t aModifiers)
+        : Key(aKey), State(aState), Modifiers(aModifiers)
+    {
+    }
     InputButton Key;
     State       State;
     uint8_t     Modifiers;
@@ -271,6 +277,11 @@ constexpr Action kSendCreepAction = Action{
     .Payload = SendCreepPayload{.Type = CreepType::Simple}};
 
 struct ActionBinding {
+    ActionBinding() = delete;
+    ActionBinding(struct KeyState aKeyState, struct Action aAction)
+        : KeyState(aKeyState), Action(aAction)
+    {
+    }
     struct KeyState KeyState;
     struct Action   Action;
 };
