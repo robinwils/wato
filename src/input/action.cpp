@@ -9,51 +9,27 @@ ActionBindings ActionBindings::Defaults()
     ActionBindings bindings;
     bindings.AddBinding(
         "move_left",
-        KeyState{
-            .Key       = Keyboard::A,
-            .State     = KeyState::State::Hold,
-            .Modifiers = 0,
-        },
+        KeyState(Keyboard::A, KeyState::State::Hold, 0),
         kMoveLeftAction);
     bindings.AddBinding(
         "move_right",
-        KeyState{
-            .Key       = Keyboard::D,
-            .State     = KeyState::State::Hold,
-            .Modifiers = 0,
-        },
+        KeyState(Keyboard::D, KeyState::State::Hold, 0),
         kMoveRightAction);
     bindings.AddBinding(
         "move_front",
-        KeyState{
-            .Key       = Keyboard::W,
-            .State     = KeyState::State::Hold,
-            .Modifiers = 0,
-        },
+        KeyState(Keyboard::W, KeyState::State::Hold, 0),
         kMoveFrontAction);
     bindings.AddBinding(
         "move_back",
-        KeyState{
-            .Key       = Keyboard::S,
-            .State     = KeyState::State::Hold,
-            .Modifiers = 0,
-        },
+        KeyState(Keyboard::S, KeyState::State::Hold, 0),
         kMoveBackAction);
     bindings.AddBinding(
         "enter_placement_ctx",
-        KeyState{
-            .Key       = Keyboard::B,
-            .State     = KeyState::State::PressOnce,
-            .Modifiers = 0,
-        },
+        KeyState(Keyboard::B, KeyState::State::PressOnce, 0),
         kEnterPlacementModeAction);
     bindings.AddBinding(
         "send_creep",
-        KeyState{
-            .Key       = Keyboard::C,
-            .State     = KeyState::State::PressOnce,
-            .Modifiers = 0,
-        },
+        KeyState(Keyboard::C, KeyState::State::PressOnce, 0),
         kSendCreepAction);
     return bindings;
 }
@@ -63,19 +39,11 @@ ActionBindings ActionBindings::PlacementDefaults()
     ActionBindings bindings = Defaults();
     bindings.AddBinding(
         "build_tower",
-        KeyState{
-            .Key       = Mouse::Button::Left,
-            .State     = KeyState::State::PressOnce,
-            .Modifiers = 0,
-        },
+        KeyState(Mouse::Button::Left, KeyState::State::PressOnce, 0),
         kBuildTowerAction);
     bindings.AddBinding(
         "exit_placement_mode",
-        KeyState{
-            .Key       = Keyboard::Escape,
-            .State     = KeyState::State::PressOnce,
-            .Modifiers = 0,
-        },
+        KeyState(Keyboard::Escape, KeyState::State::PressOnce, 0),
         kExitPlacementModeAction);
     return bindings;
 }
@@ -132,8 +100,5 @@ void ActionBindings::AddBinding(
     const KeyState&    aState,
     const Action&      aAction)
 {
-    mBindings[aActionStr] = ActionBinding{
-        .KeyState = aState,
-        .Action   = aAction,
-    };
+    mBindings.emplace(aActionStr, ActionBinding(aState, aAction));
 }
