@@ -59,18 +59,6 @@ class ActionSystem : public System<Derived>
 
     void exitPlacement(Registry& aRegistry);
 
-    // Small function kept inline
-    void initializeContextStack(Registry& aRegistry)
-    {
-        auto& contextStack = aRegistry.ctx().get<ActionContextStack&>();
-        if (contextStack.empty()) {
-            contextStack.push_front(ActionContext{
-                .State    = ActionContext::State::Default,
-                .Bindings = ActionBindings::Defaults(),
-                .Payload  = NormalPayload{}});
-        }
-    }
-
     friend Derived;
 };
 
@@ -80,7 +68,6 @@ class RealTimeActionSystem : public ActionSystem<RealTimeActionSystem>
     // Small operator kept inline
     void operator()(Registry& aRegistry, const float aDeltaTime)
     {
-        initializeContextStack(aRegistry);
         processActions(aRegistry, ActionTag::FrameTime, aDeltaTime);
     }
 
@@ -93,7 +80,6 @@ class DeterministicActionSystem : public ActionSystem<DeterministicActionSystem>
     // Small operator kept inline
     void operator()(Registry& aRegistry, const float aDeltaTime)
     {
-        initializeContextStack(aRegistry);
         processActions(aRegistry, ActionTag::FixedTime, aDeltaTime);
     }
 
@@ -105,13 +91,6 @@ class ServerActionSystem : public ActionSystem<ServerActionSystem>
    public:
     void operator()(Registry& aRegistry, const float aDeltaTime)
     {
-        auto& contextStack = aRegistry.ctx().get<ActionContextStack&>();
-        if (contextStack.empty()) {
-            contextStack.push_front(ActionContext{
-                .State    = ActionContext::State::Server,
-                .Bindings = ActionBindings::Defaults(),
-                .Payload  = NormalPayload{}});
-        }
         processActions(aRegistry, ActionTag::FixedTime, aDeltaTime);
     }
 

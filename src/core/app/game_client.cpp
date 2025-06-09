@@ -87,7 +87,7 @@ int GameClient::Run()
             throw std::runtime_error("No available peers for initiating an ENet connection.");
         }
     } else {
-        StartGameInstance(mRegistry, 0);
+        StartGameInstance(mRegistry, 0, false);
         spawnPlayerAndCamera();
     }
 
@@ -188,7 +188,7 @@ void GameClient::consumeNetworkResponses()
                     });
                 },
                 [&](const NewGameResponse& aResp) {
-                    StartGameInstance(mRegistry, aResp.GameID);
+                    StartGameInstance(mRegistry, aResp.GameID, false);
                     spawnPlayerAndCamera();
                     spdlog::info("game {} created", aResp.GameID);
                 },
