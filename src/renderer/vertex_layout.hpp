@@ -6,7 +6,6 @@
 #include <glm/ext/vector_float3.hpp>
 #include <glm/ext/vector_float4.hpp>
 #include <glm/ext/vector_int4.hpp>
-#include <variant>
 
 struct PositionNormalUvVertex {
     glm::vec3 Position;
@@ -40,7 +39,7 @@ struct PositionNormalUvBoneVertex {
             .add(bgfx::Attrib::Normal, 3, bgfx::AttribType::Float)
             .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
             .add(bgfx::Attrib::Weight, 4, bgfx::AttribType::Float)
-            .add(bgfx::Attrib::Indices, 4, bgfx::AttribType::Float)
+            .add(bgfx::Attrib::Indices, 4, bgfx::AttribType::Float, false, true)
             .end();
         return vertexLayout;
     }
