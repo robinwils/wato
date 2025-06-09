@@ -23,6 +23,23 @@ struct fmt::formatter<aiString> : fmt::formatter<std::string> {
     }
 };
 
+constexpr inline glm::vec3 toGLMVec3(const aiVector3D& aVector)
+{
+    return glm::vec3(aVector.x, aVector.y, aVector.z);
+}
+
+constexpr inline glm::mat4 toGLMMat4(const aiMatrix4x4& aMat)
+{
+    // clang-format off
+    return glm::mat4(
+        aMat.a1, aMat.b1, aMat.c1, aMat.d1,
+        aMat.a2, aMat.b2, aMat.c2, aMat.d2,
+        aMat.a3, aMat.b3, aMat.c3, aMat.d3,
+        aMat.a4, aMat.b4, aMat.c4, aMat.d4
+    );
+    // clang-format on
+}
+
 class ModelLoader final
 {
    public:
@@ -84,7 +101,8 @@ class ModelLoader final
         return std::make_shared<Model>(
             std::move(meshes),
             std::move(animations),
-            std::move(skeleton));
+            std::move(skeleton),
+            toGLMMat4(scene->mRootNode->mTransformation));
     }
 
     result_type operator()(mesh_type aPrimitive)

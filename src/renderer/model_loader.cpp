@@ -1,6 +1,6 @@
 #include <assimp/material.h>
-#include <assimp/postprocess.h>  // Post processing flags
-#include <assimp/scene.h>        // Output data structure
+#include <assimp/postprocess.h>
+#include <assimp/scene.h>
 #include <bx/bx.h>
 #include <tinystl/buffer.h>
 
@@ -11,29 +11,11 @@
 #include <utility>
 #include <vector>
 
-#include "core/sys/log.hpp"
 #include "renderer/blinn_phong_material.hpp"
 #include "renderer/cache.hpp"
 #include "renderer/shader.hpp"
 
 using namespace entt::literals;
-
-constexpr inline glm::vec3 toGLMVec3(const aiVector3D& aVector)
-{
-    return glm::vec3(aVector.x, aVector.y, aVector.z);
-}
-
-constexpr inline glm::mat4 toGLMMat4(const aiMatrix4x4& aMat)
-{
-    // clang-format off
-    return glm::mat4(
-        aMat.a1, aMat.b1, aMat.c1, aMat.d1,
-        aMat.a2, aMat.b2, aMat.c2, aMat.d2,
-        aMat.a3, aMat.b3, aMat.c3, aMat.d3,
-        aMat.a4, aMat.b4, aMat.c4, aMat.d4
-    );
-    // clang-format on
-}
 
 std::vector<entt::hashed_string> ModelLoader::processMaterialTextures(
     const aiMaterial* aMaterial,
