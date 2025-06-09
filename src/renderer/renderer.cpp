@@ -3,6 +3,7 @@
 #include <bgfx/platform.h>
 #include <bx/bx.h>
 
+#include "config.h"
 #include "core/window.hpp"
 #include "imgui_helper.h"
 
@@ -35,6 +36,10 @@ void Renderer::Init(WatoWindow& aWin)
     mInitParams.type = bgfx::RendererType::Vulkan;
 #endif
 
+#if WATO_DEBUG
+    mInitParams.debug = true;
+#endif
+
     mInitParams.resolution.width  = aWin.Width<uint32_t>();
     mInitParams.resolution.height = aWin.Height<uint32_t>();
     mInitParams.resolution.reset  = BGFX_RESET_VSYNC;
@@ -43,8 +48,10 @@ void Renderer::Init(WatoWindow& aWin)
         throw std::runtime_error("cannot init graphics");
     }
 
+#if WATO_DEBUG
     // Enable stats or debug text.
-    bgfx::setDebug(BGFX_DEBUG_TEXT | BGFX_DEBUG_PROFILER);
+    bgfx::setDebug(BGFX_DEBUG_TEXT | BGFX_DEBUG_STATS | BGFX_DEBUG_PROFILER);
+#endif
 
     // Set view 0 clear state.
     bgfx::setViewClear(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x0090cfff, 1.0f, 0);

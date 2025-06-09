@@ -1,8 +1,9 @@
 #pragma once
 
+#include <bgfx/bgfx.h>
+
 #include <glm/gtc/type_ptr.hpp>
 
-#include "bgfx/bgfx.h"
 #include "core/window.hpp"
 
 class Renderer

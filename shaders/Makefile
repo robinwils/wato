@@ -1,15 +1,21 @@
 THISDIR:=$(dir $(lastword $(MAKEFILE_LIST)))
+
+ifeq ($(DEBUG),1)
+    SHADERCFLAGS := --disasm --debug
+	BUILD_TYPE=Debug
+else
+    SHADERCFLAGS := --disasm
+	BUILD_TYPE=Release
+endif
+
 ifeq ($(OS),Windows_NT)
-BUILD_TYPE=Release
 BGFX_TARGET=win64_vs2022
 EXT=".exe"
 else
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
-BUILD_TYPE=Debug
 BGFX_TARGET=linux64_gcc
 else ifeq ($(UNAME_S),Darwin)
-BUILD_TYPE=Debug
 BGFX_TARGET=osx64_gcc
 endif
 endif
@@ -23,15 +29,15 @@ $(1)_$(2)_SHADERS=$$(patsubst %.sc,%_$(1)_$(2).bin,$$(SHADERS))
 
 vs_%_$(1)_$(2).bin: vs_%.sc
 	@echo [$$(<)]
-	$$(SHADERC) $$(SHADERC_INCLUDE) --platform $(1) -p $(2) --type vertex --depends -o $$(@) -f $$(<) --disasm
+	$$(SHADERC) $$(SHADERC_INCLUDE) --platform $(1) -p $(2) --type vertex --depends -o $$(@) -f $$(<) $$(SHADERCFLAGS)
 
 fs_%_$(1)_$(2).bin: fs_%.sc
 	@echo [$$(<)]
-	$$(SHADERC) $$(SHADERC_INCLUDE) --platform $(1) -p $(2) --type fragment --depends -o $$(@) -f $$(<) --disasm
+	$$(SHADERC) $$(SHADERC_INCLUDE) --platform $(1) -p $(2) --type fragment --depends -o $$(@) -f $$(<) $$(SHADERCFLAGS)
 
 cs_%_$(1)_$(2).bin: cs_%.sc
 	@echo [$$(<)]
-	$$(SHADERC) $$(SHADERC_INCLUDE) --platform $(1) -p $(2) --type compute --depends -o $$(@) -f $$(<) --disasm
+	$$(SHADERC) $$(SHADERC_INCLUDE) --platform $(1) -p $(2) --type compute --depends -o $$(@) -f $$(<) $$(SHADERCFLAGS)
 
 -include $$(patsubst %.sc,%_$(1)_$(2).bin.d,$$(SHADERS))
 endef
