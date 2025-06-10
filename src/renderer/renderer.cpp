@@ -30,11 +30,7 @@ void Renderer::Init(WatoWindow& aWin)
         throw std::runtime_error("cannot get native window and display");
     }
 
-#if BX_PLATFORM_OSX
-    mInitParams.type = bgfx::RendererType::Metal;
-#else
-    mInitParams.type = bgfx::RendererType::Vulkan;
-#endif
+    mInitParams.type = mRenderer;
 
 #if WATO_DEBUG
     mInitParams.debug = true;
@@ -58,6 +54,27 @@ void Renderer::Init(WatoWindow& aWin)
 
     imguiCreate();
     mIsInit = true;
+}
+
+bgfx::RendererType::Enum Renderer::detectRenderer(const std::string& aRenderer) const
+{
+    if (aRenderer == "vulkan" || aRenderer == "vk") {
+        return bgfx::RendererType::Vulkan;
+    } else if (aRenderer == "metal" || aRenderer == "mtl") {
+        return bgfx::RendererType::Metal;
+    } else if (aRenderer == "opengl" || aRenderer == "ogl") {
+        return bgfx::RendererType::OpenGL;
+    } else if (aRenderer == "opengles" || aRenderer == "ogles") {
+        return bgfx::RendererType::OpenGLES;
+    } else {
+#if BX_PLATFORM_OSX
+        return bgfx::RendererType::Metal;
+#elif BX_PLATFORM_WINDOWS
+        return bgfx::RendererType::Direct3D12;
+#else
+        return bgfx::RendererType::Vulkan;
+#endif
+    }
 }
 
 void Renderer::Resize(WatoWindow& aWin)
