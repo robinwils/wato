@@ -23,7 +23,7 @@ class GameClient : public Application
     {
         mRegistry.ctx().emplace<ActionContextStack>();
         mRegistry.ctx().emplace<WatoWindow>(aWidth, aHeight);
-        mRegistry.ctx().emplace<Renderer>();
+        mRegistry.ctx().emplace<Renderer>(mOptions.Renderer());
         mRegistry.ctx().emplace<ENetClient>();
     }
     virtual ~GameClient()                    = default;

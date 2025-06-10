@@ -9,6 +9,8 @@
 class Renderer
 {
    public:
+    Renderer(std::string aRenderer) : mIsInit(false), mRenderer(detectRenderer(aRenderer)) {}
+
     void Init(WatoWindow& aWin);
     void Resize(WatoWindow& aWin);
     void Clear();
@@ -23,7 +25,11 @@ class Renderer
     [[nodiscard]] bool IsInitialized() const noexcept { return mIsInit; }
 
    private:
+    bgfx::RendererType::Enum detectRenderer(const std::string& aRenderer) const;
+
     static constexpr bgfx::ViewId kClearView = 0;
-    bgfx::Init                    mInitParams;
-    bool                          mIsInit;
+
+    bgfx::Init               mInitParams;
+    bool                     mIsInit;
+    bgfx::RendererType::Enum mRenderer;
 };
