@@ -42,7 +42,7 @@ struct Transform3D {
             aTransform.getOrientation().z);
     }
 
-    [[nodiscard]] constexpr glm::mat4 ModelMat() const
+    [[nodiscard]] glm::mat4 ModelMat() const
     {
         auto modelMat  = glm::identity<glm::mat4>();
         modelMat       = glm::translate(modelMat, Position);
