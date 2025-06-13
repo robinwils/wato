@@ -298,6 +298,8 @@ Mouse::Button to_mouse_button(int32_t aButton)
 
 void WatoWindow::Init()
 {
+    glfwSetErrorCallback(errorCallback);
+
     if (!glfwInit()) {
         throw std::runtime_error("failed to initialize GLFW");
     }
