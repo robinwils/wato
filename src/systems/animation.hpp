@@ -14,10 +14,10 @@ class AnimationSystem : public System<AnimationSystem>
 
    private:
     struct AnimationContext {
-        const Skeleton* Skeleton;
-        Animator*       Animator;
-        double          Time;
-        glm::mat4       GlobalInverse;
+        const ::Skeleton* Skeleton;
+        ::Animator*       Animator;
+        double            Time;
+        glm::mat4         GlobalInverse;
     };
 
     void animateBone(
