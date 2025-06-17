@@ -20,9 +20,9 @@ struct AnimationKeyFrame {
         double f = (aAnimTime - Time) / (aOther.Time - Time);
 
         if constexpr (std::is_same_v<key_type, glm::vec3>) {
-            return glm::mix(aOther.Key, Key, static_cast<float>(f));
+            return glm::mix(Key, aOther.Key, static_cast<float>(f));
         } else {
-            return glm::slerp(aOther.Key, Key, static_cast<float>(f));
+            return glm::slerp(Key, aOther.Key, static_cast<float>(f));
         }
     }
 };
