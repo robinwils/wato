@@ -105,7 +105,7 @@ class ModelLoader final
             std::move(meshes),
             std::move(animations),
             std::move(skeleton),
-            toGLMMat4(scene->mRootNode->mTransformation));
+            toGLMMat4(scene->mRootNode->mTransformation.Inverse()));
     }
 
     result_type operator()(mesh_type aPrimitive)
