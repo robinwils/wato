@@ -83,12 +83,15 @@ class ModelLoader final
         Skeleton skeleton;
         if (scene->HasAnimations()) {
             populateBoneNames(scene->mRootNode, scene);
+            buildSkeleton(scene->mRootNode, scene, skeleton, 0);
+            spdlog::info("skeleton with {} bones built", skeleton.Bones.size());
             if (!mBonesMap.empty()) {
-                spdlog::debug("got bones: {}", fmt::join(mBonesMap, ", "));
+                for (std::size_t i = 0; i < skeleton.Bones.size(); ++i) {
+                    spdlog::debug("Bone[{}]: {}", i, skeleton.Bones[i]);
+                }
             } else {
                 spdlog::warn("got animations but no bones");
             }
-            buildSkeleton(scene->mRootNode, scene, skeleton, 0);
         }
         auto          meshes = processNode(scene->mRootNode, scene, skeleton);
         animation_map animations;
