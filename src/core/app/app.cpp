@@ -1,6 +1,8 @@
 #include "core/app/app.hpp"
 
 #include <assimp/types.h>
+#include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
 
 #include "components/game.hpp"
@@ -15,11 +17,23 @@ using namespace entt::literals;
 
 void Application::Init()
 {
-    std::string logLevel = mOptions.LogLevel();
-    spdlog::set_level(spdlog::level::from_str(logLevel));
+    auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+    auto fileSink    = std::make_shared<spdlog::sinks::basic_file_sink_mt>("wato_logs.txt", true);
+    spdlog::level::level_enum level = spdlog::level::from_str(mOptions.LogLevel());
+
+    consoleSink->set_level(level);
+    fileSink->set_level(level);
     // FIXME: weird segfault when using %s and %# instead of %@
     // or puting the thread info in separate []
-    spdlog::set_pattern("[%H:%M:%S %z thread %t] [%^%L%$] %v %@");
+    consoleSink->set_pattern("[%H:%M:%S %z thread %t] [%^%L%$] %v %@");
+    fileSink->set_pattern("[%H:%M:%S %z thread %t] [%^%L%$] %v %@");
+
+    std::vector<spdlog::sink_ptr> sinks{consoleSink, fileSink};
+    auto logger = std::make_shared<spdlog::logger>("multi_sink", sinks.begin(), sinks.end());
+    spdlog::set_default_logger(logger);
+    logger->set_level(level);
+    logger->warn("this should appear in both console and file");
+    logger->info("this message should not appear in the console, only in the file");
 }
 
 void Application::StartGameInstance(
