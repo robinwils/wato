@@ -17,6 +17,18 @@ struct Bone {
     std::vector<index_type>  Children;
 };
 
+template <>
+struct fmt::formatter<Bone> : fmt::formatter<std::string> {
+    auto format(Bone aObj, format_context& aCtx) const -> decltype(aCtx.out())
+    {
+        return fmt::format_to(
+            aCtx.out(),
+            "bone {} with {} children",
+            aObj.Name,
+            aObj.Children.size());
+    }
+};
+
 struct Skeleton {
     using index_type = Bone::index_type;
 
