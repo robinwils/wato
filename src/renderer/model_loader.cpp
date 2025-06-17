@@ -55,7 +55,10 @@ void ModelLoader::processBones(
         const aiBone*                     bone      = aMesh->mBones[boneIdx];
         const std::optional<std::size_t>& skBoneIdx = mBonesMap[bone->mName.C_Str()];
 
-        DBG("  bone {} with {} vertex weights", bone->mName, bone->mNumWeights);
+        DBG("  bone {} (idx: {}) with {} vertex weights",
+            bone->mName,
+            skBoneIdx,
+            bone->mNumWeights);
 
         if (bone->mNumWeights == 0) {
             continue;
@@ -94,7 +97,8 @@ void ModelLoader::processBones(
         for (int j = 0; j < influences.size() && j < 4; ++j) {
             vertex.BoneWeights[j] = influences[j].first;
             vertex.BoneIndices[j] = influences[j].second;
-            DBG("keeping normalized vertex weight for bone index {}: {}",
+            TRACE(
+                "keeping normalized vertex weight for bone index {}: {}",
                 vertex.BoneIndices[j],
                 vertex.BoneWeights[j]);
             totalWeight += vertex.BoneWeights[j];
