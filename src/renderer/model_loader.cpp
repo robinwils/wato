@@ -96,7 +96,7 @@ void ModelLoader::processBones(
         float totalWeight = 0.0f;
         for (int j = 0; j < influences.size() && j < 4; ++j) {
             vertex.BoneWeights[j] = influences[j].first;
-            vertex.BoneIndices[j] = influences[j].second;
+            vertex.BoneIndices[j] = static_cast<float>(influences[j].second);
             TRACE(
                 "keeping normalized vertex weight for bone index {}: {}",
                 vertex.BoneIndices[j],
