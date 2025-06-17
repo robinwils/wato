@@ -31,13 +31,6 @@ void AnimationSystem::operator()(Registry& aRegistry, const float aDeltaTime)
             double animatonTimeTicks = animator.Time * animator.Animation->TicksPerSecond();
             double animationTime     = std::fmod(animatonTimeTicks, animator.Animation->Duration());
 
-            spdlog::debug(
-                "animating {} with animation {} and {} bones, {} animationTime",
-                obj.ModelHash.data(),
-                animator.AnimationName,
-                skeleton.Bones.size(),
-                animationTime);
-
             if (animator.FinalBonesMatrices.empty()) {
                 spdlog::debug("empty final bone vertices, reserving {}", skeleton.Bones.size());
                 animator.FinalBonesMatrices.resize(skeleton.Bones.size());
