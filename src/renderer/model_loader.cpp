@@ -390,10 +390,10 @@ std::size_t ModelLoader::buildSkeleton(
             std::optional<std::size_t>& skBoneIdx = mBonesMap[bone->mName.C_Str()];
 
             if (!skBoneIdx.has_value()) {
-                TRACE("skeleton bone index has no value: {}", currentBoneIdx);
+                TRACE("skeleton bone {} index has no value: {}", bone->mName, currentBoneIdx);
                 skBoneIdx = currentBoneIdx;
             } else {
-                TRACE("skeleton bone index has value: {}", *skBoneIdx);
+                TRACE("skeleton bone {} index has value: {}", bone->mName, *skBoneIdx);
             }
             aSkeleton.Bones[*skBoneIdx].Offset = toGLMMat4(bone->mOffsetMatrix);
         }

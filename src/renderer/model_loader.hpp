@@ -83,8 +83,9 @@ class ModelLoader final
         Skeleton skeleton;
         if (scene->HasAnimations()) {
             populateBoneNames(scene->mRootNode, scene);
+            spdlog::debug("got bone names: {}", mBonesMap);
             buildSkeleton(scene->mRootNode, scene, skeleton, 0);
-            spdlog::info("skeleton with {} bones built", skeleton.Bones.size());
+            spdlog::info("skeleton with {} bones built for model {}", skeleton.Bones.size(), aName);
             if (!mBonesMap.empty()) {
                 for (std::size_t i = 0; i < skeleton.Bones.size(); ++i) {
                     spdlog::debug("Bone[{}]: {}", i, skeleton.Bones[i]);
