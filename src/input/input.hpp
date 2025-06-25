@@ -197,7 +197,8 @@ constexpr uint8_t kCtrlAltShiftMod = ModifierMask(ModifierKey::Ctrl)
 template <std::size_t Size>
 struct InputState {
     static constexpr std::size_t kCapacity = Size;
-    virtual ~InputState()                  = default;
+    InputState() { Clear(); }
+    virtual ~InputState() = default;
     virtual void Clear() { std::memset(Inputs.data(), 0, kCapacity * sizeof(Button::State)); }
 
     [[nodiscard]] bool IsKeyPressed(std::size_t aKey) const
@@ -226,12 +227,13 @@ struct InputState {
 };
 
 struct KeyboardState : public InputState<Keyboard::Count> {
+    KeyboardState() : InputState() {}
     std::string String() const;
 };
 
 static constexpr uint32_t kNumButtons = 3;
 struct MouseState : public InputState<kNumButtons> {
-    MouseState() : Pos(), Scroll() {}
+    MouseState() : InputState(), Pos(), Scroll() {}
 
     std::string String() const;
     void        Clear() override;
