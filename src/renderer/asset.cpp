@@ -11,8 +11,10 @@ std::string FindAsset(const char* aFileName)
         return aFileName;
     }
 
+    std::filesystem::path filePath(aFileName);
+
     for (const char* aDir : kSearchPaths) {
-        std::filesystem::path assetPath(std::filesystem::path(aDir) / aFileName);
+        std::filesystem::path assetPath(std::filesystem::path(aDir) / filePath.filename());
         if (std::filesystem::exists(assetPath)) {
             return assetPath.string();
         }
