@@ -74,20 +74,27 @@ void AnimationSystem::animateBone(
     const Bone::index_type  aBoneIdx,
     const glm::mat4&        aParentTransform)
 {
-    const Bone&          bone     = aAnimCtx.Skeleton->Bones[aBoneIdx];
-    const NodeAnimation& nodeAnim = aAnimCtx.Animator->Animation->GetNodeAnimation(bone.Name);
+    const Bone&                         bone          = aAnimCtx.Skeleton->Bones[aBoneIdx];
+    glm::mat4                           nodeTransform = bone.LocalTransform;
+    const std::optional<NodeAnimation>& nodeAnim =
+        aAnimCtx.Animator->Animation->GetNodeAnimation(bone.Name);
 
-    Transform3D transform{
-        .Position    = interpolateKey(nodeAnim.Positions, aAnimCtx.Time),
-        .Orientation = interpolateKey(nodeAnim.Rotations, aAnimCtx.Time),
-        .Scale       = interpolateKey(nodeAnim.Scales, aAnimCtx.Time),
-    };
-    glm::mat4 global = aParentTransform * transform.ModelMat();
+    if (nodeAnim) {
+        Transform3D transform{
+            .Position    = interpolateKey(nodeAnim->Positions, aAnimCtx.Time),
+            .Orientation = interpolateKey(nodeAnim->Rotations, aAnimCtx.Time),
+            .Scale       = interpolateKey(nodeAnim->Scales, aAnimCtx.Time),
+        };
+        nodeTransform = transform.ModelMat();
+    }
+    glm::mat4 global = aParentTransform * nodeTransform;
 
     spdlog::trace("got global mat {}", glm::to_string(global));
 
-    aAnimCtx.Animator->FinalBonesMatrices[aBoneIdx] =
-        aAnimCtx.GlobalInverse * global * bone.Offset.value();
+    if (bone.Offset) {
+        aAnimCtx.Animator->FinalBonesMatrices[aBoneIdx] =
+            aAnimCtx.GlobalInverse * global * bone.Offset.value();
+    }
 
     for (const Bone::index_type cIdx : bone.Children) {
         animateBone(aAnimCtx, cIdx, global);

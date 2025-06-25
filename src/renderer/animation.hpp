@@ -6,6 +6,7 @@
 #include <glm/ext/vector_float3.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/string_cast.hpp>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -62,11 +63,15 @@ class Animation
     {
     }
 
-    constexpr auto       Duration() { return mDuration; }
-    constexpr auto       TicksPerSecond() { return mTicksPerSecond; }
-    const NodeAnimation& GetNodeAnimation(const std::string& aBoneName) const
+    constexpr auto                     Duration() { return mDuration; }
+    constexpr auto                     TicksPerSecond() { return mTicksPerSecond; }
+    const std::optional<NodeAnimation> GetNodeAnimation(const std::string& aBoneName) const
     {
-        return mNodeAnimations.at(aBoneName);
+        if (mNodeAnimations.contains(aBoneName)) {
+            return mNodeAnimations.at(aBoneName);
+        } else {
+            return std::nullopt;
+        }
     }
 
    private:
