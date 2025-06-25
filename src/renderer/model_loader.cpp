@@ -167,27 +167,27 @@ ModelLoader::processMesh(const aiMesh* aMesh, const aiScene* aScene, Skeleton& a
         }
 
         DBG("  {} diffuse and {} specular textures", textures.size(), specTextures.size());
-        if (textures.size() > 0 || specTextures.size() > 0) {
-            m = new BlinnPhongMaterial(
-                shader,
-                WATO_TEXTURE_CACHE[textures.front()],
-                WATO_TEXTURE_CACHE[specTextures.front()],
-                skinned);
+        m = new BlinnPhongMaterial(shader);
+
+        if (textures.size() > 0) {
+            m->SetDiffuseTexture(WATO_TEXTURE_CACHE[textures.front()]);
         } else {
             // no material textures, get material info via properties
             aiColor3D diffuse;
             if (material->Get(AI_MATKEY_COLOR_DIFFUSE, diffuse) != AI_SUCCESS) {
                 WARN("failed to get diffuse color for mesh {}", aMesh->mName);
             }
+            m->SetDiffuse(glm::vec3(diffuse.r, diffuse.g, diffuse.b));
+        }
+
+        if (specTextures.size() > 0) {
+            m->SetSpecularTexture(WATO_TEXTURE_CACHE[specTextures.front()]);
+        } else {
             aiColor3D specular;
             if (material->Get(AI_MATKEY_COLOR_SPECULAR, specular) != AI_SUCCESS) {
                 WARN("failed to get specular color for mesh {}", aMesh->mName);
             }
-
-            m = new BlinnPhongMaterial(
-                shader,
-                glm::vec3(diffuse.r, diffuse.g, diffuse.b),
-                glm::vec3(specular.r, specular.g, specular.b));
+            m->SetSpecular(glm::vec3(specular.r, specular.g, specular.b));
         }
     } else {
         throw std::runtime_error("no material in mesh");
