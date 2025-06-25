@@ -307,7 +307,7 @@ CTestTestfile.cmake
 _deps
 CMakeUserPresets.json
 build
-_build
+_build*
 
 # mise
 .mise.toml
