@@ -157,12 +157,20 @@ add_subdirectory(test)
 target_compile_options(watolib PRIVATE "-DDOCTEST_CONFIG_DISABLE")
 target_compile_options(wato PRIVATE "-DDOCTEST_CONFIG_DISABLE")
 if(DEBUG_ENABLE)
-  target_compile_definitions(wato_common INTERFACE SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE BX_CONFIG_DEBUG=1)
-  target_compile_options(wato_common INTERFACE -ggdb -O0 -fsanitize=address,undefined)
+  target_compile_definitions(wato_common
+    INTERFACE
+      SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE
+      BX_CONFIG_DEBUG=1)
+  target_compile_options(wato_common
+    INTERFACE
+     -ggdb -O0 -fsanitize=address,undefined)
   target_link_options(wato_common INTERFACE -fsanitize=address,undefined)
   set(WATO_DEBUG 1)
 else()
-  target_compile_definitions(wato_common INTERFACE SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_INFO BX_CONFIG_DEBUG=0)
+  target_compile_definitions(wato_common
+    INTERFACE
+      SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_INFO
+      BX_CONFIG_DEBUG=0)
   target_compile_options(wato_common INTERFACE -O3)
   set(WATO_DEBUG 0)
 endif()
