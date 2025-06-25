@@ -11,29 +11,6 @@
 
 using namespace entt::literals;
 
-#define WATO_TEXTURE_CACHE (ResourceCache::Instance().TextureCache)
-#define WATO_PROGRAM_CACHE (ResourceCache::Instance().ShaderCache)
-#define WATO_MODEL_CACHE   (ResourceCache::Instance().ModelCache)
-
-using texture_cache = entt::resource_cache<bgfx::TextureHandle, TextureLoader>;
-using shader_cache  = entt::resource_cache<Shader, ShaderLoader>;
-using model_cache   = entt::resource_cache<Model, ModelLoader>;
-
-struct ResourceCache {
-    static ResourceCache& Instance()
-    {
-        static ResourceCache rc;
-
-        return rc;
-    }
-
-    ResourceCache(ResourceCache const&)  = delete;
-    void operator=(ResourceCache const&) = delete;
-
-    texture_cache TextureCache;
-    shader_cache  ShaderCache;
-    model_cache   ModelCache;
-
-   private:
-    ResourceCache() {};
-};
+using TextureCache = entt::resource_cache<bgfx::TextureHandle, TextureLoader>;
+using ShaderCache  = entt::resource_cache<Shader, ShaderLoader>;
+using ModelCache   = entt::resource_cache<Model, ModelLoader>;

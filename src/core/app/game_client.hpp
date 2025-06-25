@@ -9,6 +9,7 @@
 #include "core/net/enet_client.hpp"
 #include "input/action.hpp"
 #include "renderer/renderer.hpp"
+#include "resource/cache.hpp"
 #include "systems/action.hpp"
 #include "systems/animation.hpp"
 #include "systems/input.hpp"
@@ -25,6 +26,9 @@ class GameClient : public Application
         mRegistry.ctx().emplace<WatoWindow>(aWidth, aHeight);
         mRegistry.ctx().emplace<Renderer>(mOptions.Renderer());
         mRegistry.ctx().emplace<ENetClient>();
+        mRegistry.ctx().emplace<TextureCache>();
+        mRegistry.ctx().emplace<ShaderCache>();
+        mRegistry.ctx().emplace<ModelCache>();
     }
     virtual ~GameClient()                    = default;
     GameClient(const GameClient&)            = delete;

@@ -7,22 +7,74 @@
 #include <tinystl/buffer.h>
 
 #include <glm/gtx/string_cast.hpp>
-#include <list>
-#include <map>
 #include <stdexcept>
 #include <utility>
 #include <vector>
 
 #include "renderer/blinn_phong_material.hpp"
-#include "resource/cache.hpp"
 #include "renderer/shader.hpp"
+#include "resource/asset.hpp"
+#include "resource/cache.hpp"
 
 using namespace entt::literals;
+
+ModelLoader::result_type
+ModelLoader::operator()(Registry& aRegistry, const char* aName, unsigned int aPostProcessFlags)
+{
+    Assimp::Importer importer;
+
+    std::string assetPath = FindAsset(aName);
+    if (assetPath == "") {
+        throw std::runtime_error(fmt::format("cannot find asset {}", aName));
+    }
+
+    const aiScene* scene = importer.ReadFile(assetPath, aPostProcessFlags);
+
+    // If the import failed, report it
+    if (nullptr == scene) {
+        throw std::runtime_error(
+            fmt::format("could not load {}: {}", assetPath, importer.GetErrorString()));
+    }
+    spdlog::debug("model {} has:", aName);
+    spdlog::debug("  {} meshes", scene->mNumMeshes);
+    spdlog::debug("  {} embedded textures", scene->mNumTextures);
+    spdlog::debug("  {} materials", scene->mNumMaterials);
+    spdlog::debug("  {} animations", scene->mNumAnimations);
+
+    Skeleton skeleton;
+    if (scene->HasAnimations()) {
+        populateBoneNames(scene->mRootNode, scene);
+        spdlog::debug("got bone names: {}", mBonesMap);
+        buildSkeleton(scene->mRootNode, scene, skeleton, 0);
+        spdlog::info("skeleton with {} bones built for model {}", skeleton.Bones.size(), aName);
+        if (!mBonesMap.empty()) {
+            for (std::size_t i = 0; i < skeleton.Bones.size(); ++i) {
+                spdlog::debug("Bone[{}]: {}", i, skeleton.Bones[i]);
+            }
+        } else {
+            spdlog::warn("got animations but no bones");
+        }
+    }
+    auto          meshes = processNode(scene->mRootNode, scene, skeleton, aRegistry);
+    animation_map animations;
+    if (scene->HasAnimations()) {
+        animations = processAnimations(scene);
+    }
+
+    PrintSkeleton(skeleton);
+
+    return std::make_shared<Model>(
+        std::move(meshes),
+        std::move(animations),
+        std::move(skeleton),
+        toGLMMat4(scene->mRootNode->mTransformation.Inverse()));
+}
 
 std::vector<entt::hashed_string> ModelLoader::processMaterialTextures(
     const aiMaterial* aMaterial,
     aiTextureType     aType,
-    aiString*         aPath)
+    aiString*         aPath,
+    Registry&         aRegistry)
 {
     std::vector<entt::hashed_string> textures;
     for (unsigned int i = 0; i < aMaterial->GetTextureCount(aType); ++i) {
@@ -32,12 +84,12 @@ std::vector<entt::hashed_string> ModelLoader::processMaterialTextures(
         }
 
         auto hs          = entt::hashed_string{aPath->C_Str()};
-        auto [_, loaded] = WATO_TEXTURE_CACHE.load(hs, aPath->C_Str());
+        auto [_, loaded] = aRegistry.ctx().get<TextureCache>().load(hs, aPath->C_Str());
         if (!loaded) {
             throw std::runtime_error("could not load model material texture");
         }
 
-        auto diffuse = WATO_TEXTURE_CACHE[hs];
+        auto diffuse = aRegistry.ctx().get<TextureCache>()[hs];
         if (!bgfx::isValid(diffuse)) {
             throw std::runtime_error("could not load model material texture, invalid handle");
         }
@@ -119,8 +171,11 @@ void ModelLoader::processBones(
 }
 
 template <typename VL>
-ModelLoader::mesh_type
-ModelLoader::processMesh(const aiMesh* aMesh, const aiScene* aScene, Skeleton& aSkeleton)
+ModelLoader::mesh_type ModelLoader::processMesh(
+    const aiMesh*  aMesh,
+    const aiScene* aScene,
+    Skeleton&      aSkeleton,
+    Registry&      aRegistry)
 {
     DBG("mesh {} has {} vertices, {} indices, {} bones",
         aMesh->mName,
@@ -155,22 +210,28 @@ ModelLoader::processMesh(const aiMesh* aMesh, const aiScene* aScene, Skeleton& a
         auto        specularPath = aiString("texture_specular");
         const auto* material     = aScene->mMaterials[aMesh->mMaterialIndex];
 
-        auto textures = processMaterialTextures(material, aiTextureType_DIFFUSE, &diffusePath);
+        auto textures =
+            processMaterialTextures(material, aiTextureType_DIFFUSE, &diffusePath, aRegistry);
         auto specTextures =
-            processMaterialTextures(material, aiTextureType_SPECULAR, &specularPath);
+            processMaterialTextures(material, aiTextureType_SPECULAR, &specularPath, aRegistry);
         entt::resource<Shader> shader;
         if constexpr (std::is_same_v<VL, PositionNormalUvBoneVertex>) {
-            shader  = WATO_PROGRAM_CACHE["blinnphong_skinned"_hs];
+            shader  = aRegistry.ctx().get<ShaderCache>()["blinnphong_skinned"_hs];
             skinned = true;
         } else {
-            shader = WATO_PROGRAM_CACHE["blinnphong"_hs];
+            shader = aRegistry.ctx().get<ShaderCache>()["blinnphong"_hs];
+        }
+
+        if (!bgfx::isValid(shader->Program())) {
+            throw std::runtime_error(
+                fmt::format("could not load blinnphong shader {}", skinned ? "skinned" : ""));
         }
 
         DBG("  {} diffuse and {} specular textures", textures.size(), specTextures.size());
         m = new BlinnPhongMaterial(shader);
 
         if (textures.size() > 0) {
-            m->SetDiffuseTexture(WATO_TEXTURE_CACHE[textures.front()]);
+            m->SetDiffuseTexture(aRegistry.ctx().get<TextureCache>()[textures.front()]);
         } else {
             // no material textures, get material info via properties
             aiColor3D diffuse;
@@ -181,7 +242,7 @@ ModelLoader::processMesh(const aiMesh* aMesh, const aiScene* aScene, Skeleton& a
         }
 
         if (specTextures.size() > 0) {
-            m->SetSpecularTexture(WATO_TEXTURE_CACHE[specTextures.front()]);
+            m->SetSpecularTexture(aRegistry.ctx().get<TextureCache>()[specTextures.front()]);
         } else {
             aiColor3D specular;
             if (material->Get(AI_MATKEY_COLOR_SPECULAR, specular) != AI_SUCCESS) {
@@ -255,8 +316,11 @@ void ModelLoader::processMetaData(const aiNode* aNode, const aiScene* /*aScene*/
     }
 }
 
-ModelLoader::mesh_container
-ModelLoader::processNode(const aiNode* aNode, const aiScene* aScene, Skeleton& aSkeleton)
+ModelLoader::mesh_container ModelLoader::processNode(
+    const aiNode*  aNode,
+    const aiScene* aScene,
+    Skeleton&      aSkeleton,
+    Registry&      aRegistry)
 {
     DBG("node {} with {} meshes, {} children",
         aNode->mName,
@@ -272,18 +336,20 @@ ModelLoader::processNode(const aiNode* aNode, const aiScene* aScene, Skeleton& a
             mesh = processMesh<PositionNormalUvBoneVertex>(
                 aScene->mMeshes[aNode->mMeshes[i]],
                 aScene,
-                aSkeleton);
+                aSkeleton,
+                aRegistry);
         } else {
             mesh = processMesh<PositionNormalUvVertex>(
                 aScene->mMeshes[aNode->mMeshes[i]],
                 aScene,
-                aSkeleton);
+                aSkeleton,
+                aRegistry);
         }
         assert(mesh.has_value());
         meshes.push_back(*mesh);
     }
     for (unsigned int i = 0; i < aNode->mNumChildren; i++) {
-        auto childMeshes = processNode(aNode->mChildren[i], aScene, aSkeleton);
+        auto childMeshes = processNode(aNode->mChildren[i], aScene, aSkeleton, aRegistry);
         meshes.insert(
             meshes.end(),
             std::make_move_iterator(childMeshes.begin()),

@@ -9,20 +9,20 @@
 #include "components/tile.hpp"
 #include "registry/registry.hpp"
 #include "renderer/blinn_phong_material.hpp"
-#include "resource/cache.hpp"
 #include "renderer/plane_primitive.hpp"
+#include "resource/cache.hpp"
 
 void LoadResources(Registry& aRegistry)
 {
     LoadShaders(aRegistry);
     SpawnLight(aRegistry);
     LoadTextures(aRegistry, 20, 20);
-    LoadModels();
+    LoadModels(aRegistry);
 }
 
 void LoadShaders(Registry& aRegistry)
 {
-    WATO_PROGRAM_CACHE.load(
+    aRegistry.ctx().get<ShaderCache>().load(
         "blinnphong"_hs,
         "vs_blinnphong",
         "fs_blinnphong",
@@ -34,7 +34,7 @@ void LoadShaders(Registry& aRegistry)
             {"u_lightDir",    {bgfx::UniformType::Vec4}   },
             {"u_lightCol",    {bgfx::UniformType::Vec4}   }
     });
-    WATO_PROGRAM_CACHE.load(
+    aRegistry.ctx().get<ShaderCache>().load(
         "blinnphong_skinned"_hs,
         "vs_blinnphong_skinned",
         "fs_blinnphong",
@@ -47,19 +47,25 @@ void LoadShaders(Registry& aRegistry)
             {"u_lightCol",    {bgfx::UniformType::Vec4}     },
             {"u_bones",       {bgfx::UniformType::Mat4, 128}}
     });
-    WATO_PROGRAM_CACHE.load("simple"_hs, "vs_cubes", "fs_cubes", ShaderLoader::uniform_desc_map{});
+    aRegistry.ctx().get<ShaderCache>().load(
+        "simple"_hs,
+        "vs_cubes",
+        "fs_cubes",
+        ShaderLoader::uniform_desc_map{});
 }
 
 void LoadTextures(Registry& aRegistry, uint32_t aWidth, uint32_t aHeight)
 {
-    auto [diff, dLoaded] =
-        WATO_TEXTURE_CACHE.load("grass/diffuse"_hs, "assets/textures/TreeTop_COLOR.png");
-    auto [sp, sLoaded] =
-        WATO_TEXTURE_CACHE.load("grass/specular"_hs, "assets/textures/TreeTop_SPEC.png");
+    auto [diff, dLoaded] = aRegistry.ctx().get<TextureCache>().load(
+        "grass/diffuse"_hs,
+        "assets/textures/TreeTop_COLOR.png");
+    auto [sp, sLoaded] = aRegistry.ctx().get<TextureCache>().load(
+        "grass/specular"_hs,
+        "assets/textures/TreeTop_SPEC.png");
 
-    auto shader   = WATO_PROGRAM_CACHE["blinnphong"_hs];
-    auto diffuse  = WATO_TEXTURE_CACHE["grass/diffuse"_hs];
-    auto specular = WATO_TEXTURE_CACHE["grass/specular"_hs];
+    auto shader   = aRegistry.ctx().get<ShaderCache>()["blinnphong"_hs];
+    auto diffuse  = aRegistry.ctx().get<TextureCache>()["grass/diffuse"_hs];
+    auto specular = aRegistry.ctx().get<TextureCache>()["grass/specular"_hs];
 
     if (!bgfx::isValid(shader->Program())) {
         throw std::runtime_error("could not load blinnphong program, invalid handle");
@@ -71,7 +77,7 @@ void LoadTextures(Registry& aRegistry, uint32_t aWidth, uint32_t aHeight)
         throw std::runtime_error("could not load grass/specular texture, invalid handle");
     }
 
-    WATO_MODEL_CACHE.load(
+    aRegistry.ctx().get<ModelCache>().load(
         "grass_tile"_hs,
         new PlanePrimitive(new BlinnPhongMaterial(shader, diffuse, specular)));
 }
@@ -83,20 +89,23 @@ void SpawnLight(Registry& aRegistry)
     aRegistry.emplace<ImguiDrawable>(light, "Directional Light");
 }
 
-void LoadModels()
+void LoadModels(Registry& aRegistry)
 {
-    WATO_MODEL_CACHE.load(
+    aRegistry.ctx().get<ModelCache>().load(
         "tower_model"_hs,
+        aRegistry,
         "assets/models/tower.fbx",
         aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_PreTransformVertices
             | aiProcess_GlobalScale);
-    WATO_MODEL_CACHE.load(
+    aRegistry.ctx().get<ModelCache>().load(
         "phoenix"_hs,
+        aRegistry,
         "assets/models/phoenix.fbx",
         aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_GlobalScale | aiProcess_FlipUVs
             | aiProcess_ConvertToLeftHanded);
-    WATO_MODEL_CACHE.load(
+    aRegistry.ctx().get<ModelCache>().load(
         "mutant"_hs,
+        aRegistry,
         "assets/models/mutant.fbx",
         aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_GlobalScale | aiProcess_FlipUVs
             | aiProcess_ConvertToLeftHanded);

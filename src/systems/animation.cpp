@@ -13,7 +13,7 @@
 void AnimationSystem::operator()(Registry& aRegistry, const float aDeltaTime)
 {
     for (auto&& [entity, obj, animator] : aRegistry.view<SceneObject, Animator>().each()) {
-        if (auto model = WATO_MODEL_CACHE[obj.ModelHash]; model) {
+        if (auto model = aRegistry.ctx().get<ModelCache>()[obj.ModelHash]; model) {
             if (!animator.Animation
                 && !(animator.Animation = model->GetAnimation(animator.AnimationName))) {
                 spdlog::warn("could not get animation {}, ignoring", animator.AnimationName);

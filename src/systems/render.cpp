@@ -28,8 +28,8 @@ void RenderSystem::operator()(Registry& aRegistry, const float aDeltaTime)
 
     uint64_t state = BGFX_STATE_DEFAULT;
 
-    auto bpShader        = WATO_PROGRAM_CACHE["blinnphong"_hs];
-    auto bpSkinnedShader = WATO_PROGRAM_CACHE["blinnphong_skinned"_hs];
+    auto bpShader        = aRegistry.ctx().get<ShaderCache>()["blinnphong"_hs];
+    auto bpSkinnedShader = aRegistry.ctx().get<ShaderCache>()["blinnphong_skinned"_hs];
 
     // light
     for (auto&& [light, source] : aRegistry.view<const LightSource>().each()) {
@@ -53,7 +53,7 @@ void RenderSystem::operator()(Registry& aRegistry, const float aDeltaTime)
             // DBG("GOT Placement mode entity!")
         }
 
-        if (auto model = WATO_MODEL_CACHE[obj.ModelHash]; model) {
+        if (auto model = aRegistry.ctx().get<ModelCache>()[obj.ModelHash]; model) {
             if (const Animator* animator = aRegistry.try_get<Animator>(entity);
                 animator && !animator->FinalBonesMatrices.empty()) {
                 uint16_t numBones = static_cast<uint16_t>(animator->FinalBonesMatrices.size());
@@ -189,7 +189,7 @@ void PhysicsDebugSystem::operator()(Registry& aRegistry, const float aDeltaTime)
     auto nTri   = debugRenderer.getNbTriangles();
     auto nLines = debugRenderer.getNbLines();
 
-    auto  debugShader = WATO_PROGRAM_CACHE["simple"_hs];
+    auto  debugShader = aRegistry.ctx().get<ShaderCache>()["simple"_hs];
     auto* debugMat    = new Material(debugShader);
     if (nTri > 0) {
         auto state = BGFX_STATE_WRITE_RGB | BGFX_STATE_DEPTH_TEST_ALWAYS;

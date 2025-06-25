@@ -6,11 +6,9 @@
 #include <assimp/Importer.hpp>  // C++ importer interface
 #include <entt/core/hashed_string.hpp>
 #include <optional>
-#include <stdexcept>
 
-#include "core/sys/log.hpp"
+#include "registry/registry.hpp"
 #include "renderer/animation.hpp"
-#include "resource/asset.hpp"
 #include "renderer/model.hpp"
 #include "renderer/skeleton.hpp"
 #include "renderer/vertex_layout.hpp"
@@ -70,66 +68,7 @@ class ModelLoader final
     using animation_map  = Model::animation_map;
     using result_type    = std::shared_ptr<Model>;
 
-    result_type operator()(const char* aName, unsigned int aPostProcessFlags)
-    {
-        Assimp::Importer importer;
-
-        // flags are used for post processing (the more, the slower)
-        // const aiScene *scene = importer.ReadFile(_name,
-        //     aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_PreTransformVertices |
-        //     aiProcess_GlobalScale);
-        //
-        // const aiScene *scene = importer.ReadFile(_name,
-        //     aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs |
-        //     aiProcess_JoinIdenticalVertices);
-
-        std::string assetPath = FindAsset(aName);
-        if (assetPath == "") {
-            throw std::runtime_error(fmt::format("cannot find asset {}", aName));
-        }
-
-        const aiScene* scene = importer.ReadFile(assetPath, aPostProcessFlags);
-
-        // If the import failed, report it
-        if (nullptr == scene) {
-            throw std::runtime_error(
-                fmt::format("could not load {}: {}", assetPath, importer.GetErrorString()));
-        }
-        spdlog::debug("model {} has:", aName);
-        spdlog::debug("  {} meshes", scene->mNumMeshes);
-        spdlog::debug("  {} embedded textures", scene->mNumTextures);
-        spdlog::debug("  {} materials", scene->mNumMaterials);
-        spdlog::debug("  {} animations", scene->mNumAnimations);
-
-        Skeleton skeleton;
-        if (scene->HasAnimations()) {
-            populateBoneNames(scene->mRootNode, scene);
-            spdlog::debug("got bone names: {}", mBonesMap);
-            buildSkeleton(scene->mRootNode, scene, skeleton, 0);
-            spdlog::info("skeleton with {} bones built for model {}", skeleton.Bones.size(), aName);
-            if (!mBonesMap.empty()) {
-                for (std::size_t i = 0; i < skeleton.Bones.size(); ++i) {
-                    spdlog::debug("Bone[{}]: {}", i, skeleton.Bones[i]);
-                }
-            } else {
-                spdlog::warn("got animations but no bones");
-            }
-        }
-        auto          meshes = processNode(scene->mRootNode, scene, skeleton);
-        animation_map animations;
-        if (scene->HasAnimations()) {
-            animations = processAnimations(scene);
-        }
-
-        PrintSkeleton(skeleton);
-
-        return std::make_shared<Model>(
-            std::move(meshes),
-            std::move(animations),
-            std::move(skeleton),
-            toGLMMat4(scene->mRootNode->mTransformation.Inverse()));
-    }
-
+    result_type operator()(Registry& aRegistry, const char* aName, unsigned int aPostProcessFlags);
     result_type operator()(mesh_type aPrimitive)
     {
         mesh_container meshes;
@@ -138,13 +77,25 @@ class ModelLoader final
     }
 
    private:
-    std::vector<entt::hashed_string>
-    processMaterialTextures(const aiMaterial* aMaterial, aiTextureType aType, aiString* aPath);
+    std::vector<entt::hashed_string> processMaterialTextures(
+        const aiMaterial* aMaterial,
+        aiTextureType     aType,
+        aiString*         aPath,
+        Registry&         aRegistry);
 
-    mesh_container processNode(const aiNode* aNode, const aiScene* aScene, Skeleton& aSkeleton);
+    mesh_container processNode(
+        const aiNode*  aNode,
+        const aiScene* aScene,
+        Skeleton&      aSkeleton,
+        Registry&      aRegistry);
 
     template <typename VL>
-    mesh_type     processMesh(const aiMesh* aMesh, const aiScene* aScene, Skeleton& aSkeleton);
+    mesh_type processMesh(
+        const aiMesh*  aMesh,
+        const aiScene* aScene,
+        Skeleton&      aSkeleton,
+        Registry&      aRegistry);
+
     void          processMetaData(const aiNode* aNode, const aiScene* /*aScene*/);
     animation_map processAnimations(const aiScene* aScene);
     Animation     processAnimation(const aiAnimation* aAnimation);
