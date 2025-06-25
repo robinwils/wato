@@ -314,3 +314,6 @@ _build
 
 # RenderDoc
 *.rdc
+
+# shaders
+shaders/*.bin
