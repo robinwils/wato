@@ -1,3 +1,4 @@
+#pragma once
 
 #include <bgfx/bgfx.h>
 #include <bimg/decode.h>
@@ -17,8 +18,4 @@ struct TextureLoader final {
         uint8_t                  aSkip        = 0,
         bgfx::TextureInfo*       aInfo        = nullptr,
         bimg::Orientation::Enum* aOrientation = nullptr);
-
-   private:
-    bx::DefaultAllocator mallocator;
-    bx::FileReader       mfr;
 };

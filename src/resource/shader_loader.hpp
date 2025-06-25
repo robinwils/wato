@@ -1,3 +1,6 @@
+#pragma once
+
+#include <bx/bx.h>
 #include <bx/file.h>
 
 #include <memory>
@@ -11,7 +14,4 @@ struct ShaderLoader final {
 
     result_type
     operator()(const char* aVsName, const char* aFsName, const uniform_desc_map& aUniforms);
-
-   private:
-    bx::FileReader mfr;
 };

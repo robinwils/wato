@@ -21,7 +21,9 @@ TextureLoader::result_type TextureLoader::operator()(
     bimg::Orientation::Enum* aOrientation)
 {
     BX_UNUSED(aSkip);
-    bgfx::TextureHandle handle = BGFX_INVALID_HANDLE;
+    static bx::DefaultAllocator allocator;
+    bgfx::TextureHandle         handle = BGFX_INVALID_HANDLE;
+    bx::FileReader              fr;
 
     uint32_t    size      = 0;
     std::string assetPath = FindAsset(aName);
@@ -29,9 +31,9 @@ TextureLoader::result_type TextureLoader::operator()(
         throw std::runtime_error(fmt::format("cannot find asset {}", aName));
     }
 
-    void* data = load(&mfr, &mallocator, assetPath.c_str(), &size);
+    void* data = load(&fr, &allocator, assetPath.c_str(), &size);
     if (nullptr != data) {
-        bimg::ImageContainer* imageContainer = bimg::imageParse(&mallocator, data, size);
+        bimg::ImageContainer* imageContainer = bimg::imageParse(&allocator, data, size);
 
         if (nullptr != imageContainer) {
             if (nullptr != aOrientation) {
@@ -43,7 +45,7 @@ TextureLoader::result_type TextureLoader::operator()(
                 imageContainer->m_size,
                 imageReleaseCb,
                 imageContainer);
-            bx::free(&mallocator, data);
+            bx::free(&allocator, data);
 
             if (imageContainer->m_cubeMap) {
                 handle = bgfx::createTextureCube(

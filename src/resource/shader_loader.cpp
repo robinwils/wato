@@ -77,7 +77,8 @@ ShaderLoader::result_type ShaderLoader::operator()(
     const char*             aFsName,
     const uniform_desc_map& aUniforms)
 {
-    auto handle = loadProgram(&mfr, aVsName, aFsName);
+    bx::FileReader fr;
+    auto           handle = loadProgram(&fr, aVsName, aFsName);
 
     auto uniformHandles = Shader::uniform_map{};
     for (auto&& [name, desc] : aUniforms) {
