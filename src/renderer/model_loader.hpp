@@ -56,6 +56,11 @@ constexpr inline glm::mat4 toGLMMat4(const aiMatrix4x4& aMat)
     // clang-format on
 }
 
+constexpr inline glm::quat toGLMQuat(const aiQuaternion& aQuat)
+{
+    return glm::quat(aQuat.w, aQuat.x, aQuat.y, aQuat.z);
+}
+
 class ModelLoader final
 {
    public:
