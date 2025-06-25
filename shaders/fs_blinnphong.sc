@@ -23,7 +23,11 @@ void main()
 
   vec3 diffuse = vec3(0.0);
   if (u_useDiffuseTex == 1.0) {
-    diffuse = diff * u_lightCol.xyz * texture2D(s_diffuseTex, v_texcoord0).rgb;
+	vec4 color = texture2D(s_diffuseTex, v_texcoord0);
+	if (color.a < 0.1) {
+		discard;
+	}
+    diffuse = diff * u_lightCol.xyz * color.rgb;
   } else {
     diffuse = diff * u_lightCol.xyz * u_diffuse.xyz;
   }
