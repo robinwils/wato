@@ -7,6 +7,8 @@
 
 #include <optional>
 
+#include "config.h"
+
 template <typename T>
 struct fmt::formatter<std::optional<T>> : fmt::formatter<std::string> {
     auto format(std::optional<T> aObj, format_context& aCtx) const -> decltype(aCtx.out())
