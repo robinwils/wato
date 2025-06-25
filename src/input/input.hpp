@@ -155,6 +155,7 @@ struct Button {
     };
 
     struct State {
+        State() : Action(Action::Unknown), Modifiers(0) {}
         std::string String() const;
         enum Action Action;
         uint8_t     Modifiers;
