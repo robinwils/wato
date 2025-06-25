@@ -1,3 +1,5 @@
+#include "renderer/model_loader.hpp"
+
 #include <assimp/material.h>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
@@ -48,7 +50,8 @@ std::vector<entt::hashed_string> ModelLoader::processMaterialTextures(
 
 void ModelLoader::processBones(
     const aiMesh*                            aMesh,
-    std::vector<PositionNormalUvBoneVertex>& aVertices)
+    std::vector<PositionNormalUvBoneVertex>& aVertices,
+    Skeleton&                                aSkeleton)
 {
     std::vector<std::vector<std::pair<float, int>>> boneInfluences(aVertices.size());
     for (unsigned int boneIdx = 0; boneIdx < aMesh->mNumBones; ++boneIdx) {
@@ -77,6 +80,9 @@ void ModelLoader::processBones(
                 vertexW.mWeight);
 
             boneInfluences[vertexW.mVertexId].emplace_back(vertexW.mWeight, *skBoneIdx);
+            if (skBoneIdx && !aSkeleton.Bones[*skBoneIdx].Offset) {
+                aSkeleton.Bones[*skBoneIdx].Offset.emplace(toGLMMat4(bone->mOffsetMatrix));
+            }
 
             TRACE(
                 "    vertex weight {} with {} vertex weights",
@@ -189,7 +195,7 @@ ModelLoader::processMesh(const aiMesh* aMesh, const aiScene* aScene, Skeleton& a
 
     if constexpr (std::is_same_v<VL, PositionNormalUvBoneVertex>) {
         if (aMesh->HasBones()) {
-            processBones(aMesh, vertices);
+            processBones(aMesh, vertices, aSkeleton);
         }
     }
 
@@ -376,35 +382,13 @@ std::size_t ModelLoader::buildSkeleton(
         aNode->mNumMeshes,
         isBone);
 
-    // bones map is filled before building skeleton
-    if (isBone) {
-        aSkeleton.Bones.emplace_back(aNode->mName.C_Str(), toGLMMat4(aNode->mTransformation));
-        mBonesMap[aNode->mName.C_Str()] = currentBoneIdx;
-    }
-
-    for (unsigned int meshIdx = 0; meshIdx < aNode->mNumMeshes; ++meshIdx) {
-        const aiMesh* mesh = aScene->mMeshes[aNode->mMeshes[meshIdx]];
-
-        for (unsigned int boneIdx = 0; boneIdx < mesh->mNumBones; ++boneIdx) {
-            const aiBone*               bone      = mesh->mBones[boneIdx];
-            std::optional<std::size_t>& skBoneIdx = mBonesMap[bone->mName.C_Str()];
-
-            if (!skBoneIdx.has_value()) {
-                TRACE("skeleton bone {} index has no value: {}", bone->mName, currentBoneIdx);
-                skBoneIdx = currentBoneIdx;
-            } else {
-                TRACE("skeleton bone {} index has value: {}", bone->mName, *skBoneIdx);
-            }
-            aSkeleton.Bones[*skBoneIdx].Offset = toGLMMat4(bone->mOffsetMatrix);
-        }
-    }
+    aSkeleton.Bones.emplace_back(aNode->mName.C_Str(), toGLMMat4(aNode->mTransformation));
+    mBonesMap[aNode->mName.C_Str()] = currentBoneIdx;
 
     for (unsigned int childIdx = 0; childIdx < aNode->mNumChildren; childIdx++) {
         std::size_t childNodeIndex =
             buildSkeleton(aNode->mChildren[childIdx], aScene, aSkeleton, aIndent + 2);
-        if (isBone) {
-            aSkeleton.Bones[currentBoneIdx].Children.push_back(childNodeIndex);
-        }
+        aSkeleton.Bones[currentBoneIdx].Children.push_back(childNodeIndex);
     }
     return currentBoneIdx;
 }

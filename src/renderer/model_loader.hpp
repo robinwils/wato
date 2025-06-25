@@ -127,8 +127,12 @@ class ModelLoader final
     void          processMetaData(const aiNode* aNode, const aiScene* /*aScene*/);
     animation_map processAnimations(const aiScene* aScene);
     Animation     processAnimation(const aiAnimation* aAnimation);
-    void processBones(const aiMesh* aMesh, std::vector<PositionNormalUvBoneVertex>& aVertices);
-    void populateBoneNames(const aiNode* aNode, const aiScene* aScene);
+    void          processBones(
+                 const aiMesh*                            aMesh,
+                 std::vector<PositionNormalUvBoneVertex>& aVertices,
+                 Skeleton&                                aSkeleton);
+
+    void        populateBoneNames(const aiNode* aNode, const aiScene* aScene);
     std::size_t buildSkeleton(
         const aiNode*  aNode,
         const aiScene* aScene,
