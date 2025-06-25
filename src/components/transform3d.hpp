@@ -44,11 +44,8 @@ struct Transform3D {
 
     [[nodiscard]] glm::mat4 ModelMat() const
     {
-        auto modelMat  = glm::identity<glm::mat4>();
-        modelMat       = glm::translate(modelMat, Position);
-        modelMat      *= glm::mat4_cast(Orientation);
-
-        return glm::scale(modelMat, Scale);
+        return glm::translate(glm::identity<glm::mat4>(), Position) * glm::mat4_cast(Orientation)
+               * glm::scale(glm::identity<glm::mat4>(), Scale);
     }
 
     constexpr static auto Serialize(auto& aArchive, const auto& aSelf)
