@@ -311,13 +311,7 @@ Animation ModelLoader::processAnimation(const aiAnimation* aAnimation)
         }
         for (unsigned int rotIdx = 0; rotIdx < channel->mNumRotationKeys; ++rotIdx) {
             const aiQuatKey& rotationKey = channel->mRotationKeys[rotIdx];
-            nodeAnimation.Rotations.emplace_back(
-                glm::quat(
-                    rotationKey.mValue.x,
-                    rotationKey.mValue.y,
-                    rotationKey.mValue.z,
-                    rotationKey.mValue.w),
-                rotationKey.mTime);
+            nodeAnimation.Rotations.emplace_back(toGLMQuat(rotationKey.mValue), rotationKey.mTime);
         }
         for (unsigned int scKey = 0; scKey < channel->mNumScalingKeys; ++scKey) {
             const aiVectorKey& scalingKey = channel->mScalingKeys[scKey];
