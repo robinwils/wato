@@ -62,7 +62,7 @@ KT AnimationSystem::interpolateKey(std::vector<AnimationKeyFrame<KT>> aKeys, con
         return aKeys.back().Key;
     }
     for (unsigned int posIdx = 0; posIdx < aKeys.size() - 1; ++posIdx) {
-        if (aTime < aKeys[posIdx].Time) {
+        if (aTime < aKeys[posIdx + 1].Time) {
             return aKeys[posIdx].Interpolate(aKeys[posIdx + 1], aTime);
         }
     }
