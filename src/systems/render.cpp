@@ -18,7 +18,7 @@
 #include "core/types.hpp"
 #include "core/window.hpp"
 #include "imgui_helper.h"
-#include "renderer/cache.hpp"
+#include "resource/cache.hpp"
 
 void RenderSystem::operator()(Registry& aRegistry, const float aDeltaTime)
 {

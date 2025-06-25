@@ -10,7 +10,7 @@
 
 #include "core/sys/log.hpp"
 #include "renderer/animation.hpp"
-#include "renderer/asset.hpp"
+#include "resource/asset.hpp"
 #include "renderer/model.hpp"
 #include "renderer/skeleton.hpp"
 #include "renderer/vertex_layout.hpp"

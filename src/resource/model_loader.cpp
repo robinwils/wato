@@ -1,4 +1,4 @@
-#include "renderer/model_loader.hpp"
+#include "resource/model_loader.hpp"
 
 #include <assimp/material.h>
 #include <assimp/postprocess.h>
@@ -14,7 +14,7 @@
 #include <vector>
 
 #include "renderer/blinn_phong_material.hpp"
-#include "renderer/cache.hpp"
+#include "resource/cache.hpp"
 #include "renderer/shader.hpp"
 
 using namespace entt::literals;

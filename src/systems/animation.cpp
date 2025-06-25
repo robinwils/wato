@@ -8,7 +8,7 @@
 #include "components/scene_object.hpp"
 #include "components/transform3d.hpp"
 #include "registry/registry.hpp"
-#include "renderer/cache.hpp"
+#include "resource/cache.hpp"
 
 void AnimationSystem::operator()(Registry& aRegistry, const float aDeltaTime)
 {

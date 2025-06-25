@@ -11,9 +11,6 @@
 #include "renderer/material.hpp"
 #include "renderer/shader.hpp"
 
-bgfx::ShaderHandle  loadShader(bx::FileReaderI* aReader, const char* aName);
-bgfx::ProgramHandle loadProgram(bx::FileReader* aFr, const char* aVsName, const char* aFsName);
-
 class BlinnPhongMaterial : public Material
 {
    public:

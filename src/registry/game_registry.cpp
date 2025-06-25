@@ -9,7 +9,7 @@
 #include "components/tile.hpp"
 #include "registry/registry.hpp"
 #include "renderer/blinn_phong_material.hpp"
-#include "renderer/cache.hpp"
+#include "resource/cache.hpp"
 #include "renderer/plane_primitive.hpp"
 
 void LoadResources(Registry& aRegistry)
@@ -26,7 +26,7 @@ void LoadShaders(Registry& aRegistry)
         "blinnphong"_hs,
         "vs_blinnphong",
         "fs_blinnphong",
-        ProgramLoader::uniform_desc_map{
+        ShaderLoader::uniform_desc_map{
             {"s_diffuseTex",  {bgfx::UniformType::Sampler}},
             {"s_specularTex", {bgfx::UniformType::Sampler}},
             {"u_diffuse",     {bgfx::UniformType::Vec4}   },
@@ -38,7 +38,7 @@ void LoadShaders(Registry& aRegistry)
         "blinnphong_skinned"_hs,
         "vs_blinnphong_skinned",
         "fs_blinnphong",
-        ProgramLoader::uniform_desc_map{
+        ShaderLoader::uniform_desc_map{
             {"s_diffuseTex",  {bgfx::UniformType::Sampler}  },
             {"s_specularTex", {bgfx::UniformType::Sampler}  },
             {"u_diffuse",     {bgfx::UniformType::Vec4}     },
@@ -47,7 +47,7 @@ void LoadShaders(Registry& aRegistry)
             {"u_lightCol",    {bgfx::UniformType::Vec4}     },
             {"u_bones",       {bgfx::UniformType::Mat4, 128}}
     });
-    WATO_PROGRAM_CACHE.load("simple"_hs, "vs_cubes", "fs_cubes", ProgramLoader::uniform_desc_map{});
+    WATO_PROGRAM_CACHE.load("simple"_hs, "vs_cubes", "fs_cubes", ShaderLoader::uniform_desc_map{});
 }
 
 void LoadTextures(Registry& aRegistry, uint32_t aWidth, uint32_t aHeight)
