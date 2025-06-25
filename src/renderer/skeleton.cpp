@@ -7,11 +7,15 @@
 
 void PrintBone(const Bone& aBone, const Skeleton& aSkeleton, std::size_t aIndent)
 {
-    spdlog::info(
-        "{}bone {} with offset {}",
-        std::string(aIndent, ' '),
-        aBone.Name,
-        glm::to_string(aBone.Offset.value_or(glm::identity<glm::mat4>())));
+    if (aBone.Offset) {
+        spdlog::info(
+            "{}bone {} with offset {}",
+            std::string(aIndent, ' '),
+            aBone.Name,
+            glm::to_string(*aBone.Offset));
+    } else {
+        spdlog::info("{}bone {} with no offset", std::string(aIndent, ' '), aBone.Name);
+    }
     for (const auto bIdx : aBone.Children) {
         PrintBone(aSkeleton.Bones[bIdx], aSkeleton, aIndent + 2);
     }
