@@ -311,3 +311,6 @@ _build
 
 # mise
 .mise.toml
+
+# RenderDoc
+*.rdc
