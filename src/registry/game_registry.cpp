@@ -93,5 +93,11 @@ void LoadModels()
     WATO_MODEL_CACHE.load(
         "phoenix"_hs,
         "assets/models/phoenix.fbx",
-        aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_GlobalScale | aiProcess_FlipUVs);
+        aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_GlobalScale | aiProcess_FlipUVs
+            | aiProcess_ConvertToLeftHanded);
+    WATO_MODEL_CACHE.load(
+        "mutant"_hs,
+        "assets/models/mutant.fbx",
+        aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_GlobalScale | aiProcess_FlipUVs
+            | aiProcess_ConvertToLeftHanded);
 }
