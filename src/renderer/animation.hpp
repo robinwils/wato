@@ -1,8 +1,11 @@
 #pragma once
 
+#include <spdlog/fmt/bundled/format.h>
+
 #include <glm/ext/quaternion_common.hpp>
 #include <glm/ext/vector_float3.hpp>
 #include <glm/gtc/quaternion.hpp>
+#include <glm/gtx/string_cast.hpp>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -24,6 +27,14 @@ struct AnimationKeyFrame {
         } else {
             return glm::slerp(Key, aOther.Key, static_cast<float>(f));
         }
+    }
+};
+
+template <typename KT>
+struct fmt::formatter<AnimationKeyFrame<KT>> : fmt::formatter<std::string> {
+    auto format(AnimationKeyFrame<KT> aObj, format_context& aCtx) const -> decltype(aCtx.out())
+    {
+        return fmt::format_to(aCtx.out(), "{} at time {}", glm::to_string(aObj.Key), aObj.Time);
     }
 };
 
