@@ -13,17 +13,17 @@
 enum Category { PlacementGhostTower = 0x0001, Terrain = 0x0002, Entities = 0x0004 };
 
 struct PhysicsParams {
-    bool InfoLogs;
-    bool WarningLogs;
-    bool ErrorLogs;
+    bool InfoLogs    = false;
+    bool WarningLogs = false;
+    bool ErrorLogs   = true;
 
-    reactphysics3d::DefaultLogger* Logger;
+    reactphysics3d::DefaultLogger* Logger = nullptr;
 
 #if WATO_DEBUG
-    bool RenderShapes;
-    bool RenderAabb = true;
-    bool RenderContactPoints;
-    bool RenderContactNormals;
+    bool RenderShapes         = false;
+    bool RenderAabb           = true;
+    bool RenderContactPoints  = false;
+    bool RenderContactNormals = false;
 #endif
 };
 
