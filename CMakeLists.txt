@@ -28,12 +28,16 @@ option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 set(TF_BUILD_TESTS OFF CACHE BOOL "Disable taskflow test builds" FORCE)
 set(TF_BUILD_EXAMPLES OFF CACHE BOOL "Disable taskflow example builds" FORCE)
 
+set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(ASSIMP_INJECT_DEBUG_POSTFIX OFF CACHE BOOL "" FORCE)
+set(ASSIMP_INSTALL OFF CACHE BOOL "" FORCE)
+
 include(FetchContent)
 FetchContent_Declare(
   assimp
   GIT_REPOSITORY https://github.com/assimp/assimp.git
-  GIT_TAG v5.4.3
-  FIND_PACKAGE_ARGS NAMES assimp REQUIRED
+  GIT_TAG v6.0.2
+  FIND_PACKAGE_ARGS NAMES assimp
 )
 FetchContent_Declare(
   glfw3
@@ -96,7 +100,8 @@ FetchContent_Declare(
 
 find_package(Sodium REQUIRED)
 
-set(DEPENDENCY_NAMES assimp
+set(DEPENDENCY_NAMES
+  assimp
   glfw3
   entt
   glm
