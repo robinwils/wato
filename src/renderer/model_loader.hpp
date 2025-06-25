@@ -23,6 +23,22 @@ struct fmt::formatter<aiString> : fmt::formatter<std::string> {
     }
 };
 
+template <>
+struct fmt::formatter<aiMatrix4x4> : fmt::formatter<std::string> {
+    auto format(aiMatrix4x4 aObj, format_context& aCtx) const -> decltype(aCtx.out())
+    {
+        // clang-format off
+        return fmt::format_to(
+            aCtx.out(),
+            "aiMatrix4x4(({}, {}, {}, {}), ({}, {}, {}, {}), ({}, {}, {}, {}), ({}, {}, {}, {}))",
+            aObj.a1,aObj.a2,aObj.a3,aObj.a4,
+            aObj.b1,aObj.b2,aObj.b3,aObj.b4,
+            aObj.c1,aObj.c2,aObj.c3,aObj.c4,
+            aObj.d1,aObj.d2,aObj.d3,aObj.d4);
+        // clang-format on
+    }
+};
+
 constexpr inline glm::vec3 toGLMVec3(const aiVector3D& aVector)
 {
     return glm::vec3(aVector.x, aVector.y, aVector.z);
