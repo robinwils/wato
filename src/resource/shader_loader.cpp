@@ -1,8 +1,9 @@
-#include "renderer/material.hpp"
+#include "shader_loader.hpp"
 
+#include "core/sys/log.hpp"
 #include "core/sys/mem.hpp"
 
-bgfx::ShaderHandle loadShader(bx::FileReaderI* aReader, const char* aName)
+static bgfx::ShaderHandle loadShader(bx::FileReaderI* aReader, const char* aName)
 {
     char filePath[512];
 
@@ -59,7 +60,8 @@ bgfx::ShaderHandle loadShader(bx::FileReaderI* aReader, const char* aName)
     return handle;
 }
 
-bgfx::ProgramHandle loadProgram(bx::FileReader* aFr, const char* aVsName, const char* aFsName)
+static bgfx::ProgramHandle
+loadProgram(bx::FileReader* aFr, const char* aVsName, const char* aFsName)
 {
     bgfx::ShaderHandle vsh = loadShader(aFr, aVsName);
     bgfx::ShaderHandle fsh = BGFX_INVALID_HANDLE;
@@ -68,4 +70,21 @@ bgfx::ProgramHandle loadProgram(bx::FileReader* aFr, const char* aVsName, const 
     }
 
     return bgfx::createProgram(vsh, fsh, true /* destroy shaders when program is destroyed */);
+}
+
+ShaderLoader::result_type ShaderLoader::operator()(
+    const char*             aVsName,
+    const char*             aFsName,
+    const uniform_desc_map& aUniforms)
+{
+    bx::FileReader fr;
+    auto           handle = loadProgram(&fr, aVsName, aFsName);
+
+    auto uniformHandles = Shader::uniform_map{};
+    for (auto&& [name, desc] : aUniforms) {
+        DBG("creating uniform '{}'", name);
+        uniformHandles[name] = bgfx::createUniform(name.c_str(), desc.Type, desc.Number);
+    }
+
+    return std::make_shared<Shader>(handle, uniformHandles);
 }

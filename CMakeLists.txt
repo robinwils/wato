@@ -157,12 +157,20 @@ add_subdirectory(test)
 target_compile_options(watolib PRIVATE "-DDOCTEST_CONFIG_DISABLE")
 target_compile_options(wato PRIVATE "-DDOCTEST_CONFIG_DISABLE")
 if(DEBUG_ENABLE)
-  target_compile_definitions(wato_common INTERFACE SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE BX_CONFIG_DEBUG=1)
-  target_compile_options(wato_common INTERFACE -ggdb -O0 -fsanitize=address,undefined)
+  target_compile_definitions(wato_common
+    INTERFACE
+      SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE
+      BX_CONFIG_DEBUG=1)
+  target_compile_options(wato_common
+    INTERFACE
+     -ggdb -O0 -fsanitize=address,undefined)
   target_link_options(wato_common INTERFACE -fsanitize=address,undefined)
   set(WATO_DEBUG 1)
 else()
-  target_compile_definitions(wato_common INTERFACE SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_INFO BX_CONFIG_DEBUG=0)
+  target_compile_definitions(wato_common
+    INTERFACE
+      SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_INFO
+      BX_CONFIG_DEBUG=0)
   target_compile_options(wato_common INTERFACE -O3)
   set(WATO_DEBUG 0)
 endif()
@@ -325,18 +333,20 @@ target_sources(wato
     src/input/input.hpp
     src/registry/game_registry.hpp
     src/renderer/animation.hpp
-    src/renderer/asset.hpp
     src/renderer/bgfx_utils.hpp
     src/renderer/blinn_phong_material.hpp
-    src/renderer/cache.hpp
     src/renderer/material.hpp
-    src/renderer/model_loader.hpp
     src/renderer/model.hpp
     src/renderer/plane_primitive.hpp
     src/renderer/primitive.hpp
     src/renderer/renderer.hpp
     src/renderer/skeleton.hpp
     src/renderer/vertex_layout.hpp
+    src/resource/asset.hpp
+    src/resource/cache.hpp
+    src/resource/model_loader.hpp
+    src/resource/shader_loader.hpp
+    src/resource/texture_loader.hpp
     src/systems/action.hpp
     src/systems/animation.hpp
     src/systems/input.hpp
@@ -357,13 +367,14 @@ target_sources(wato
     src/input/input.cpp
     src/main.cpp
     src/registry/game_registry.cpp
-    src/renderer/asset.cpp
     src/renderer/bgfx_utils.cpp
-    src/renderer/material.cpp
     src/renderer/model.cpp
-    src/renderer/model_loader.cpp
     src/renderer/renderer.cpp
     src/renderer/skeleton.cpp
+    src/resource/asset.cpp
+    src/resource/model_loader.cpp
+    src/resource/shader_loader.cpp
+    src/resource/texture_loader.cpp
     src/systems/action.cpp
     src/systems/animation.cpp
     src/systems/input.cpp

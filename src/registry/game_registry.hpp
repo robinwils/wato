@@ -12,4 +12,4 @@ void LoadResources(Registry& aRegistry);
 void LoadShaders(Registry& aRegistry);
 void SpawnLight(Registry& aRegistry);
 void LoadTextures(Registry& aRegistry, uint32_t aW, uint32_t aH);
-void LoadModels();
+void LoadModels(Registry& aRegistry);

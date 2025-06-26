@@ -7,12 +7,7 @@
 #include <glm/ext/vector_float4.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "core/sys/log.hpp"
-#include "glm/ext/vector_float3.hpp"
 #include "renderer/shader.hpp"
-
-bgfx::ShaderHandle  loadShader(bx::FileReaderI* aReader, const char* aName);
-bgfx::ProgramHandle loadProgram(bx::FileReader* aFr, const char* aVsName, const char* aFsName);
 
 class Material
 {
