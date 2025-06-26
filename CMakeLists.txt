@@ -304,6 +304,7 @@ target_sources(watolib
     src/core/snapshot.hpp
     src/core/sys/backtrace.hpp
     src/core/sys/log.hpp
+    src/core/tower_building_handler.hpp
     src/registry/registry.hpp
     src/systems/physics.hpp
     src/systems/system.hpp
@@ -315,6 +316,7 @@ target_sources(watolib
     src/core/physics.cpp
     src/core/snapshot.cpp
     src/core/sys/backtrace.cpp
+    src/core/tower_building_handler.cpp
     src/systems/physics.cpp
 )
 
@@ -323,6 +325,7 @@ target_sources(wato
   BASE_DIRS src
   FILES
     src/core/app/game_client.hpp
+    src/core/event_handler.hpp
     src/core/net/enet_client.hpp
     src/core/tile.hpp
     src/core/window.hpp
@@ -356,6 +359,7 @@ target_sources(wato
     deps/imgui/imgui_tables.cpp
     deps/imgui/imgui_widgets.cpp
     src/core/app/game_client.cpp
+    src/core/event_handler.cpp
     src/core/net/enet_client.cpp
     src/core/sys/mem.cpp
     src/core/window.cpp

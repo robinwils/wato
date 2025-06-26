@@ -1,15 +1,20 @@
 #pragma once
 
+#include <reactphysics3d/reactphysics3d.h>
 #include <spdlog/spdlog.h>
 
 #include <entt/entity/fwd.hpp>
 #include <glm/glm.hpp>
-#include <vector>
 
-#include "core/event_handler.hpp"
+#include "registry/registry.hpp"
 
 // Enumeration for categories
 enum Category { PlacementGhostTower = 0x0001, Terrain = 0x0002, Entities = 0x0004 };
+
+struct RigidBodyData {
+    RigidBodyData(entt::entity aEntity) : Entity(aEntity) {}
+    entt::entity Entity;
+};
 
 struct PhysicsParams {
     bool InfoLogs    = false;

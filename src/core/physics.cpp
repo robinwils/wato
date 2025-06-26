@@ -3,7 +3,6 @@
 #include <spdlog/spdlog.h>
 
 #include "components/rigid_body.hpp"
-#include "core/event_handler.hpp"
 
 void Physics::Init(Registry& aRegistry)
 {

@@ -1,7 +1,5 @@
 #pragma once
 
-#include <stdexcept>
-
 #include "input/action.hpp"
 #include "systems/system.hpp"
 
