@@ -19,8 +19,6 @@ find_package(ZLIB REQUIRED)
 
 find_program(CLANG_TIDY_BIN clang-tidy REQUIRED)
 
-option(DEBUG_ENABLE "Enable debug features" OFF)
-
 option(wato_WARNINGS_AS_ERRORS "Treat Warnings As Errors" OFF)
 
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
@@ -154,30 +152,29 @@ add_executable(wato)
 add_subdirectory(src/watod)
 add_subdirectory(test)
 
+# Preprocessor
+target_compile_definitions(wato_common
+  INTERFACE
+    SPDLOG_ACTIVE_LEVEL=$<IF:$<CONFIG:Debug>,SPDLOG_LEVEL_TRACE,SPDLOG_LEVEL_INFO>
+    BX_CONFIG_DEBUG=$<IF:$<CONFIG:Debug>,1,0>
+    WATO_DEBUG=$<IF:$<CONFIG:Debug>,1,0>
+    GLM_FORCE_SIZE_T_LENGTH
+)
+
+target_compile_options(wato_common
+  INTERFACE
+    $<$<CONFIG:Debug>:-ggdb -fsanitize=address,undefined>
+    -O$<IF:$<CONFIG:Debug>,0,3>
+)
 target_compile_options(watolib PRIVATE "-DDOCTEST_CONFIG_DISABLE")
 target_compile_options(wato PRIVATE "-DDOCTEST_CONFIG_DISABLE")
-if(DEBUG_ENABLE)
-  target_compile_definitions(wato_common
-    INTERFACE
-      SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE
-      BX_CONFIG_DEBUG=1)
-  target_compile_options(wato_common
-    INTERFACE
-     -ggdb -O0 -fsanitize=address,undefined)
-  target_link_options(wato_common INTERFACE -fsanitize=address,undefined)
-  set(WATO_DEBUG 1)
-else()
-  target_compile_definitions(wato_common
-    INTERFACE
-      SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_INFO
-      BX_CONFIG_DEBUG=0)
-  target_compile_options(wato_common INTERFACE -O3)
-  set(WATO_DEBUG 0)
-endif()
 
-# Configure the file using the provided (or default) value
-configure_file(config.h.in config.h @ONLY)
+target_link_options(wato_common
+  INTERFACE
+    $<$<CONFIG:Debug>:-fsanitize=address,undefined>
+)
 
+set(WATO_DEBUG "$<IF:$<CONFIG:Debug>,1,0>")
 
 include(cmake/CompilerWarnings.cmake)
 wato_set_project_warnings(wato_common

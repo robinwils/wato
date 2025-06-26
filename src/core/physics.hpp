@@ -6,7 +6,6 @@
 #include <glm/glm.hpp>
 #include <vector>
 
-#include "config.h"
 #include "core/event_handler.hpp"
 
 // Enumeration for categories

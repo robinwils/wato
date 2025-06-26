@@ -3,7 +3,6 @@
 #include <bgfx/platform.h>
 #include <bx/bx.h>
 
-#include "config.h"
 #include "core/window.hpp"
 #include "imgui_helper.h"
 
