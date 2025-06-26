@@ -157,8 +157,9 @@ struct Button {
     struct State {
         State() : Action(Action::Unknown), Modifiers(0) {}
         std::string String() const;
-        enum Action Action;
-        uint8_t     Modifiers;
+
+        enum Action Action { Action::Unknown };
+        uint8_t     Modifiers{0};
     };
 };
 
@@ -197,9 +198,8 @@ constexpr uint8_t kCtrlAltShiftMod = ModifierMask(ModifierKey::Ctrl)
 template <std::size_t Size>
 struct InputState {
     static constexpr std::size_t kCapacity = Size;
-    InputState() { Clear(); }
-    virtual ~InputState() = default;
-    virtual void Clear() { std::memset(Inputs.data(), 0, kCapacity * sizeof(Button::State)); }
+    InputState()                           = default;
+    virtual ~InputState()                  = default;
 
     [[nodiscard]] bool IsKeyPressed(std::size_t aKey) const
     {
@@ -237,7 +237,6 @@ struct MouseState : public InputState<kNumButtons> {
     ~MouseState() = default;
 
     std::string String() const;
-    void        Clear() override;
     glm::fvec2  Pos, Scroll;
 };
 

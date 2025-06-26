@@ -12,16 +12,6 @@
 #include "core/sys/log.hpp"
 #include "core/window.hpp"
 
-void MouseState::Clear()
-{
-    InputState::Clear();
-
-    Pos.x    = -1.0f;
-    Pos.y    = -1.0f;
-    Scroll.x = 0.0f;
-    Scroll.y = 0.0f;
-}
-
 std::string MouseState::String() const
 {
     std::string str;
