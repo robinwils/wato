@@ -234,6 +234,7 @@ struct KeyboardState : public InputState<Keyboard::Count> {
 static constexpr uint32_t kNumButtons = 3;
 struct MouseState : public InputState<kNumButtons> {
     MouseState() : InputState(), Pos(), Scroll() {}
+    ~MouseState() = default;
 
     std::string String() const;
     void        Clear() override;
