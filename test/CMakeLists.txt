@@ -18,6 +18,7 @@ target_sources(wato_tests
   FILES
   PRIVATE
     ${CMAKE_SOURCE_DIR}/src/core/snapshot.cpp
+    ${CMAKE_SOURCE_DIR}/src/input/action.cpp
     main.cpp
 )
 
