@@ -97,9 +97,7 @@ FetchContent_Declare(
   FIND_PACKAGE_ARGS NAMES spdlog
 )
 
-find_package(Sodium REQUIRED)
-
-set(DEPENDENCY_NAMES
+set(FETCHED_DEPS_NAMES
   assimp
   glfw3
   entt
@@ -112,13 +110,29 @@ set(DEPENDENCY_NAMES
   spdlog
 )
 
-FetchContent_MakeAvailable(${DEPENDENCY_NAMES})
+FetchContent_MakeAvailable(${FETCHED_DEPS_NAMES})
+set(OTHER_DEPS
+  Sodium
+  bgfx
+)
+
+foreach(dep ${OTHER_DEPS})
+  find_package(${dep} REQUIRED)
+endforeach()
+
+# vcpkg loses the dependency of bx on windows which fails to pull in all headers
+# credit https://github.com/openblack/openblack
+find_package(bgfx REQUIRED)
+if (TARGET bgfx::bgfx AND TARGET bgfx::bx)
+  target_link_libraries(bgfx::bgfx INTERFACE bgfx::bx)
+endif ()
+
 # Display all fetched content info
 message(STATUS "Fetched dependencies information:")
 message(STATUS "----------------------------------")
 
 # For each dependency, show key paths
-foreach(dep ${DEPENDENCY_NAMES} Sodium)
+foreach(dep ${FETCHED_DEPS_NAMES} ${OTHER_DEPS})
   if(${dep}_POPULATED OR ${dep}_FOUND)
     if(${dep}_SOURCE_DIR)  # Was fetched and built
       message(STATUS "Dependency: ${dep} fetched and built")
@@ -160,7 +174,6 @@ add_subdirectory(test)
 target_compile_definitions(wato_common
   INTERFACE
     SPDLOG_ACTIVE_LEVEL=$<IF:$<CONFIG:Debug>,SPDLOG_LEVEL_TRACE,SPDLOG_LEVEL_INFO>
-    BX_CONFIG_DEBUG=$<IF:$<CONFIG:Debug>,1,0>
     WATO_DEBUG=$<IF:$<CONFIG:Debug>,1,0>
     GLM_FORCE_SIZE_T_LENGTH
 )
@@ -187,12 +200,6 @@ wato_set_project_warnings(wato_common
 
 target_compile_features(wato_common INTERFACE cxx_std_${CMAKE_CXX_STANDARD})
 
-target_include_directories(wato_common
-  SYSTEM INTERFACE
-    deps/bimg/include
-    deps/bx/include
-)
-
 target_include_directories(wato
   PRIVATE
     src
@@ -201,7 +208,6 @@ target_include_directories(wato
 
 target_include_directories(wato
   SYSTEM PRIVATE
-    deps/bgfx/include
     deps/imgui
     src/imgui
     deps/iconfontcppheaders
@@ -262,28 +268,6 @@ if(DEFINED spdlog_SOURCE_DIR)
     ${spdlog_SOURCE_DIR}/include
   )
 endif()
-
-if(WIN32)
-  target_include_directories(wato_common
-  SYSTEM INTERFACE
-    deps/bx/include/compat/msvc
-  )
-  target_link_directories(wato_common
-  INTERFACE
-    deps/bgfx/.build/win64_vs2022/bin
-    deps/glfw/lib-vc2022
-  )
-elseif(UNIX)
-  target_include_directories(wato_common
-  SYSTEM INTERFACE
-    deps/bx/include/compat/linux
-  )
-  target_link_directories(wato_common
-  INTERFACE
-    deps/bgfx/.build/linux64_gcc/bin
-  )
-endif()
-
 
 target_sources(watolib
   PUBLIC FILE_SET HEADERS
@@ -395,7 +379,7 @@ target_link_options(wato_common INTERFACE -rdynamic)
 target_link_libraries(watolib
   PUBLIC
     wato_common
-    bxDebug
+    bgfx::bx
     sodium
     spdlog
     reactphysics3d
@@ -403,9 +387,9 @@ target_link_libraries(watolib
 
 target_link_libraries(wato
   watolib
-  bgfxDebug
-  bimg_decodeDebug
-  bimgDebug
+  bgfx::bgfx
+  bgfx::bimg_decode
+  bgfx::bimg
 )
 
 if(WIN32)

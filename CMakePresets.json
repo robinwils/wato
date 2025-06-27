@@ -12,6 +12,7 @@
       "hidden": true,
       "binaryDir": "${sourceDir}/out/build/${presetName}",
       "installDir": "${sourceDir}/out/install/${presetName}",
+      "toolchainFile": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
       "cacheVariables": {
         "ASSIMP_BUILD_USE_CCACHE": "OFF",
         "BUILD_SHARED_LIBS": "OFF"
