@@ -19,8 +19,6 @@ find_package(ZLIB REQUIRED)
 
 find_program(CLANG_TIDY_BIN clang-tidy REQUIRED)
 
-option(DEBUG_ENABLE "Enable debug features" OFF)
-
 option(wato_WARNINGS_AS_ERRORS "Treat Warnings As Errors" OFF)
 
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
@@ -31,6 +29,9 @@ set(TF_BUILD_EXAMPLES OFF CACHE BOOL "Disable taskflow example builds" FORCE)
 set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(ASSIMP_INJECT_DEBUG_POSTFIX OFF CACHE BOOL "" FORCE)
 set(ASSIMP_INSTALL OFF CACHE BOOL "" FORCE)
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_COLOR_MAKEFILE ON)
 
 include(FetchContent)
 FetchContent_Declare(
@@ -98,9 +99,7 @@ FetchContent_Declare(
   FIND_PACKAGE_ARGS NAMES spdlog
 )
 
-find_package(Sodium REQUIRED)
-
-set(DEPENDENCY_NAMES
+set(FETCHED_DEPS_NAMES
   assimp
   glfw3
   entt
@@ -113,13 +112,29 @@ set(DEPENDENCY_NAMES
   spdlog
 )
 
-FetchContent_MakeAvailable(${DEPENDENCY_NAMES})
+FetchContent_MakeAvailable(${FETCHED_DEPS_NAMES})
+set(OTHER_DEPS
+  Sodium
+  bgfx
+)
+
+foreach(dep ${OTHER_DEPS})
+  find_package(${dep} REQUIRED)
+endforeach()
+
+# vcpkg loses the dependency of bx on windows which fails to pull in all headers
+# credit https://github.com/openblack/openblack
+find_package(bgfx REQUIRED)
+if (TARGET bgfx::bgfx AND TARGET bgfx::bx)
+  target_link_libraries(bgfx::bgfx INTERFACE bgfx::bx)
+endif ()
+
 # Display all fetched content info
 message(STATUS "Fetched dependencies information:")
 message(STATUS "----------------------------------")
 
 # For each dependency, show key paths
-foreach(dep ${DEPENDENCY_NAMES} Sodium)
+foreach(dep ${FETCHED_DEPS_NAMES} ${OTHER_DEPS})
   if(${dep}_POPULATED OR ${dep}_FOUND)
     if(${dep}_SOURCE_DIR)  # Was fetched and built
       message(STATUS "Dependency: ${dep} fetched and built")
@@ -146,38 +161,38 @@ include(CTest)
 
 add_library(wato_common INTERFACE)
 if(BUILD_SHARED_LIBS)
-add_library(watolib SHARED)
+  add_library(watolib SHARED)
 else()
-add_library(watolib STATIC)
+  add_library(watolib STATIC)
 endif()
+
+# to get libwato.so not libwatolib.so
+set_property(TARGET watolib PROPERTY OUTPUT_NAME wato)
 add_executable(wato)
 add_subdirectory(src/watod)
 add_subdirectory(test)
 
-target_compile_options(watolib PRIVATE "-DDOCTEST_CONFIG_DISABLE")
-target_compile_options(wato PRIVATE "-DDOCTEST_CONFIG_DISABLE")
-if(DEBUG_ENABLE)
-  target_compile_definitions(wato_common
-    INTERFACE
-      SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE
-      BX_CONFIG_DEBUG=1)
+# Preprocessor
+target_compile_definitions(wato_common
+  INTERFACE
+    SPDLOG_ACTIVE_LEVEL=$<IF:$<CONFIG:Debug>,SPDLOG_LEVEL_TRACE,SPDLOG_LEVEL_INFO>
+    WATO_DEBUG=$<IF:$<CONFIG:Debug>,1,0>
+    GLM_FORCE_SIZE_T_LENGTH
+    DOCTEST_CONFIG_DISABLE
+)
+
+if(UNIX)
   target_compile_options(wato_common
     INTERFACE
-     -ggdb -O0 -fsanitize=address,undefined)
-  target_link_options(wato_common INTERFACE -fsanitize=address,undefined)
-  set(WATO_DEBUG 1)
-else()
-  target_compile_definitions(wato_common
+      $<$<CONFIG:Debug>:-ggdb -fsanitize=address,undefined>
+      -fdiagnostics-color=always
+      -O$<IF:$<CONFIG:Debug>,0,3>
+  )
+  target_link_options(wato_common
     INTERFACE
-      SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_INFO
-      BX_CONFIG_DEBUG=0)
-  target_compile_options(wato_common INTERFACE -O3)
-  set(WATO_DEBUG 0)
+      $<$<CONFIG:Debug>:-fsanitize=address,undefined>
+  )
 endif()
-
-# Configure the file using the provided (or default) value
-configure_file(config.h.in config.h @ONLY)
-
 
 include(cmake/CompilerWarnings.cmake)
 wato_set_project_warnings(wato_common
@@ -185,12 +200,6 @@ wato_set_project_warnings(wato_common
   AS_ERRRORS ${wato_WARNINGS_AS_ERRORS})
 
 target_compile_features(wato_common INTERFACE cxx_std_${CMAKE_CXX_STANDARD})
-
-target_include_directories(wato_common
-  SYSTEM INTERFACE
-    deps/bimg/include
-    deps/bx/include
-)
 
 target_include_directories(wato
   PRIVATE
@@ -200,7 +209,6 @@ target_include_directories(wato
 
 target_include_directories(wato
   SYSTEM PRIVATE
-    deps/bgfx/include
     deps/imgui
     src/imgui
     deps/iconfontcppheaders
@@ -262,28 +270,6 @@ if(DEFINED spdlog_SOURCE_DIR)
   )
 endif()
 
-if(WIN32)
-  target_include_directories(wato_common
-  SYSTEM INTERFACE
-    deps/bx/include/compat/msvc
-  )
-  target_link_directories(wato_common
-  INTERFACE
-    deps/bgfx/.build/win64_vs2022/bin
-    deps/glfw/lib-vc2022
-  )
-elseif(UNIX)
-  target_include_directories(wato_common
-  SYSTEM INTERFACE
-    deps/bx/include/compat/linux
-  )
-  target_link_directories(wato_common
-  INTERFACE
-    deps/bgfx/.build/linux64_gcc/bin
-  )
-endif()
-
-
 target_sources(watolib
   PUBLIC FILE_SET HEADERS
   BASE_DIRS src
@@ -301,12 +287,12 @@ target_sources(watolib
     src/components/transform3d.hpp
     src/core/app/app.hpp
     src/core/event_handler.hpp
-    src/core/net/enet_base.hpp
     src/core/physics.hpp
     src/core/queue/ring_buffer.hpp
     src/core/snapshot.hpp
     src/core/sys/backtrace.hpp
     src/core/sys/log.hpp
+    src/core/tower_building_handler.hpp
     src/registry/registry.hpp
     src/systems/physics.hpp
     src/systems/system.hpp
@@ -314,10 +300,10 @@ target_sources(watolib
   PRIVATE
     src/core/app/app.cpp
     src/core/event_handler.cpp
-    src/core/net/enet_base.cpp
     src/core/physics.cpp
     src/core/snapshot.cpp
     src/core/sys/backtrace.cpp
+    src/core/tower_building_handler.cpp
     src/systems/physics.cpp
 )
 
@@ -326,6 +312,8 @@ target_sources(wato
   BASE_DIRS src
   FILES
     src/core/app/game_client.hpp
+    src/core/event_handler.hpp
+    src/core/net/enet_base.hpp
     src/core/net/enet_client.hpp
     src/core/tile.hpp
     src/core/window.hpp
@@ -359,6 +347,8 @@ target_sources(wato
     deps/imgui/imgui_tables.cpp
     deps/imgui/imgui_widgets.cpp
     src/core/app/game_client.cpp
+    src/core/event_handler.cpp
+    src/core/net/enet_base.cpp
     src/core/net/enet_client.cpp
     src/core/sys/mem.cpp
     src/core/window.cpp
@@ -390,7 +380,7 @@ target_link_options(wato_common INTERFACE -rdynamic)
 target_link_libraries(watolib
   PUBLIC
     wato_common
-    bxDebug
+    bgfx::bx
     sodium
     spdlog
     reactphysics3d
@@ -398,9 +388,9 @@ target_link_libraries(watolib
 
 target_link_libraries(wato
   watolib
-  bgfxDebug
-  bimg_decodeDebug
-  bimgDebug
+  bgfx::bgfx
+  bgfx::bimg_decode
+  bgfx::bimg
 )
 
 if(WIN32)

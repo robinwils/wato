@@ -13,6 +13,7 @@
 #include "components/scene_object.hpp"
 #include "components/transform3d.hpp"
 #include "core/physics.hpp"
+#include "core/tower_building_handler.hpp"
 #include "input/action.hpp"
 #include "registry/registry.hpp"
 

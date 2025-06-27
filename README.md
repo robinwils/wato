@@ -112,3 +112,14 @@ $ make -C shaders windows-shaders
 $ make -C shaders osx-shaders
 ```
 
+## Vagrant
+
+Careful with firewalls, disable before `vagrant up`
+
+```
+apt install nfs-kernel-server rpcbind
+vagrant plugin install vagrant-libvirt
+vagrant plugin install winrm
+vagrant plugin install winrm-fs
+vagrant plugin install winrm-elevated (this additional error showed after the first two were installed)
+```

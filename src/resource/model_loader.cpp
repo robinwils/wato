@@ -4,7 +4,6 @@
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 #include <bx/bx.h>
-#include <tinystl/buffer.h>
 
 #include <glm/gtx/string_cast.hpp>
 #include <stdexcept>

@@ -6,7 +6,6 @@
 #include "components/placement_mode.hpp"
 #include "components/scene_object.hpp"
 #include "components/transform3d.hpp"
-#include "config.h"
 #include "core/physics.hpp"
 #include "registry/registry.hpp"
 #include "systems/system.hpp"
@@ -18,7 +17,8 @@ class RenderSystem : public System<RenderSystem>
 
     void Register(entt::organizer& aOrganizer)
     {
-        aOrganizer.emplace<&RenderSystem::operator(), const LightSource, const PlacementMode>(*this,
+        aOrganizer.emplace<&RenderSystem::operator(), const LightSource, const PlacementMode>(
+            *this,
             StaticName());
     }
     void operator()(Registry& aRegistry, const float aDeltaTime);
