@@ -148,6 +148,9 @@ if(BUILD_SHARED_LIBS)
 else()
   add_library(watolib STATIC)
 endif()
+
+# to get libwato.so not libwatolib.so
+set_property(TARGET watolib PROPERTY OUTPUT_NAME wato)
 add_executable(wato)
 add_subdirectory(src/watod)
 add_subdirectory(test)
