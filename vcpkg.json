@@ -1,5 +1,22 @@
 {
-  "dependencies": [
-    "bgfx"
-  ]
+  "name": "wato",
+  "default-features": [ "client" ],
+  "dependencies": [ "zlib", "libsodium" ],
+  "features": {
+    "client": {
+      "description": "WaTo game client",
+      "dependencies": [
+        {
+          "name": "glfw3",
+          "features": [
+            {
+              "name": "wayland",
+              "platform": "!(windows | osx)"
+            }
+          ]
+        },
+        "bgfx"
+      ]
+    }
+  }
 }
