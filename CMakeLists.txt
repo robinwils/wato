@@ -29,7 +29,9 @@ set(TF_BUILD_EXAMPLES OFF CACHE BOOL "Disable taskflow example builds" FORCE)
 set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(ASSIMP_INJECT_DEBUG_POSTFIX OFF CACHE BOOL "" FORCE)
 set(ASSIMP_INSTALL OFF CACHE BOOL "" FORCE)
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_COLOR_MAKEFILE ON)
 
 include(FetchContent)
 FetchContent_Declare(
@@ -176,22 +178,21 @@ target_compile_definitions(wato_common
     SPDLOG_ACTIVE_LEVEL=$<IF:$<CONFIG:Debug>,SPDLOG_LEVEL_TRACE,SPDLOG_LEVEL_INFO>
     WATO_DEBUG=$<IF:$<CONFIG:Debug>,1,0>
     GLM_FORCE_SIZE_T_LENGTH
+    DOCTEST_CONFIG_DISABLE
 )
 
-target_compile_options(wato_common
-  INTERFACE
-    $<$<CONFIG:Debug>:-ggdb -fsanitize=address,undefined>
-    -O$<IF:$<CONFIG:Debug>,0,3>
-)
-target_compile_options(watolib PRIVATE "-DDOCTEST_CONFIG_DISABLE")
-target_compile_options(wato PRIVATE "-DDOCTEST_CONFIG_DISABLE")
-
-target_link_options(wato_common
-  INTERFACE
-    $<$<CONFIG:Debug>:-fsanitize=address,undefined>
-)
-
-set(WATO_DEBUG "$<IF:$<CONFIG:Debug>,1,0>")
+if(UNIX)
+  target_compile_options(wato_common
+    INTERFACE
+      $<$<CONFIG:Debug>:-ggdb -fsanitize=address,undefined>
+      -fdiagnostics-color=always
+      -O$<IF:$<CONFIG:Debug>,0,3>
+  )
+  target_link_options(wato_common
+    INTERFACE
+      $<$<CONFIG:Debug>:-fsanitize=address,undefined>
+  )
+endif()
 
 include(cmake/CompilerWarnings.cmake)
 wato_set_project_warnings(wato_common
