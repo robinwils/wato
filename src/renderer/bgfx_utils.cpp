@@ -3,13 +3,6 @@
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
-#include <bx/math.h>
-#include <bx/timer.h>
-#include <tinystl/allocator.h>
-#include <tinystl/string.h>
-#include <tinystl/vector.h>
-namespace stl = tinystl;
-
 #include <bgfx/bgfx.h>
 #include <bx/commandline.h>
 #include <bx/endian.h>
@@ -17,6 +10,7 @@ namespace stl = tinystl;
 #include <bx/math.h>
 #include <bx/readerwriter.h>
 #include <bx/string.h>
+#include <bx/timer.h>
 // #include <meshoptimizer/src/meshoptimizer.h>
 
 #include <bimg/decode.h>
@@ -24,11 +18,12 @@ namespace stl = tinystl;
 #include <core/sys/log.hpp>
 #include <renderer/bgfx_utils.hpp>
 
-void calcTangents(void* aVertices,
-    uint16_t            aNumVertices,
-    bgfx::VertexLayout  aLayout,
-    const uint16_t*     aIndices,
-    uint32_t            aNumIndices)
+void calcTangents(
+    void*              aVertices,
+    uint16_t           aNumVertices,
+    bgfx::VertexLayout aLayout,
+    const uint16_t*    aIndices,
+    uint32_t           aNumIndices)
 {
     struct PosTexcoord {
         float X;

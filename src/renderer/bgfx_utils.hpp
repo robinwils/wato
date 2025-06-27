@@ -12,27 +12,6 @@
 #include <bx/file.h>
 #include <bx/pixelformat.h>
 #include <bx/string.h>
-#include <tinystl/allocator.h>
-#include <tinystl/vector.h>
-
-struct BxSingleton {
-    static BxSingleton& GetInstance()
-    {
-        static BxSingleton instance;
-
-        return instance;
-    }
-
-    BxSingleton(BxSingleton const&)    = delete;
-    void operator=(BxSingleton const&) = delete;
-
-    bx::DefaultAllocator Allocator;
-    bx::FileReader       Reader;
-    bx::FileWriter       Writer;
-
-   private:
-    BxSingleton() {};
-};
 
 ///
 void unload(void* aPtr);
@@ -41,11 +20,12 @@ void unload(void* aPtr);
 bimg::ImageContainer* imageLoad(const char* aFilePath, bgfx::TextureFormat::Enum aDstFormat);
 
 ///
-void calcTangents(void* aVertices,
-    uint16_t            aNumVertices,
-    bgfx::VertexLayout  aLayout,
-    const uint16_t*     aIndices,
-    uint32_t            aNumIndices);
+void calcTangents(
+    void*              aVertices,
+    uint16_t           aNumVertices,
+    bgfx::VertexLayout aLayout,
+    const uint16_t*    aIndices,
+    uint32_t           aNumIndices);
 
 /// Returns true if both internal transient index and vertex buffer have
 /// enough space.
@@ -54,9 +34,10 @@ void calcTangents(void* aVertices,
 /// @param[in] _layout Vertex layout.
 /// @param[in] _numIndices Number of indices.
 ///
-inline bool checkAvailTransientBuffers(uint32_t aNumVertices,
-    const bgfx::VertexLayout&                   aLayout,
-    uint32_t                                    aNumIndices)
+inline bool checkAvailTransientBuffers(
+    uint32_t                  aNumVertices,
+    const bgfx::VertexLayout& aLayout,
+    uint32_t                  aNumIndices)
 {
     return aNumVertices == bgfx::getAvailTransientVertexBuffer(aNumVertices, aLayout)
            && (0 == aNumIndices || aNumIndices == bgfx::getAvailTransientIndexBuffer(aNumIndices));
