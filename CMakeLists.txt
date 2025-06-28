@@ -15,7 +15,6 @@ endif()
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
-find_package(ZLIB REQUIRED)
 
 find_program(CLANG_TIDY_BIN clang-tidy)
 
@@ -405,7 +404,6 @@ elseif(UNIX)
     vulkan
     GL
     GLU
-    ZLIB::ZLIB
   )
 endif()
 
