@@ -54,12 +54,13 @@ int GameServer::Run()
     auto prevTime = clock_type::now();
     mRunning      = true;
 
-    std::jthread netPollThread{[&]() {
+    mNetTaskflow.emplace([&]() {
         while (mRunning) {
             mServer.ConsumeNetworkResponses();
             mServer.Poll();
         }
-    }};
+    });
+    mNetExecutor.run(mNetTaskflow);
 
     while (mRunning) {
         auto                         t  = clock_type::now();
