@@ -8,13 +8,14 @@
 
 #define IMGUI_USER_CONFIG "wato_imgui_config.h"
 
-#include <IconsFontAwesome6.h>
-#include <IconsKenney.h>
 #include <bgfx/bgfx.h>
 #include <imgui.h>
 #include <imgui_internal.h>
 
 #include <input/input.hpp>
+
+#include "iconfonts/IconsFontAwesome6.h"
+#include "iconfonts/IconsKenney.h"
 
 #define IMGUI_MBUT_LEFT   0x01
 #define IMGUI_MBUT_RIGHT  0x02

@@ -10,9 +10,6 @@
 [submodule "deps/imgui"]
 	path = deps/imgui
 	url = https://github.com/ocornut/imgui.git
-[submodule "deps/iconfontcppheaders"]
-	path = deps/iconfontcppheaders
-	url = https://github.com/juliettef/IconFontCppHeaders.git
 [submodule "vcpkg"]
 	path = vcpkg
 	url = https://github.com/microsoft/vcpkg.git

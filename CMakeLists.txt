@@ -205,13 +205,13 @@ target_include_directories(wato
   PRIVATE
     src
     src/imgui
+    include
 )
 
 target_include_directories(wato
   SYSTEM PRIVATE
     deps/imgui
     src/imgui
-    deps/iconfontcppheaders
 )
 
 if(DEFINED glfw3_SOURCE_DIR)
