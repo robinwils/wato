@@ -3,6 +3,7 @@
 #include <bx/spscqueue.h>
 
 #include <string>
+#include <taskflow/taskflow.hpp>
 #include <unordered_map>
 
 #include "core/app/app.hpp"
@@ -35,6 +36,8 @@ class GameServer : public Application
 
    private:
     GameInstanceID createGameInstance(const NewGameRequest& aNewGame);
+    tf::Taskflow   mNetTaskflow;
+    tf::Executor   mNetExecutor;
 
     ENetServer                                   mServer;
     std::unordered_map<GameInstanceID, Registry> mGameInstances;
