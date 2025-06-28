@@ -387,21 +387,22 @@ target_link_libraries(watolib
 
 target_link_libraries(wato
   watolib
+  glfw
+  assimp
   bgfx::bgfx
   bgfx::bimg_decode
   bgfx::bimg
 )
 
-if(WIN32)
+if(LINUX)
   target_link_libraries(wato
-    glfw3_mt
-  )
-elseif(UNIX)
-  target_link_libraries(wato
-    glfw
-    assimp
     X11
     vulkan
+    GL
+    GLU
+  )
+elseif(APPLE)
+  target_link_libraries(wato
     GL
     GLU
   )
