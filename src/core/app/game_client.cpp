@@ -3,7 +3,6 @@
 #include <bx/bx.h>
 
 #include <chrono>
-#include <taskflow/taskflow.hpp>
 #include <thread>
 
 #include "components/game.hpp"
@@ -74,15 +73,18 @@ int GameClient::Run()
 {
     tf::Executor executor;
 
-    auto&                       window    = mRegistry.ctx().get<WatoWindow&>();
-    auto&                       renderer  = mRegistry.ctx().get<Renderer&>();
-    auto&                       netClient = mRegistry.ctx().get<ENetClient&>();
-    auto                        prevTime  = clock_type::now();
-    std::optional<std::jthread> netPollThread;
+    auto& window    = mRegistry.ctx().get<WatoWindow&>();
+    auto& renderer  = mRegistry.ctx().get<Renderer&>();
+    auto& netClient = mRegistry.ctx().get<ENetClient&>();
+    auto  prevTime  = clock_type::now();
+    // std::optional<std::jthread>     netPollThread;
 
     if (mOptions.Multiplayer()) {
-        netPollThread.emplace(&GameClient::networkThread, this);
+        mNetTaskflow.emplace([&]() { networkThread(); });
+        mNetExecutor.run(mNetTaskflow);
 
+        // netPollThread.emplace(&GameClient::networkThread, this);
+        //
         if (!netClient.Connect()) {
             throw std::runtime_error("No available peers for initiating an ENet connection.");
         }
@@ -136,8 +138,8 @@ void GameClient::networkThread()
 {
     auto& netClient = mRegistry.ctx().get<ENetClient&>();
     while (netClient.Running()) {
-        if (mDiscTimerStart.has_value()) {
-            if (clock_type::now() - mDiscTimerStart.value() > 3s) {
+        if (mDiscTimerStart) {
+            if (clock_type::now() - *mDiscTimerStart > 3s) {
                 netClient.ForceDisconnect();
             }
         }

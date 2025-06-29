@@ -15,9 +15,8 @@ endif()
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
-find_package(ZLIB REQUIRED)
 
-find_program(CLANG_TIDY_BIN clang-tidy REQUIRED)
+find_program(CLANG_TIDY_BIN clang-tidy)
 
 option(wato_WARNINGS_AS_ERRORS "Treat Warnings As Errors" OFF)
 
@@ -242,6 +241,13 @@ if(DEFINED reactphysics3d_SOURCE_DIR)
   )
 endif()
 
+if(DEFINED assimp_SOURCE_DIR)
+  target_include_directories(wato
+  SYSTEM PUBLIC
+    ${assimp_SOURCE_DIR}/include
+  )
+endif()
+
 if(DEFINED enet_SOURCE_DIR)
   target_include_directories(wato_common
   SYSTEM INTERFACE
@@ -388,24 +394,24 @@ target_link_libraries(watolib
 
 target_link_libraries(wato
   watolib
+  glfw
+  assimp
   bgfx::bgfx
   bgfx::bimg_decode
   bgfx::bimg
 )
 
-if(WIN32)
+if(LINUX)
   target_link_libraries(wato
-    glfw3_mt
-  )
-elseif(UNIX)
-  target_link_libraries(wato
-    glfw
-    assimp
     X11
     vulkan
     GL
     GLU
-    ZLIB::ZLIB
+  )
+elseif(APPLE)
+  target_link_libraries(wato
+    GL
+    GLU
   )
 endif()
 
