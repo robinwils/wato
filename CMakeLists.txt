@@ -241,6 +241,13 @@ if(DEFINED reactphysics3d_SOURCE_DIR)
   )
 endif()
 
+if(DEFINED assimp_SOURCE_DIR)
+  target_include_directories(wato
+  SYSTEM PUBLIC
+    ${assimp_SOURCE_DIR}/include
+  )
+endif()
+
 if(DEFINED enet_SOURCE_DIR)
   target_include_directories(wato_common
   SYSTEM INTERFACE
