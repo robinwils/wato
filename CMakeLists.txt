@@ -61,6 +61,9 @@ FetchContent_Declare(
   reactphysics3d
   GIT_REPOSITORY https://github.com/DanielChappuis/reactphysics3d
   GIT_TAG v0.10.2
+  PATCH_COMMAND git apply ${CMAKE_CURRENT_SOURCE_DIR}/patches/chrono-include-for-msvc.patch
+  # avoid applying patch multiple times
+  UPDATE_DISCONNECTED 1
   FIND_PACKAGE_ARGS NAMES reactphysics3d
 )
 FetchContent_Declare(
