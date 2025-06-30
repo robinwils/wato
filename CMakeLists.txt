@@ -120,6 +120,22 @@ set(OTHER_DEPS
   bgfx
 )
 
+if(APPLE)
+  find_library(METAL Metal REQUIRED)
+  if (NOT METAL)
+    message(FATAL_ERROR "Metal not found")
+  endif()
+
+  find_package(OpenGL REQUIRED)
+elseif(LINUX)
+  find_package(X11 REQUIRED)
+  find_package(Vulkan REQUIRED)
+  find_package(OpenGL REQUIRED)
+elseif(WIN32)
+  find_package(Vulkan REQUIRED)
+  find_package(OpenGL REQUIRED)
+endif()
+
 foreach(dep ${OTHER_DEPS})
   find_package(${dep} REQUIRED)
 endforeach()
@@ -407,14 +423,21 @@ target_link_libraries(wato
 if(LINUX)
   target_link_libraries(wato
     X11
-    vulkan
-    GL
-    GLU
+    Vulkan::Vulkan
+    OpenGL::GL
+    OpenGL::GLU
   )
 elseif(APPLE)
   target_link_libraries(wato
-    GL
-    GLU
+    OpenGL::GL
+    OpenGL::GLU
+    ${METAL}
+  )
+elseif(WIN32)
+  target_link_libraries(wato
+    Vulkan::Vulkan
+    OpenGL::GL
+    OpenGL::GLU
   )
 endif()
 
