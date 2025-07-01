@@ -184,8 +184,12 @@ else()
   add_library(watolib STATIC)
 endif()
 
-# to get libwato.so not libwatolib.so
-set_property(TARGET watolib PROPERTY OUTPUT_NAME wato)
+# to get libwato.so not libwatolib.so, but on mscv this creates
+# a linker error because exe and lib are the same name
+if(NOT MSVC)
+  set_property(TARGET watolib PROPERTY OUTPUT_NAME wato)
+endif()
+
 add_executable(wato)
 add_subdirectory(src/watod)
 add_subdirectory(test)
