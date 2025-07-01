@@ -83,7 +83,7 @@ FetchContent_Declare(
 FetchContent_Declare(
   taskflow
   GIT_REPOSITORY https://github.com/taskflow/taskflow.git
-  GIT_TAG v3.9.0
+  GIT_TAG v3.10.0
   FIND_PACKAGE_ARGS NAMES taskflow
 )
 
