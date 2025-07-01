@@ -209,6 +209,7 @@ if(UNIX)
   target_link_options(wato_common
     INTERFACE
       $<$<CONFIG:Debug>:-fsanitize=address,undefined>
+      -rdynamic
   )
 elseif(WIN32)
   target_compile_definitions(wato_common INTERFACE NOMINMAX)
@@ -400,8 +401,6 @@ target_sources(wato
 )
 
 target_include_directories(wato_common INTERFACE "${CMAKE_CURRENT_BINARY_DIR}")
-
-target_link_options(wato_common INTERFACE -rdynamic)
 
 # Link libraries
 target_link_libraries(watolib
