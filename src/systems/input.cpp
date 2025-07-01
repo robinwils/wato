@@ -61,7 +61,7 @@ void InputSystem::handleMouseMovement(Registry& aRegistry, const float aDeltaTim
                             aT.Position.x = raycastCb.Hits[0].x;
                             aT.Position.z = raycastCb.Hits[0].z;
                             aRegistry.patch<RigidBody>(ghostTower, [aT](RigidBody& aRb) {
-                                aRb.RigidBody->setTransform(aT.ToRP3D());
+                                aRb.Body->setTransform(aT.ToRP3D());
                             });
                         });
                 }
