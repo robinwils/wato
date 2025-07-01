@@ -210,6 +210,8 @@ if(UNIX)
     INTERFACE
       $<$<CONFIG:Debug>:-fsanitize=address,undefined>
   )
+elseif(WIN32)
+  target_compile_definitions(wato_common INTERFACE NOMINMAX)
 endif()
 
 include(cmake/CompilerWarnings.cmake)
