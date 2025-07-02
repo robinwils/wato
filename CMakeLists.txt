@@ -80,6 +80,7 @@ set(FETCHED_DEPS_NAMES
 
 FetchContent_MakeAvailable(${FETCHED_DEPS_NAMES})
 set(OTHER_DEPS
+  OpenGL
   glfw3
   assimp
   ReactPhysics3D
@@ -93,15 +94,10 @@ if(APPLE)
   if (NOT METAL)
     message(FATAL_ERROR "Metal not found")
   endif()
-
-  find_package(OpenGL REQUIRED)
 elseif(LINUX)
-  find_package(X11 REQUIRED)
-  find_package(Vulkan REQUIRED)
-  find_package(OpenGL REQUIRED)
+  list(APPEND OTHER_DEPS X11 Vulkan)
 elseif(WIN32)
-  find_package(Vulkan REQUIRED)
-  find_package(OpenGL REQUIRED)
+  list(APPEND OTHER_DEPS Vulkan)
 endif()
 
 foreach(dep ${OTHER_DEPS})
