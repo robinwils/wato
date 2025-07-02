@@ -183,6 +183,14 @@ elseif(WIN32)
   target_compile_definitions(wato_common INTERFACE NOMINMAX)
 endif()
 
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  target_link_options(wato_common
+    INTERFACE
+      $<$<CONFIG:Debug>:-static-libasan -static-libubsan>
+  )
+endif()
+
+
 include(cmake/CompilerWarnings.cmake)
 wato_set_project_warnings(wato_common
   VISIBILITY "INTERFACE"
