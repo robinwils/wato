@@ -25,20 +25,10 @@ option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 set(TF_BUILD_TESTS OFF CACHE BOOL "Disable taskflow test builds" FORCE)
 set(TF_BUILD_EXAMPLES OFF CACHE BOOL "Disable taskflow example builds" FORCE)
 
-set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(ASSIMP_INJECT_DEBUG_POSTFIX OFF CACHE BOOL "" FORCE)
-set(ASSIMP_INSTALL OFF CACHE BOOL "" FORCE)
-
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_COLOR_MAKEFILE ON)
 
 include(FetchContent)
-FetchContent_Declare(
-  assimp
-  GIT_REPOSITORY https://github.com/assimp/assimp.git
-  GIT_TAG v6.0.2
-  FIND_PACKAGE_ARGS NAMES assimp
-)
 FetchContent_Declare(
   glfw3
   GIT_REPOSITORY https://github.com/glfw/glfw
@@ -102,7 +92,6 @@ FetchContent_Declare(
 )
 
 set(FETCHED_DEPS_NAMES
-  assimp
   glfw3
   entt
   glm
@@ -116,6 +105,7 @@ set(FETCHED_DEPS_NAMES
 
 FetchContent_MakeAvailable(${FETCHED_DEPS_NAMES})
 set(OTHER_DEPS
+  assimp
   Sodium
   bgfx
 )
@@ -267,13 +257,6 @@ if(DEFINED reactphysics3d_SOURCE_DIR)
   )
 endif()
 
-if(DEFINED assimp_SOURCE_DIR)
-  target_include_directories(wato
-  SYSTEM PUBLIC
-    ${assimp_SOURCE_DIR}/include
-  )
-endif()
-
 if(DEFINED enet_SOURCE_DIR)
   target_include_directories(wato_common
   SYSTEM INTERFACE
@@ -419,7 +402,7 @@ target_link_libraries(watolib
 target_link_libraries(wato
   watolib
   glfw
-  assimp
+  assimp::assimp
   bgfx::bgfx
   bgfx::bimg_decode
   bgfx::bimg
