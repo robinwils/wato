@@ -48,15 +48,6 @@ FetchContent_Declare(
   FIND_PACKAGE_ARGS NAMES glm
 )
 FetchContent_Declare(
-  reactphysics3d
-  GIT_REPOSITORY https://github.com/DanielChappuis/reactphysics3d
-  GIT_TAG v0.10.2
-  PATCH_COMMAND git apply ${CMAKE_CURRENT_SOURCE_DIR}/patches/chrono-include-for-msvc.patch
-  # avoid applying patch multiple times
-  UPDATE_DISCONNECTED 1
-  FIND_PACKAGE_ARGS NAMES reactphysics3d
-)
-FetchContent_Declare(
   enet
   GIT_REPOSITORY https://github.com/zpl-c/enet
   GIT_TAG v2.6.2
@@ -88,7 +79,6 @@ set(FETCHED_DEPS_NAMES
   glfw3
   entt
   glm
-  reactphysics3d
   enet
   argh
   taskflow
@@ -98,6 +88,7 @@ set(FETCHED_DEPS_NAMES
 FetchContent_MakeAvailable(${FETCHED_DEPS_NAMES})
 set(OTHER_DEPS
   assimp
+  ReactPhysics3D
   spdlog
   Sodium
   bgfx
@@ -243,12 +234,6 @@ if(DEFINED entt_SOURCE_DIR)
   )
 endif()
 
-if(DEFINED reactphysics3d_SOURCE_DIR)
-  target_include_directories(wato_common
-  SYSTEM INTERFACE
-    ${reactphysics3d_SOURCE_DIR}/include
-  )
-endif()
 
 if(DEFINED enet_SOURCE_DIR)
   target_include_directories(wato_common
@@ -381,8 +366,8 @@ target_link_libraries(watolib
     wato_common
     bgfx::bx
     sodium
-    reactphysics3d
     spdlog::spdlog
+    ReactPhysics3D::ReactPhysics3D
 )
 
 target_link_libraries(wato
