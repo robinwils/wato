@@ -84,13 +84,6 @@ FetchContent_Declare(
   FIND_PACKAGE_ARGS NAMES doctest
 )
 
-FetchContent_Declare(
-  spdlog
-  GIT_REPOSITORY https://github.com/gabime/spdlog
-  GIT_TAG v1.15.3
-  FIND_PACKAGE_ARGS NAMES spdlog
-)
-
 set(FETCHED_DEPS_NAMES
   glfw3
   entt
@@ -100,12 +93,12 @@ set(FETCHED_DEPS_NAMES
   argh
   taskflow
   doctest
-  spdlog
 )
 
 FetchContent_MakeAvailable(${FETCHED_DEPS_NAMES})
 set(OTHER_DEPS
   assimp
+  spdlog
   Sodium
   bgfx
 )
@@ -278,13 +271,6 @@ if(DEFINED taskflow_SOURCE_DIR)
   )
 endif()
 
-if(DEFINED spdlog_SOURCE_DIR)
-  target_include_directories(wato_common
-  SYSTEM INTERFACE
-    ${spdlog_SOURCE_DIR}/include
-  )
-endif()
-
 target_sources(watolib
   PUBLIC FILE_SET HEADERS
   BASE_DIRS src
@@ -395,8 +381,8 @@ target_link_libraries(watolib
     wato_common
     bgfx::bx
     sodium
-    spdlog
     reactphysics3d
+    spdlog::spdlog
 )
 
 target_link_libraries(wato

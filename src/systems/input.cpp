@@ -2,7 +2,7 @@
 
 #include <reactphysics3d/collision/RaycastInfo.h>
 #include <reactphysics3d/mathematics/Ray.h>
-#include <spdlog/fmt/bundled/ranges.h>
+#include <fmt/ranges.h>
 
 #include "components/placement_mode.hpp"
 #include "components/rigid_body.hpp"

@@ -1,7 +1,11 @@
 {
   "name": "wato",
   "default-features": [ "client" ],
-  "dependencies": [ "zlib", "libsodium" ],
+  "dependencies": [
+    "zlib",
+    "libsodium",
+    "spdlog"
+  ],
   "features": {
     "client": {
       "description": "WaTo game client",

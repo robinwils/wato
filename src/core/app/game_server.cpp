@@ -1,7 +1,7 @@
 #include "core/app/game_server.hpp"
 
 #include <bx/bx.h>
-#include <spdlog/fmt/bundled/ranges.h>
+#include <fmt/ranges.h>
 
 #include <thread>
 
