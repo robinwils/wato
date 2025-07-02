@@ -1,4 +1,5 @@
 THISDIR:=$(dir $(lastword $(MAKEFILE_LIST)))
+WATO_ROOT:=$(THISDIR)/..
 
 ifeq ($(DEBUG),1)
     SHADERCFLAGS := --disasm --debug
@@ -9,35 +10,47 @@ else
 endif
 
 ifeq ($(OS),Windows_NT)
-BGFX_TARGET=win64_vs2022
-EXT=".exe"
+	BGFX_TARGET=x64-windows-static-md
+	EXT=".exe"
 else
-UNAME_S := $(shell uname -s)
-ifeq ($(UNAME_S),Linux)
-BGFX_TARGET=linux64_gcc
-else ifeq ($(UNAME_S),Darwin)
-BGFX_TARGET=osx64_gcc
+	UNAME_S=$(shell uname -s)
+	UNAME_M=$(shell uname -m)
+	ifeq ($(UNAME_M),x86_64)
+		ARCH=x64
+	else ifeq ($(findstring armv8,$(UNAME_M)),armv8)
+		ARCH=arm64
+	else ifeq ($(findstring aarch64,$(UNAME_M)),aarch64)
+		ARCH=arm64
+	else
+		ARCH=unknown
+	endif
+
+	ifeq ($(UNAME_S),Linux)
+		BGFX_TARGET=$(ARCH)-linux
+	else ifeq ($(UNAME_S),Darwin)
+		BGFX_TARGET=$(ARCH)-osx
+	endif
 endif
-endif
-SHADERC=$(THISDIR)../deps/bgfx/.build/$(BGFX_TARGET)/bin/shaderc$(BUILD_TYPE)$(EXT)
+
+BGFX_PACKAGE=$(WATO_ROOT)/vcpkg/packages/bgfx_$(BGFX_TARGET)
+SHADERC=$(BGFX_PACKAGE)/tools/bgfx/shaderc$(EXT)
 
 SHADERS=$(wildcard vs_*.sc) $(wildcard fs_*.sc) $(wildcard cs_*.sc)
-SHADERC_INCLUDE=-i $(THISDIR)../deps/bgfx/src/ -i $(THISDIR)../deps/bgfx/examples/
 
 define SHADER_TARGET =
 $(1)_$(2)_SHADERS=$$(patsubst %.sc,%_$(1)_$(2).bin,$$(SHADERS))
 
 vs_%_$(1)_$(2).bin: vs_%.sc
 	@echo [$$(<)]
-	$$(SHADERC) $$(SHADERC_INCLUDE) --platform $(1) -p $(2) --type vertex --depends -o $$(@) -f $$(<) $$(SHADERCFLAGS)
+	$$(SHADERC) -i $$(BGFX_PACKAGE)/include/bgfx --platform $(1) -p $(2) --type vertex --depends -o $$(@) -f $$(<) $$(SHADERCFLAGS)
 
 fs_%_$(1)_$(2).bin: fs_%.sc
 	@echo [$$(<)]
-	$$(SHADERC) $$(SHADERC_INCLUDE) --platform $(1) -p $(2) --type fragment --depends -o $$(@) -f $$(<) $$(SHADERCFLAGS)
+	$$(SHADERC) -i $$(BGFX_PACKAGE)/include/bgfx --platform $(1) -p $(2) --type fragment --depends -o $$(@) -f $$(<) $$(SHADERCFLAGS)
 
 cs_%_$(1)_$(2).bin: cs_%.sc
 	@echo [$$(<)]
-	$$(SHADERC) $$(SHADERC_INCLUDE) --platform $(1) -p $(2) --type compute --depends -o $$(@) -f $$(<) $$(SHADERCFLAGS)
+	$$(SHADERC) -i $$(BGFX_PACKAGE)/include/bgfx --platform $(1) -p $(2) --type compute --depends -o $$(@) -f $$(<) $$(SHADERCFLAGS)
 
 -include $$(patsubst %.sc,%_$(1)_$(2).bin.d,$$(SHADERS))
 endef

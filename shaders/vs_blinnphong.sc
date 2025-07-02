@@ -5,7 +5,7 @@ $input a_position, a_normal, a_texcoord0
 #endif
 $output v_worldPos, v_view, v_normal, v_texcoord0
 
-#include "common/common.sh"
+#include "bgfx_shader.sh"
 
 #ifdef SKINNED
 uniform mat4 u_bones[128];

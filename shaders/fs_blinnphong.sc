@@ -1,6 +1,21 @@
 $input v_worldPos, v_view, v_normal, v_texcoord0
 
-#include "common/common.sh"
+#include "bgfx_shader.sh"
+
+float toGamma(float _r)
+{
+	return pow(abs(_r), 1.0/2.2);
+}
+
+vec3 toGamma(vec3 _rgb)
+{
+	return pow(abs(_rgb), vec3_splat(1.0/2.2) );
+}
+
+vec4 toGamma(vec4 _rgba)
+{
+	return vec4(toGamma(_rgba.xyz), _rgba.w);
+}
 
 // w is a bool indicating to use texture or not
 uniform vec4 u_diffuse;
