@@ -16,7 +16,11 @@
           "features": [
             {
               "name": "wayland",
-              "platform": "!(windows | osx)"
+              "platform": "linux"
+            },
+            {
+              "name": "x11",
+              "platform": "linux"
             }
           ]
         },

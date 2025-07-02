@@ -30,12 +30,6 @@ set(CMAKE_COLOR_MAKEFILE ON)
 
 include(FetchContent)
 FetchContent_Declare(
-  glfw3
-  GIT_REPOSITORY https://github.com/glfw/glfw
-  GIT_TAG 3.4
-  FIND_PACKAGE_ARGS NAMES glfw3
-)
-FetchContent_Declare(
   entt
   GIT_REPOSITORY https://github.com/skypjack/entt
   GIT_TAG v3.14.0
@@ -76,7 +70,6 @@ FetchContent_Declare(
 )
 
 set(FETCHED_DEPS_NAMES
-  glfw3
   entt
   glm
   enet
@@ -87,6 +80,7 @@ set(FETCHED_DEPS_NAMES
 
 FetchContent_MakeAvailable(${FETCHED_DEPS_NAMES})
 set(OTHER_DEPS
+  glfw3
   assimp
   ReactPhysics3D
   spdlog
@@ -212,13 +206,6 @@ target_include_directories(wato
     deps/imgui
     src/imgui
 )
-
-if(DEFINED glfw3_SOURCE_DIR)
-  target_include_directories(wato
-  SYSTEM PUBLIC
-    ${glfw3_SOURCE_DIR}/include
-  )
-endif()
 
 if(DEFINED glm_SOURCE_DIR)
   target_include_directories(wato_common
