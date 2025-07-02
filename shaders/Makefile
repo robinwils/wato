@@ -2,10 +2,10 @@ THISDIR:=$(dir $(lastword $(MAKEFILE_LIST)))
 WATO_ROOT:=$(THISDIR)/..
 
 ifeq ($(DEBUG),1)
-    SHADERCFLAGS := --disasm --debug
+	SHADERCFLAGS=--disasm --debug
 	BUILD_TYPE=Debug
 else
-    SHADERCFLAGS := --disasm
+	SHADERCFLAGS=--disasm
 	BUILD_TYPE=Release
 endif
 
