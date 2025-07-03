@@ -391,6 +391,38 @@ elseif(WIN32)
   )
 endif()
 
+bgfx_compile_shaders(
+  TYPE VERTEX
+  SHADERS
+    shaders/vs_blinnphong.sc
+    shaders/vs_blinnphong_skinned.sc
+  VARYING_DEF ${CMAKE_SOURCE_DIR}/shaders/varying.def.sc
+  OUTPUT_DIR ${CMAKE_SOURCE_DIR}/shaders
+)
+
+bgfx_compile_shaders(
+  TYPE FRAGMENT
+  SHADERS
+    shaders/fs_blinnphong.sc
+    VARYING_DEF ${CMAKE_SOURCE_DIR}/shaders/varying.def.sc
+  OUTPUT_DIR ${CMAKE_SOURCE_DIR}/shaders
+)
+
+add_custom_target(
+  shadersbin
+  DEPENDS
+    shaders/glsl/vs_blinnphong.sc.bin
+    shaders/essl/vs_blinnphong.sc.bin
+    shaders/spirv/vs_blinnphong.sc.bin
+    shaders/glsl/vs_blinnphong_skinned.sc.bin
+    shaders/essl/vs_blinnphong_skinned.sc.bin
+    shaders/spirv/vs_blinnphong_skinned.sc.bin
+    shaders/glsl/fs_blinnphong.sc.bin
+    shaders/essl/fs_blinnphong.sc.bin
+    shaders/spirv/fs_blinnphong.sc.bin
+)
+
+
 set(wato_includes "$<TARGET_PROPERTY:wato,INCLUDE_DIRECTORIES>")
 set(wato_sources "$<FILTER:$<TARGET_PROPERTY:wato,SOURCES>,INCLUDE,src/*>")
 set(wato_headers "$<FILTER:$<TARGET_PROPERTY:wato,HEADER_SET>,INCLUDE,src/*>")
