@@ -247,6 +247,25 @@ if(DEFINED taskflow_SOURCE_DIR)
   )
 endif()
 
+bgfx_compile_shaders(
+  TYPE VERTEX
+  SHADERS
+    shaders/vs_blinnphong.sc
+    shaders/vs_blinnphong_skinned.sc
+  VARYING_DEF ${CMAKE_SOURCE_DIR}/shaders/varying.def.sc
+  OUTPUT_DIR ${CMAKE_BINARY_DIR}/include/generated/shaders
+  AS_HEADERS
+)
+
+bgfx_compile_shaders(
+  TYPE FRAGMENT
+  SHADERS
+    shaders/fs_blinnphong.sc
+  VARYING_DEF ${CMAKE_SOURCE_DIR}/shaders/varying.def.sc
+  OUTPUT_DIR ${CMAKE_BINARY_DIR}/include/generated/shaders
+  AS_HEADERS
+)
+
 target_sources(watolib
   PUBLIC FILE_SET HEADERS
   BASE_DIRS src
@@ -347,9 +366,15 @@ target_sources(wato
     src/systems/input.cpp
     src/systems/render.cpp
     src/systems/sync.cpp
+
+    shaders/vs_blinnphong.sc
+    shaders/vs_blinnphong_skinned.sc
+    shaders/fs_blinnphong.sc
 )
 
 target_include_directories(wato_common INTERFACE "${CMAKE_CURRENT_BINARY_DIR}")
+target_include_directories(wato PRIVATE ${CMAKE_BINARY_DIR}/include/generated/shaders)
+
 
 # Link libraries
 target_link_libraries(watolib
@@ -391,36 +416,6 @@ elseif(WIN32)
   )
 endif()
 
-bgfx_compile_shaders(
-  TYPE VERTEX
-  SHADERS
-    shaders/vs_blinnphong.sc
-    shaders/vs_blinnphong_skinned.sc
-  VARYING_DEF ${CMAKE_SOURCE_DIR}/shaders/varying.def.sc
-  OUTPUT_DIR ${CMAKE_SOURCE_DIR}/shaders
-)
-
-bgfx_compile_shaders(
-  TYPE FRAGMENT
-  SHADERS
-    shaders/fs_blinnphong.sc
-    VARYING_DEF ${CMAKE_SOURCE_DIR}/shaders/varying.def.sc
-  OUTPUT_DIR ${CMAKE_SOURCE_DIR}/shaders
-)
-
-add_custom_target(
-  shadersbin
-  DEPENDS
-    shaders/glsl/vs_blinnphong.sc.bin
-    shaders/essl/vs_blinnphong.sc.bin
-    shaders/spirv/vs_blinnphong.sc.bin
-    shaders/glsl/vs_blinnphong_skinned.sc.bin
-    shaders/essl/vs_blinnphong_skinned.sc.bin
-    shaders/spirv/vs_blinnphong_skinned.sc.bin
-    shaders/glsl/fs_blinnphong.sc.bin
-    shaders/essl/fs_blinnphong.sc.bin
-    shaders/spirv/fs_blinnphong.sc.bin
-)
 
 
 set(wato_includes "$<TARGET_PROPERTY:wato,INCLUDE_DIRECTORIES>")

@@ -1,12 +1,41 @@
 #pragma once
 
+#include <bgfx/embedded_shader.h>
 #include <bx/bx.h>
 #include <bx/file.h>
+#include <essl/fs_blinnphong.sc.bin.h>
+#include <essl/vs_blinnphong.sc.bin.h>
+#include <essl/vs_blinnphong_skinned.sc.bin.h>
+#include <glsl/fs_blinnphong.sc.bin.h>
+#include <glsl/vs_blinnphong.sc.bin.h>
+#include <glsl/vs_blinnphong_skinned.sc.bin.h>
+#include <spirv/fs_blinnphong.sc.bin.h>
+#include <spirv/vs_blinnphong.sc.bin.h>
+#include <spirv/vs_blinnphong_skinned.sc.bin.h>
 
 #include <memory>
 #include <unordered_map>
 
 #include "renderer/shader.hpp"
+#if defined(_WIN32)
+#include <dx11/fs_blinnphong.sc.bin.h>
+#include <dx11/vs_blinnphong.sc.bin.h>
+#include <dx11/vs_blinnphong_skinned.sc.bin.h>
+#else
+#define BGFX_EMBEDDED_SHADER_DXBC(...)
+#endif  //  defined(_WIN32)
+#if __APPLE__
+#include <mtl/fs_blinnphong.sc.bin.h>
+#include <mtl/vs_blinnphong.sc.bin.h>
+#include <mtl/vs_blinnphong_skinned.sc.bin.h>
+#endif  // __APPLE__
+        //
+
+static const bgfx::EmbeddedShader kSEmbeddedShaders[] = {
+    BGFX_EMBEDDED_SHADER(vs_blinnphong),
+    BGFX_EMBEDDED_SHADER(vs_blinnphong_skinned),
+    BGFX_EMBEDDED_SHADER(fs_blinnphong),
+    BGFX_EMBEDDED_SHADER_END()};
 
 struct ShaderLoader final {
     using uniform_desc_map = std::unordered_map<std::string, UniformDesc>;
