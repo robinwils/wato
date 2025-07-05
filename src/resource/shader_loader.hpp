@@ -25,9 +25,9 @@
 #define BGFX_EMBEDDED_SHADER_DXBC(...)
 #endif  //  defined(_WIN32)
 #if __APPLE__
-#include <mtl/fs_blinnphong.sc.bin.h>
-#include <mtl/vs_blinnphong.sc.bin.h>
-#include <mtl/vs_blinnphong_skinned.sc.bin.h>
+#include <metal/fs_blinnphong.sc.bin.h>
+#include <metal/vs_blinnphong.sc.bin.h>
+#include <metal/vs_blinnphong_skinned.sc.bin.h>
 #endif  // __APPLE__
         //
 
