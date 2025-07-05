@@ -14,7 +14,12 @@ uniform mat4 u_bones[128];
 void main()
 {
 #ifdef SKINNED
-	mat4 boneMat = mat4(0.0);
+	mat4 boneMat = mat4(
+		0.0, 0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, 0.0
+	);
 	if (a_weight.x > 0.0) boneMat += a_weight.x * u_bones[int(a_indices.x)];
 	if (a_weight.y > 0.0) boneMat += a_weight.y * u_bones[int(a_indices.y)];
 	if (a_weight.z > 0.0) boneMat += a_weight.z * u_bones[int(a_indices.z)];
