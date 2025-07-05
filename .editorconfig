@@ -15,8 +15,5 @@ indent_style = tab
 [{CMakeLists.txt,*.cmake,*.rst,*.json,*.yml,*.yaml}]
 indent_size = 2
 
-[*.sc]
-indent_style = tab
-
 [*.md]
 trim_trailing_whitespace = false
