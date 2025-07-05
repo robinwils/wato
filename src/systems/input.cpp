@@ -2,7 +2,7 @@
 
 #include <reactphysics3d/collision/RaycastInfo.h>
 #include <reactphysics3d/mathematics/Ray.h>
-#include <spdlog/fmt/bundled/ranges.h>
+#include <fmt/ranges.h>
 
 #include "components/placement_mode.hpp"
 #include "components/rigid_body.hpp"
@@ -61,7 +61,7 @@ void InputSystem::handleMouseMovement(Registry& aRegistry, const float aDeltaTim
                             aT.Position.x = raycastCb.Hits[0].x;
                             aT.Position.z = raycastCb.Hits[0].z;
                             aRegistry.patch<RigidBody>(ghostTower, [aT](RigidBody& aRb) {
-                                aRb.RigidBody->setTransform(aT.ToRP3D());
+                                aRb.Body->setTransform(aT.ToRP3D());
                             });
                         });
                 }

@@ -138,11 +138,11 @@ void PlacementModeContextHandler::operator()(Registry& aRegistry, const BuildTow
     for (auto tower : aRegistry.view<PlacementMode>()) {
         auto& rb = aRegistry.get<RigidBody>(tower);
 
-        rb.RigidBody->getCollider(0)->setIsSimulationCollider(true);
-        rb.RigidBody->getCollider(0)->setCollisionCategoryBits(Category::Entities);
-        rb.RigidBody->getCollider(0)->setCollideWithMaskBits(
+        rb.Body->getCollider(0)->setIsSimulationCollider(true);
+        rb.Body->getCollider(0)->setCollisionCategoryBits(Category::Entities);
+        rb.Body->getCollider(0)->setCollideWithMaskBits(
             Category::Terrain | Category::PlacementGhostTower);
-        rb.RigidBody->setType(rp3d::BodyType::STATIC);
+        rb.Body->setType(rp3d::BodyType::STATIC);
 
         aRegistry.emplace<Health>(tower, 100.0F);
         aRegistry.remove<PlacementMode>(tower);

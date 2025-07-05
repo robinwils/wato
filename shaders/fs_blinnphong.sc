@@ -1,6 +1,21 @@
 $input v_worldPos, v_view, v_normal, v_texcoord0
 
-#include "common/common.sh"
+#include "bgfx_shader.sh"
+
+float toGamma(float _r)
+{
+	return pow(abs(_r), 1.0/2.2);
+}
+
+vec3 toGamma(vec3 _rgb)
+{
+	return pow(abs(_rgb), vec3_splat(1.0/2.2) );
+}
+
+vec4 toGamma(vec4 _rgba)
+{
+	return vec4(toGamma(_rgba.xyz), _rgba.w);
+}
 
 // w is a bool indicating to use texture or not
 uniform vec4 u_diffuse;
@@ -21,7 +36,7 @@ void main()
   vec3 lightDir = normalize(-u_lightDir.xyz);
   float diff = max(dot(v_normal, lightDir), 0.0);
 
-  vec3 diffuse = vec3(0.0);
+  vec3 diffuse = vec3_splat(0.0);
   if (u_useDiffuseTex == 1.0) {
 	vec4 color = texture2D(s_diffuseTex, v_texcoord0);
 	if (color.a < 0.1) {
@@ -37,7 +52,7 @@ void main()
 
   // specular
   float spec = pow(max(dot(v_normal, halfwayDir), 0.0), 16.0);
-  vec3 specular = vec3(0.0);
+  vec3 specular = vec3_splat(0.0);
   if (u_useSpecularTex == 1.0) {
     specular = spec * u_lightCol.xyz * texture2D(s_specularTex, v_texcoord0).rgb;
   } else {

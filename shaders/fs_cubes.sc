@@ -5,7 +5,7 @@ $input v_color0
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
-#include "common/common.sh"
+#include "bgfx_shader.sh"
 
 void main()
 {

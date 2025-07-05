@@ -1,6 +1,6 @@
 #pragma once
 
-#include <spdlog/fmt/bundled/format.h>
+#include <fmt/format.h>
 
 #include <glm/ext/quaternion_common.hpp>
 #include <glm/ext/vector_float3.hpp>

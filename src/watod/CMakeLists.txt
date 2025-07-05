@@ -27,5 +27,5 @@ target_compile_options(watod PRIVATE "-DDOCTEST_CONFIG_DISABLE")
 
 target_link_libraries(watod
   watolib
-  reactphysics3d
+  ReactPhysics3D::ReactPhysics3D
 )

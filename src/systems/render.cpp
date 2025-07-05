@@ -33,12 +33,12 @@ void RenderSystem::operator()(Registry& aRegistry, const float aDeltaTime)
 
     // light
     for (auto&& [light, source] : aRegistry.view<const LightSource>().each()) {
-        bgfx::setUniform(
-            bpShader->Uniform("u_lightDir"),
-            glm::value_ptr(glm::vec4(source.direction, 0.0f)));
-        bgfx::setUniform(
-            bpShader->Uniform("u_lightCol"),
-            glm::value_ptr(glm::vec4(source.color, 0.0f)));
+        // bgfx::setUniform(
+        //     bpShader->Uniform("u_lightDir"),
+        //     glm::value_ptr(glm::vec4(source.direction, 0.0f)));
+        // bgfx::setUniform(
+        //     bpShader->Uniform("u_lightCol"),
+        //     glm::value_ptr(glm::vec4(source.color, 0.0f)));
         bgfx::setUniform(
             bpSkinnedShader->Uniform("u_lightDir"),
             glm::value_ptr(glm::vec4(source.direction, 0.0f)));

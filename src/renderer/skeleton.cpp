@@ -1,6 +1,6 @@
 #include "renderer/skeleton.hpp"
 
-#include <spdlog/fmt/bundled/format.h>
+#include <fmt/format.h>
 #include <spdlog/spdlog.h>
 
 #include <glm/gtx/string_cast.hpp>

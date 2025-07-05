@@ -1,6 +1,6 @@
 #include "resource/texture_loader.hpp"
 
-#include <spdlog/fmt/bundled/format.h>
+#include <fmt/format.h>
 
 #include "core/sys/log.hpp"
 #include "core/sys/mem.hpp"

@@ -1,7 +1,7 @@
 #include "input.hpp"
 
 #include <imgui.h>
-#include <spdlog/fmt/bundled/ranges.h>
+#include <fmt/ranges.h>
 
 #include <cstring>
 #include <glm/gtx/string_cast.hpp>
