@@ -31,7 +31,7 @@
 #endif  // __APPLE__
         //
 
-static const bgfx::EmbeddedShader kSEmbeddedShaders[] = {
+static const bgfx::EmbeddedShader kEmbeddedShaders[] = {
     BGFX_EMBEDDED_SHADER(vs_blinnphong),
     BGFX_EMBEDDED_SHADER(vs_blinnphong_skinned),
     BGFX_EMBEDDED_SHADER(fs_blinnphong),
@@ -41,6 +41,8 @@ struct ShaderLoader final {
     using uniform_desc_map = std::unordered_map<std::string, UniformDesc>;
     using result_type      = std::shared_ptr<Shader>;
 
-    result_type
-    operator()(const char* aVsName, const char* aFsName, const uniform_desc_map& aUniforms);
+    result_type operator()(
+        const char*             aVsName,
+        const char*             aFsName   = "",
+        const uniform_desc_map& aUniforms = {});
 };
