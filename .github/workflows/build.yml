@@ -36,18 +36,20 @@ jobs:
       CMAKE_PRESET: ${{ matrix.preset }}-${{ matrix.compiler }}-${{ matrix.buildtype }}
 
     steps:
+      - name: Setup environment
+        run: |
+          echo "GITHUB_WORKSPACE=$GITHUB_WORKSPACE" >> $GITHUB_ENV
+          echo "VCPKG_BINARY_SOURCES=clear;files,$GITHUB_WORKSPACE/vcpkg_cache,readwrite" >> $GITHUB_ENV
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            echo "CMAKE_BUILD_PARALLEL_LEVEL=$NUMBER_OF_PROCESSORS" >> $GITHUB_ENV
+          elif [[ "$RUNNER_OS" == "macOS" ]]; then
+            echo "CMAKE_BUILD_PARALLEL_LEVEL=$(sysctl -n hw.physicalcpu)" >> $GITHUB_ENV
+          else
+            echo "CMAKE_BUILD_PARALLEL_LEVEL=$(nproc)" >> $GITHUB_ENV
+          fi
+
       - name: Mark repo as safe for git
-        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
-
-      - name: Get nb cores (macOS)
-        if: runner.os == 'macOS'
-        run: |
-          echo "CORES=$(sysctl -n hw.physicalcpu)" >> $GITHUB_ENV
-
-      - name: Get nb cores (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          echo "CORES=$(nproc)" >> $GITHUB_ENV
+        run: git config --global --add safe.directory ${{ env.GITHUB_WORKSPACE }}
 
       - name: Install macOS dependencies
         if: runner.os == 'macOS'
@@ -75,30 +77,27 @@ jobs:
           # debian testing version as of 28/06/2025
           cmakeVersion: 3.31.6
 
+      - name: Cache vcpkg
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.GITHUB_WORKSPACE }}/vcpkg_cache
+          key: vcpkg-${{ env.CMAKE_PRESET }}-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', 'vcpkg_overlay/**', 'CMakeLists.txt', '**/CMakeLists.txt', 'CMakePresets.json') }}
+
       - name: Setup vcpkg
         uses: lukka/run-vcpkg@v11
-        id: runvcpkg
+        with:
+          vcpkgDirectory: '${{ env.GITHUB_WORKSPACE }}/vcpkg'
+          vcpkgJsonGlob: '**/vcpkg.json'
 
       # On Windows runners, let's ensure to have the Developer Command Prompt environment setup correctly.
       # As used here the Developer Command Prompt created is targeting x64 and using the default the Windows SDK.
       # As stated in the readme: Supports Windows. Does nothing on Linux and macOS.
       - uses: ilammy/msvc-dev-cmd@v1
 
-      - name: Restore from cache the dependencies and generate project files
+      - name: Configure CMake + vcpkg
         run: |
           cmake --preset ${{ env.CMAKE_PRESET }} .
 
       - name: Build
-        if: runner.os == 'Windows'
         run: |
-          cmake --build out/build/${{ env.CMAKE_PRESET }}
-
-      - name: Build
-        if: runner.os != 'Windows'
-        run: |
-          cmake --build out/build/${{ env.CMAKE_PRESET }} -j ${{ env.CORES }} -v
-
-       # Test the whole project with CTest, again Release configuration only.
-      - name: Test
-        run: |
-          ctest
+          cmake --build --preset ${{ env.CMAKE_PRESET }} -v
