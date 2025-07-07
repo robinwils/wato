@@ -11,6 +11,7 @@
 #include "components/placement_mode.hpp"
 #include "components/rigid_body.hpp"
 #include "components/scene_object.hpp"
+#include "components/spawner.hpp"
 #include "components/transform3d.hpp"
 #include "core/physics.hpp"
 #include "core/tower_building_handler.hpp"
@@ -54,28 +55,31 @@ void DefaultContextHandler::operator()(
 
 void DefaultContextHandler::operator()(Registry& aRegistry, const SendCreepPayload& aPayload)
 {
-    auto& phy   = aRegistry.ctx().get<Physics&>();
-    auto  creep = aRegistry.create();
-    auto& t     = aRegistry.emplace<Transform3D>(
-        creep,
-        glm::vec3(2.0f, 0.0f, 2.0f),
-        glm::identity<glm::quat>(),
-        glm::vec3(0.5f));
+    auto& phy = aRegistry.ctx().get<Physics&>();
 
-    aRegistry.emplace<Health>(creep, 100.0f);
-    aRegistry.emplace<Creep>(creep, aPayload.Type);
-    aRegistry.emplace<SceneObject>(creep, "phoenix"_hs);
-    aRegistry.emplace<Animator>(creep, 0.0f, "Take 001");
+    for (auto&& [entity, spawnTransform] : aRegistry.view<Spawner, Transform3D>().each()) {
+        auto  creep          = aRegistry.create();
+        auto& creepTransform = aRegistry.emplace<Transform3D>(
+            creep,
+            spawnTransform.Position,
+            glm::identity<glm::quat>(),
+            glm::vec3(0.5f));
 
-    auto* body = phy.CreateRigidBody(
-        creep,
-        aRegistry,
-        RigidBodyParams{
-            .Type           = rp3d::BodyType::DYNAMIC,
-            .Transform      = t.ToRP3D(),
-            .GravityEnabled = false});
-    rp3d::Collider* collider = phy.AddCapsuleCollider(body, 0.1f, 0.05f);
-    collider->setCollisionCategoryBits(Category::Entities);
+        aRegistry.emplace<Health>(creep, 100.0f);
+        aRegistry.emplace<Creep>(creep, aPayload.Type);
+        aRegistry.emplace<SceneObject>(creep, "phoenix"_hs);
+        aRegistry.emplace<Animator>(creep, 0.0f, "Take 001");
+
+        auto* body = phy.CreateRigidBody(
+            creep,
+            aRegistry,
+            RigidBodyParams{
+                .Type           = rp3d::BodyType::DYNAMIC,
+                .Transform      = creepTransform.ToRP3D(),
+                .GravityEnabled = false});
+        rp3d::Collider* collider = phy.AddCapsuleCollider(body, 0.1f, 0.05f);
+        collider->setCollisionCategoryBits(Category::Entities);
+    }
 }
 
 void DefaultContextHandler::operator()(Registry& aRegistry, const PlacementModePayload& aPayload)

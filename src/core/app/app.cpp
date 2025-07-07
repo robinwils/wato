@@ -6,6 +6,7 @@
 
 #include "components/game.hpp"
 #include "components/scene_object.hpp"
+#include "components/spawner.hpp"
 #include "components/tile.hpp"
 #include "components/transform3d.hpp"
 #include "core/event_handler.hpp"
@@ -86,8 +87,9 @@ void Application::AdvanceSimulation(Registry& aRegistry, const float aDeltaTime)
 
 void Application::SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeight)
 {
-    auto&        physics = aRegistry.ctx().get<Physics>();
-    entt::entity first   = entt::null;
+    auto&                 physics       = aRegistry.ctx().get<Physics>();
+    entt::entity          first         = entt::null;
+    static const uint32_t kCellsPerTile = 9;
 
     // Create tiles
     for (uint32_t i = 0; i < aWidth; ++i) {
@@ -96,16 +98,20 @@ void Application::SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeigh
             if (first == entt::null) {
                 first = tile;
             }
-            aRegistry.emplace<Transform3D>(
-                tile,
-                glm::vec3(i, 0.0f, j),
-                glm::vec3(0.0f),
-                glm::vec3(1.0f));
-
+            aRegistry.emplace<Transform3D>(tile, glm::vec3(i, 0.0f, j));
             aRegistry.emplace<SceneObject>(tile, "grass_tile"_hs);
             aRegistry.emplace<Tile>(tile);
         }
     }
+
+    // create spawn and base
+    auto spawner = aRegistry.create();
+    aRegistry.emplace<Transform3D>(spawner, glm::vec3(0.0f));
+    aRegistry.emplace<Spawner>(spawner);
+
+    auto base = aRegistry.create();
+    aRegistry.emplace<Transform3D>(base, glm::vec3(10.0f, 0.0f, 10.0f));
+    aRegistry.emplace<Base>(base);
 
     // Create physics heightfield
     std::vector<float>         heightValues((aWidth + 1) * (aHeight + 1), 0.0f);
