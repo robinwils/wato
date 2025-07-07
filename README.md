@@ -82,28 +82,23 @@ apt-get install -y \
     wayland-protocols \
     libsodium-dev
 ```
+
 ### Build
 
 Build is done using cmake with presets:
 
 ```bash
 cmake --preset unixlike-clang-debug-sccache
-cmake --build out/build/unixlike-clang-debug-sccache -j $(nproc)
+cmake --build --preset unixlike-clang-debug-sccache -j $(nproc)
 ```
 
 ## Shaders
 
-Shaders are compiled using a makefile, they are kept in the same place as bgfx shader files
-
-You need to compile shaderc binary from the bgfx solution (tools > shaderc > shaderc) in release mode
-
-```
-$ make -C shaders linux-shaders DEBUG=1
-$ make -C shaders windows-shaders
-$ make -C shaders osx-shaders
-```
+Shaders are compiled as headers using bgfx tools through CMake.
 
 ## Vagrant
+
+Experimental setup to test windows builds locally. Github Actions is used otherwise as a windows compilation check
 
 Careful with firewalls, disable before `vagrant up`
 
