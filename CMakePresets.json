@@ -35,7 +35,7 @@
       "inherits": "conf-common",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
-        "VCPKG_INSTALL_OPTIONS": "--x-abi-tools-use-exact-versions --debug"
+        "VCPKG_INSTALL_OPTIONS": "--x-abi-tools-use-exact-versions;--debug"
       }
     },
     {
