@@ -5,8 +5,6 @@
 
 #include "imgui_helper.h"
 
-#include <IconsFontAwesome4.h_fontawesome-webfont.ttf.h>
-#include <IconsKenney.h_kenney-icon-font.ttf.h>
 #include <bgfx/bgfx.h>
 #include <bgfx/embedded_shader.h>
 #include <bx/allocator.h>
@@ -21,7 +19,11 @@
 
 #include <renderer/bgfx_utils.hpp>
 
-static const bgfx::EmbeddedShader EMBEDDED_SHADERS[] = {BGFX_EMBEDDED_SHADER(vs_ocornut_imgui),
+#include "iconfonts/IconsFontAwesome4.h_fontawesome-webfont.ttf.h"
+#include "iconfonts/IconsKenney.h_kenney-icon-font.ttf.h"
+
+static const bgfx::EmbeddedShader EMBEDDED_SHADERS[] = {
+    BGFX_EMBEDDED_SHADER(vs_ocornut_imgui),
     BGFX_EMBEDDED_SHADER(fs_ocornut_imgui),
     BGFX_EMBEDDED_SHADER(vs_imgui_image),
     BGFX_EMBEDDED_SHADER(fs_imgui_image),

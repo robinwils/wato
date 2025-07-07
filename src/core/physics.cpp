@@ -22,15 +22,15 @@ void Physics::Init(Registry& aRegistry)
 
 void Physics::InitLogger()
 {
-    uint logLevel = 0;
+    uint32_t logLevel = 0;
     if (Params.InfoLogs) {
-        logLevel |= static_cast<uint>(rp3d::Logger::Level::Information);
+        logLevel |= static_cast<uint32_t>(rp3d::Logger::Level::Information);
     }
     if (Params.WarningLogs) {
-        logLevel |= static_cast<uint>(rp3d::Logger::Level::Warning);
+        logLevel |= static_cast<uint32_t>(rp3d::Logger::Level::Warning);
     }
     if (Params.ErrorLogs) {
-        logLevel |= static_cast<uint>(rp3d::Logger::Level::Error);
+        logLevel |= static_cast<uint32_t>(rp3d::Logger::Level::Error);
     }
 
     // Output the logs into an HTML file
@@ -85,10 +85,10 @@ rp3d::Collider* Physics::AddCapsuleCollider(
 
 void Physics::DeleteRigidBody(Registry& aRegistry, entt::entity aEntity)
 {
-    if (const auto& body = aRegistry.get<RigidBody>(aEntity);
-        body.RigidBody && body.RigidBody->getUserData()) {
-        auto* uData = static_cast<RigidBodyData*>(body.RigidBody->getUserData());
+    const auto& body = aRegistry.get<RigidBody>(aEntity);
+    if (body.Body && body.Body->getUserData()) {
+        auto* uData = static_cast<RigidBodyData*>(body.Body->getUserData());
         delete uData;
-        aRegistry.ctx().get<Physics&>().World()->destroyRigidBody(body.RigidBody);
+        aRegistry.ctx().get<Physics&>().World()->destroyRigidBody(body.Body);
     }
 }

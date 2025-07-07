@@ -19,10 +19,29 @@
       }
     },
     {
+      "name": "release-common",
+      "description": "General settings that apply to all Release configurations",
+      "hidden": true,
+      "inherits": "conf-common",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "VCPKG_INSTALL_OPTIONS": "--x-abi-tools-use-exact-versions"
+      }
+    },
+    {
+      "name": "debug-common",
+      "description": "General settings that apply to all Debug configurations",
+      "hidden": true,
+      "inherits": "conf-common",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "VCPKG_INSTALL_OPTIONS": "--x-abi-tools-use-exact-versions;--debug"
+      }
+    },
+    {
       "name": "conf-sccache-common",
       "description": "Shared Compilation Cache common settings",
       "hidden": true,
-      "inherits": "conf-common",
       "cacheVariables": {
         "CMAKE_C_COMPILER_LAUNCHER": "sccache",
         "CMAKE_CXX_COMPILER_LAUNCHER":"sccache"
@@ -32,7 +51,6 @@
       "name": "conf-windows-common",
       "description": "Windows settings for MSBuild toolchain that apply to msvc and clang",
       "hidden": true,
-      "inherits": "conf-common",
       "generator": "Ninja",
       "condition": {
         "type": "equals",
@@ -49,7 +67,8 @@
       },
       "cacheVariables": {
         "ENABLE_CPPCHECK_DEFAULT": "FALSE",
-        "ENABLE_CLANG_TIDY_DEFAULT": "FALSE"
+        "ENABLE_CLANG_TIDY_DEFAULT": "FALSE",
+        "VCPKG_TARGET_TRIPLET": "x64-windows-static-md"
       }
     },
     {
@@ -66,7 +85,6 @@
       "name": "conf-unixlike-common",
       "description": "Unix-like OS settings for gcc and clang toolchains",
       "hidden": true,
-      "inherits": "conf-common",
       "generator": "Unix Makefiles",
       "condition": {
         "type": "inList",
@@ -75,101 +93,83 @@
           "Linux",
           "Darwin"
         ]
-      },
-      "vendor": {
-        "microsoft.com/VisualStudioRemoteSettings/CMake/1.0": {
-          "sourceDir": "$env{HOME}/.vs/$ms{projectDirName}"
-        }
       }
-    },
-    {
-      "name": "conf-unixlike-sccache-common",
-      "description": "Shared Compilation Cache common Unix settings",
-      "inherits": ["conf-sccache-common", "conf-unixlike-common"],
-      "hidden": true
     },
     {
       "name": "windows-msvc-debug",
       "displayName": "msvc Debug ",
       "description": "Target Windows with the msvc compiler, debug build type",
-      "inherits": "conf-windows-common",
+      "inherits": ["conf-windows-common", "debug-common" ],
       "cacheVariables": {
         "CMAKE_C_COMPILER": "cl",
-        "CMAKE_CXX_COMPILER": "cl",
-        "CMAKE_BUILD_TYPE": "Debug"
+        "CMAKE_CXX_COMPILER": "cl"
       }
     },
     {
       "name": "windows-msvc-release",
       "displayName": "msvc Release ",
       "description": "Target Windows with the msvc compiler, release build type",
-      "inherits": "conf-windows-common",
+      "inherits": ["conf-windows-common", "release-common" ],
       "cacheVariables": {
         "CMAKE_C_COMPILER": "cl",
-        "CMAKE_CXX_COMPILER": "cl",
-        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+        "CMAKE_CXX_COMPILER": "cl"
       }
     },
     {
       "name": "unixlike-gcc-debug",
       "displayName": "gcc Debug",
       "description": "Target Unix-like OS with the gcc compiler, debug build type",
-      "inherits": "conf-unixlike-common",
+      "inherits": [ "conf-unixlike-common", "debug-common" ],
       "cacheVariables": {
         "CMAKE_C_COMPILER": "gcc",
-        "CMAKE_CXX_COMPILER": "g++",
-        "CMAKE_BUILD_TYPE": "Debug"
+        "CMAKE_CXX_COMPILER": "g++"
       }
     },
     {
       "name": "unixlike-gcc-release",
       "displayName": "gcc Release",
       "description": "Target Unix-like OS with the gcc compiler, release build type",
-      "inherits": "conf-unixlike-common",
+      "inherits": [ "conf-unixlike-common", "release-common" ],
       "cacheVariables": {
         "CMAKE_C_COMPILER": "gcc",
-        "CMAKE_CXX_COMPILER": "g++",
-        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+        "CMAKE_CXX_COMPILER": "g++"
       }
     },
     {
       "name": "unixlike-clang-debug",
       "displayName": "clang Debug",
       "description": "Target Unix-like OS with the clang compiler, debug build type",
-      "inherits": "conf-unixlike-common",
+      "inherits": [ "conf-unixlike-common", "debug-common" ],
       "cacheVariables": {
         "CMAKE_C_COMPILER": "clang",
-        "CMAKE_CXX_COMPILER": "clang++",
-        "CMAKE_BUILD_TYPE": "Debug"
+        "CMAKE_CXX_COMPILER": "clang++"
       }
     },
     {
       "name": "unixlike-clang-release",
       "displayName": "clang Release",
       "description": "Target Unix-like OS with the clang compiler, release build type",
-      "inherits": "conf-unixlike-common",
+      "inherits": [ "conf-unixlike-common", "release-common" ],
       "cacheVariables": {
         "CMAKE_C_COMPILER": "clang",
-        "CMAKE_CXX_COMPILER": "clang++",
-        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+        "CMAKE_CXX_COMPILER": "clang++"
       }
     },
     {
       "name": "windows-msvc-debug-sccache",
       "displayName": "msvc Debug sccache",
       "description": "Target Windows with the msvc compiler + sccache, debug build type",
-      "inherits": "conf-windows-sccache-common",
+      "inherits": [ "conf-windows-sccache-common", "debug-common" ],
       "cacheVariables": {
         "CMAKE_C_COMPILER": "cl",
-        "CMAKE_CXX_COMPILER": "cl",
-        "CMAKE_BUILD_TYPE": "Debug"
+        "CMAKE_CXX_COMPILER": "cl"
       }
     },
     {
       "name": "windows-msvc-release-sccache",
       "displayName": "msvc Release sccache",
       "description": "Target Windows with the msvc compiler + sccache, release build type",
-      "inherits": "conf-windows-sccache-common",
+      "inherits": [ "conf-windows-sccache-common", "release-common" ],
       "cacheVariables": {
         "CMAKE_C_COMPILER": "cl",
         "CMAKE_CXX_COMPILER": "cl",
@@ -180,7 +180,7 @@
       "name": "unixlike-gcc-debug-sccache",
       "displayName": "gcc Debug sccache",
       "description": "Target Unix-like OS with the gcc compiler + sccache, debug build type",
-      "inherits": "conf-unixlike-sccache-common",
+      "inherits": ["conf-sccache-common", "conf-unixlike-common", "debug-common" ],
       "cacheVariables": {
         "CMAKE_C_COMPILER": "gcc",
         "CMAKE_CXX_COMPILER": "g++",
@@ -191,7 +191,7 @@
       "name": "unixlike-gcc-release-sccache",
       "displayName": "gcc Release sccache",
       "description": "Target Unix-like OS with the gcc compiler + sccache, release build type",
-      "inherits": "conf-unixlike-sccache-common",
+      "inherits": ["conf-sccache-common", "conf-unixlike-common", "release-common" ],
       "cacheVariables": {
         "CMAKE_C_COMPILER": "gcc",
         "CMAKE_CXX_COMPILER": "g++",
@@ -202,7 +202,7 @@
       "name": "unixlike-clang-debug-sccache",
       "displayName": "clang Debug sccache",
       "description": "Target Unix-like OS with the clang compiler + sccache, debug build type",
-      "inherits": "conf-unixlike-sccache-common",
+      "inherits": ["conf-sccache-common", "conf-unixlike-common", "debug-common" ],
       "cacheVariables": {
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++",
@@ -213,12 +213,86 @@
       "name": "unixlike-clang-release-sccache",
       "displayName": "clang Release sccache",
       "description": "Target Unix-like OS with the clang compiler + sccache, release build type",
-      "inherits": "conf-unixlike-sccache-common",
+      "inherits": ["conf-sccache-common", "conf-unixlike-common", "release-common" ],
       "cacheVariables": {
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++",
         "CMAKE_BUILD_TYPE": "RelWithDebInfo"
       }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "windows-msvc-debug",
+      "displayName": "msvc Debug ",
+      "description": "Target Windows with the msvc compiler, debug build type",
+      "configurePreset": "windows-msvc-debug"
+    },
+    {
+      "name": "windows-msvc-release",
+      "displayName": "msvc Release ",
+      "description": "Target Windows with the msvc compiler, release build type",
+      "configurePreset": "windows-msvc-release"
+    },
+    {
+      "name": "unixlike-gcc-debug",
+      "displayName": "gcc Debug",
+      "description": "Target Unix-like OS with the gcc compiler, debug build type",
+      "configurePreset": "unixlike-gcc-debug"
+    },
+    {
+      "name": "unixlike-gcc-release",
+      "displayName": "gcc Release",
+      "description": "Target Unix-like OS with the gcc compiler, release build type",
+      "configurePreset": "unixlike-gcc-release"
+    },
+    {
+      "name": "unixlike-clang-debug",
+      "displayName": "clang Debug",
+      "description": "Target Unix-like OS with the clang compiler, debug build type",
+      "configurePreset": "unixlike-clang-debug"
+    },
+    {
+      "name": "unixlike-clang-release",
+      "displayName": "clang Release",
+      "description": "Target Unix-like OS with the clang compiler, release build type",
+      "configurePreset": "unixlike-clang-release"
+    },
+    {
+      "name": "windows-msvc-debug-sccache",
+      "displayName": "msvc Debug sccache",
+      "description": "Target Windows with the msvc compiler + sccache, debug build type",
+      "configurePreset": "windows-msvc-debug-sccache"
+    },
+    {
+      "name": "windows-msvc-release-sccache",
+      "displayName": "msvc Release sccache",
+      "description": "Target Windows with the msvc compiler + sccache, release build type",
+      "configurePreset": "windows-msvc-release-sccache"
+    },
+    {
+      "name": "unixlike-gcc-debug-sccache",
+      "displayName": "gcc Debug sccache",
+      "description": "Target Unix-like OS with the gcc compiler + sccache, debug build type",
+      "configurePreset": "unixlike-gcc-debug-sccache"
+    },
+    {
+      "name": "unixlike-gcc-release-sccache",
+      "displayName": "gcc Release sccache",
+      "description": "Target Unix-like OS with the gcc compiler + sccache, release build type",
+      "configurePreset": "unixlike-gcc-release-sccache"
+    },
+    {
+      "name": "unixlike-clang-debug-sccache",
+      "displayName": "clang Debug sccache",
+      "description": "Target Unix-like OS with the clang compiler + sccache, debug build type",
+      "configurePreset": "unixlike-clang-debug-sccache"
+    },
+    {
+      "name": "unixlike-clang-release-sccache",
+      "displayName": "clang Release sccache",
+      "description": "Target Unix-like OS with the clang compiler + sccache, release build type",
+      "configurePreset": "unixlike-clang-release-sccache"
     }
   ],
   "testPresets": [

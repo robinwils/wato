@@ -1,7 +1,7 @@
 #include "core/app/game_server.hpp"
 
 #include <bx/bx.h>
-#include <spdlog/fmt/bundled/ranges.h>
+#include <fmt/ranges.h>
 
 #include <thread>
 
@@ -54,12 +54,13 @@ int GameServer::Run()
     auto prevTime = clock_type::now();
     mRunning      = true;
 
-    std::jthread netPollThread{[&]() {
+    mNetTaskflow.emplace([&]() {
         while (mRunning) {
             mServer.ConsumeNetworkResponses();
             mServer.Poll();
         }
-    }};
+    });
+    mNetExecutor.run(mNetTaskflow);
 
     while (mRunning) {
         auto                         t  = clock_type::now();

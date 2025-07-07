@@ -1,8 +1,7 @@
 #include "core/net/enet_client.hpp"
 
-#include <bx/string.h>
 #include <enet.h>
-#include <spdlog/fmt/bundled/format.h>
+#include <fmt/format.h>
 #include <spdlog/spdlog.h>
 
 #include <stdexcept>

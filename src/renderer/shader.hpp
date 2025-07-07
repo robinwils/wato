@@ -15,7 +15,7 @@ class Shader
    public:
     using uniform_map = std::unordered_map<std::string, bgfx::UniformHandle>;
 
-    Shader(bgfx::ProgramHandle& aHandle, const uniform_map& aUniforms)
+    Shader(const bgfx::ProgramHandle& aHandle, const uniform_map& aUniforms)
         : mUniforms(aUniforms), mHandle(aHandle)
     {
     }

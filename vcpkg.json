@@ -1,5 +1,42 @@
 {
+  "name": "wato",
+  "default-features": [ "client" ],
   "dependencies": [
-    "bgfx"
-  ]
+    "zlib",
+    "libsodium",
+    "spdlog",
+    "reactphysics3d"
+  ],
+  "features": {
+    "client": {
+      "description": "WaTo game client",
+      "dependencies": [
+        {
+          "name": "glfw3",
+          "features": [
+            {
+              "name": "wayland",
+              "platform": "linux"
+            },
+            {
+              "name": "x11",
+              "platform": "linux"
+            }
+          ]
+        },
+        {
+          "name": "bgfx",
+          "default-features": false,
+          "features": [ "multithreaded", "tools" ],
+          "host": true,
+          "$reason": "tools are used on host, can't compile on non native"
+        },
+        {
+          "name": "bgfx",
+          "features": [ "multithreaded" ]
+        },
+        "assimp"
+      ]
+    }
+  }
 }

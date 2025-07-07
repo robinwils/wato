@@ -47,6 +47,8 @@ class GameClient : public Application
     Registry        mRegistry;
     entt::organizer mFrameTimeOrganizer;
     tf::Taskflow    mTaskflow;
+    tf::Taskflow    mNetTaskflow;
+    tf::Executor    mNetExecutor;
 
     // systems
     InputSystem               mInputSystem;

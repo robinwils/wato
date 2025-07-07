@@ -15,9 +15,8 @@ endif()
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
-find_package(ZLIB REQUIRED)
 
-find_program(CLANG_TIDY_BIN clang-tidy REQUIRED)
+find_program(CLANG_TIDY_BIN clang-tidy)
 
 option(wato_WARNINGS_AS_ERRORS "Treat Warnings As Errors" OFF)
 
@@ -26,26 +25,10 @@ option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 set(TF_BUILD_TESTS OFF CACHE BOOL "Disable taskflow test builds" FORCE)
 set(TF_BUILD_EXAMPLES OFF CACHE BOOL "Disable taskflow example builds" FORCE)
 
-set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(ASSIMP_INJECT_DEBUG_POSTFIX OFF CACHE BOOL "" FORCE)
-set(ASSIMP_INSTALL OFF CACHE BOOL "" FORCE)
-
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_COLOR_MAKEFILE ON)
 
 include(FetchContent)
-FetchContent_Declare(
-  assimp
-  GIT_REPOSITORY https://github.com/assimp/assimp.git
-  GIT_TAG v6.0.2
-  FIND_PACKAGE_ARGS NAMES assimp
-)
-FetchContent_Declare(
-  glfw3
-  GIT_REPOSITORY https://github.com/glfw/glfw
-  GIT_TAG 3.4
-  FIND_PACKAGE_ARGS NAMES glfw3
-)
 FetchContent_Declare(
   entt
   GIT_REPOSITORY https://github.com/skypjack/entt
@@ -57,12 +40,6 @@ FetchContent_Declare(
   GIT_REPOSITORY https://github.com/g-truc/glm
   GIT_TAG 0.9.9.8
   FIND_PACKAGE_ARGS NAMES glm
-)
-FetchContent_Declare(
-  reactphysics3d
-  GIT_REPOSITORY https://github.com/DanielChappuis/reactphysics3d
-  GIT_TAG v0.10.2
-  FIND_PACKAGE_ARGS NAMES reactphysics3d
 )
 FetchContent_Declare(
   enet
@@ -81,7 +58,7 @@ FetchContent_Declare(
 FetchContent_Declare(
   taskflow
   GIT_REPOSITORY https://github.com/taskflow/taskflow.git
-  GIT_TAG v3.9.0
+  GIT_TAG v3.10.0
   FIND_PACKAGE_ARGS NAMES taskflow
 )
 
@@ -92,31 +69,36 @@ FetchContent_Declare(
   FIND_PACKAGE_ARGS NAMES doctest
 )
 
-FetchContent_Declare(
-  spdlog
-  GIT_REPOSITORY https://github.com/gabime/spdlog
-  GIT_TAG v1.15.3
-  FIND_PACKAGE_ARGS NAMES spdlog
-)
-
 set(FETCHED_DEPS_NAMES
-  assimp
-  glfw3
   entt
   glm
-  reactphysics3d
   enet
   argh
   taskflow
   doctest
-  spdlog
 )
 
 FetchContent_MakeAvailable(${FETCHED_DEPS_NAMES})
 set(OTHER_DEPS
+  OpenGL
+  glfw3
+  assimp
+  ReactPhysics3D
+  spdlog
   Sodium
   bgfx
 )
+
+if(APPLE)
+  find_library(METAL Metal REQUIRED)
+  if (NOT METAL)
+    message(FATAL_ERROR "Metal not found")
+  endif()
+elseif(LINUX)
+  list(APPEND OTHER_DEPS X11 Vulkan)
+elseif(WIN32)
+  list(APPEND OTHER_DEPS Vulkan)
+endif()
 
 foreach(dep ${OTHER_DEPS})
   find_package(${dep} REQUIRED)
@@ -166,8 +148,12 @@ else()
   add_library(watolib STATIC)
 endif()
 
-# to get libwato.so not libwatolib.so
-set_property(TARGET watolib PROPERTY OUTPUT_NAME wato)
+# to get libwato.so not libwatolib.so, but on mscv this creates
+# a linker error because exe and lib are the same name
+if(NOT MSVC)
+  set_property(TARGET watolib PROPERTY OUTPUT_NAME wato)
+endif()
+
 add_executable(wato)
 add_subdirectory(src/watod)
 add_subdirectory(test)
@@ -191,8 +177,19 @@ if(UNIX)
   target_link_options(wato_common
     INTERFACE
       $<$<CONFIG:Debug>:-fsanitize=address,undefined>
+      -rdynamic
+  )
+elseif(WIN32)
+  target_compile_definitions(wato_common INTERFACE NOMINMAX)
+endif()
+
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  target_link_options(wato_common
+    INTERFACE
+      $<$<CONFIG:Debug>:-static-libasan -static-libubsan>
   )
 endif()
+
 
 include(cmake/CompilerWarnings.cmake)
 wato_set_project_warnings(wato_common
@@ -205,21 +202,14 @@ target_include_directories(wato
   PRIVATE
     src
     src/imgui
+    include
 )
 
 target_include_directories(wato
   SYSTEM PRIVATE
     deps/imgui
     src/imgui
-    deps/iconfontcppheaders
 )
-
-if(DEFINED glfw3_SOURCE_DIR)
-  target_include_directories(wato
-  SYSTEM PUBLIC
-    ${glfw3_SOURCE_DIR}/include
-  )
-endif()
 
 if(DEFINED glm_SOURCE_DIR)
   target_include_directories(wato_common
@@ -235,12 +225,6 @@ if(DEFINED entt_SOURCE_DIR)
   )
 endif()
 
-if(DEFINED reactphysics3d_SOURCE_DIR)
-  target_include_directories(wato_common
-  SYSTEM INTERFACE
-    ${reactphysics3d_SOURCE_DIR}/include
-  )
-endif()
 
 if(DEFINED enet_SOURCE_DIR)
   target_include_directories(wato_common
@@ -263,12 +247,24 @@ if(DEFINED taskflow_SOURCE_DIR)
   )
 endif()
 
-if(DEFINED spdlog_SOURCE_DIR)
-  target_include_directories(wato_common
-  SYSTEM INTERFACE
-    ${spdlog_SOURCE_DIR}/include
-  )
-endif()
+bgfx_compile_shaders(
+  TYPE VERTEX
+  SHADERS
+    shaders/vs_blinnphong.sc
+    shaders/vs_blinnphong_skinned.sc
+  VARYING_DEF ${CMAKE_SOURCE_DIR}/shaders/varying.def.sc
+  OUTPUT_DIR ${CMAKE_BINARY_DIR}/include/generated/shaders
+  AS_HEADERS
+)
+
+bgfx_compile_shaders(
+  TYPE FRAGMENT
+  SHADERS
+    shaders/fs_blinnphong.sc
+  VARYING_DEF ${CMAKE_SOURCE_DIR}/shaders/varying.def.sc
+  OUTPUT_DIR ${CMAKE_BINARY_DIR}/include/generated/shaders
+  AS_HEADERS
+)
 
 target_sources(watolib
   PUBLIC FILE_SET HEADERS
@@ -370,11 +366,15 @@ target_sources(wato
     src/systems/input.cpp
     src/systems/render.cpp
     src/systems/sync.cpp
+
+    shaders/vs_blinnphong.sc
+    shaders/vs_blinnphong_skinned.sc
+    shaders/fs_blinnphong.sc
 )
 
 target_include_directories(wato_common INTERFACE "${CMAKE_CURRENT_BINARY_DIR}")
+target_include_directories(wato PRIVATE ${CMAKE_BINARY_DIR}/include/generated/shaders)
 
-target_link_options(wato_common INTERFACE -rdynamic)
 
 # Link libraries
 target_link_libraries(watolib
@@ -382,32 +382,41 @@ target_link_libraries(watolib
     wato_common
     bgfx::bx
     sodium
-    spdlog
-    reactphysics3d
+    spdlog::spdlog
+    ReactPhysics3D::ReactPhysics3D
 )
 
 target_link_libraries(wato
   watolib
+  glfw
+  assimp::assimp
   bgfx::bgfx
   bgfx::bimg_decode
   bgfx::bimg
 )
 
-if(WIN32)
+if(LINUX)
   target_link_libraries(wato
-    glfw3_mt
-  )
-elseif(UNIX)
-  target_link_libraries(wato
-    glfw
-    assimp
     X11
-    vulkan
-    GL
-    GLU
-    ZLIB::ZLIB
+    Vulkan::Vulkan
+    OpenGL::GL
+    OpenGL::GLU
+  )
+elseif(APPLE)
+  target_link_libraries(wato
+    OpenGL::GL
+    OpenGL::GLU
+    ${METAL}
+  )
+elseif(WIN32)
+  target_link_libraries(wato
+    Vulkan::Vulkan
+    OpenGL::GL
+    OpenGL::GLU
   )
 endif()
+
+
 
 set(wato_includes "$<TARGET_PROPERTY:wato,INCLUDE_DIRECTORIES>")
 set(wato_sources "$<FILTER:$<TARGET_PROPERTY:wato,SOURCES>,INCLUDE,src/*>")
