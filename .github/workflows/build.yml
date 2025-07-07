@@ -47,6 +47,9 @@ jobs:
           else
             echo "CMAKE_BUILD_PARALLEL_LEVEL=$(nproc)" >> $GITHUB_ENV
           fi
+          if [[ "${{ matrix.buildtype }}" == "debug" ]]; then
+            echo "VCPKG_INSTALL_OPTIONS=--debug" >> $GITHUB_ENV
+          fi
 
       - name: Mark repo as safe for git
         run: git config --global --add safe.directory ${{ env.GITHUB_WORKSPACE }}
