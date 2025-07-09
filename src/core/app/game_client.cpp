@@ -173,7 +173,8 @@ void GameClient::spawnPlayerAndCamera()
 
     auto player = mRegistry.create();
     // TODO: ID should be something coming from outside (menu, DB, etc...)
-    mRegistry.emplace<Player>(player, 0u, "stion", camera);
+    mRegistry.emplace<Player>(player, 0u);
+    mRegistry.emplace<Name>(player, "stion");
 }
 
 void GameClient::consumeNetworkResponses()
