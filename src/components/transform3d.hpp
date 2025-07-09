@@ -13,8 +13,8 @@
 
 struct Transform3D {
     glm::vec3 Position;
-    glm::quat Orientation;
-    glm::vec3 Scale;
+    glm::quat Orientation{glm::identity<glm::quat>()};
+    glm::vec3 Scale{1.0f};
 
     [[nodiscard]] rp3d::Transform ToRP3D() const
     {
