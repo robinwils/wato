@@ -18,6 +18,7 @@
 #include "core/types.hpp"
 #include "core/window.hpp"
 #include "imgui_helper.h"
+#include "input/action.hpp"
 #include "resource/cache.hpp"
 
 void RenderSystem::operator()(Registry& aRegistry, const float aDeltaTime)
@@ -68,7 +69,14 @@ void RenderSystem::operator()(Registry& aRegistry, const float aDeltaTime)
             model->Submit(t.ModelMat(), state);
         }
     }
+
+    if (aRegistry.ctx().get<ActionContextStack>().front().State
+        == ActionContext::State::Placement) {
+        renderGrid(aRegistry);
+    }
 }
+
+void RenderSystem::renderGrid(Registry& aRegistry) {}
 
 void RenderImguiSystem::operator()(Registry& aRegistry, const float aDeltaTime)
 {
