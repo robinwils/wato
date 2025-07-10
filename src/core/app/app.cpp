@@ -10,6 +10,7 @@
 #include "components/tile.hpp"
 #include "components/transform3d.hpp"
 #include "core/event_handler.hpp"
+#include "core/graph.hpp"
 #include "core/physics.hpp"
 #include "input/action.hpp"
 
@@ -87,10 +88,12 @@ void Application::AdvanceSimulation(Registry& aRegistry, const float aDeltaTime)
 
 void Application::SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeight)
 {
-    auto&                 physics       = aRegistry.ctx().get<Physics>();
-    entt::entity          first         = entt::null;
-    static const uint32_t kCellsPerTile = 9;
+    auto&        physics = aRegistry.ctx().get<Physics>();
+    entt::entity first   = entt::null;
 
+    aRegistry.ctx().emplace<Graph>(
+        aWidth * GraphCell::kCellsPerAxis,
+        aHeight * GraphCell::kCellsPerAxis);
     // Create tiles
     for (uint32_t i = 0; i < aWidth; ++i) {
         for (uint32_t j = 0; j < aHeight; ++j) {
