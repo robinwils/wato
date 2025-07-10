@@ -2,13 +2,18 @@
 
 #include <bgfx/bgfx.h>
 
+#include <algorithm>
 #include <glm/ext/vector_float3.hpp>
+#include <glm/fwd.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include "components/imgui.hpp"
 #include "components/light_source.hpp"
 #include "components/tile.hpp"
+#include "core/graph.hpp"
 #include "registry/registry.hpp"
 #include "renderer/blinn_phong_material.hpp"
+#include "renderer/grid_preview_material.hpp"
 #include "renderer/plane_primitive.hpp"
 #include "resource/cache.hpp"
 
@@ -90,6 +95,33 @@ void SpawnLight(Registry& aRegistry)
     auto light = aRegistry.create();
     aRegistry.emplace<LightSource>(light, glm::vec3(-1.0f, -1.0f, 0.0f), glm::vec3(0.5f));
     aRegistry.emplace<ImguiDrawable>(light, "Directional Light");
+}
+
+void PrepareGridPreview(Registry& aRegistry)
+{
+    const auto& graph = aRegistry.ctx().get<Graph>();
+
+    std::vector<PositionVertex> vertices;
+    std::vector<uint16_t>       indices;
+    uint16_t                    idx = 0;
+
+    for (uint32_t i = 0; i < graph.Width - 1; ++i) {
+        for (uint32_t j = 0; j < graph.Height - 1; ++j) {
+            vertices.emplace_back(GridToWorld(i, j));
+            vertices.emplace_back(GridToWorld(i + 1, j));
+            vertices.emplace_back(GridToWorld(i, j + 1));
+            vertices.emplace_back(GridToWorld(i + 1, j + 1));
+
+            std::copy_n(glm::value_ptr(glm::u16vec3(idx, idx + 1, idx + 2)), 3, indices.end());
+            std::copy_n(glm::value_ptr(glm::u16vec3(idx + 1, idx + 2, idx + 3)), 3, indices.end());
+
+            idx += 4;
+        }
+    }
+
+    const entt::resource<Shader>& shader = aRegistry.ctx().get<ShaderCache>()["grid"_hs];
+    auto*                         mat    = new GridPreviewMaterial(shader);
+    Primitive<PositionVertex>     primitive(vertices, indices, mat);
 }
 
 void LoadModels(Registry& aRegistry)
