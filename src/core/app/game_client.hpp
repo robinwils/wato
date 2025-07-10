@@ -44,6 +44,7 @@ class GameClient : public Application
     void networkThread();
     void consumeNetworkResponses();
     void spawnPlayerAndCamera();
+    void prepareGridPreview();
     void setupObservers();
 
     Registry        mRegistry;

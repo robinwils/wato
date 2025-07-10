@@ -91,5 +91,7 @@ class Primitive
     }
 };
 
-using PrimitiveVariant =
-    std::variant<Primitive<PositionNormalUvVertex>*, Primitive<PositionNormalUvBoneVertex>*>;
+using PrimitiveVariant = std::variant<
+    Primitive<PositionNormalUvVertex>*,
+    Primitive<PositionNormalUvBoneVertex>*,
+    Primitive<PositionVertex>*>;

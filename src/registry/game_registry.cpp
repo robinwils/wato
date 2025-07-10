@@ -3,10 +3,11 @@
 #include <bgfx/bgfx.h>
 
 #include <glm/ext/vector_float3.hpp>
+#include <glm/fwd.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include "components/imgui.hpp"
 #include "components/light_source.hpp"
-#include "components/tile.hpp"
 #include "registry/registry.hpp"
 #include "renderer/blinn_phong_material.hpp"
 #include "renderer/plane_primitive.hpp"

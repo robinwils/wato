@@ -12,6 +12,7 @@
 #include "core/window.hpp"
 #include "registry/game_registry.hpp"
 #include "registry/registry.hpp"
+#include "renderer/grid_preview_material.hpp"
 #include "renderer/renderer.hpp"
 #include "systems/render.hpp"
 #include "systems/system.hpp"
@@ -92,6 +93,7 @@ int GameClient::Run()
     } else {
         StartGameInstance(mRegistry, 0, false);
         spawnPlayerAndCamera();
+        prepareGridPreview();
     }
 
     while (!window.ShouldClose()) {
@@ -178,6 +180,48 @@ void GameClient::spawnPlayerAndCamera()
     mRegistry.emplace<Name>(player, "stion");
 }
 
+void GameClient::prepareGridPreview()
+{
+    const auto& graph = mRegistry.ctx().get<Graph>();
+
+    std::vector<PositionVertex> vertices;
+    std::vector<uint16_t>       indices;
+    uint16_t                    idx = 0;
+
+    for (GraphCell::size_type i = 0; i < graph.Width - 1; ++i) {
+        for (GraphCell::size_type j = 0; j < graph.Height - 1; ++j) {
+            vertices.emplace_back(GridToWorld(i, j));
+            vertices.emplace_back(GridToWorld(i + 1, j));
+            vertices.emplace_back(GridToWorld(i, j + 1));
+            vertices.emplace_back(GridToWorld(i + 1, j + 1));
+
+            std::copy_n(glm::value_ptr(glm::u16vec3(idx, idx + 1, idx + 2)), 3, indices.end());
+            std::copy_n(glm::value_ptr(glm::u16vec3(idx + 1, idx + 2, idx + 3)), 3, indices.end());
+
+            idx += 4;
+        }
+    }
+
+    const entt::resource<Shader>& shader    = mRegistry.ctx().get<ShaderCache>()["grid"_hs];
+    auto*                         mat       = new GridPreviewMaterial(shader);
+    auto*                         primitive = new Primitive<PositionVertex>(vertices, indices, mat);
+
+    mRegistry.ctx().get<ModelCache>().load("grid"_hs, primitive);
+
+    bgfx::TextureHandle handle = bgfx::createTexture2D(
+        graph.Width,
+        graph.Height,
+        false,
+        1,
+        bgfx::TextureFormat::R8,
+        0,
+        bgfx::copy(graph.GridLayout().data(), graph.Width * graph.Height));
+
+    // Put texture in context variables because I am not sure entt:resource_cache can be updated
+    // easily
+    mRegistry.ctx().insert_or_assign("grid_tex"_hs, handle);
+}
+
 void GameClient::consumeNetworkResponses()
 {
     auto& netClient = mRegistry.ctx().get<ENetClient>();
@@ -194,6 +238,7 @@ void GameClient::consumeNetworkResponses()
                 [&](const NewGameResponse& aResp) {
                     StartGameInstance(mRegistry, aResp.GameID, false);
                     spawnPlayerAndCamera();
+                    prepareGridPreview();
                     spdlog::info("game {} created", aResp.GameID);
                 },
             },
