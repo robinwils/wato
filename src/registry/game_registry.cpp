@@ -48,10 +48,13 @@ void LoadShaders(Registry& aRegistry)
             {"u_bones",       {bgfx::UniformType::Mat4, 128}}
     });
     aRegistry.ctx().get<ShaderCache>().load(
-        "simple"_hs,
-        "vs_cubes",
-        "fs_cubes",
-        ShaderLoader::uniform_desc_map{});
+        "grid"_hs,
+        "vs_grid",
+        "fs_grid",
+        ShaderLoader::uniform_desc_map{
+            {"s_gridTex",  {bgfx::UniformType::Sampler}},
+            {"u_gridInfo", {bgfx::UniformType::Vec4}   },
+    });
 }
 
 void LoadTextures(Registry& aRegistry, uint32_t aWidth, uint32_t aHeight)

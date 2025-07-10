@@ -7,6 +7,20 @@
 #include <glm/ext/vector_float4.hpp>
 #include <glm/ext/vector_int4.hpp>
 
+struct PositionVertex {
+    glm::vec3 Position;
+
+    static bgfx::VertexLayout GetVertexLayout()
+    {
+        bgfx::VertexLayout vertexLayout;
+        vertexLayout.begin()
+            .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
+            .add(bgfx::Attrib::Color0, 3, bgfx::AttribType::Float)
+            .end();
+        return vertexLayout;
+    }
+};
+
 struct PositionNormalUvVertex {
     glm::vec3 Position;
     glm::vec3 Normal;

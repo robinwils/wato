@@ -319,6 +319,7 @@ target_sources(wato
     src/renderer/animation.hpp
     src/renderer/bgfx_utils.hpp
     src/renderer/blinn_phong_material.hpp
+    src/renderer/grid_preview_material.hpp
     src/renderer/material.hpp
     src/renderer/model.hpp
     src/renderer/plane_primitive.hpp
