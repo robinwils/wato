@@ -23,6 +23,9 @@ class RenderSystem : public System<RenderSystem>
     }
     void operator()(Registry& aRegistry, const float aDeltaTime);
 
+   private:
+    void renderGrid(Registry& aRegistry);
+
     static constexpr const char* StaticName() { return "RenderSystem"; }
 };
 
