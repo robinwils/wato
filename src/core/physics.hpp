@@ -6,6 +6,7 @@
 #include <entt/entity/fwd.hpp>
 #include <glm/glm.hpp>
 
+#include "core/graph.hpp"
 #include "registry/registry.hpp"
 
 // Enumeration for categories
@@ -136,6 +137,8 @@ inline rp3d::Vector3 ToRP3D(const glm::vec3 aVector)
 {
     return rp3d::Vector3(aVector.x, aVector.y, aVector.z);
 }
+
+void ToggleObstacle(const rp3d::Collider* aCollider, Graph& aGraph, bool aAdd);
 
 struct WorldRaycastCallback : public rp3d::RaycastCallback {
     virtual rp3d::decimal notifyRaycastHit(const rp3d::RaycastInfo& aInfo) override

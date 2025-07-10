@@ -92,3 +92,22 @@ void Physics::DeleteRigidBody(Registry& aRegistry, entt::entity aEntity)
         aRegistry.ctx().get<Physics&>().World()->destroyRigidBody(body.Body);
     }
 }
+
+void ToggleObstacle(const rp3d::Collider* aCollider, Graph& aGraph, bool aAdd)
+{
+    const rp3d::AABB& box = aCollider->getWorldAABB();
+    const GraphCell&  min = GraphCell::ToGrid(box.getMin().x, box.getMin().z);
+    const GraphCell&  max = GraphCell::ToGrid(box.getMax().x, box.getMax().z);
+
+    for (int i = min.Location.x; i < min.Location.x; ++i) {
+        for (int j = max.Location.y; j < max.Location.y; ++j) {
+            const GraphCell cell{glm::ivec2(i, j)};
+
+            if (aAdd) {
+                aGraph.Obstacles.emplace(cell);
+            } else {
+                aGraph.Obstacles.erase(cell);
+            }
+        }
+    }
+}
