@@ -15,6 +15,7 @@
 #include "systems/input.hpp"
 #include "systems/render.hpp"
 #include "systems/sync.hpp"
+#include "systems/tower_built.hpp"
 
 class GameClient : public Application
 {
@@ -43,6 +44,7 @@ class GameClient : public Application
     void networkThread();
     void consumeNetworkResponses();
     void spawnPlayerAndCamera();
+    void setupObservers();
 
     Registry        mRegistry;
     entt::organizer mFrameTimeOrganizer;
@@ -59,6 +61,7 @@ class GameClient : public Application
     RenderImguiSystem         mRenderImguiSystem;
     CameraSystem              mCameraSystem;
     NetworkSyncSystem         mNetworkSyncSystem;
+    TowerBuiltSystem          mTowerBuiltSystem;
 #if WATO_DEBUG
     PhysicsDebugSystem mPhysicsDbgSystem;
 #endif

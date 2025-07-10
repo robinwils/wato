@@ -13,6 +13,7 @@
 #include "components/scene_object.hpp"
 #include "components/spawner.hpp"
 #include "components/transform3d.hpp"
+#include "core/graph.hpp"
 #include "core/physics.hpp"
 #include "core/tower_building_handler.hpp"
 #include "input/action.hpp"
@@ -98,7 +99,6 @@ void DefaultContextHandler::operator()(Registry& aRegistry, const PlacementModeP
 
     auto ghostTower = aRegistry.create();
     aRegistry.emplace<SceneObject>(ghostTower, "tower_model"_hs);
-    aRegistry.emplace<Tower>(ghostTower, aPayload.Tower);
     auto& t = aRegistry.emplace<Transform3D>(
         ghostTower,
         glm::vec3(0.0f),
@@ -140,17 +140,8 @@ void PlacementModeContextHandler::operator()(Registry& aRegistry, const BuildTow
         return;
     }
     for (auto tower : aRegistry.view<PlacementMode>()) {
-        auto& rb = aRegistry.get<RigidBody>(tower);
-
-        rb.Body->getCollider(0)->setIsSimulationCollider(true);
-        rb.Body->getCollider(0)->setCollisionCategoryBits(Category::Entities);
-        rb.Body->getCollider(0)->setCollideWithMaskBits(
-            Category::Terrain | Category::PlacementGhostTower);
-        rb.Body->setType(rp3d::BodyType::STATIC);
-
-        aRegistry.emplace<Health>(tower, 100.0F);
-        aRegistry.remove<PlacementMode>(tower);
-        aRegistry.remove<ImguiDrawable>(tower);
+        aRegistry.emplace<Tower>(tower, aPayload.Tower);
+        break;
     }
     SPDLOG_DEBUG("exiting placement mode");
     ExitPlacement(aRegistry);

@@ -339,6 +339,7 @@ target_sources(wato
     src/systems/input.hpp
     src/systems/render.hpp
     src/systems/sync.hpp
+    src/systems/tower_built.hpp
 
   PRIVATE
     deps/imgui/imgui.cpp
@@ -369,6 +370,7 @@ target_sources(wato
     src/systems/input.cpp
     src/systems/render.cpp
     src/systems/sync.cpp
+    src/systems/tower_built.cpp
 
     shaders/vs_blinnphong.sc
     shaders/vs_blinnphong_skinned.sc

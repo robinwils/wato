@@ -3,11 +3,10 @@
 #include <bx/bx.h>
 
 #include <chrono>
-#include <thread>
 
 #include "components/game.hpp"
 #include "components/imgui.hpp"
-#include "components/tile.hpp"
+#include "components/tower.hpp"
 #include "core/net/enet_client.hpp"
 #include "core/net/net.hpp"
 #include "core/window.hpp"
@@ -18,6 +17,7 @@
 #include "systems/system.hpp"
 
 using namespace std::literals::chrono_literals;
+using namespace entt::literals;
 
 void GameClient::Init()
 {
@@ -43,6 +43,7 @@ void GameClient::Init()
 #endif
 
     mSystemsFT.push_back(DeterministicActionSystem::MakeDelegate(mFTActionSystem));
+    mSystemsFT.push_back(TowerBuiltSystem::MakeDelegate(mTowerBuiltSystem));
     mSystemsFT.push_back(AnimationSystem::MakeDelegate(mAnimationSystem));
     mSystemsFT.push_back(PhysicsSystem::MakeDelegate(mPhysicsSystem));
     mSystemsFT.push_back(NetworkSyncSystem::MakeDelegate(mNetworkSyncSystem));
@@ -199,4 +200,9 @@ void GameClient::consumeNetworkResponses()
             ev->Payload);
         delete ev;
     }
+}
+void GameClient::setupObservers()
+{
+    auto& storage = mRegistry.storage<entt::reactive>("tower_built_observer"_hs);
+    storage.on_construct<Tower>();
 }
