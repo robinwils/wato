@@ -9,6 +9,14 @@
 #include "core/graph.hpp"
 #include "registry/registry.hpp"
 
+template <>
+struct fmt::formatter<rp3d::Vector3> : fmt::formatter<std::string> {
+    auto format(rp3d::Vector3 aObj, format_context& aCtx) const -> decltype(aCtx.out())
+    {
+        return fmt::format_to(aCtx.out(), "rp3d::Vector3({}, {}, {})", aObj.x, aObj.y, aObj.z);
+    }
+};
+
 // Enumeration for categories
 enum Category { PlacementGhostTower = 0x0001, Terrain = 0x0002, Entities = 0x0004 };
 
@@ -42,8 +50,9 @@ class Physics
 {
    public:
     Physics() {}
-    Physics(const Physics&) = delete;
     Physics(Physics&& aPhy) : mWorld(aPhy.mWorld) {}
+
+    Physics(const Physics&)            = delete;
     Physics& operator=(const Physics&) = delete;
     Physics& operator=(Physics&&)      = delete;
 
