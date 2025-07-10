@@ -283,6 +283,7 @@ target_sources(watolib
     src/components/transform3d.hpp
     src/core/app/app.hpp
     src/core/event_handler.hpp
+    src/core/graph.hpp
     src/core/physics.hpp
     src/core/queue/ring_buffer.hpp
     src/core/snapshot.hpp
@@ -296,6 +297,7 @@ target_sources(watolib
   PRIVATE
     src/core/app/app.cpp
     src/core/event_handler.cpp
+    src/core/graph.cpp
     src/core/physics.cpp
     src/core/snapshot.cpp
     src/core/sys/backtrace.cpp
