@@ -49,9 +49,17 @@ void LoadShaders(Registry& aRegistry)
     });
     aRegistry.ctx().get<ShaderCache>().load(
         "simple"_hs,
-        "vs_cubes",
-        "fs_cubes",
+        "vs_simple",
+        "fs_simple",
         ShaderLoader::uniform_desc_map{});
+    aRegistry.ctx().get<ShaderCache>().load(
+        "grid"_hs,
+        "vs_grid",
+        "fs_grid",
+        ShaderLoader::uniform_desc_map{
+            {"s_gridTex",  {bgfx::UniformType::Sampler}},
+            {"u_gridInfo", {bgfx::UniformType::Vec4}   },
+    });
 }
 
 void LoadTextures(Registry& aRegistry, uint32_t aWidth, uint32_t aHeight)
