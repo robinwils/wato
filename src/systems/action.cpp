@@ -13,6 +13,7 @@
 #include "components/scene_object.hpp"
 #include "components/spawner.hpp"
 #include "components/transform3d.hpp"
+#include "core/graph.hpp"
 #include "core/physics.hpp"
 #include "core/tower_building_handler.hpp"
 #include "input/action.hpp"
@@ -151,6 +152,7 @@ void PlacementModeContextHandler::operator()(Registry& aRegistry, const BuildTow
         aRegistry.emplace<Health>(tower, 100.0F);
         aRegistry.remove<PlacementMode>(tower);
         aRegistry.remove<ImguiDrawable>(tower);
+        ToggleObstacle(rb.Body->getCollider(0), aRegistry.ctx().get<Graph>(), true);
     }
     SPDLOG_DEBUG("exiting placement mode");
     ExitPlacement(aRegistry);
