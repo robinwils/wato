@@ -29,5 +29,16 @@ void TowerBuiltSystem::operator()(Registry& aRegistry, const float aDeltaTime)
 
         ToggleObstacle(rb.Body->getCollider(0), aRegistry.ctx().get<Graph>(), true);
     }
+
+    bgfx::updateTexture2D(
+        aRegistry.ctx().get<bgfx::TextureHandle>("grid_tex"_hs),
+        0,
+        0,
+        0,
+        0,
+        graph.Width,
+        graph.Height,
+        bgfx::copy(graph.GridLayout().data(), graph.Width * graph.Height));
+
     storage.clear();
 }
