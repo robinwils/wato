@@ -7,7 +7,9 @@
 
 struct GraphCell {
     using size_type         = uint16_t;
+    using grid_preview_type = uint8_t;
     using vec_type          = glm::vec<2, size_type, glm::defaultp>;
+
     static const size_type     kCellsPerAxis = 3;
     static constexpr GraphCell ToGrid(float aX, float aY)
     {
@@ -51,6 +53,7 @@ struct std::hash<GraphCell> {
 
 struct Graph {
     using size_type         = GraphCell::size_type;
+    using grid_preview_type = std::vector<GraphCell::grid_preview_type>;
     using obstacles_type    = std::vector<GraphCell>;
 
     Graph(const size_type aW, const size_type aH) : Width(aW), Height(aH) {}
@@ -59,5 +62,6 @@ struct Graph {
 
     std::unordered_set<GraphCell> Obstacles;
 
+    grid_preview_type GridLayout() const;
     obstacles_type    Neighbours(const GraphCell& aCell);
 };
