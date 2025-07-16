@@ -158,7 +158,6 @@ void ServerContextHandler::operator()(Registry& aRegistry, const BuildTowerPaylo
     auto  tower = aRegistry.create();
     auto& phy   = aRegistry.ctx().get<Physics>();
 
-    aRegistry.emplace<SceneObject>(tower, "tower_model"_hs);
     aRegistry.emplace<Tower>(tower, aPayload.Tower);
 
     auto& t = aRegistry.emplace<Transform3D>(
@@ -166,8 +165,6 @@ void ServerContextHandler::operator()(Registry& aRegistry, const BuildTowerPaylo
         aPayload.Position,
         glm::identity<glm::quat>(),
         glm::vec3(0.1f));
-    aRegistry.emplace<PlacementMode>(tower);
-    aRegistry.emplace<ImguiDrawable>(tower, "Ghost Tower");
 
     rp3d::RigidBody* body = phy.CreateRigidBody(
         tower,
