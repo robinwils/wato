@@ -6,28 +6,30 @@
 #include <vector>
 
 struct GraphCell {
-    static const uint32_t      kCellsPerAxis = 3;
+    using size_type         = uint16_t;
+    using vec_type          = glm::vec<2, size_type, glm::defaultp>;
+    static const size_type     kCellsPerAxis = 3;
     static constexpr GraphCell ToGrid(float aX, float aY)
     {
         return GraphCell{
             .Location = glm::uvec2(
-                static_cast<uint32_t>(aX * kCellsPerAxis),
-                static_cast<uint32_t>(aY * kCellsPerAxis)),
+                static_cast<size_type>(aX * kCellsPerAxis),
+                static_cast<size_type>(aY * kCellsPerAxis)),
         };
     }
     static constexpr GraphCell ToGrid(glm::vec3 aPoint) { return ToGrid(aPoint.x, aPoint.z); }
 
     bool operator==(const GraphCell&) const = default;
 
-    glm::uvec2 Location;
+    vec_type Location;
 };
 
-constexpr inline glm::vec3 GridToWorld(const uint32_t aX, const uint32_t aY)
+constexpr inline glm::vec3 GridToWorld(const GraphCell::size_type aX, const GraphCell::size_type aY)
 {
     return glm::vec3(aX / GraphCell::kCellsPerAxis, 0.0f, aY / GraphCell::kCellsPerAxis);
 }
 
-constexpr inline glm::vec3 GridToWorld(const glm::uvec2& aGridCoords)
+constexpr inline glm::vec3 GridToWorld(const GraphCell::vec_type& aGridCoords)
 {
     return GridToWorld(aGridCoords.x, aGridCoords.y);
 }
@@ -41,18 +43,21 @@ template <>
 struct std::hash<GraphCell> {
     std::size_t operator()(const GraphCell& aCell) const noexcept
     {
-        std::size_t hX = std::hash<uint32_t>{}(aCell.Location.x);
-        std::size_t hY = std::hash<uint32_t>{}(aCell.Location.y);
+        std::size_t hX = std::hash<GraphCell::size_type>{}(aCell.Location.x);
+        std::size_t hY = std::hash<GraphCell::size_type>{}(aCell.Location.y);
         return hX ^ (hY << 1);
     }
 };
 
 struct Graph {
-    Graph(const uint32_t aW, const uint32_t aH) : Width(aW), Height(aH) {}
-    uint32_t Width;
-    uint32_t Height;
+    using size_type         = GraphCell::size_type;
+    using obstacles_type    = std::vector<GraphCell>;
+
+    Graph(const size_type aW, const size_type aH) : Width(aW), Height(aH) {}
+    size_type Width;
+    size_type Height;
 
     std::unordered_set<GraphCell> Obstacles;
 
-    std::vector<GraphCell> Neighbours(const GraphCell& aCell);
+    obstacles_type    Neighbours(const GraphCell& aCell);
 };
