@@ -195,8 +195,14 @@ void GameClient::prepareGridPreview()
             vertices.emplace_back(GridToWorld(i, j + 1));
             vertices.emplace_back(GridToWorld(i + 1, j + 1));
 
-            std::copy_n(glm::value_ptr(glm::u16vec3(idx, idx + 1, idx + 2)), 3, indices.end());
-            std::copy_n(glm::value_ptr(glm::u16vec3(idx + 1, idx + 2, idx + 3)), 3, indices.end());
+            std::copy_n(
+                glm::value_ptr(glm::u16vec3(idx, idx + 1, idx + 2)),
+                3,
+                std::back_inserter(indices));
+            std::copy_n(
+                glm::value_ptr(glm::u16vec3(idx + 1, idx + 2, idx + 3)),
+                3,
+                std::back_inserter(indices));
 
             idx += 4;
         }
