@@ -5,6 +5,7 @@ $output v_worldPos
 
 void main()
 {
-	gl_Position = mul(u_modelViewProj, vec4(a_position, 1.0));
-    v_worldPos = mul(u_model[0], pos).xyz; 
+    vec4 pos = vec4(a_position, 1.0);
+	gl_Position = mul(u_modelViewProj, pos);
+    v_worldPos = mul(u_model[0], pos).xyz;
 }

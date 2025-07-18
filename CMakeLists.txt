@@ -250,6 +250,8 @@ endif()
 bgfx_compile_shaders(
   TYPE VERTEX
   SHADERS
+    shaders/vs_simple.sc
+    shaders/vs_grid.sc
     shaders/vs_blinnphong.sc
     shaders/vs_blinnphong_skinned.sc
   VARYING_DEF ${CMAKE_SOURCE_DIR}/shaders/varying.def.sc
@@ -260,6 +262,8 @@ bgfx_compile_shaders(
 bgfx_compile_shaders(
   TYPE FRAGMENT
   SHADERS
+    shaders/fs_simple.sc
+    shaders/fs_grid.sc
     shaders/fs_blinnphong.sc
   VARYING_DEF ${CMAKE_SOURCE_DIR}/shaders/varying.def.sc
   OUTPUT_DIR ${CMAKE_BINARY_DIR}/include/generated/shaders
@@ -372,9 +376,13 @@ target_sources(wato
     src/systems/sync.cpp
     src/systems/tower_built.cpp
 
+    shaders/fs_blinnphong.sc
+    shaders/fs_grid.sc
+    shaders/fs_simple.sc
     shaders/vs_blinnphong.sc
     shaders/vs_blinnphong_skinned.sc
-    shaders/fs_blinnphong.sc
+    shaders/vs_grid.sc
+    shaders/vs_simple.sc
 )
 
 target_include_directories(wato_common INTERFACE "${CMAKE_CURRENT_BINARY_DIR}")
