@@ -34,7 +34,6 @@ void TowerBuiltSystem::operator()(Registry& aRegistry, const float aDeltaTime)
         rb.Body->setType(rp3d::BodyType::STATIC);
 
         aRegistry.emplace<Health>(tower, 100.0F);
-        aRegistry.remove<PlacementMode>(tower);
         aRegistry.remove<ImguiDrawable>(tower);
 
         ToggleObstacle(rb.Body->getCollider(0), aRegistry.ctx().get<Graph>(), true);

@@ -141,6 +141,7 @@ void PlacementModeContextHandler::operator()(Registry& aRegistry, const BuildTow
     }
     for (auto tower : aRegistry.view<PlacementMode>()) {
         aRegistry.emplace<Tower>(tower, aPayload.Tower);
+        aRegistry.remove<PlacementMode>(tower);
         break;
     }
     SPDLOG_DEBUG("exiting placement mode");
