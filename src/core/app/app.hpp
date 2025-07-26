@@ -4,6 +4,7 @@
 
 #include <atomic>
 #include <chrono>
+#include <entt/core/fwd.hpp>
 
 #include "core/options.hpp"
 #include "core/types.hpp"
@@ -34,6 +35,7 @@ class Application
     void StartGameInstance(Registry& aRegistry, const GameInstanceID aGameID, const bool aIsServer);
     void AdvanceSimulation(Registry& aRegistry, const float aDeltaTime);
     void SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeight);
+    void ClearAllObservers(Registry& aRegistry);
 
     Options mOptions;
 
@@ -45,4 +47,6 @@ class Application
     SystemRegistry mSystemsFT;
 
     std::atomic_bool mRunning;
+
+    std::vector<entt::hashed_string> mObserverNames;
 };

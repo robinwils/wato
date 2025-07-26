@@ -3,6 +3,7 @@
 #include <bx/bx.h>
 
 #include <chrono>
+#include <entt/core/fwd.hpp>
 
 #include "components/game.hpp"
 #include "components/imgui.hpp"
@@ -257,6 +258,10 @@ void GameClient::consumeNetworkResponses()
 
 void GameClient::setupObservers()
 {
+    entt::hashed_string obsHash = "tower_built_observer";
+
     auto& storage = mRegistry.storage<entt::reactive>("tower_built_observer"_hs);
     storage.on_construct<Tower>();
+
+    mObserverNames.push_back(obsHash);
 }

@@ -84,6 +84,8 @@ void Application::AdvanceSimulation(Registry& aRegistry, const float aDeltaTime)
         actions.Latest().GameID = instance.GameID;
         actions.Latest().Tick   = ++instance.Tick;
     }
+
+    ClearAllObservers(aRegistry);
 }
 
 void Application::SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeight)
@@ -140,4 +142,17 @@ void Application::SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeigh
     rp3d::Collider*         collider         = body->addCollider(heightFieldShape, transform);
     collider->setCollisionCategoryBits(Category::Terrain);
     collider->setCollideWithMaskBits(Category::Entities);
+}
+
+void Application::ClearAllObservers(Registry& aRegistry)
+{
+    for (const entt::hashed_string& hash : mObserverNames) {
+        auto* storage = aRegistry.storage(hash);
+
+        if (storage == nullptr) {
+            throw std::runtime_error(fmt::format("{} storage not initiated", hash.data()));
+        }
+
+        storage->clear();
+    }
 }
