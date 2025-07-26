@@ -159,8 +159,6 @@ void ServerContextHandler::operator()(Registry& aRegistry, const BuildTowerPaylo
     auto  tower = aRegistry.create();
     auto& phy   = aRegistry.ctx().get<Physics>();
 
-    aRegistry.emplace<Tower>(tower, aPayload.Tower);
-
     auto& t = aRegistry.emplace<Transform3D>(
         tower,
         aPayload.Position,
@@ -186,7 +184,10 @@ void ServerContextHandler::operator()(Registry& aRegistry, const BuildTowerPaylo
 
     if (!handler.CanBuildTower) {
         phy.DeleteRigidBody(aRegistry, tower);
+        aRegistry.destroy(tower);
+        return;
     }
+    aRegistry.emplace<Tower>(tower, aPayload.Tower);
 }
 
 template <typename Derived>
