@@ -48,6 +48,4 @@ void TowerBuiltSystem::operator()(Registry& aRegistry, const float aDeltaTime)
         graph.Width,
         graph.Height,
         bgfx::copy(graph.GridLayout().data(), graph.Width * graph.Height));
-
-    storage->clear();
 }
