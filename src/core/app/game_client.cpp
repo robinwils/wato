@@ -221,7 +221,7 @@ void GameClient::prepareGridPreview()
         1,
         bgfx::TextureFormat::R8,
         0,
-        bgfx::copy(graph.GridLayout().data(), graph.Width * graph.Height));
+        nullptr);
 
     // Put texture in context variables because I am not sure entt:resource_cache can be updated
     // easily
