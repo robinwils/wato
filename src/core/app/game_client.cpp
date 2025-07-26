@@ -49,6 +49,8 @@ void GameClient::Init()
     mSystemsFT.push_back(PhysicsSystem::MakeDelegate(mPhysicsSystem));
     mSystemsFT.push_back(NetworkSyncSystem::MakeDelegate(mNetworkSyncSystem));
 
+    setupObservers();
+
     auto graph = organizerFixedTime.graph();
     spdlog::info("graph size: {}", graph.size());
     // TODO: use these tasks
@@ -252,6 +254,7 @@ void GameClient::consumeNetworkResponses()
         delete ev;
     }
 }
+
 void GameClient::setupObservers()
 {
     auto& storage = mRegistry.storage<entt::reactive>("tower_built_observer"_hs);
