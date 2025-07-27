@@ -10,9 +10,9 @@ struct GraphCell {
     using grid_preview_type = uint8_t;
     using vec_type          = glm::vec<2, size_type, glm::defaultp>;
 
-    static const size_type     kCellsPerAxis = 3;
     GraphCell(const size_type aX, const size_type aY) : Location(aX, aY) {}
 
+    constexpr static float kCellsPerAxis = 3.0f;
 
     static GraphCell ToGrid(float aX, float aY)
     {
