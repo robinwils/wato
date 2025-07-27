@@ -34,7 +34,7 @@ struct GraphCell {
 
 constexpr inline glm::vec3 GridToWorld(const GraphCell::size_type aX, const GraphCell::size_type aY)
 {
-    return glm::vec3(aX / GraphCell::kCellsPerAxis, 0.0f, aY / GraphCell::kCellsPerAxis);
+    return glm::vec3(aX / GraphCell::kCellsPerAxis, 0.01f, aY / GraphCell::kCellsPerAxis);
 }
 
 constexpr inline glm::vec3 GridToWorld(const GraphCell::vec_type& aGridCoords)
