@@ -1,7 +1,11 @@
 #pragma once
 
+#include <fmt/format.h>
+#include <spdlog/spdlog.h>
+
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
+#include <string>
 #include <unordered_set>
 #include <vector>
 
@@ -70,5 +74,20 @@ struct Graph {
     constexpr size_type Index(const GraphCell& aCell) const
     {
         return aCell.Location.y * Width + aCell.Location.x;
+    }
+};
+
+template <>
+struct fmt::formatter<Graph> : fmt::formatter<std::string> {
+    auto format(Graph aObj, format_context& aCtx) const -> decltype(aCtx.out())
+    {
+        auto o = fmt::format_to(aCtx.out(), "{}x{} grid:\n", aObj.Width, aObj.Height);
+        for (GraphCell::size_type i = 0; i < aObj.Width; ++i) {
+            for (GraphCell::size_type j = 0; j < aObj.Height; ++j) {
+                o = fmt::format_to(o, "{}", aObj.Obstacles.contains(GraphCell(i, j)) ? 1 : 0);
+            }
+            o = fmt::format_to(o, "\n");
+        }
+        return o;
     }
 };
