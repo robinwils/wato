@@ -1,6 +1,7 @@
 #pragma once
 
 #include <bgfx/bgfx.h>
+#include <fmt/format.h>
 
 #include <cstdint>
 #include <glm/ext/vector_float2.hpp>
@@ -11,6 +12,7 @@
 #include <vector>
 
 #include "core/sys/log.hpp"
+#include "core/types.hpp"
 #include "renderer/vertex_layout.hpp"
 
 template <typename VL>
@@ -89,9 +91,36 @@ class Primitive
             bgfx::destroy(mIndexBufferHandle);
         }
     }
+    friend struct fmt::formatter<Primitive<VL>>;
 };
 
 using PrimitiveVariant = std::variant<
     Primitive<PositionNormalUvVertex>*,
     Primitive<PositionNormalUvBoneVertex>*,
     Primitive<PositionVertex>*>;
+
+template <typename VL>
+struct fmt::formatter<Primitive<VL>> : fmt::formatter<std::string> {
+    auto format(Primitive<VL> aObj, format_context& aCtx) const -> decltype(aCtx.out())
+    {
+        return fmt::format_to(
+            aCtx.out(),
+            "{} vertices, {} indices\nvertices: {}, indices: {}",
+            aObj.mVertices.size(),
+            aObj.mIndices.size(),
+            aObj.mVertices,
+            aObj.mIndices);
+    }
+};
+
+template <>
+struct fmt::formatter<PrimitiveVariant> : fmt::formatter<std::string> {
+    auto format(PrimitiveVariant aObj, format_context& aCtx) const -> decltype(aCtx.out())
+    {
+        return std::visit(
+            VariantVisitor{
+                [&](auto* aPrimitive) { return fmt::format_to(aCtx.out(), "{}", *aPrimitive); },
+            },
+            aObj);
+    }
+};

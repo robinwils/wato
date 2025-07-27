@@ -1,5 +1,7 @@
 #pragma once
 
+#include <spdlog/fmt/ranges.h>
+
 #include <optional>
 #include <unordered_map>
 
@@ -49,4 +51,18 @@ class Model final
     animation_map  mAnimations;
     ::Skeleton     mSkeleton;  // bind pose
     glm::mat4      mGlobalInverseTransform;
+
+    friend struct fmt::formatter<Model>;
+};
+
+template <>
+struct fmt::formatter<Model> : fmt::formatter<std::string> {
+    auto format(Model aObj, format_context& aCtx) const -> decltype(aCtx.out())
+    {
+        return fmt::format_to(
+            aCtx.out(),
+            "Model with {} meshes: {}\n",
+            aObj.mMeshes.size(),
+            aObj.mMeshes);
+    }
 };

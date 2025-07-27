@@ -1,11 +1,14 @@
 #pragma once
 
 #include <bgfx/bgfx.h>
+#include <fmt/base.h>
 
 #include <glm/ext/vector_float2.hpp>
 #include <glm/ext/vector_float3.hpp>
 #include <glm/ext/vector_float4.hpp>
 #include <glm/ext/vector_int4.hpp>
+#include <glm/gtx/string_cast.hpp>
+#include <string>
 
 struct PositionVertex {
     glm::vec3 Position;
@@ -56,5 +59,41 @@ struct PositionNormalUvBoneVertex {
             .add(bgfx::Attrib::Indices, 4, bgfx::AttribType::Float)
             .end();
         return vertexLayout;
+    }
+};
+
+template <>
+struct fmt::formatter<PositionVertex> : fmt::formatter<std::string> {
+    auto format(PositionVertex aObj, format_context& aCtx) const -> decltype(aCtx.out())
+    {
+        return fmt::format_to(aCtx.out(), "{{{}}}", glm::to_string(aObj.Position));
+    }
+};
+
+template <>
+struct fmt::formatter<PositionNormalUvVertex> : fmt::formatter<std::string> {
+    auto format(PositionNormalUvVertex aObj, format_context& aCtx) const -> decltype(aCtx.out())
+    {
+        return fmt::format_to(
+            aCtx.out(),
+            "{{{} {} {}}}",
+            glm::to_string(aObj.Position),
+            glm::to_string(aObj.Normal),
+            glm::to_string(aObj.Uv));
+    }
+};
+
+template <>
+struct fmt::formatter<PositionNormalUvBoneVertex> : fmt::formatter<std::string> {
+    auto format(PositionNormalUvBoneVertex aObj, format_context& aCtx) const -> decltype(aCtx.out())
+    {
+        return fmt::format_to(
+            aCtx.out(),
+            "{{{} {} {}}}",
+            glm::to_string(aObj.Position),
+            glm::to_string(aObj.Normal),
+            glm::to_string(aObj.Uv),
+            glm::to_string(aObj.BoneWeights),
+            glm::to_string(aObj.BoneIndices));
     }
 };
