@@ -99,9 +99,9 @@ void ToggleObstacle(const rp3d::Collider* aCollider, Graph& aGraph, bool aAdd)
     const GraphCell&  min = GraphCell::ToGrid(box.getMin().x, box.getMin().z);
     const GraphCell&  max = GraphCell::ToGrid(box.getMax().x, box.getMax().z);
 
-    for (int i = min.Location.x; i < min.Location.x; ++i) {
-        for (int j = max.Location.y; j < max.Location.y; ++j) {
-            const GraphCell cell{glm::ivec2(i, j)};
+    for (GraphCell::size_type i = min.Location.x; i < min.Location.x; ++i) {
+        for (GraphCell::size_type j = max.Location.y; j < max.Location.y; ++j) {
+            const GraphCell cell(i, j);
 
             if (aAdd) {
                 aGraph.Obstacles.emplace(cell);

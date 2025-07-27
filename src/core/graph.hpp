@@ -11,15 +11,17 @@ struct GraphCell {
     using vec_type          = glm::vec<2, size_type, glm::defaultp>;
 
     static const size_type     kCellsPerAxis = 3;
-    static constexpr GraphCell ToGrid(float aX, float aY)
+    GraphCell(const size_type aX, const size_type aY) : Location(aX, aY) {}
+
+
+    static GraphCell ToGrid(float aX, float aY)
     {
         return GraphCell{
-            .Location = glm::uvec2(
-                static_cast<size_type>(aX * kCellsPerAxis),
-                static_cast<size_type>(aY * kCellsPerAxis)),
+            static_cast<size_type>(aX * kCellsPerAxis),
+            static_cast<size_type>(aY * kCellsPerAxis),
         };
     }
-    static constexpr GraphCell ToGrid(glm::vec3 aPoint) { return ToGrid(aPoint.x, aPoint.z); }
+    static GraphCell ToGrid(glm::vec3 aPoint) { return ToGrid(aPoint.x, aPoint.z); }
 
     bool operator==(const GraphCell&) const = default;
 
@@ -64,4 +66,9 @@ struct Graph {
 
     grid_preview_type GridLayout() const;
     obstacles_type    Neighbours(const GraphCell& aCell);
+
+    constexpr size_type Index(const GraphCell& aCell) const
+    {
+        return aCell.Location.y * Width + aCell.Location.x;
+    }
 };

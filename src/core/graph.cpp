@@ -5,7 +5,7 @@ Graph::grid_preview_type Graph::GridLayout() const
     Graph::grid_preview_type grid(Width * Height, 0);
 
     for (const GraphCell& obstacle : Obstacles) {
-        grid[obstacle.Location.y * Width + obstacle.Location.y] = 1;
+        grid[Index(obstacle)] = 1;
     }
 
     return grid;
