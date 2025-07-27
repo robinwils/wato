@@ -189,25 +189,18 @@ void GameClient::prepareGridPreview()
 
     std::vector<PositionVertex> vertices;
     std::vector<uint16_t>       indices;
-    uint16_t                    idx = 0;
 
-    for (GraphCell::size_type i = 0; i < graph.Width - 1; ++i) {
-        for (GraphCell::size_type j = 0; j < graph.Height - 1; ++j) {
+    for (GraphCell::size_type i = 0; i < graph.Width; ++i) {
+        for (GraphCell::size_type j = 0; j < graph.Height; ++j) {
             vertices.emplace_back(GridToWorld(i, j));
-            vertices.emplace_back(GridToWorld(i + 1, j));
-            vertices.emplace_back(GridToWorld(i, j + 1));
-            vertices.emplace_back(GridToWorld(i + 1, j + 1));
-
-            std::copy_n(
-                glm::value_ptr(glm::u16vec3(idx, idx + 1, idx + 2)),
-                3,
-                std::back_inserter(indices));
-            std::copy_n(
-                glm::value_ptr(glm::u16vec3(idx + 1, idx + 2, idx + 3)),
-                3,
-                std::back_inserter(indices));
-
-            idx += 4;
+            if (i != 0) {
+                indices.push_back(graph.Index(GraphCell(i, j)));
+                indices.push_back(graph.Index(GraphCell(i - 1, j)));
+            }
+            if (j != 0) {
+                indices.push_back(graph.Index(GraphCell(i, j)));
+                indices.push_back(graph.Index(GraphCell(i, j - 1)));
+            }
         }
     }
 
