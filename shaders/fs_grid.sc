@@ -11,7 +11,7 @@ uniform vec3 u_gridInfo;
 
 void main()
 {
-    ivec2 uv = ivec2(v_worldPos.xz / u_cellSize);
+    ivec2 uv = clamp(ivec2(v_worldPos.xz / u_cellSize), ivec2(0,0), ivec2(u_gridSize));
 
     float occupancy = texelFetch(s_gridTex, uv, 1).r;
     vec4 color = mix(vec4(0.0), vec4(1.0, 0.0, 0.0, 0.5), occupancy);
