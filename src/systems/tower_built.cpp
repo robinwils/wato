@@ -1,6 +1,7 @@
 #include "systems/tower_built.hpp"
 
 #include <bgfx/bgfx.h>
+#include <bx/bx.h>
 
 #include <stdexcept>
 
@@ -8,6 +9,7 @@
 #include "components/imgui.hpp"
 #include "components/rigid_body.hpp"
 #include "core/graph.hpp"
+#include "resource/cache.hpp"
 
 using namespace entt::literals;
 
@@ -37,10 +39,15 @@ void TowerBuiltSystem::operator()(Registry& aRegistry, const float aDeltaTime)
         aRegistry.remove<ImguiDrawable>(tower);
 
         ToggleObstacle(rb.Body->getCollider(0), aRegistry.ctx().get<Graph>(), true);
+        spdlog::debug("{}", aRegistry.ctx().get<Graph>());
     }
 
+    BX_ASSERT(
+        graph.GridLayout().size() == graph.Width * graph.Height,
+        "incorrect graph data length");
+    entt::resource<bgfx::TextureHandle> handle = aRegistry.ctx().get<TextureCache>()["grid_tex"_hs];
     bgfx::updateTexture2D(
-        aRegistry.ctx().get<bgfx::TextureHandle>("grid_tex"_hs),
+        handle,
         0,
         0,
         0,

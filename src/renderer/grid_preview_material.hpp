@@ -14,7 +14,13 @@
 class GridPreviewMaterial : public Material
 {
    public:
-    GridPreviewMaterial(entt::resource<Shader> aShader) : Material(aShader) {}
+    GridPreviewMaterial(
+        entt::resource<Shader>              aShader,
+        const glm::vec3&                    aInfo,
+        entt::resource<bgfx::TextureHandle> aTexture)
+        : Material(aShader), mGridInfo(aInfo), mGridTexture(aTexture)
+    {
+    }
 
     virtual ~GridPreviewMaterial() {}
 

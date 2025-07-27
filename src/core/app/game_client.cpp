@@ -204,13 +204,8 @@ void GameClient::prepareGridPreview()
         }
     }
 
-    const entt::resource<Shader>& shader    = mRegistry.ctx().get<ShaderCache>()["grid"_hs];
-    auto*                         mat       = new GridPreviewMaterial(shader);
-    auto*                         primitive = new Primitive<PositionVertex>(vertices, indices, mat);
-
-    mRegistry.ctx().get<ModelCache>().load("grid"_hs, primitive);
-
-    bgfx::TextureHandle handle = bgfx::createTexture2D(
+    auto [texture, loaded] = mRegistry.ctx().get<TextureCache>().load(
+        "grid_tex"_hs,
         graph.Width,
         graph.Height,
         false,
@@ -219,9 +214,25 @@ void GameClient::prepareGridPreview()
         0,
         nullptr);
 
+    const entt::resource<Shader>& shader = mRegistry.ctx().get<ShaderCache>()["grid"_hs];
+    auto*                         mat    = new GridPreviewMaterial(
+        shader,
+        glm::vec3(graph.Width, graph.Height, GraphCell::kCellsPerAxis),
+        texture->second);
+    auto* primitive = new Primitive<PositionVertex>(vertices, indices, mat);
+
     // Put texture in context variables because I am not sure entt:resource_cache can be updated
     // easily
-    mRegistry.ctx().insert_or_assign("grid_tex"_hs, handle);
+    mRegistry.ctx().get<ModelCache>().load("grid"_hs, primitive);
+    bgfx::updateTexture2D(
+        texture->second,
+        0,
+        0,
+        0,
+        0,
+        graph.Width,
+        graph.Height,
+        bgfx::copy(graph.GridLayout().data(), graph.Width * graph.Height));
 }
 
 void GameClient::consumeNetworkResponses()
