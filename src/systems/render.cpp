@@ -76,7 +76,14 @@ void RenderSystem::operator()(Registry& aRegistry, const float aDeltaTime)
     }
 }
 
-void RenderSystem::renderGrid(Registry& aRegistry) {}
+void RenderSystem::renderGrid(Registry& aRegistry)
+{
+    if (auto grid = aRegistry.ctx().get<ModelCache>()["grid"_hs]; grid) {
+        // spdlog::debug("grid is {}", *grid);
+        spdlog::debug("{}", aRegistry.ctx().get<Graph>());
+        grid->Submit(glm::identity<glm::mat4>(), BGFX_STATE_DEFAULT | BGFX_STATE_PT_LINES);
+    }
+}
 
 void RenderImguiSystem::operator()(Registry& aRegistry, const float aDeltaTime)
 {
