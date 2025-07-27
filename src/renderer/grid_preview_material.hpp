@@ -26,6 +26,11 @@ class GridPreviewMaterial : public Material
 
     void Submit() const
     {
+        BX_ASSERT(bgfx::isValid(mShader->Program()), "grid preview shader handle is invalid");
+        BX_ASSERT(
+            mGridTexture.handle() != nullptr && bgfx::isValid(mGridTexture),
+            "grid preview texture handle is invalid");
+
         bgfx::setTexture(0, mShader->Uniform("s_gridTex"), mGridTexture);
         bgfx::setUniform(mShader->Uniform("u_gridInfo"), glm::value_ptr(mGridInfo));
     }

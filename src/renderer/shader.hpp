@@ -1,5 +1,7 @@
 #pragma once
 
+#include <bx/bx.h>
+
 #include <string>
 #include <unordered_map>
 
@@ -20,7 +22,11 @@ class Shader
     {
     }
 
-    bgfx::UniformHandle Uniform(const char* const aName) const { return mUniforms.at(aName); }
+    bgfx::UniformHandle Uniform(const char* const aName) const
+    {
+        BX_ASSERT(mUniforms.contains(aName), "uniform %s does not exist", aName);
+        return mUniforms.at(aName);
+    }
 
     bgfx::ProgramHandle Program() const { return mHandle; }
 
