@@ -82,9 +82,9 @@ struct fmt::formatter<Graph> : fmt::formatter<std::string> {
     auto format(Graph aObj, format_context& aCtx) const -> decltype(aCtx.out())
     {
         auto o = fmt::format_to(aCtx.out(), "{}x{} grid:\n", aObj.Width, aObj.Height);
-        for (GraphCell::size_type i = 0; i < aObj.Width; ++i) {
-            for (GraphCell::size_type j = 0; j < aObj.Height; ++j) {
-                o = fmt::format_to(o, "{}", aObj.Obstacles.contains(GraphCell(i, j)) ? 1 : 0);
+        for (GraphCell::size_type i = 0; i < aObj.Height; ++i) {
+            for (GraphCell::size_type j = 0; j < aObj.Width; ++j) {
+                o = fmt::format_to(o, "{}", aObj.Obstacles.contains(GraphCell(j, i)) ? 1 : 0);
             }
             o = fmt::format_to(o, "\n");
         }
