@@ -1,5 +1,6 @@
 #include "core/physics.hpp"
 
+#include <fmt/ranges.h>
 #include <spdlog/spdlog.h>
 
 #include "components/rigid_body.hpp"
@@ -98,9 +99,15 @@ void ToggleObstacle(const rp3d::Collider* aCollider, Graph& aGraph, bool aAdd)
     const rp3d::AABB& box = aCollider->getWorldAABB();
     const GraphCell&  min = GraphCell::ToGrid(box.getMin().x, box.getMin().z);
     const GraphCell&  max = GraphCell::ToGrid(box.getMax().x, box.getMax().z);
+    spdlog::debug(
+        "toggling obstacle from min {}|{} to max {}|{}",
+        box.getMin(),
+        min,
+        box.getMax(),
+        max);
 
-    for (GraphCell::size_type i = min.Location.x; i < min.Location.x; ++i) {
-        for (GraphCell::size_type j = max.Location.y; j < max.Location.y; ++j) {
+    for (GraphCell::size_type i = min.Location.x; i <= max.Location.x; ++i) {
+        for (GraphCell::size_type j = min.Location.y; j <= max.Location.y; ++j) {
             const GraphCell cell(i, j);
 
             if (aAdd) {
@@ -110,4 +117,5 @@ void ToggleObstacle(const rp3d::Collider* aCollider, Graph& aGraph, bool aAdd)
             }
         }
     }
+    spdlog::debug("obstacles are now: {}", fmt::join(aGraph.Obstacles, ", "));
 }

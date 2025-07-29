@@ -78,6 +78,14 @@ struct Graph {
 };
 
 template <>
+struct fmt::formatter<GraphCell> : fmt::formatter<std::string> {
+    auto format(GraphCell aObj, format_context& aCtx) const -> decltype(aCtx.out())
+    {
+        return fmt::format_to(aCtx.out(), "[{}, {}]", aObj.Location.x, aObj.Location.y);
+    }
+};
+
+template <>
 struct fmt::formatter<Graph> : fmt::formatter<std::string> {
     auto format(Graph aObj, format_context& aCtx) const -> decltype(aCtx.out())
     {
