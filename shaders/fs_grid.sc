@@ -14,6 +14,6 @@ void main()
     ivec2 uv = clamp(ivec2(v_worldPos.xz / u_cellSize), ivec2(0,0), ivec2(u_gridSize));
     float occupancy = texelFetch(s_gridTex, uv, 0).r;
 
-    vec4 color = mix(vec4_splat(0.0), vec4(1.0, 0.0, 0.0, 0.5), occupancy);
+    vec4 color = occupancy > 0.0 ? vec4(1.0, 0.0, 0.0, 1.0) : vec4(0.0, 1.0, 0.4, 1.0);
     gl_FragColor = color;
 }
