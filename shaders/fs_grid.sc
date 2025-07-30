@@ -3,7 +3,7 @@ $input v_worldPos
 #include "bgfx_shader.sh"
 
 SAMPLER2D(s_gridTex,0);
-uniform vec3 u_gridInfo;
+uniform vec4 u_gridInfo;
 
 #define u_gridSize u_gridInfo.xy
 #define u_cellSize (1.0 / u_gridInfo.z)

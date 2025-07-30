@@ -220,7 +220,7 @@ void GameClient::prepareGridPreview()
     const entt::resource<Shader>& shader = mRegistry.ctx().get<ShaderCache>()["grid"_hs];
     auto*                         mat    = new GridPreviewMaterial(
         shader,
-        glm::vec3(graph.Width, graph.Height, GraphCell::kCellsPerAxis),
+        glm::vec4(graph.Width, graph.Height, GraphCell::kCellsPerAxis, 0),
         texture->second);
     auto* primitive = new Primitive<PositionVertex>(vertices, indices, mat);
 
