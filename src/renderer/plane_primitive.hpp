@@ -17,10 +17,10 @@ class PlanePrimitive : public Primitive<PositionNormalUvVertex>
     explicit PlanePrimitive(Material* aMaterial)
         : Primitive<PositionNormalUvVertex>(
               {
-                  {{+0.5F, +0.0F, -0.5F}, {0.0F, +1.0F, 0.0F}, {0.0F, 1.0F}},
-                  {{-0.5F, +0.0F, -0.5F}, {0.0F, +1.0F, 0.0F}, {0.0F, 0.0F}},
-                  {{-0.5F, +0.0F, +0.5F}, {0.0F, +1.0F, 0.0F}, {1.0F, 0.0F}},
-                  {{+0.5F, +0.0F, +0.5F}, {0.0F, +1.0F, 0.0F}, {1.0F, 1.0F}}
+                  {{+1.0F, +0.0F, -0.0F}, {0.0F, +1.0F, 0.0F}, {0.0F, 1.0F}},
+                  {{-0.0F, +0.0F, -0.0F}, {0.0F, +1.0F, 0.0F}, {0.0F, 0.0F}},
+                  {{-0.0F, +0.0F, +1.0F}, {0.0F, +1.0F, 0.0F}, {1.0F, 0.0F}},
+                  {{+1.0F, +0.0F, +1.0F}, {0.0F, +1.0F, 0.0F}, {1.0F, 1.0F}}
     },
               {
                   0,

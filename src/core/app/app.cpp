@@ -129,7 +129,7 @@ void Application::SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeigh
         messages);
 
     // Create physics body
-    glm::vec3        translate = glm::vec3(aWidth + 1, 2.0f, aHeight + 1) / 4.0f - 0.5f;
+    glm::vec3        translate = glm::vec3(aWidth + 1, 1.004f, aHeight + 1) / 4.0f - 0.25f;
     rp3d::Transform  transform(ToRP3D(translate), rp3d::Quaternion::identity());
     rp3d::RigidBody* body = physics.CreateRigidBody(
         first,

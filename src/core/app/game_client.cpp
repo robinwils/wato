@@ -172,7 +172,7 @@ void GameClient::spawnPlayerAndCamera()
     // pos, orientation, scale
     mRegistry.emplace<Transform3D>(
         camera,
-        glm::vec3(0.0f, 2.0f, 1.5f),
+        glm::vec3(3.0f, 2.0f, 3.0f),
         glm::identity<glm::quat>(),
         glm::vec3(1.0f));
     mRegistry.emplace<ImguiDrawable>(camera, "Camera");
