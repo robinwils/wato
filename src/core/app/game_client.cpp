@@ -187,19 +187,22 @@ void GameClient::prepareGridPreview()
 {
     const auto& graph = mRegistry.ctx().get<Graph>();
 
+    GraphCell::size_type numVertsX = graph.Width + 1;
+    GraphCell::size_type numVertsY = graph.Height + 1;
+
     std::vector<PositionVertex> vertices;
     std::vector<uint16_t>       indices;
 
-    for (GraphCell::size_type i = 0; i < graph.Height; ++i) {
-        for (GraphCell::size_type j = 0; j < graph.Width; ++j) {
+    for (GraphCell::size_type i = 0; i < numVertsY; ++i) {
+        for (GraphCell::size_type j = 0; j < numVertsX; ++j) {
             vertices.emplace_back(GridToWorld(j, i));
             if (i != 0) {
-                indices.push_back(graph.Index(GraphCell(j, i)));
-                indices.push_back(graph.Index(GraphCell(j, i - 1)));
+                indices.push_back(i * numVertsX + j);
+                indices.push_back((i - 1) * numVertsX + j);
             }
             if (j != 0) {
-                indices.push_back(graph.Index(GraphCell(j, i)));
-                indices.push_back(graph.Index(GraphCell(j - 1, i)));
+                indices.push_back(i * numVertsX + j);
+                indices.push_back(i * numVertsX + j - 1);
             }
         }
     }
