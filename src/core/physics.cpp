@@ -97,8 +97,8 @@ void Physics::DeleteRigidBody(Registry& aRegistry, entt::entity aEntity)
 void ToggleObstacle(const rp3d::Collider* aCollider, Graph& aGraph, bool aAdd)
 {
     const rp3d::AABB& box = aCollider->getWorldAABB();
-    const GraphCell&  min = GraphCell::ToGrid(box.getMin().x, box.getMin().z);
-    const GraphCell&  max = GraphCell::ToGrid(box.getMax().x, box.getMax().z);
+    const GraphCell&  min = GraphCell::FromWorldPoint(box.getMin().x, box.getMin().z);
+    const GraphCell&  max = GraphCell::FromWorldPoint(box.getMax().x, box.getMax().z);
     spdlog::debug(
         "toggling obstacle from min {}|{} to max {}|{}",
         box.getMin(),
@@ -111,11 +111,10 @@ void ToggleObstacle(const rp3d::Collider* aCollider, Graph& aGraph, bool aAdd)
             const GraphCell cell(i, j);
 
             if (aAdd) {
-                aGraph.Obstacles.emplace(cell);
+                aGraph.AddObstacle(cell);
             } else {
-                aGraph.Obstacles.erase(cell);
+                aGraph.RemoveObstacle(cell);
             }
         }
     }
-    spdlog::debug("obstacles are now: {}", fmt::join(aGraph.Obstacles, ", "));
 }

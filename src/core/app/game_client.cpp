@@ -187,15 +187,16 @@ void GameClient::prepareGridPreview()
 {
     const auto& graph = mRegistry.ctx().get<Graph>();
 
-    GraphCell::size_type numVertsX = graph.Width + 1;
-    GraphCell::size_type numVertsY = graph.Height + 1;
+    GraphCell::size_type numVertsX = graph.Width() + 1;
+    GraphCell::size_type numVertsY = graph.Height() + 1;
 
     std::vector<PositionVertex> vertices;
     std::vector<uint16_t>       indices;
 
     for (GraphCell::size_type i = 0; i < numVertsY; ++i) {
         for (GraphCell::size_type j = 0; j < numVertsX; ++j) {
-            vertices.emplace_back(GridToWorld(j, i));
+            GraphCell cell(j, i);
+            vertices.emplace_back(cell.ToWorld());
             if (i != 0) {
                 indices.push_back(i * numVertsX + j);
                 indices.push_back((i - 1) * numVertsX + j);
@@ -209,8 +210,8 @@ void GameClient::prepareGridPreview()
 
     auto [texture, loaded] = mRegistry.ctx().get<TextureCache>().load(
         "grid_tex"_hs,
-        graph.Width,
-        graph.Height,
+        graph.Width(),
+        graph.Height(),
         false,
         1,
         bgfx::TextureFormat::R8,
@@ -220,7 +221,7 @@ void GameClient::prepareGridPreview()
     const entt::resource<Shader>& shader = mRegistry.ctx().get<ShaderCache>()["grid"_hs];
     auto*                         mat    = new GridPreviewMaterial(
         shader,
-        glm::vec4(graph.Width, graph.Height, GraphCell::kCellsPerAxis, 0),
+        glm::vec4(graph.Width(), graph.Height(), GraphCell::kCellsPerAxis, 0),
         texture->second);
     auto* primitive = new Primitive<PositionVertex>(vertices, indices, mat);
 
@@ -233,9 +234,9 @@ void GameClient::prepareGridPreview()
         0,
         0,
         0,
-        graph.Width,
-        graph.Height,
-        bgfx::copy(graph.GridLayout().data(), graph.Width * graph.Height));
+        graph.Width(),
+        graph.Height(),
+        bgfx::copy(graph.GridLayout().data(), graph.Width() * graph.Height()));
 }
 
 void GameClient::consumeNetworkResponses()

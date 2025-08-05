@@ -8,6 +8,7 @@
 #include "components/health.hpp"
 #include "components/imgui.hpp"
 #include "components/rigid_body.hpp"
+#include "components/spawner.hpp"
 #include "core/graph.hpp"
 #include "resource/cache.hpp"
 
@@ -22,9 +23,10 @@ void TowerBuiltSystem::operator()(Registry& aRegistry, const float aDeltaTime)
         throw std::runtime_error("tower_built_observer storage not initiated");
     }
 
-    if (storage->size() > 0) {
-        spdlog::debug("got {} towers built", storage->size());
+    if (storage->size() == 0) {
+        return;
     }
+    spdlog::debug("got {} towers built", storage->size());
 
     for (auto tower : *storage) {
         auto& rb = aRegistry.get<RigidBody>(tower);
@@ -42,8 +44,15 @@ void TowerBuiltSystem::operator()(Registry& aRegistry, const float aDeltaTime)
         spdlog::debug("{}", aRegistry.ctx().get<Graph>());
     }
 
+    // FIXME: need to think about player ownership and how to handle only updating the correct
+    // player's grid
+    for (auto&& [base, transform] : aRegistry.view<Base, Transform3D>().each()) {
+        graph.ComputePaths(GraphCell::FromWorldPoint(transform.Position));
+        break;
+    }
+
     BX_ASSERT(
-        graph.GridLayout().size() == graph.Width * graph.Height,
+        graph.GridLayout().size() == graph.Width() * graph.Height(),
         "incorrect graph data length");
     entt::resource<bgfx::TextureHandle> handle = aRegistry.ctx().get<TextureCache>()["grid_tex"_hs];
     bgfx::updateTexture2D(
@@ -52,7 +61,7 @@ void TowerBuiltSystem::operator()(Registry& aRegistry, const float aDeltaTime)
         0,
         0,
         0,
-        graph.Width,
-        graph.Height,
-        bgfx::copy(graph.GridLayout().data(), graph.Width * graph.Height));
+        graph.Width(),
+        graph.Height(),
+        bgfx::copy(graph.GridLayout().data(), graph.Width() * graph.Height()));
 }

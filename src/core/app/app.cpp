@@ -93,7 +93,7 @@ void Application::SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeigh
     auto&        physics = aRegistry.ctx().get<Physics>();
     entt::entity first   = entt::null;
 
-    aRegistry.ctx().emplace<Graph>(
+    auto& graph = aRegistry.ctx().emplace<Graph>(
         aWidth * GraphCell::kCellsPerAxis,
         aHeight * GraphCell::kCellsPerAxis);
     // Create tiles
@@ -114,9 +114,11 @@ void Application::SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeigh
     aRegistry.emplace<Transform3D>(spawner, glm::vec3(0.0f));
     aRegistry.emplace<Spawner>(spawner);
 
-    auto base = aRegistry.create();
-    aRegistry.emplace<Transform3D>(base, glm::vec3(10.0f, 0.0f, 10.0f));
+    auto  base          = aRegistry.create();
+    auto& baseTransform = aRegistry.emplace<Transform3D>(base, glm::vec3(10.0f, 0.0f, 10.0f));
     aRegistry.emplace<Base>(base);
+
+    graph.ComputePaths(GraphCell::FromWorldPoint(baseTransform.Position));
 
     // Create physics heightfield
     std::vector<float>         heightValues((aWidth + 1) * (aHeight + 1), 0.0f);
