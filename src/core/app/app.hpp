@@ -9,6 +9,7 @@
 #include "core/options.hpp"
 #include "core/types.hpp"
 #include "registry/registry.hpp"
+#include "systems/ai.hpp"
 #include "systems/creep.hpp"
 #include "systems/physics.hpp"
 #include "systems/system.hpp"
@@ -41,7 +42,7 @@ class Application
 
     PhysicsSystem         mPhysicsSystem;
     UpdateTransformsSytem mUpdateTransformsSystem;
-    CreepSystem           mCreepSystem;
+    AiSystem              mAiSystem;
 
     SystemRegistry mSystems;
     SystemRegistry mSystemsFT;

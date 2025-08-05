@@ -277,6 +277,7 @@ target_sources(watolib
     src/components/animator.hpp
     src/components/camera.hpp
     src/components/color.hpp
+    src/components/creep.hpp
     src/components/direction.hpp
     src/components/health.hpp
     src/components/imgui.hpp
@@ -285,6 +286,7 @@ target_sources(watolib
     src/components/scene_object.hpp
     src/components/tile.hpp
     src/components/transform3d.hpp
+    src/components/velocity.hpp
     src/core/app/app.hpp
     src/core/event_handler.hpp
     src/core/graph.hpp
@@ -295,6 +297,7 @@ target_sources(watolib
     src/core/sys/log.hpp
     src/core/tower_building_handler.hpp
     src/registry/registry.hpp
+    src/systems/ai.hpp
     src/systems/physics.hpp
     src/systems/system.hpp
 
@@ -306,6 +309,7 @@ target_sources(watolib
     src/core/snapshot.cpp
     src/core/sys/backtrace.cpp
     src/core/tower_building_handler.cpp
+    src/systems/ai.cpp
     src/systems/physics.cpp
 )
 

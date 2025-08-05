@@ -16,7 +16,7 @@ void GameServer::Init()
     Application::Init();
     mServer.Init();
     mSystemsFT.push_back(PhysicsSystem::MakeDelegate(mPhysicsSystem));
-    mSystemsFT.push_back(CreepSystem::MakeDelegate(mCreepSystem));
+    mSystemsFT.push_back(AiSystem::MakeDelegate(mAiSystem));
     mSystemsFT.push_back(ServerActionSystem::MakeDelegate(mActionSystem));
 }
 

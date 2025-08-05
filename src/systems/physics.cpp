@@ -19,7 +19,7 @@ void PhysicsSystem::operator()(Registry& aRegistry, const float aDeltaTime)
     phy.World()->update(aDeltaTime);
 }
 
-void UpdateTransformsSytem ::operator()(Registry& aRegistry, const float aFactor)
+void UpdateTransformsSytem::operator()(Registry& aRegistry, const float aFactor)
 {
     // update transforms
     for (auto&& [entity, t, rb] :

@@ -13,6 +13,7 @@
 #include "components/scene_object.hpp"
 #include "components/spawner.hpp"
 #include "components/transform3d.hpp"
+#include "components/velocity.hpp"
 #include "core/graph.hpp"
 #include "core/physics.hpp"
 #include "core/tower_building_handler.hpp"
@@ -67,6 +68,7 @@ void DefaultContextHandler::operator()(Registry& aRegistry, const SendCreepPaylo
             glm::vec3(0.5f));
 
         aRegistry.emplace<Health>(creep, 100.0f);
+        aRegistry.emplace<Velocity>(creep, 0.01f);
         aRegistry.emplace<Creep>(creep, aPayload.Type);
         aRegistry.emplace<SceneObject>(creep, "phoenix"_hs);
         aRegistry.emplace<Animator>(creep, 0.0f, "Take 001");
@@ -75,7 +77,7 @@ void DefaultContextHandler::operator()(Registry& aRegistry, const SendCreepPaylo
             creep,
             aRegistry,
             RigidBodyParams{
-                .Type           = rp3d::BodyType::DYNAMIC,
+                .Type           = rp3d::BodyType::KINEMATIC,
                 .Transform      = creepTransform.ToRP3D(),
                 .GravityEnabled = false});
         rp3d::Collider* collider = phy.AddCapsuleCollider(body, 0.1f, 0.05f);

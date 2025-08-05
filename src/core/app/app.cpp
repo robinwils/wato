@@ -5,6 +5,7 @@
 #include <spdlog/spdlog.h>
 
 #include "components/game.hpp"
+#include "components/player.hpp"
 #include "components/scene_object.hpp"
 #include "components/spawner.hpp"
 #include "components/tile.hpp"
