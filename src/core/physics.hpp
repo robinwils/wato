@@ -93,7 +93,7 @@ class Physics
             aArchive.template Write<rp3d::BodyType>(&type, 1);
             aArchive.template Write<float>(&position.x, 3);
             aArchive.template Write<float>(&orientation.x, 4);
-            aArchive.template Write<float>(&gravity, 1);
+            aArchive.template Write<bool>(&gravity, 1);
             aArchive.template Write<entt::entity>(&data->Entity, 1);
         }
     }
@@ -121,7 +121,7 @@ class Physics
             aArchive.template Read<rp3d::BodyType>(&type, 1);
             aArchive.template Read<float>(&position.x, 3);
             aArchive.template Read<float>(&orientation.x, 4);
-            aArchive.template Read<float>(&gravity, 1);
+            aArchive.template Read<bool>(&gravity, 1);
             aArchive.template Read<entt::entity>(&entity, 1);
 
             phy.CreateRigidBody(

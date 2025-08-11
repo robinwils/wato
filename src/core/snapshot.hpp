@@ -141,5 +141,5 @@ TEST_CASE("snapshot.simple")
     CHECK(dest.valid(e3));
     CHECK_EQ(dest.get<Transform3D>(e1).Position, glm::vec3(0.0f, 2.0f, 1.5f));
     CHECK_EQ(dest.get<Health>(e2).Health, 300.0f);
-    CHECK_EQ(dest.get<RigidBody>(e3).RigidBody->getTransform(), rp3d::Transform::identity());
+    CHECK_EQ(dest.get<RigidBody>(e3).Body->getTransform(), rp3d::Transform::identity());
 }
