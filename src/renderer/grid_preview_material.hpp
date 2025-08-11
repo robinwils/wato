@@ -24,7 +24,7 @@ class GridPreviewMaterial : public Material
 
     virtual ~GridPreviewMaterial() {}
 
-    void Submit() const
+    void Submit() const override
     {
         BX_ASSERT(bgfx::isValid(mShader->Program()), "grid preview shader handle is invalid");
         BX_ASSERT(

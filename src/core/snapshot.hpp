@@ -126,7 +126,8 @@ TEST_CASE("snapshot.simple")
         RigidBodyParams{
             .Type           = rp3d::BodyType::STATIC,
             .Transform      = rp3d::Transform::identity(),
-            .GravityEnabled = false});
+            .GravityEnabled = false,
+        });
 
     std::vector<uint8_t> storage;
     ByteOutputArchive    outAr(storage);

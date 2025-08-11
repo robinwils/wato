@@ -152,7 +152,7 @@ void ToggleObstacle(const rp3d::Collider* aCollider, Graph& aGraph, bool aAdd);
 struct WorldRaycastCallback : public rp3d::RaycastCallback {
     virtual rp3d::decimal notifyRaycastHit(const rp3d::RaycastInfo& aInfo) override
     {
-        if (aInfo.hitFraction == 0.0f) return rp3d::decimal(-1.0f);
+        if (aInfo.hitFraction == 0.0f) return -1.0f;
         Hits.push_back(glm::vec3(aInfo.worldPoint.x, aInfo.worldPoint.y, aInfo.worldPoint.z));
 
         // Return a fraction of 1.0 to gather all hits

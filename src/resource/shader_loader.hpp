@@ -40,6 +40,7 @@
 #else
 // BX marks linux as a supported platform for Direct3D shaders but shaderc CMake wrapper does not
 // generate shader headers for Direct3D on Linux so we need to override the following macro
+#undef BGFX_EMBEDDED_SHADER_DXBC
 #define BGFX_EMBEDDED_SHADER_DXBC(...)
 #endif  //  defined(_WIN32)
 #if __APPLE__
