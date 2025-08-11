@@ -12,12 +12,12 @@
 void signalHandler(int aSignum)
 {
     void*  array[50];
-    size_t size    = backtrace(array, 50);
+    int    size    = backtrace(array, 50);
     char** symbols = backtrace_symbols(array, size);
 
     fprintf(stderr, "Error: signal %d:\n", aSignum);
 
-    for (size_t i = 0; i < size; ++i) {
+    for (int i = 0; i < size; ++i) {
         char* mangled   = symbols[i];
         char* demangled = nullptr;
         int   status    = 0;
