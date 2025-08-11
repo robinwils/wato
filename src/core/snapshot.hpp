@@ -16,6 +16,7 @@
 #include "components/rigid_body.hpp"
 #include "components/transform3d.hpp"
 #include "core/physics.hpp"
+#include "core/types.hpp"
 
 class ByteInputArchive
 {
@@ -47,18 +48,14 @@ class ByteInputArchive
     template <typename T, std::output_iterator<T> Out>
     void Read(Out aDestination, std::size_t aN)
     {
-        if (mIdx + aN * sizeof(T) > mStorage.size()) {
-            throw std::out_of_range(fmt::format(
-                " mIdx = {:d}, asked = {:d}, size = {:d}",
-                mIdx,
-                aN * sizeof(T),
-                mStorage.size()));
-        }
+        SafeU32 idx = SafeU32(mIdx) + aN * sizeof(T);
+
+        idx = idx < mStorage.size() ? idx : SafeU32(-1);
 
         // spdlog::info("reading {:d} elts with type size {:d}", aN, sizeof(T));
         // bx::memCopy(aDestination, &mStorage[mIdx], aN * sizeof(T));
         std::copy_n(reinterpret_cast<const T*>(&mStorage[mIdx]), aN, aDestination);
-        mIdx += aN * sizeof(T);
+        mIdx = idx;
     }
 
    private:

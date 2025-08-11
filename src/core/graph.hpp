@@ -6,9 +6,12 @@
 
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
-#include <string>
+#include <optional>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
+
+#include "core/types.hpp"
 
 struct GraphCell {
     using size_type         = uint16_t;
@@ -17,7 +20,7 @@ struct GraphCell {
 
     GraphCell(const size_type aX, const size_type aY) : Location(aX, aY) {}
 
-    constexpr static float kCellsPerAxis = 3.0f;
+    constexpr static size_type kCellsPerAxis = 3;
 
     static GraphCell FromWorldPoint(float aX, float aZ)
     {
@@ -31,9 +34,9 @@ struct GraphCell {
     constexpr glm::vec3 ToWorld() const
     {
         return glm::vec3(
-            Location.x / GraphCell::kCellsPerAxis,
+            Location.x / static_cast<float>(GraphCell::kCellsPerAxis),
             0.001f,
-            Location.y / GraphCell::kCellsPerAxis);
+            Location.y / static_cast<float>(GraphCell::kCellsPerAxis));
     }
 
     bool operator==(const GraphCell&) const = default;
@@ -66,12 +69,12 @@ class Graph
 
     constexpr bool IsInside(GraphCell::size_type aX, GraphCell::size_type aY)
     {
-        return aX >= 0 && aY >= 0 && aX < mWidth && aY < mHeight;
+        return aX < mWidth && aY < mHeight;
     }
 
     constexpr size_type Index(const GraphCell& aCell) const
     {
-        return aCell.Location.y * mWidth + aCell.Location.x;
+        return SafeU16(aCell.Location.y) * mWidth + aCell.Location.x;
     }
 
     grid_preview_type GridLayout() const;
@@ -83,7 +86,7 @@ class Graph
      */
     void ComputePaths(const GraphCell& aDest);
 
-    constexpr std::optional<GraphCell> GetNextCell(const GraphCell& aFrom)
+    std::optional<GraphCell> GetNextCell(const GraphCell& aFrom)
     {
         return mPaths.contains(aFrom) ? std::make_optional(mPaths.at(aFrom)) : std::nullopt;
     }

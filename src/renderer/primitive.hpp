@@ -49,8 +49,8 @@ class Primitive
 
     virtual void InitializePrimitive()
     {
-        assert(!mVertices.empty());
-        assert(!mIndices.empty());
+        BX_ASSERT(!mVertices.empty(), "primitive has no vertices");
+        BX_ASSERT(!mIndices.empty(), "primitive has no indices");
 
         if (mIsInitialized) {
             return;
@@ -61,11 +61,12 @@ class Primitive
         DBG("initializing primitive with {} vertices and {} vertex layout data size",
             mVertices.size(),
             sizeof(layout_type));
+
         mVertexBufferHandle = bgfx::createVertexBuffer(
-            bgfx::makeRef(mVertices.data(), sizeof(layout_type) * mVertices.size()),
+            bgfx::makeRef(mVertices.data(), SafeU32(sizeof(layout_type)) * mVertices.size()),
             vertexLayout);
         mIndexBufferHandle = bgfx::createIndexBuffer(
-            bgfx::makeRef(mIndices.data(), sizeof(indice_type) * mIndices.size()));
+            bgfx::makeRef(mIndices.data(), SafeU32(sizeof(indice_type)) * mIndices.size()));
 
         mIsInitialized = true;
     }

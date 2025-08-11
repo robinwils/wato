@@ -1,6 +1,5 @@
 #include "core/graph.hpp"
 
-#include <optional>
 #include <queue>
 
 Graph::grid_preview_type Graph::GridLayout() const

@@ -139,6 +139,8 @@ foreach(dep ${FETCHED_DEPS_NAMES} ${OTHER_DEPS})
   endif()
 endforeach()
 
+find_path(SAFEINT_INCLUDE_DIRS "SafeInt.hpp" REQUIRED)
+
 include(CTest)
 
 add_library(wato_common INTERFACE)
@@ -198,6 +200,7 @@ wato_set_project_warnings(wato_common
 
 target_compile_features(wato_common INTERFACE cxx_std_${CMAKE_CXX_STANDARD})
 
+target_include_directories(wato_common INTERFACE ${SAFEINT_INCLUDE_DIRS})
 target_include_directories(wato
   PRIVATE
     src

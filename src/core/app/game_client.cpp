@@ -10,6 +10,7 @@
 #include "components/tower.hpp"
 #include "core/net/enet_client.hpp"
 #include "core/net/net.hpp"
+#include "core/types.hpp"
 #include "core/window.hpp"
 #include "registry/game_registry.hpp"
 #include "registry/registry.hpp"
@@ -199,12 +200,12 @@ void GameClient::prepareGridPreview()
             GraphCell cell(j, i);
             vertices.emplace_back(cell.ToWorld());
             if (i != 0) {
-                indices.push_back(i * numVertsX + j);
-                indices.push_back((i - 1) * numVertsX + j);
+                indices.push_back(SafeU16(i) * numVertsX + j);
+                indices.push_back((SafeU16(i) - 1) * numVertsX + j);
             }
             if (j != 0) {
-                indices.push_back(i * numVertsX + j);
-                indices.push_back(i * numVertsX + j - 1);
+                indices.push_back(SafeU16(i) * numVertsX + j);
+                indices.push_back(SafeU16(i) * numVertsX + j - 1);
             }
         }
     }
