@@ -3,12 +3,12 @@ add_executable(wato_tests)
 if(DEFINED doctest_SOURCE_DIR)
   target_include_directories(wato_tests
     SYSTEM PUBLIC
-    ${doctest_SOURCE_DIR}
+    ${doctest_SOURCE_DIR}/doctest
+    ${entt_SOURCE_DIR}/src
   )
 
   include("${doctest_SOURCE_DIR}/scripts/cmake/doctest.cmake")
   doctest_discover_tests(wato_tests TEST_PREFIX "wato.")
-  target_link_libraries(wato_tests doctest)
 endif()
 
 target_sources(wato_tests
@@ -16,13 +16,21 @@ target_sources(wato_tests
   BASE_DIRS
     ${CMAKE_SOURCE_DIR}/src
   FILES
+    ${CMAKE_SOURCE_DIR}/src/core/physics.hpp
+    ${CMAKE_SOURCE_DIR}/src/core/snapshot.hpp
+    ${CMAKE_SOURCE_DIR}/src/core/queue/ring_buffer.hpp
   PRIVATE
+    ${CMAKE_SOURCE_DIR}/src/core/physics.cpp
     ${CMAKE_SOURCE_DIR}/src/core/snapshot.cpp
-    ${CMAKE_SOURCE_DIR}/src/input/action.cpp
     main.cpp
 )
 
 target_link_libraries(wato_tests
-  watolib
+  PUBLIC
+    wato_common
+    bgfx::bx
+    spdlog::spdlog
+    ReactPhysics3D::ReactPhysics3D
+    doctest
 )
 
