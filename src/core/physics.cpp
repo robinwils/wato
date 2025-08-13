@@ -99,7 +99,7 @@ void ToggleObstacle(const rp3d::Collider* aCollider, Graph& aGraph, bool aAdd)
     const rp3d::AABB& box = aCollider->getWorldAABB();
     const GraphCell&  min = GraphCell::FromWorldPoint(box.getMin().x, box.getMin().z);
     const GraphCell&  max = GraphCell::FromWorldPoint(box.getMax().x, box.getMax().z);
-    spdlog::debug(
+    spdlog::trace(
         "toggling obstacle from min {}|{} to max {}|{}",
         box.getMin(),
         min,

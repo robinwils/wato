@@ -26,7 +26,7 @@ void TowerBuiltSystem::operator()(Registry& aRegistry, const float aDeltaTime)
     if (storage->size() == 0) {
         return;
     }
-    spdlog::debug("got {} towers built", storage->size());
+    spdlog::trace("got {} towers built", storage->size());
 
     for (auto tower : *storage) {
         auto& rb = aRegistry.get<RigidBody>(tower);
@@ -41,13 +41,14 @@ void TowerBuiltSystem::operator()(Registry& aRegistry, const float aDeltaTime)
         aRegistry.remove<ImguiDrawable>(tower);
 
         ToggleObstacle(rb.Body->getCollider(0), aRegistry.ctx().get<Graph>(), true);
-        spdlog::debug("{}", aRegistry.ctx().get<Graph>());
+        spdlog::trace("{}", aRegistry.ctx().get<Graph>());
     }
 
     // FIXME: need to think about player ownership and how to handle only updating the correct
     // player's grid
     for (auto&& [base, transform] : aRegistry.view<Base, Transform3D>().each()) {
         graph.ComputePaths(GraphCell::FromWorldPoint(transform.Position));
+        spdlog::trace("paths updated");
         break;
     }
 
