@@ -62,6 +62,7 @@ class Graph
     using paths_type        = std::unordered_map<GraphCell, GraphCell>;
 
    public:
+    enum class Direction { Left, Right, Up, Down, UpRight, UpLeft, DownRight, DownLeft };
     Graph(const size_type aW, const size_type aH) : mWidth(aW), mHeight(aH) {}
 
     constexpr size_type Width() const { return mWidth; }
@@ -75,6 +76,24 @@ class Graph
     constexpr size_type Index(const GraphCell& aCell) const
     {
         return SafeU16(aCell.Location.y) * mWidth + aCell.Location.x;
+    }
+
+    constexpr std::optional<Graph::Direction> Direction(
+        const GraphCell& aFrom,
+        const GraphCell& aTo)
+    {
+        const int dx = int(aTo.Location.x) - int(aFrom.Location.x);
+        const int dy = int(aTo.Location.y) - int(aFrom.Location.y);
+
+        if (dx == -1 && dy == 0) return Direction::Left;
+        if (dx == 1 && dy == 0) return Direction::Right;
+        if (dx == 0 && dy == -1) return Direction::Up;
+        if (dx == 0 && dy == 1) return Direction::Down;
+        if (dx == 1 && dy == -1) return Direction::UpRight;
+        if (dx == -1 && dy == -1) return Direction::UpLeft;
+        if (dx == 1 && dy == 1) return Direction::DownRight;
+        if (dx == -1 && dy == 1) return Direction::DownLeft;
+        return std::nullopt;
     }
 
     grid_preview_type GridLayout() const;
@@ -106,6 +125,33 @@ class Graph
 };
 
 template <>
+struct fmt::formatter<enum Graph::Direction> : fmt::formatter<std::string> {
+    auto format(enum Graph::Direction aObj, format_context& aCtx) const -> decltype(aCtx.out())
+    {
+        switch (aObj) {
+            case Graph::Direction::Left:
+                return fmt::format_to(aCtx.out(), "\u2190");
+            case Graph::Direction::Right:
+                return fmt::format_to(aCtx.out(), "\u2192");
+            case Graph::Direction::Up:
+                return fmt::format_to(aCtx.out(), "\u2191");
+            case Graph::Direction::Down:
+                return fmt::format_to(aCtx.out(), "\u2193");
+            case Graph::Direction::UpRight:
+                return fmt::format_to(aCtx.out(), "\u2197");
+            case Graph::Direction::UpLeft:
+                return fmt::format_to(aCtx.out(), "\u2196");
+            case Graph::Direction::DownRight:
+                return fmt::format_to(aCtx.out(), "\u2198");
+            case Graph::Direction::DownLeft:
+                return fmt::format_to(aCtx.out(), "\u2199");
+            default:
+                return fmt::format_to(aCtx.out(), "?");
+        }
+    }
+};
+
+template <>
 struct fmt::formatter<GraphCell> : fmt::formatter<std::string> {
     auto format(GraphCell aObj, format_context& aCtx) const -> decltype(aCtx.out())
     {
@@ -120,7 +166,20 @@ struct fmt::formatter<Graph> : fmt::formatter<std::string> {
         auto o = fmt::format_to(aCtx.out(), "{}x{} grid:\n", aObj.mWidth, aObj.mHeight);
         for (GraphCell::size_type i = 0; i < aObj.mHeight; ++i) {
             for (GraphCell::size_type j = 0; j < aObj.mWidth; ++j) {
-                o = fmt::format_to(o, "{}", aObj.mObstacles.contains(GraphCell(j, i)) ? 1 : 0);
+                GraphCell c(j, i);
+                if (aObj.mObstacles.contains(c)) {
+                    o = fmt::format_to(o, "{}", 1);
+                } else if (aObj.mPaths.contains(c)) {
+                    const GraphCell& to  = aObj.mPaths.at(c);
+                    const auto&      dir = aObj.Direction(c, to);
+                    if (dir) {
+                        o = fmt::format_to(o, "{}", *dir);
+                    } else {
+                        o = fmt::format_to(o, "?");
+                    }
+                } else {
+                    o = fmt::format_to(o, "{}", 0);
+                }
             }
             o = fmt::format_to(o, "\n");
         }
