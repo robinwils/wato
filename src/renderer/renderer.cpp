@@ -45,7 +45,7 @@ void Renderer::Init(WatoWindow& aWin)
 
 #if WATO_DEBUG
     // Enable stats or debug text.
-    bgfx::setDebug(BGFX_DEBUG_TEXT | BGFX_DEBUG_STATS | BGFX_DEBUG_PROFILER);
+    bgfx::setDebug(BGFX_DEBUG_TEXT);
 #endif
 
     // Set view 0 clear state.
@@ -85,7 +85,6 @@ void Renderer::Resize(WatoWindow& aWin)
 void Renderer::Clear()
 {
     bgfx::touch(kClearView);
-    // Use debug font to print information about this example.
     bgfx::dbgTextClear();
 }
 

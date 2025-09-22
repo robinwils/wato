@@ -27,7 +27,7 @@ void AiSystem::operator()(Registry& aRegistry, const float aDeltaTime)
             t.Position += dir;
             // rb.Body->applyWorldForceAtCenterOfMass(ToRP3D(dir * v.Velocity));
             rb.Body->setTransform(t.ToRP3D());
-            spdlog::debug(
+            spdlog::trace(
                 "next: {}({}), velocity: {}, force: {} mix: {}",
                 *next,
                 glm::to_string(next->ToWorld()),

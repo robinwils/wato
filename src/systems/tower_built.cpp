@@ -37,11 +37,12 @@ void TowerBuiltSystem::operator()(Registry& aRegistry, const float aDeltaTime)
             Category::Terrain | Category::PlacementGhostTower);
         rb.Body->setType(rp3d::BodyType::STATIC);
 
+        // FIXME: this sometimes does some weird entt crash saying slot is not available
         aRegistry.emplace<Health>(tower, 100.0F);
         aRegistry.remove<ImguiDrawable>(tower);
 
         ToggleObstacle(rb.Body->getCollider(0), aRegistry.ctx().get<Graph>(), true);
-        spdlog::trace("{}", aRegistry.ctx().get<Graph>());
+        spdlog::debug("{}", aRegistry.ctx().get<Graph>());
     }
 
     // FIXME: need to think about player ownership and how to handle only updating the correct

@@ -89,8 +89,6 @@ void AnimationSystem::animateBone(
     }
     glm::mat4 global = aParentTransform * nodeTransform;
 
-    spdlog::trace("got global mat {}", glm::to_string(global));
-
     if (bone.Offset) {
         aAnimCtx.Animator->FinalBonesMatrices[aBoneIdx] =
             aAnimCtx.GlobalInverse * global * bone.Offset.value();
