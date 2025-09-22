@@ -17,10 +17,12 @@ Graph::obstacles_type Graph::Neighbours(const GraphCell& aCell)
 {
     Graph::obstacles_type neighbours;
 
-    for (GraphCell::size_type i = aCell.Location.x - 1; i <= aCell.Location.x + 1; ++i) {
-        for (GraphCell::size_type j = aCell.Location.y - 1; j <= aCell.Location.y + 1; ++j) {
-            if (IsInside(i, j) && i != aCell.Location.x && j != aCell.Location.y) {
-                neighbours.emplace_back(i, j);
+    for (GraphCell::size_type x = aCell.Location.x - 1; x <= aCell.Location.x + 1; ++x) {
+        for (GraphCell::size_type y = aCell.Location.y - 1; y <= aCell.Location.y + 1; ++y) {
+            GraphCell c(x, y);
+            if (IsInside(c) && (x != aCell.Location.x || y != aCell.Location.y)
+                && !mObstacles.contains(c)) {
+                neighbours.emplace_back(c);
             }
         }
     }

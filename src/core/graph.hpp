@@ -73,6 +73,11 @@ class Graph
         return aX < mWidth && aY < mHeight;
     }
 
+    constexpr bool IsInside(const GraphCell& aCell)
+    {
+        return IsInside(aCell.Location.x, aCell.Location.y);
+    }
+
     constexpr size_type Index(const GraphCell& aCell) const
     {
         return SafeU16(aCell.Location.y) * mWidth + aCell.Location.x;
