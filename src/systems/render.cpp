@@ -88,7 +88,7 @@ void RenderImguiSystem::operator()(Registry& aRegistry, const float aDeltaTime)
 
     for (auto&& [entity, imgui] : aRegistry.view<ImguiDrawable>().each()) {
         auto [camera, transform] = aRegistry.try_get<Camera, Transform3D>(entity);
-        ImGui::Text("%s Settings", imgui.name.c_str());
+        ImGui::Text("%s Settings", imgui.Name.c_str());
         if (camera && transform) {
             window.GetInput().DrawImgui(*camera, transform->Position, window);
             ImGui::DragFloat3("Position", glm::value_ptr(transform->Position), 0.1f, 5.0f);
@@ -145,6 +145,43 @@ void RenderImguiSystem::operator()(Registry& aRegistry, const float aDeltaTime)
     debugRenderer.setIsDebugItemDisplayed(
         rp3d::DebugRenderer::DebugItem::CONTACT_NORMAL,
         phy.Params.RenderContactNormals);
+#endif
+
+    ImGui::End();
+
+#if WATO_DEBUG
+    Camera      cam;
+    Transform3D camT;
+
+    for (auto&& [entity, camera, t] : aRegistry.view<Camera, Transform3D>().each()) {
+        cam  = camera;
+        camT = t;
+        break;
+    }
+
+    auto& graph = aRegistry.ctx().get<Graph>();
+    for (auto&& [entity, imgui, t] : aRegistry.view<ImguiDrawable, Transform3D>().each()) {
+        if (imgui.PosOnUnit) {
+            GraphCell c      = GraphCell::FromWorldPoint(t.Position);
+            glm::vec3 screen = window.ProjectPosition(t.Position, cam, camT.Position);
+            text(
+                screen.x,
+                window.Height<float>() - screen.y,
+                fmt::format("graph_pos_{}", entt::id_type(entity)),
+                fmt::format("{} {}", c.Location.x, c.Location.y));
+
+            if (auto next = graph.GetNextCell(GraphCell::FromWorldPoint(t.Position))) {
+                screen = window.ProjectPosition(next->ToWorld(), cam, camT.Position);
+
+                text(
+                    screen.x,
+                    window.Height<float>() - screen.y - 20.0f,
+                    fmt::format("next_graph_pos_{}", entt::id_type(entity)),
+                    fmt::format("{} {}", next->Location.x, next->Location.y),
+                    imguiRGBA(255, 0, 0));
+            }
+        }
+    }
 #endif
 
     imguiEndFrame();

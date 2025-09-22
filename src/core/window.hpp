@@ -55,6 +55,9 @@ class WatoWindow
     [[nodiscard]] constexpr bool IsInitialized() const noexcept { return mIsInit; }
     [[nodiscard]] constexpr bool UseWayland() const noexcept { return mWayland; }
 
+    [[nodiscard]] glm::vec3
+    ProjectPosition(const glm::vec3& aPos, const Camera& aCam, const glm::vec3& aCamPos);
+
     [[nodiscard]] std::pair<glm::vec3, glm::vec3> MouseUnproject(
         const Camera&    aCam,
         const glm::vec3& aCamPos) const;

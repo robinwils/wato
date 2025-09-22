@@ -71,6 +71,7 @@ void DefaultContextHandler::operator()(Registry& aRegistry, const SendCreepPaylo
         aRegistry.emplace<Velocity>(creep, 0.01f);
         aRegistry.emplace<Creep>(creep, aPayload.Type);
         aRegistry.emplace<SceneObject>(creep, "phoenix"_hs);
+        aRegistry.emplace<ImguiDrawable>(creep, "phoenix", true);
         aRegistry.emplace<Animator>(creep, 0.0f, "Take 001");
 
         auto* body = phy.CreateRigidBody(

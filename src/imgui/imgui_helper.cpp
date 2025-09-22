@@ -333,7 +333,6 @@ struct OcornutImguiContext {
 
     void EndFrame()
     {
-        ImGui::End();
         ImGui::Render();
         Render(ImGui::GetDrawData());
     }
