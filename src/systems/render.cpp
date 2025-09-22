@@ -51,7 +51,7 @@ void RenderSystem::operator()(Registry& aRegistry, const float aDeltaTime)
 
     for (auto&& [entity, obj, t] : aRegistry.view<SceneObject, Transform3D>().each()) {
         if (check.contains(entity)) {
-            // DBG("GOT Placement mode entity!")
+            renderGrid(aRegistry);
         }
 
         if (auto model = aRegistry.ctx().get<ModelCache>()[obj.ModelHash]; model) {
@@ -68,11 +68,6 @@ void RenderSystem::operator()(Registry& aRegistry, const float aDeltaTime)
             }
             model->Submit(t.ModelMat(), state);
         }
-    }
-
-    if (aRegistry.ctx().get<ActionContextStack>().front().State
-        == ActionContext::State::Placement) {
-        renderGrid(aRegistry);
     }
 }
 
