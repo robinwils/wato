@@ -6,7 +6,8 @@
     "libsodium",
     "spdlog",
     "reactphysics3d",
-    "safeint"
+    "safeint",
+    "lodepng"
   ],
   "features": {
     "client": {
