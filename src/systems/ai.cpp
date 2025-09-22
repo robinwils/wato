@@ -24,7 +24,7 @@ void AiSystem::operator()(Registry& aRegistry, const float aDeltaTime)
         if (auto next = graph.GetNextCell(GraphCell::FromWorldPoint(t.Position))) {
             auto dir = glm::normalize(next->ToWorld() - t.Position);
 
-            t.Position += dir;
+            t.Position += v.Velocity * dir;
             // rb.Body->applyWorldForceAtCenterOfMass(ToRP3D(dir * v.Velocity));
             rb.Body->setTransform(t.ToRP3D());
             spdlog::trace(
