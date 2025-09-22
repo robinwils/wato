@@ -120,6 +120,7 @@ void Application::SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeigh
     aRegistry.emplace<Base>(base);
 
     graph.ComputePaths(GraphCell::FromWorldPoint(baseTransform.Position));
+    spdlog::debug("{}", graph);
 
     // Create physics heightfield
     std::vector<float>         heightValues((aWidth + 1) * (aHeight + 1), 0.0f);

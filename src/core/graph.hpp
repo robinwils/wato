@@ -168,12 +168,19 @@ template <>
 struct fmt::formatter<Graph> : fmt::formatter<std::string> {
     auto format(Graph aObj, format_context& aCtx) const -> decltype(aCtx.out())
     {
-        auto o = fmt::format_to(aCtx.out(), "{}x{} grid:\n", aObj.mWidth, aObj.mHeight);
-        for (GraphCell::size_type i = 0; i < aObj.mHeight; ++i) {
-            for (GraphCell::size_type j = 0; j < aObj.mWidth; ++j) {
-                GraphCell c(j, i);
+        auto o = fmt::format_to(
+            aCtx.out(),
+            "{}x{} grid, {} paths:\n",
+            aObj.mWidth,
+            aObj.mHeight,
+            aObj.mPaths.size());
+        for (GraphCell::size_type y = 0; y < aObj.mHeight; ++y) {
+            for (GraphCell::size_type x = 0; x < aObj.mWidth; ++x) {
+                GraphCell c(x, y);
                 if (aObj.mObstacles.contains(c)) {
                     o = fmt::format_to(o, "{}", 1);
+                } else if (aObj.mDest == c) {
+                    o = fmt::format_to(o, "*");
                 } else if (aObj.mPaths.contains(c)) {
                     const GraphCell& to  = aObj.mPaths.at(c);
                     const auto&      dir = aObj.Direction(c, to);
