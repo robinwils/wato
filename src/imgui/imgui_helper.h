@@ -43,6 +43,13 @@ void imguiBeginFrame(const Input& aInput,
 
 void imguiEndFrame();
 
+void text(
+    float              aX,
+    float              aY,
+    const std::string& aName,
+    const std::string& aText,
+    uint32_t           aColor = 0xffffffff);
+
 void showImguiDialogs(float aWidth, float aHeight);
 void showStatsDialog(const char* aErrorText = NULL);
 void showSettingsDialog(float aWidth, float aHeight);

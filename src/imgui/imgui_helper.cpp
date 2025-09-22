@@ -489,6 +489,21 @@ static void resourceBar(const char* aName,
     }
 }
 
+void text(float aX, float aY, const std::string& aName, const std::string& aText, uint32_t aColor)
+{
+    ImGui::SetNextWindowPos(ImVec2(aX, aY));
+    ImGui::Begin(
+        aName.c_str(),
+        nullptr,
+        ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize
+            | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoSavedSettings
+            | ImGuiWindowFlags_NoInputs);
+    ImGui::PushStyleColor(ImGuiCol_Text, aColor);
+    ImGui::Text("%s", aText.c_str());
+    ImGui::PopStyleColor();
+    ImGui::End();
+}
+
 void showImguiDialogs(float aWidth, float aHeight)
 {
     showStatsDialog();
