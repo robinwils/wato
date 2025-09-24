@@ -21,10 +21,18 @@ void AiSystem::operator()(Registry& aRegistry, const float aDeltaTime)
 
     for (auto&& [_, creep, t, rb, v] :
          aRegistry.view<Creep, Transform3D, RigidBody, Velocity>().each()) {
-        if (auto next = graph.GetNextCell(GraphCell::FromWorldPoint(t.Position))) {
-            auto dir = glm::normalize(next->ToWorld() - t.Position);
+        auto c = GraphCell::FromWorldPoint(t.Position);
 
-            t.Position += v.Velocity * dir;
+        if (auto next = graph.GetNextCell(c)) {
+            glm::vec3 diff = next->ToWorld() - t.Position;
+            float     dist = glm::length(diff);
+            glm::vec3 dir  = glm::normalize(next->ToWorld() - t.Position);
+
+            if (dist < 1e-3f) {
+                t.Position = next->ToWorld();
+            } else {
+                t.Position += v.Velocity * dir;
+            }
             // rb.Body->applyWorldForceAtCenterOfMass(ToRP3D(dir * v.Velocity));
             rb.Body->setTransform(t.ToRP3D());
             spdlog::trace(
