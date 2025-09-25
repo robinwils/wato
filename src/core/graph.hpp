@@ -112,7 +112,10 @@ class Graph
 
     std::optional<GraphCell> GetNextCell(const GraphCell& aFrom)
     {
-        return mPaths.contains(aFrom) ? std::make_optional(mPaths.at(aFrom)) : std::nullopt;
+        if (!mPaths.contains(aFrom) || aFrom == mDest) {
+            return std::nullopt;
+        }
+        return std::make_optional(mPaths.at(aFrom));
     }
 
     void AddObstacle(const GraphCell& aCell) { mObstacles.emplace(aCell); }
