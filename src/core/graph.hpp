@@ -25,8 +25,8 @@ struct GraphCell {
     static GraphCell FromWorldPoint(float aX, float aZ)
     {
         return GraphCell{
-            static_cast<size_type>(aX * kCellsPerAxis),
-            static_cast<size_type>(aZ * kCellsPerAxis),
+            static_cast<size_type>(std::round(aX * kCellsPerAxis)),
+            static_cast<size_type>(std::round(aZ * kCellsPerAxis)),
         };
     }
     static GraphCell FromWorldPoint(glm::vec3 aPoint) { return FromWorldPoint(aPoint.x, aPoint.z); }
