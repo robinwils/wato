@@ -17,13 +17,23 @@ Graph::obstacles_type Graph::Neighbours(const GraphCell& aCell)
 {
     Graph::obstacles_type neighbours;
 
-    for (GraphCell::size_type x = aCell.Location.x - 1; x <= aCell.Location.x + 1; ++x) {
-        for (GraphCell::size_type y = aCell.Location.y - 1; y <= aCell.Location.y + 1; ++y) {
-            GraphCell c(x, y);
-            if (IsInside(c) && (x != aCell.Location.x || y != aCell.Location.y)
-                && !mObstacles.contains(c)) {
-                neighbours.emplace_back(c);
-            }
+    // https://www.redblobgames.com/pathfinding/a-star/implementation.html#troubleshooting-ugly-path
+    GraphCell candidates[8] = {
+        // N, S, E, W
+        GraphCell(aCell.Location.x, aCell.Location.y - 1),
+        GraphCell(aCell.Location.x, aCell.Location.y + 1),
+        GraphCell(aCell.Location.x + 1, aCell.Location.y),
+        GraphCell(aCell.Location.x - 1, aCell.Location.y),
+        // NE, NW, SE, SW
+        GraphCell(aCell.Location.x + 1, aCell.Location.y - 1),
+        GraphCell(aCell.Location.x - 1, aCell.Location.y - 1),
+        GraphCell(aCell.Location.x + 1, aCell.Location.y + 1),
+        GraphCell(aCell.Location.x - 1, aCell.Location.y + 1),
+    };
+
+    for (const GraphCell& c : candidates) {
+        if (IsInside(c) && !mObstacles.contains(c)) {
+            neighbours.emplace_back(c);
         }
     }
 
