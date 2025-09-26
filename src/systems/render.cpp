@@ -9,6 +9,7 @@
 #include <glm/ext/matrix_float4x4.hpp>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <memory>
 #include <variant>
 
 #include "components/animator.hpp"
@@ -236,8 +237,8 @@ void PhysicsDebugSystem::operator()(Registry& aRegistry, const float aDeltaTime)
     auto nTri   = debugRenderer.getNbTriangles();
     auto nLines = debugRenderer.getNbLines();
 
-    auto  debugShader = aRegistry.ctx().get<ShaderCache>()["simple"_hs];
-    auto* debugMat    = new Material(debugShader);
+    auto debugShader = aRegistry.ctx().get<ShaderCache>()["simple"_hs];
+    auto debugMat    = std::make_unique<Material>(debugShader);
     if (nTri > 0) {
         auto state = BGFX_STATE_WRITE_RGB | BGFX_STATE_DEPTH_TEST_ALWAYS;
         if (3 * nTri == bgfx::getAvailTransientVertexBuffer(3 * nTri, PosColor::msLayout)) {

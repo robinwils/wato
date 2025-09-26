@@ -1,7 +1,6 @@
 #pragma once
 
 #include <bgfx/bgfx.h>
-#include <fmt/format.h>
 
 #include <cstdint>
 #include <glm/ext/vector_float2.hpp>
@@ -23,12 +22,12 @@ class Primitive
     using layout_type = VL;
 
     Primitive(
-        std::vector<layout_type> aVertices,
-        std::vector<indice_type> aIndices,
-        Material*                aMaterial)
+        std::vector<layout_type>  aVertices,
+        std::vector<indice_type>  aIndices,
+        std::unique_ptr<Material> aMaterial)
         : mVertices(std::move(aVertices)),
           mIndices(std::move(aIndices)),
-          mMaterial(aMaterial),
+          mMaterial(std::move(aMaterial)),
           mIsInitialized(false)
     {
         InitializePrimitive();
@@ -72,9 +71,9 @@ class Primitive
     }
 
    protected:
-    std::vector<layout_type> mVertices;
-    std::vector<indice_type> mIndices;
-    Material*                mMaterial;
+    std::vector<layout_type>  mVertices;
+    std::vector<indice_type>  mIndices;
+    std::unique_ptr<Material> mMaterial;
 
     bool mIsInitialized;
 
@@ -96,13 +95,13 @@ class Primitive
 };
 
 using PrimitiveVariant = std::variant<
-    Primitive<PositionNormalUvVertex>*,
-    Primitive<PositionNormalUvBoneVertex>*,
-    Primitive<PositionVertex>*>;
+    std::unique_ptr<Primitive<PositionNormalUvVertex>>,
+    std::unique_ptr<Primitive<PositionNormalUvBoneVertex>>,
+    std::unique_ptr<Primitive<PositionVertex>>>;
 
 template <typename VL>
 struct fmt::formatter<Primitive<VL>> : fmt::formatter<std::string> {
-    auto format(Primitive<VL> aObj, format_context& aCtx) const -> decltype(aCtx.out())
+    auto format(const Primitive<VL>& aObj, format_context& aCtx) const -> decltype(aCtx.out())
     {
         return fmt::format_to(
             aCtx.out(),
@@ -111,17 +110,5 @@ struct fmt::formatter<Primitive<VL>> : fmt::formatter<std::string> {
             aObj.mIndices.size(),
             aObj.mVertices,
             aObj.mIndices);
-    }
-};
-
-template <>
-struct fmt::formatter<PrimitiveVariant> : fmt::formatter<std::string> {
-    auto format(PrimitiveVariant aObj, format_context& aCtx) const -> decltype(aCtx.out())
-    {
-        return std::visit(
-            VariantVisitor{
-                [&](auto* aPrimitive) { return fmt::format_to(aCtx.out(), "{}", *aPrimitive); },
-            },
-            aObj);
     }
 };

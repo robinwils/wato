@@ -88,7 +88,8 @@ void LoadTextures(Registry& aRegistry, uint32_t aWidth, uint32_t aHeight)
 
     aRegistry.ctx().get<ModelCache>().load(
         "grass_tile"_hs,
-        new PlanePrimitive(new BlinnPhongMaterial(shader, diffuse, specular)));
+        std::make_unique<PlanePrimitive>(
+            std::make_unique<BlinnPhongMaterial>(shader, diffuse, specular)));
 }
 
 void SpawnLight(Registry& aRegistry)

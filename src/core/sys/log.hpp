@@ -2,19 +2,18 @@
 
 #include <bx/debug.h>
 #include <bx/string.h>
-#include <spdlog/fmt/ranges.h>
+#include <fmt/ranges.h>
+#include <fmt/std.h>
 #include <spdlog/spdlog.h>
 
-#include <optional>
-
 template <typename T>
-struct fmt::formatter<std::optional<T>> : fmt::formatter<std::string> {
-    auto format(std::optional<T> aObj, format_context& aCtx) const -> decltype(aCtx.out())
+struct fmt::formatter<std::unique_ptr<T>> : fmt::formatter<std::string> {
+    auto format(std::unique_ptr<T> const& aObj, format_context& aCtx) const -> decltype(aCtx.out())
     {
-        if (aObj.has_value()) {
-            return fmt::format_to(aCtx.out(), "optional with value {}", *aObj);
+        if (aObj) {
+            return fmt::format_to(aCtx.out(), "{}", *aObj);
         } else {
-            return fmt::format_to(aCtx.out(), "(null optional)");
+            return fmt::format_to(aCtx.out(), "(null unique_ptr)");
         }
     }
 };

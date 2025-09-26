@@ -33,5 +33,5 @@ ShaderLoader::result_type ShaderLoader::operator()(
         }
     }
 
-    return std::make_shared<Shader>(bgfx::createProgram(vsh, fsh, true), uniformHandles);
+    return std::make_shared<Shader>(bgfx::createProgram(vsh, fsh, true), std::move(uniformHandles));
 }

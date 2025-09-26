@@ -14,7 +14,7 @@
 class PlanePrimitive : public Primitive<PositionNormalUvVertex>
 {
    public:
-    explicit PlanePrimitive(Material* aMaterial)
+    explicit PlanePrimitive(std::unique_ptr<Material> aMaterial)
         : Primitive<PositionNormalUvVertex>(
               {
                   {{+1.0F, +0.0F, -0.0F}, {0.0F, +1.0F, 0.0F}, {0.0F, 1.0F}},
@@ -30,7 +30,7 @@ class PlanePrimitive : public Primitive<PositionNormalUvVertex>
                   2,
                   3,
               },
-              aMaterial)
+              std::move(aMaterial))
     {
     }
 

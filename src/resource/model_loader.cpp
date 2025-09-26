@@ -6,6 +6,7 @@
 #include <bx/bx.h>
 
 #include <glm/gtx/string_cast.hpp>
+#include <memory>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -202,8 +203,8 @@ ModelLoader::mesh_type ModelLoader::processMesh(
         }
     }
 
-    BlinnPhongMaterial* m       = nullptr;
-    bool                skinned = false;
+    std::unique_ptr<BlinnPhongMaterial> m;
+    bool                                skinned = false;
     if (aMesh->mMaterialIndex >= 0) {
         auto        diffusePath  = aiString("texture_diffuse");
         auto        specularPath = aiString("texture_specular");
@@ -227,7 +228,7 @@ ModelLoader::mesh_type ModelLoader::processMesh(
         }
 
         DBG("  {} diffuse and {} specular textures", textures.size(), specTextures.size());
-        m = new BlinnPhongMaterial(shader);
+        m = std::make_unique<BlinnPhongMaterial>(shader);
 
         if (textures.size() > 0) {
             m->SetDiffuseTexture(aRegistry.ctx().get<TextureCache>()[textures.front()]);
@@ -259,7 +260,7 @@ ModelLoader::mesh_type ModelLoader::processMesh(
         }
     }
 
-    return new Primitive(std::move(vertices), std::move(indices), m);
+    return std::make_unique<Primitive<VL>>(std::move(vertices), std::move(indices), std::move(m));
 }
 
 void ModelLoader::processMetaData(const aiNode* aNode, const aiScene* /*aScene*/)
@@ -345,7 +346,7 @@ ModelLoader::mesh_container ModelLoader::processNode(
                 aRegistry);
         }
         assert(mesh.has_value());
-        meshes.push_back(*mesh);
+        meshes.push_back(std::move(*mesh));
     }
     for (unsigned int i = 0; i < aNode->mNumChildren; i++) {
         auto childMeshes = processNode(aNode->mChildren[i], aScene, aSkeleton, aRegistry);

@@ -1,10 +1,9 @@
 #pragma once
 
-#include <spdlog/fmt/ranges.h>
-
 #include <optional>
 #include <unordered_map>
 
+#include "core/sys/log.hpp"
 #include "renderer/animation.hpp"
 #include "renderer/primitive.hpp"
 #include "renderer/skeleton.hpp"

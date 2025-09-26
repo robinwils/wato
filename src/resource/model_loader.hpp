@@ -73,7 +73,7 @@ class ModelLoader final
     {
         mesh_container meshes;
         meshes.push_back(std::move(aPrimitive));
-        return std::make_shared<Model>(meshes, animation_map{});
+        return std::make_shared<Model>(std::move(meshes), animation_map{});
     }
 
    private:

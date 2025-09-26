@@ -4,6 +4,7 @@
 
 #include <chrono>
 #include <entt/core/fwd.hpp>
+#include <memory>
 
 #include "components/game.hpp"
 #include "components/imgui.hpp"
@@ -15,6 +16,7 @@
 #include "registry/game_registry.hpp"
 #include "registry/registry.hpp"
 #include "renderer/grid_preview_material.hpp"
+#include "renderer/primitive.hpp"
 #include "renderer/renderer.hpp"
 #include "systems/render.hpp"
 #include "systems/system.hpp"
@@ -219,15 +221,15 @@ void GameClient::prepareGridPreview()
         nullptr);
 
     const entt::resource<Shader>& shader = mRegistry.ctx().get<ShaderCache>()["grid"_hs];
-    auto*                         mat    = new GridPreviewMaterial(
+    auto                          mat    = std::make_unique<GridPreviewMaterial>(
         shader,
         glm::vec4(graph.Width(), graph.Height(), GraphCell::kCellsPerAxis, 0),
         texture->second);
-    auto* primitive = new Primitive<PositionVertex>(vertices, indices, mat);
+    auto primitive = std::make_unique<Primitive<PositionVertex>>(vertices, indices, std::move(mat));
 
     // Put texture in context variables because I am not sure entt:resource_cache can be updated
     // easily
-    mRegistry.ctx().get<ModelCache>().load("grid"_hs, primitive);
+    mRegistry.ctx().get<ModelCache>().load("grid"_hs, std::move(primitive));
     bgfx::updateTexture2D(
         texture->second,
         0,
