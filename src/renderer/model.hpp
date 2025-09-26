@@ -32,6 +32,8 @@ class Model final
     {
     }
 
+    ~Model() { TRACE("Model destructor called"); }
+
     void Submit(
         glm::mat4 aModelMatrix = glm::identity<glm::mat4>(),
         uint64_t  aState       = BGFX_STATE_DEFAULT);

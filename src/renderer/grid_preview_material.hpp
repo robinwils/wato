@@ -22,7 +22,7 @@ class GridPreviewMaterial : public Material
     {
     }
 
-    virtual ~GridPreviewMaterial() {}
+    virtual ~GridPreviewMaterial() { bgfx::destroy(mGridTexture); }
 
     void Submit() const override
     {

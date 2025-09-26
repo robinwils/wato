@@ -6,6 +6,7 @@
 #include <unordered_map>
 
 #include "bgfx/bgfx.h"
+#include "core/sys/log.hpp"
 
 struct UniformDesc {
     bgfx::UniformType::Enum Type;
@@ -20,6 +21,15 @@ class Shader
     Shader(bgfx::ProgramHandle&& aHandle, uniform_map&& aUniforms)
         : mHandle(std::move(aHandle)), mUniforms(std::move(aUniforms))
     {
+    }
+
+    ~Shader()
+    {
+        TRACE("shader destructor called");
+        bgfx::destroy(mHandle);
+        for (const auto& u : mUniforms) {
+            bgfx::destroy(u.second);
+        }
     }
 
     bgfx::UniformHandle Uniform(const char* const aName) const
