@@ -38,6 +38,8 @@ class Application
     void SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeight);
     void ClearAllObservers(Registry& aRegistry);
 
+    virtual void OnGameInstanceCreated() = 0;
+
     Options mOptions;
 
     PhysicsSystem         mPhysicsSystem;

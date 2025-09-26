@@ -97,8 +97,6 @@ int GameClient::Run()
         }
     } else {
         StartGameInstance(mRegistry, 0, false);
-        spawnPlayerAndCamera();
-        prepareGridPreview();
     }
 
     while (!window.ShouldClose()) {
@@ -241,6 +239,13 @@ void GameClient::prepareGridPreview()
         bgfx::copy(graph.GridLayout().data(), graph.Width() * graph.Height()));
 }
 
+void GameClient::OnGameInstanceCreated()
+{
+    spawnPlayerAndCamera();
+    prepareGridPreview();
+    mRegistry.ctx().get<Physics>().World()->setEventListener(&mPhysicsEventHandler);
+}
+
 void GameClient::consumeNetworkResponses()
 {
     auto& netClient = mRegistry.ctx().get<ENetClient>();
@@ -256,8 +261,6 @@ void GameClient::consumeNetworkResponses()
                 },
                 [&](const NewGameResponse& aResp) {
                     StartGameInstance(mRegistry, aResp.GameID, false);
-                    spawnPlayerAndCamera();
-                    prepareGridPreview();
                     spdlog::info("game {} created", aResp.GameID);
                 },
             },

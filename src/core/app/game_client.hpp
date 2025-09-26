@@ -40,6 +40,9 @@ class GameClient : public Application
     void Init() override;
     int  Run() override;
 
+   protected:
+    virtual void OnGameInstanceCreated() override;
+
    private:
     void networkThread();
     void consumeNetworkResponses();

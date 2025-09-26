@@ -51,8 +51,6 @@ void Application::StartGameInstance(
     aRegistry.ctx().emplace<GameInstance>(aGameID, 0.0f, 0u);
 
     physics.Init(aRegistry);
-    // TODO: leak ?
-    physics.World()->setEventListener(new EventHandler(&aRegistry));
 
     enum ActionContext::State actionContextState = ActionContext::State::Default;
     if (aIsServer) {
@@ -63,6 +61,7 @@ void Application::StartGameInstance(
         .Bindings = ActionBindings::Defaults(),
         .Payload  = NormalPayload{}});
     SpawnMap(aRegistry, 20, 20);
+    OnGameInstanceCreated();
 }
 
 void Application::AdvanceSimulation(Registry& aRegistry, const float aDeltaTime)
