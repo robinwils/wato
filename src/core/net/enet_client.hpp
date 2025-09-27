@@ -40,9 +40,10 @@ class ENetClient : public ENetBase
     void OnDisconnectTimeout(ENetEvent& aEvent) override;
     void OnNone(ENetEvent& aEvent) override;
 
+    std::atomic_bool mConnected;
+
    private:
     void send(const std::vector<uint8_t> aData);
 
-    ENetPeer*        mPeer;
-    std::atomic_bool mConnected;
+    ENetPeer* mPeer;
 };
