@@ -117,6 +117,18 @@ void Application::SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeigh
     auto  base          = aRegistry.create();
     auto& baseTransform = aRegistry.emplace<Transform3D>(base, glm::vec3(10.0f, 0.0f, 10.0f));
     aRegistry.emplace<Base>(base);
+    rp3d::RigidBody* bBody = physics.CreateRigidBody(
+        base,
+        aRegistry,
+        RigidBodyParams{
+            .Type           = rp3d::BodyType::STATIC,
+            .Transform      = baseTransform.ToRP3D(),
+            .GravityEnabled = false});
+    rp3d::Collider* bCollider =
+        physics.AddBoxCollider(bBody, ToRP3D(GraphCell(1, 1).ToWorld() * 0.5f), true);
+    bCollider->setCollisionCategoryBits(Category::Entities);
+    bCollider->setCollideWithMaskBits(
+        Category::Terrain | Category::Entities | Category::PlacementGhostTower);
 
     graph.ComputePaths(GraphCell::FromWorldPoint(baseTransform.Position));
     spdlog::debug("{}", graph);
