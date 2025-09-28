@@ -115,7 +115,7 @@ void Application::SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeigh
     aRegistry.emplace<Spawner>(spawner);
 
     auto  base          = aRegistry.create();
-    auto& baseTransform = aRegistry.emplace<Transform3D>(base, glm::vec3(10.0f, 0.0f, 10.0f));
+    auto& baseTransform = aRegistry.emplace<Transform3D>(base, glm::vec3(2.0f, 0.004f, 2.0f));
     aRegistry.emplace<Base>(base);
     rp3d::RigidBody* bBody = physics.CreateRigidBody(
         base,
@@ -144,7 +144,7 @@ void Application::SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeigh
         messages);
 
     // Create physics body
-    glm::vec3        translate = glm::vec3(aWidth + 1, 1.004f, aHeight + 1) / 4.0f - 0.25f;
+    glm::vec3        translate = glm::vec3(0.75f, 0.004f, 0.75f);
     rp3d::Transform  transform(ToRP3D(translate), rp3d::Quaternion::identity());
     rp3d::RigidBody* body = physics.CreateRigidBody(
         first,
