@@ -286,6 +286,7 @@ target_sources(watolib
     src/components/direction.hpp
     src/components/health.hpp
     src/components/imgui.hpp
+    src/components/path.hpp
     src/components/placement_mode.hpp
     src/components/rigid_body.hpp
     src/components/scene_object.hpp

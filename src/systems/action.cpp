@@ -8,6 +8,7 @@
 #include "components/creep.hpp"
 #include "components/health.hpp"
 #include "components/imgui.hpp"
+#include "components/path.hpp"
 #include "components/placement_mode.hpp"
 #include "components/rigid_body.hpp"
 #include "components/scene_object.hpp"
@@ -57,7 +58,8 @@ void DefaultContextHandler::operator()(
 
 void DefaultContextHandler::operator()(Registry& aRegistry, const SendCreepPayload& aPayload)
 {
-    auto& phy = aRegistry.ctx().get<Physics&>();
+    auto& phy   = aRegistry.ctx().get<Physics&>();
+    auto& graph = aRegistry.ctx().get<Graph&>();
 
     for (auto&& [entity, spawnTransform] : aRegistry.view<Spawner, Transform3D>().each()) {
         auto  creep          = aRegistry.create();
@@ -73,6 +75,10 @@ void DefaultContextHandler::operator()(Registry& aRegistry, const SendCreepPaylo
         aRegistry.emplace<SceneObject>(creep, "phoenix"_hs);
         aRegistry.emplace<ImguiDrawable>(creep, "phoenix", true);
         aRegistry.emplace<Animator>(creep, 0.0f, "Take 001");
+        aRegistry.emplace<Path>(
+            creep,
+            GraphCell::FromWorldPoint(spawnTransform.Position),
+            graph.GetNextCell(GraphCell::FromWorldPoint(spawnTransform.Position)));
 
         auto* body = phy.CreateRigidBody(
             creep,
