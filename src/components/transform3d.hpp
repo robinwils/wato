@@ -23,12 +23,6 @@ struct Transform3D {
             rp3d::Quaternion(Orientation.x, Orientation.y, Orientation.z, Orientation.w));
     }
 
-    [[nodiscard]] std::string ToString() const
-    {
-        return "Transform3D: position = " + glm::to_string(Position) + ", rotation = "
-               + glm::to_string(Orientation) + ", scale = " + glm::to_string(Scale);
-    }
-
     void FromRP3D(const rp3d::Transform& aTransform)
     {
         Position.x = aTransform.getPosition().x;

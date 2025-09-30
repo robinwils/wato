@@ -41,10 +41,10 @@ void AiSystem::operator()(Registry& aRegistry, const float aDeltaTime)
             spdlog::trace(
                 "pos = {}({}), next = {}({}), diff = {}",
                 c,
-                glm::to_string(t.Position),
+                t.Position,
                 *p.NextCell,
-                glm::to_string(p.NextCell->ToWorld()),
-                glm::to_string(diff));
+                p.NextCell->ToWorld(),
+                diff);
 
             if (dist < 1e-3f) {
                 spdlog::trace("rounding pos to next cell");
@@ -56,10 +56,7 @@ void AiSystem::operator()(Registry& aRegistry, const float aDeltaTime)
             }
 
             rb.Body->setTransform(t.ToRP3D());
-            spdlog::trace(
-                "new pos: {}({})",
-                GraphCell::FromWorldPoint(t.Position),
-                glm::to_string(t.Position));
+            spdlog::trace("new pos: {}({})", GraphCell::FromWorldPoint(t.Position), t.Position);
         }
     }
 }

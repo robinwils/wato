@@ -63,7 +63,7 @@ template <>
 struct fmt::formatter<PositionVertex> : fmt::formatter<std::string> {
     auto format(PositionVertex aObj, format_context& aCtx) const -> decltype(aCtx.out())
     {
-        return fmt::format_to(aCtx.out(), "{{{}}}", glm::to_string(aObj.Position));
+        return fmt::format_to(aCtx.out(), "{{{}}}", aObj.Position);
     }
 };
 
@@ -71,12 +71,7 @@ template <>
 struct fmt::formatter<PositionNormalUvVertex> : fmt::formatter<std::string> {
     auto format(PositionNormalUvVertex aObj, format_context& aCtx) const -> decltype(aCtx.out())
     {
-        return fmt::format_to(
-            aCtx.out(),
-            "{{{} {} {}}}",
-            glm::to_string(aObj.Position),
-            glm::to_string(aObj.Normal),
-            glm::to_string(aObj.Uv));
+        return fmt::format_to(aCtx.out(), "{{{} {} {}}}", aObj.Position, aObj.Normal, aObj.Uv);
     }
 };
 
@@ -87,10 +82,10 @@ struct fmt::formatter<PositionNormalUvBoneVertex> : fmt::formatter<std::string> 
         return fmt::format_to(
             aCtx.out(),
             "{{{} {} {}}}",
-            glm::to_string(aObj.Position),
-            glm::to_string(aObj.Normal),
-            glm::to_string(aObj.Uv),
-            glm::to_string(aObj.BoneWeights),
-            glm::to_string(aObj.BoneIndices));
+            aObj.Position,
+            aObj.Normal,
+            aObj.Uv,
+            aObj.BoneWeights,
+            aObj.BoneIndices);
     }
 };

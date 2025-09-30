@@ -1,9 +1,8 @@
 #include "renderer/skeleton.hpp"
 
-#include <fmt/format.h>
-#include <spdlog/spdlog.h>
-
 #include <glm/gtx/string_cast.hpp>
+
+#include "core/sys/log.hpp"
 
 void PrintBone(const Bone& aBone, const Skeleton& aSkeleton, std::size_t aIndent)
 {
@@ -12,7 +11,7 @@ void PrintBone(const Bone& aBone, const Skeleton& aSkeleton, std::size_t aIndent
             "{}bone {} with offset {}",
             std::string(aIndent, ' '),
             aBone.Name,
-            glm::to_string(*aBone.Offset));
+            *aBone.Offset);
     } else {
         spdlog::info("{}bone {} with no offset", std::string(aIndent, ' '), aBone.Name);
     }
