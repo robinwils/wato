@@ -16,7 +16,7 @@
 #include "components/transform3d.hpp"
 #include "components/velocity.hpp"
 #include "core/graph.hpp"
-#include "core/physics.hpp"
+#include "core/physics/physics.hpp"
 #include "core/tower_building_handler.hpp"
 #include "input/action.hpp"
 #include "registry/registry.hpp"
@@ -80,15 +80,32 @@ void DefaultContextHandler::operator()(Registry& aRegistry, const SendCreepPaylo
             GraphCell::FromWorldPoint(spawnTransform.Position),
             graph.GetNextCell(GraphCell::FromWorldPoint(spawnTransform.Position)));
 
-        auto* body = phy.CreateRigidBody(
+        aRegistry.emplace<RigidBody>(
             creep,
-            aRegistry,
-            RigidBodyParams{
-                .Type           = rp3d::BodyType::KINEMATIC,
-                .Transform      = creepTransform.ToRP3D(),
-                .GravityEnabled = false});
-        rp3d::Collider* collider = phy.AddCapsuleCollider(body, 0.1f, 0.05f);
-        collider->setCollisionCategoryBits(Category::Entities);
+            RigidBody{
+                .Params =
+                    RigidBodyParams{
+                        .Type           = rp3d::BodyType::KINEMATIC,
+                        .Velocity       = 0.01f,
+                        .Direction      = glm::vec3(0.0f),
+                        .GravityEnabled = false,
+                    },
+            });
+        aRegistry.emplace<Collider>(
+            creep,
+            Collider{
+                .Params =
+                    ColliderParams{
+                        .CollisionCategoryBits = Category::Entities,
+                        .CollideWithMaskBits   = 0,
+                        .IsTrigger             = false,
+                        .ShapeParams =
+                            CapsuleShapeParams{
+                                .Radius = 0.1f,
+                                .Height = 0.05f,
+                            },
+                    },
+            });
     }
 }
 
@@ -101,8 +118,7 @@ void DefaultContextHandler::operator()(Registry& aRegistry, const PlacementModeP
     ActionContext placementCtx{
         .State    = ActionContext::State::Placement,
         .Bindings = ActionBindings::PlacementDefaults(),
-        .Payload  = PlacementModePayload{.CanBuild = true, .Tower = aPayload.Tower}
-    };
+        .Payload  = PlacementModePayload{.CanBuild = true, .Tower = aPayload.Tower}};
 
     contextStack.push_front(std::move(placementCtx));
 
@@ -113,18 +129,34 @@ void DefaultContextHandler::operator()(Registry& aRegistry, const PlacementModeP
         glm::vec3(0.0f),
         glm::identity<glm::quat>(),
         glm::vec3(0.1f));
-    aRegistry.emplace<PlacementMode>(ghostTower);
+    const auto& pm = aRegistry.emplace<PlacementMode>(ghostTower, new PlacementModeData());
     aRegistry.emplace<ImguiDrawable>(ghostTower, "Ghost Tower");
-    rp3d::RigidBody* body = phy.CreateRigidBody(
+    auto& rb = aRegistry.emplace<RigidBody>(
         ghostTower,
-        aRegistry,
-        RigidBodyParams{
-            .Type           = rp3d::BodyType::DYNAMIC,
-            .Transform      = t.ToRP3D(),
-            .GravityEnabled = false});
-    rp3d::Collider* collider = phy.AddBoxCollider(body, rp3d::Vector3(0.35F, 0.65F, 0.35F), true);
-    collider->setCollisionCategoryBits(Category::PlacementGhostTower);
-    collider->setCollideWithMaskBits(Category::Terrain | Category::Entities);
+        RigidBody{
+            .Params =
+                RigidBodyParams{
+                    .Type           = rp3d::BodyType::DYNAMIC,
+                    .Velocity       = 0.00f,
+                    .Direction      = glm::vec3(0.0f),
+                    .GravityEnabled = false,
+                    .Data           = pm.Data,
+                },
+        });
+    aRegistry.emplace<Collider>(
+        ghostTower,
+        Collider{
+            .Params =
+                ColliderParams{
+                    .CollisionCategoryBits = Category::PlacementGhostTower,
+                    .CollideWithMaskBits   = Category::Terrain | Category::Entities,
+                    .IsTrigger             = true,
+                    .ShapeParams =
+                        BoxShapeParams{
+                            .HalfExtents = glm::vec3(0.35f, 0.65f, 0.35f),
+                        },
+                },
+        });
 }
 
 void DefaultContextHandler::ExitPlacement(Registry& aRegistry)
@@ -143,16 +175,17 @@ void DefaultContextHandler::ExitPlacement(Registry& aRegistry)
 
 void PlacementModeContextHandler::operator()(Registry& aRegistry, const BuildTowerPayload& aPayload)
 {
-    auto& contextStack = aRegistry.ctx().get<ActionContextStack&>();
-    if (auto* payload = std::get_if<PlacementModePayload>(&contextStack.front().Payload);
-        !payload->CanBuild) {
-        return;
+    for (const auto&& [tower, pm] : aRegistry.view<PlacementMode>()->each()) {
+        if (pm.Data) {
+            if (pm.Data->Overlaps != 0) {
+                return;
+            }
+            aRegistry.emplace<Tower>(tower, aPayload.Tower);
+            // remove component so that ExitPlacement does not destroy the entity
+            aRegistry.remove<PlacementMode>(tower);
+        }
     }
-    for (auto tower : aRegistry.view<PlacementMode>()) {
-        aRegistry.emplace<Tower>(tower, aPayload.Tower);
-        aRegistry.remove<PlacementMode>(tower);
-        break;
-    }
+
     SPDLOG_DEBUG("exiting placement mode");
     ExitPlacement(aRegistry);
 }
@@ -174,29 +207,43 @@ void ServerContextHandler::operator()(Registry& aRegistry, const BuildTowerPaylo
         glm::identity<glm::quat>(),
         glm::vec3(0.1f));
 
-    rp3d::RigidBody* body = phy.CreateRigidBody(
-        tower,
-        aRegistry,
-        RigidBodyParams{
-            .Type           = rp3d::BodyType::DYNAMIC,
-            .Transform      = t.ToRP3D(),
-            .GravityEnabled = false});
-    rp3d::Collider* collider = phy.AddBoxCollider(body, rp3d::Vector3(0.35F, 0.65F, 0.35F), true);
+    RigidBody body = RigidBody{
+        .Params =
+            RigidBodyParams{
+                .Type           = rp3d::BodyType::STATIC,
+                .Velocity       = 0.0f,
+                .Direction      = glm::vec3(0.0f),
+                .GravityEnabled = false,
+            },
+    };
 
-    collider->setIsSimulationCollider(true);
-    collider->setCollisionCategoryBits(Category::Entities);
-    collider->setCollideWithMaskBits(Category::Terrain | Category::PlacementGhostTower);
-    body->setType(rp3d::BodyType::STATIC);
+    Collider collider = Collider{
+        .Params =
+            ColliderParams{
+                .CollisionCategoryBits = Category::Entities,
+                .CollideWithMaskBits   = Category::Terrain | Category::PlacementGhostTower,
+                .IsTrigger             = false,
+                .ShapeParams =
+                    BoxShapeParams{
+                        .HalfExtents = glm::vec3(0.35f, 0.65f, 0.35f),
+                    },
+            },
+    };
+
+    body.Body         = phy.CreateRigidBody(body.Params, t);
+    collider.Collider = phy.AddCollider(body.Body, collider.Params);
 
     TowerBuildingHandler handler;
-    phy.World()->testCollision(body, handler);
+    phy.World()->testCollision(body.Body, handler);
 
     if (!handler.CanBuildTower) {
-        phy.DeleteRigidBody(aRegistry, tower);
+        phy.World()->destroyRigidBody(body.Body);
         aRegistry.destroy(tower);
         return;
     }
     aRegistry.emplace<Tower>(tower, aPayload.Tower);
+    aRegistry.emplace<RigidBody>(tower, body);
+    aRegistry.emplace<Collider>(tower, collider);
 }
 
 template <typename Derived>

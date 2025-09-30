@@ -15,7 +15,7 @@
 #include "components/animator.hpp"
 #include "components/imgui.hpp"
 #include "components/scene_object.hpp"
-#include "core/physics.hpp"
+#include "core/physics/physics.hpp"
 #include "core/types.hpp"
 #include "core/window.hpp"
 #include "imgui_helper.h"

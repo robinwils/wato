@@ -12,7 +12,7 @@
 #include "reactphysics3d/reactphysics3d.h"
 
 struct Transform3D {
-    glm::vec3 Position;
+    glm::vec3 Position{0.0f};
     glm::quat Orientation{glm::identity<glm::quat>()};
     glm::vec3 Scale{1.0f};
 

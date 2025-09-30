@@ -8,7 +8,7 @@
 #include "components/rigid_body.hpp"
 #include "components/tile.hpp"
 #include "components/transform3d.hpp"
-#include "core/physics.hpp"
+#include "core/physics/physics.hpp"
 #include "core/window.hpp"
 #include "input/action.hpp"
 #include "registry/registry.hpp"

@@ -20,7 +20,7 @@ void TowerBuiltSystem::operator()(Registry& aRegistry, const float aDeltaTime)
     auto* storage = aRegistry.storage("tower_built_observer"_hs);
 
     if (storage == nullptr) {
-        throw std::runtime_error("tower_built_observer storage not initiated");
+        throw std::runtime_error("tower_built_observer storage not initialized");
     }
 
     if (storage->size() == 0) {

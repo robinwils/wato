@@ -6,6 +6,7 @@
 #include <entt/entity/fwd.hpp>
 #include <glm/glm.hpp>
 
+#include "components/transform3d.hpp"
 #include "core/graph.hpp"
 #include "registry/registry.hpp"
 
@@ -20,9 +21,37 @@ struct fmt::formatter<rp3d::Vector3> : fmt::formatter<std::string> {
 // Enumeration for categories
 enum Category { PlacementGhostTower = 0x0001, Terrain = 0x0002, Entities = 0x0004 };
 
-struct RigidBodyData {
-    RigidBodyData(entt::entity aEntity) : Entity(aEntity) {}
-    entt::entity Entity;
+struct BoxShapeParams {
+    glm::vec3 HalfExtents;
+};
+
+struct CapsuleShapeParams {
+    float Radius;
+    float Height;
+};
+
+struct HeightFieldShapeParams {
+    std::vector<float> Data;
+    int                Rows;
+    int                Columns;
+};
+
+using ColliderShapeParams =
+    std::variant<BoxShapeParams, CapsuleShapeParams, HeightFieldShapeParams>;
+
+struct RigidBodyParams {
+    rp3d::BodyType Type{rp3d::BodyType::STATIC};
+    float          Velocity;
+    glm::vec3      Direction;
+    bool           GravityEnabled{true};
+    void*          Data{nullptr};
+};
+
+struct ColliderParams {
+    unsigned short      CollisionCategoryBits;
+    unsigned short      CollideWithMaskBits;
+    bool                IsTrigger;
+    ColliderShapeParams ShapeParams;
 };
 
 struct PhysicsParams {
@@ -38,12 +67,6 @@ struct PhysicsParams {
     bool RenderContactPoints  = false;
     bool RenderContactNormals = false;
 #endif
-};
-
-struct RigidBodyParams {
-    rp3d::BodyType  Type{rp3d::BodyType::STATIC};
-    rp3d::Transform Transform{rp3d::Transform::identity()};
-    bool            GravityEnabled{true};
 };
 
 class Physics
@@ -62,20 +85,17 @@ class Physics
     [[nodiscard]] rp3d::PhysicsWorld*  World() const noexcept { return mWorld; }
     [[nodiscard]] rp3d::PhysicsCommon& Common() noexcept { return mCommon; }
 
-    rp3d::RigidBody* CreateRigidBody(
-        const entt::entity&   aEntity,
-        Registry&             aRegistry,
-        const RigidBodyParams aParams);
-    rp3d::Collider* AddBoxCollider(
-        rp3d::RigidBody*     aBody,
-        const rp3d::Vector3& aSize,
-        const bool           aIsTrigger = false);
-    rp3d::Collider* AddCapsuleCollider(
-        rp3d::RigidBody* aBody,
-        const float&     aRadius,
-        const float&     aHeight,
-        const bool       aIsTrigger = false);
-    void DeleteRigidBody(Registry& aRegistry, entt::entity aEntity);
+    rp3d::RigidBody* CreateRigidBodyAndCollider(
+        RigidBodyParams&   aRigidBodyParams,
+        ColliderParams&    aColliderParams,
+        const Transform3D& aTransform);
+
+    rp3d::CollisionShape* CreateCollisionShape(const ColliderShapeParams& aParams);
+    rp3d::Collider*       AddCollider(
+              rp3d::RigidBody*                  aBody,
+              const ColliderParams&             aParams,
+              const std::optional<Transform3D>& aTransform = std::nullopt);
+    rp3d::RigidBody* CreateRigidBody(const RigidBodyParams& aParams, const Transform3D& aTransform);
 
     static constexpr auto Serialize(auto& aArchive, const auto& aSelf)
     {
@@ -88,13 +108,11 @@ class Physics
             const rp3d::Quaternion& orientation = transform.getOrientation();
             const rp3d::BodyType    type        = body->getType();
             const bool              gravity     = body->isGravityEnabled();
-            const RigidBodyData*    data        = static_cast<RigidBodyData*>(body->getUserData());
 
             aArchive.template Write<rp3d::BodyType>(&type, 1);
             aArchive.template Write<float>(&position.x, 3);
             aArchive.template Write<float>(&orientation.x, 4);
             aArchive.template Write<bool>(&gravity, 1);
-            aArchive.template Write<entt::entity>(&data->Entity, 1);
         }
     }
 
@@ -112,25 +130,23 @@ class Physics
         uint32_t nbRigidBodies = 0;
         aArchive.template Read<uint32_t>(&nbRigidBodies, 1);
         for (uint32_t rbIdx = 0; rbIdx < nbRigidBodies; ++rbIdx) {
-            rp3d::BodyType   type;
-            rp3d::Vector3    position;
-            rp3d::Quaternion orientation;
-            entt::entity     entity;
-            bool             gravity;
+            rp3d::BodyType type;
+            float          velocity;
+            glm::vec3      direction;
+            entt::entity   entity;
+            bool           gravity;
 
             aArchive.template Read<rp3d::BodyType>(&type, 1);
-            aArchive.template Read<float>(&position.x, 3);
-            aArchive.template Read<float>(&orientation.x, 4);
+            aArchive.template Read<float>(&velocity, 1);
+            aArchive.template Read<float>(glm::value_ptr(direction), 3);
             aArchive.template Read<bool>(&gravity, 1);
             aArchive.template Read<entt::entity>(&entity, 1);
 
-            phy.CreateRigidBody(
-                entity,
-                aRegistry,
-                RigidBodyParams{
-                    .Type           = type,
-                    .Transform      = rp3d::Transform(position, orientation),
-                    .GravityEnabled = gravity});
+            phy.CreateRigidBody(RigidBodyParams{
+                .Type           = type,
+                .Velocity       = velocity,
+                .Direction      = direction,
+                .GravityEnabled = gravity});
         }
         return true;
     }

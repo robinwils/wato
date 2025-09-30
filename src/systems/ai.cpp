@@ -21,8 +21,8 @@ void AiSystem::operator()(Registry& aRegistry, const float aDeltaTime)
 {
     auto& graph = aRegistry.ctx().get<Graph>();
 
-    for (auto&& [_, creep, t, rb, v, p] :
-         aRegistry.view<Creep, Transform3D, RigidBody, Velocity, Path>().each()) {
+    for (auto&& [_, creep, t, rb, p] :
+         aRegistry.view<Creep, Transform3D, RigidBody, Path>().each()) {
         auto c = GraphCell::FromWorldPoint(t.Position);
         if (!p.NextCell || c == p.NextCell) {
             p.NextCell = graph.GetNextCell(c);
@@ -50,8 +50,10 @@ void AiSystem::operator()(Registry& aRegistry, const float aDeltaTime)
                 spdlog::trace("rounding pos to next cell");
                 t.Position = p.NextCell->ToWorld();
             } else {
-                auto force = v.Velocity * dir;
+                auto force          = rb.Params.Velocity * dir;
+                rb.Params.Direction = dir;
                 spdlog::trace("advancing by {}", glm::to_string(force));
+                // rigidBody.Body->setLinearVelocity(ToRP3D(dir));
                 t.Position += force;
             }
 

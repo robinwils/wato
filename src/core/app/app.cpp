@@ -6,13 +6,14 @@
 
 #include "components/game.hpp"
 #include "components/player.hpp"
+#include "components/rigid_body.hpp"
 #include "components/scene_object.hpp"
 #include "components/spawner.hpp"
 #include "components/tile.hpp"
 #include "components/transform3d.hpp"
-#include "core/event_handler.hpp"
 #include "core/graph.hpp"
-#include "core/physics.hpp"
+#include "core/physics/event_handler.hpp"
+#include "core/physics/physics.hpp"
 #include "input/action.hpp"
 
 using namespace entt::literals;
@@ -117,18 +118,32 @@ void Application::SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeigh
     auto  base          = aRegistry.create();
     auto& baseTransform = aRegistry.emplace<Transform3D>(base, glm::vec3(2.0f, 0.004f, 2.0f));
     aRegistry.emplace<Base>(base);
-    rp3d::RigidBody* bBody = physics.CreateRigidBody(
+    aRegistry.emplace<RigidBody>(
         base,
-        aRegistry,
-        RigidBodyParams{
-            .Type           = rp3d::BodyType::STATIC,
-            .Transform      = baseTransform.ToRP3D(),
-            .GravityEnabled = false});
-    rp3d::Collider* bCollider =
-        physics.AddBoxCollider(bBody, ToRP3D(GraphCell(1, 1).ToWorld() * 0.5f), true);
-    bCollider->setCollisionCategoryBits(Category::Entities);
-    bCollider->setCollideWithMaskBits(
-        Category::Terrain | Category::Entities | Category::PlacementGhostTower);
+        RigidBody{
+            .Params =
+                RigidBodyParams{
+                    .Type           = rp3d::BodyType::STATIC,
+                    .Velocity       = 0.0f,
+                    .Direction      = glm::vec3(0.0f),
+                    .GravityEnabled = false,
+                },
+        });
+    aRegistry.emplace<Collider>(
+        base,
+        Collider{
+            .Params =
+                ColliderParams{
+                    .CollisionCategoryBits = Category::Entities,
+                    .CollideWithMaskBits =
+                        Category::Terrain | Category::Entities | Category::PlacementGhostTower,
+                    .IsTrigger = true,
+                    .ShapeParams =
+                        BoxShapeParams{
+                            .HalfExtents = GraphCell(1, 1).ToWorld() * 0.5f,
+                        },
+                },
+        });
 
     graph.ComputePaths(GraphCell::FromWorldPoint(baseTransform.Position));
     spdlog::debug("{}", graph);
@@ -142,21 +157,38 @@ void Application::SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeigh
         heightValues.data(),
         rp3d::HeightField::HeightDataType::HEIGHT_FLOAT_TYPE,
         messages);
+    rp3d::HeightFieldShape* heightFieldShape = physics.Common().createHeightFieldShape(heightField);
 
     // Create physics body
     glm::vec3        translate = glm::vec3(aWidth + 1, 1.004f, aHeight + 1) / 2.0f - 0.5f;
     rp3d::Transform  transform(ToRP3D(translate), rp3d::Quaternion::identity());
     rp3d::RigidBody* body = physics.CreateRigidBody(
         first,
-        aRegistry,
-        RigidBodyParams{
-            .Type           = rp3d::BodyType::STATIC,
-            .Transform      = rp3d::Transform::identity(),
-            .GravityEnabled = false});
-    rp3d::HeightFieldShape* heightFieldShape = physics.Common().createHeightFieldShape(heightField);
-    rp3d::Collider*         collider         = body->addCollider(heightFieldShape, transform);
-    collider->setCollisionCategoryBits(Category::Terrain);
-    collider->setCollideWithMaskBits(Category::Entities);
+        RigidBody{
+            .Params =
+                RigidBodyParams{
+                    .Type           = rp3d::BodyType::STATIC,
+                    .Velocity       = 0.0f,
+                    .Direction      = glm::vec3(0.0f),
+                    .GravityEnabled = false,
+                },
+        });
+    aRegistry.emplace<Collider>(
+        first,
+        Collider{
+            .Params =
+                ColliderParams{
+                    .CollisionCategoryBits = Category::Terrain,
+                    .CollideWithMaskBits   = Category::Entities,
+                    .IsTrigger             = false,
+                    .ShapeParams =
+                        HeightFieldShapeParams{
+                            .Data    = heightValues,
+                            .Rows    = SafeI32(aHeight + 1),
+                            .Columns = SafeI32(aWidth + 1),
+                        },
+                },
+        });
 }
 
 void Application::ClearAllObservers(Registry& aRegistry)

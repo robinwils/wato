@@ -15,7 +15,7 @@
 #include "components/health.hpp"
 #include "components/rigid_body.hpp"
 #include "components/transform3d.hpp"
-#include "core/physics.hpp"
+#include "core/physics/physics.hpp"
 #include "core/types.hpp"
 
 class ByteInputArchive
@@ -136,19 +136,23 @@ TEST_CASE("snapshot.simple")
     auto e1 = src.create();
     src.emplace<Transform3D>(e1, glm::vec3(0.0f, 2.0f, 1.5f), glm::vec3(1.0f), glm::vec3(1.0f));
 
-    auto e2 = src.create();
-    src.emplace<Transform3D>(e2, glm::vec3(4.2f, 2.1f, 0.42f), glm::vec3(42.0f), glm::vec3(0.5f));
+    auto        e2 = src.create();
+    const auto& t  = src.emplace<Transform3D>(
+        e2,
+        glm::vec3(4.2f, 2.1f, 0.42f),
+        glm::vec3(42.0f),
+        glm::vec3(0.5f));
     src.emplace<Health>(e2, 300.0f);
 
     auto e3 = src.create();
     phy.CreateRigidBody(
-        e3,
-        src,
         RigidBodyParams{
             .Type           = rp3d::BodyType::STATIC,
-            .Transform      = rp3d::Transform::identity(),
+            .Velocity       = 21.0f,
+            .Direction      = glm::vec3(42.0f),
             .GravityEnabled = false,
-        });
+        },
+        t);
 
     std::vector<uint8_t> storage;
     ByteOutputArchive    outAr(storage);
@@ -163,5 +167,5 @@ TEST_CASE("snapshot.simple")
     CHECK(dest.valid(e3));
     CHECK_EQ(dest.get<Transform3D>(e1).Position, glm::vec3(0.0f, 2.0f, 1.5f));
     CHECK_EQ(dest.get<Health>(e2).Health, 300.0f);
-    CHECK_EQ(dest.get<RigidBody>(e3).Body->getTransform(), rp3d::Transform::identity());
+    CHECK_EQ(dest.get<RigidBody>(e3).Velocity, 21.0f);
 }

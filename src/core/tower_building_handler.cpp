@@ -2,7 +2,7 @@
 
 #include <spdlog/spdlog.h>
 
-#include "core/physics.hpp"
+#include "core/physics/physics.hpp"
 
 void TowerBuildingHandler::onContact(const rp3d::CollisionCallback::CallbackData& aCallbackData)
 {

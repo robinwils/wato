@@ -16,11 +16,11 @@ target_sources(wato_tests
   BASE_DIRS
     ${CMAKE_SOURCE_DIR}/src
   FILES
-    ${CMAKE_SOURCE_DIR}/src/core/physics.hpp
+    ${CMAKE_SOURCE_DIR}/src/core/physics/physics.hpp
     ${CMAKE_SOURCE_DIR}/src/core/snapshot.hpp
     ${CMAKE_SOURCE_DIR}/src/core/queue/ring_buffer.hpp
   PRIVATE
-    ${CMAKE_SOURCE_DIR}/src/core/physics.cpp
+    ${CMAKE_SOURCE_DIR}/src/core/physics/physics.cpp
     ${CMAKE_SOURCE_DIR}/src/core/snapshot.cpp
     main.cpp
 )

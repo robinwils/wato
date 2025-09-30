@@ -7,7 +7,7 @@
 #include <taskflow/taskflow.hpp>
 
 #include "core/app/app.hpp"
-#include "core/event_handler.hpp"
+#include "core/physics/event_handler.hpp"
 #include "core/net/enet_client.hpp"
 #include "input/action.hpp"
 #include "renderer/renderer.hpp"
@@ -16,6 +16,7 @@
 #include "systems/animation.hpp"
 #include "systems/input.hpp"
 #include "systems/render.hpp"
+#include "systems/rigid_bodies_update.hpp"
 #include "systems/sync.hpp"
 #include "systems/tower_built.hpp"
 
@@ -110,6 +111,7 @@ class GameClient : public Application
     CameraSystem              mCameraSystem;
     NetworkSyncSystem         mNetworkSyncSystem;
     TowerBuiltSystem          mTowerBuiltSystem;
+    RigidBodiesUpdateSystem   mRBUpdatesSystem;
 #if WATO_DEBUG
     PhysicsDebugSystem mPhysicsDbgSystem;
 #endif

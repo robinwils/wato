@@ -8,6 +8,7 @@
 
 #include "components/game.hpp"
 #include "components/imgui.hpp"
+#include "components/rigid_body.hpp"
 #include "components/tower.hpp"
 #include "core/net/enet_client.hpp"
 #include "core/net/net.hpp"
@@ -49,6 +50,7 @@ void GameClient::Init()
 
     mSystemsFT.push_back(DeterministicActionSystem::MakeDelegate(mFTActionSystem));
     mSystemsFT.push_back(TowerBuiltSystem::MakeDelegate(mTowerBuiltSystem));
+    mSystemsFT.push_back(RigidBodiesUpdateSystem::MakeDelegate(mRBUpdatesSystem));
     mSystemsFT.push_back(AiSystem::MakeDelegate(mAiSystem));
     mSystemsFT.push_back(AnimationSystem::MakeDelegate(mAnimationSystem));
     mSystemsFT.push_back(PhysicsSystem::MakeDelegate(mPhysicsSystem));
@@ -273,10 +275,16 @@ void GameClient::consumeNetworkResponses()
 
 void GameClient::setupObservers()
 {
-    entt::hashed_string obsHash = "tower_built_observer";
+    mObserverNames.push_back("tower_built_observer");
+    auto& tbo = mRegistry.storage<entt::reactive>("tower_built_observer"_hs);
+    tbo.on_construct<Tower>();
 
-    auto& storage = mRegistry.storage<entt::reactive>("tower_built_observer"_hs);
-    storage.on_construct<Tower>();
+    mObserverNames.push_back("rigid_bodies_observer");
+    auto& rbo = mRegistry.storage<entt::reactive>("rigid_bodies_observer"_hs);
+    rbo.on_construct<RigidBody>();
+    rbo.on_update<RigidBody>();
 
-    mObserverNames.push_back(obsHash);
+    mObserverNames.push_back("placement_mode_observer");
+    auto& pmo = mRegistry.storage<entt::reactive>("placement_mode_observer"_hs);
+    pmo.on_update<Transform3D>();
 }
