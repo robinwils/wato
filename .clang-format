@@ -2,7 +2,7 @@
 Language:        Cpp
 AccessModifierOffset: -1
 AlignAfterOpenBracket: AlwaysBreak
-AlignArrayOfStructures: Left
+AlignArrayOfStructures: None
 AlignConsecutiveAssignments:
   Enabled:         true
   AcrossEmptyLines: false
