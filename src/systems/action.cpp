@@ -99,6 +99,7 @@ void DefaultContextHandler::operator()(Registry& aRegistry, const SendCreepPaylo
                         .CollisionCategoryBits = Category::Entities,
                         .CollideWithMaskBits   = 0,
                         .IsTrigger             = false,
+                        .Offset                = Transform3D{},
                         .ShapeParams =
                             CapsuleShapeParams{
                                 .Radius = 0.1f,
@@ -151,6 +152,7 @@ void DefaultContextHandler::operator()(Registry& aRegistry, const PlacementModeP
                     .CollisionCategoryBits = Category::PlacementGhostTower,
                     .CollideWithMaskBits   = Category::Terrain | Category::Entities,
                     .IsTrigger             = true,
+                    .Offset                = Transform3D{},
                     .ShapeParams =
                         BoxShapeParams{
                             .HalfExtents = glm::vec3(0.35f, 0.65f, 0.35f),
@@ -223,6 +225,7 @@ void ServerContextHandler::operator()(Registry& aRegistry, const BuildTowerPaylo
                 .CollisionCategoryBits = Category::Entities,
                 .CollideWithMaskBits   = Category::Terrain | Category::PlacementGhostTower,
                 .IsTrigger             = false,
+                .Offset                = Transform3D{},
                 .ShapeParams =
                     BoxShapeParams{
                         .HalfExtents = glm::vec3(0.35f, 0.65f, 0.35f),

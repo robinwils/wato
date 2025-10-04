@@ -148,21 +148,7 @@ void Application::SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeigh
     graph.ComputePaths(GraphCell::FromWorldPoint(baseTransform.Position));
     spdlog::debug("{}", graph);
 
-    // Create physics heightfield
-    std::vector<float>         heightValues((aWidth + 1) * (aHeight + 1), 0.0f);
-    std::vector<rp3d::Message> messages;
-    rp3d::HeightField*         heightField = physics.Common().createHeightField(
-        static_cast<int>(aWidth) + 1,
-        static_cast<int>(aHeight) + 1,
-        heightValues.data(),
-        rp3d::HeightField::HeightDataType::HEIGHT_FLOAT_TYPE,
-        messages);
-    rp3d::HeightFieldShape* heightFieldShape = physics.Common().createHeightFieldShape(heightField);
-
-    // Create physics body
-    glm::vec3        translate = glm::vec3(aWidth + 1, 1.004f, aHeight + 1) / 2.0f - 0.5f;
-    rp3d::Transform  transform(ToRP3D(translate), rp3d::Quaternion::identity());
-    rp3d::RigidBody* body = physics.CreateRigidBody(
+    aRegistry.emplace<RigidBody>(
         first,
         RigidBody{
             .Params =
@@ -181,9 +167,13 @@ void Application::SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeigh
                     .CollisionCategoryBits = Category::Terrain,
                     .CollideWithMaskBits   = Category::Entities,
                     .IsTrigger             = false,
+                    .Offset =
+                        Transform3D{
+                            .Position = glm::vec3(aWidth + 1, 1.004f, aHeight + 1) / 2.0f - 0.5f,
+                        },
                     .ShapeParams =
                         HeightFieldShapeParams{
-                            .Data    = heightValues,
+                            .Data    = std::vector<float>((aWidth + 1) * (aHeight + 1), 0.0f),
                             .Rows    = SafeI32(aHeight + 1),
                             .Columns = SafeI32(aWidth + 1),
                         },

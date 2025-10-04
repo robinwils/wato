@@ -51,6 +51,7 @@ struct ColliderParams {
     unsigned short      CollisionCategoryBits;
     unsigned short      CollideWithMaskBits;
     bool                IsTrigger;
+    Transform3D         Offset;
     ColliderShapeParams ShapeParams;
 };
 
@@ -91,10 +92,7 @@ class Physics
         const Transform3D& aTransform);
 
     rp3d::CollisionShape* CreateCollisionShape(const ColliderShapeParams& aParams);
-    rp3d::Collider*       AddCollider(
-              rp3d::RigidBody*                  aBody,
-              const ColliderParams&             aParams,
-              const std::optional<Transform3D>& aTransform = std::nullopt);
+    rp3d::Collider*       AddCollider(rp3d::RigidBody* aBody, const ColliderParams& aParams);
     rp3d::RigidBody* CreateRigidBody(const RigidBodyParams& aParams, const Transform3D& aTransform);
 
     PhysicsParams Params;

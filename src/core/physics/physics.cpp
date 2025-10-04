@@ -66,14 +66,10 @@ rp3d::CollisionShape* Physics::CreateCollisionShape(const ColliderShapeParams& a
     return shape;
 }
 
-rp3d::Collider* Physics::AddCollider(
-    rp3d::RigidBody*                  aBody,
-    const ColliderParams&             aParams,
-    const std::optional<Transform3D>& aTransform)
+rp3d::Collider* Physics::AddCollider(rp3d::RigidBody* aBody, const ColliderParams& aParams)
 {
-    rp3d::CollisionShape* shape = CreateCollisionShape(aParams.ShapeParams);
-    rp3d::Collider*       collider =
-        aBody->addCollider(shape, aTransform ? aTransform->ToRP3D() : rp3d::Transform::identity());
+    rp3d::CollisionShape* shape    = CreateCollisionShape(aParams.ShapeParams);
+    rp3d::Collider*       collider = aBody->addCollider(shape, aParams.Offset.ToRP3D());
 
     collider->setCollisionCategoryBits(aParams.CollisionCategoryBits);
     collider->setCollideWithMaskBits(aParams.CollideWithMaskBits);
