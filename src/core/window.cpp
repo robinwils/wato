@@ -380,6 +380,18 @@ std::pair<glm::vec3, glm::vec3> WatoWindow::MouseUnproject(
     return std::make_pair(nearP, farP);
 }
 
+glm::vec3
+WatoWindow::ProjectPosition(const glm::vec3& aPos, const Camera& aCam, const glm::vec3& aCamPos)
+{
+    const auto viewport = glm::vec4(0, 0, Width<float>(), Height<float>());
+
+    return glm::project(
+        aPos,
+        aCam.View(aCamPos),
+        aCam.Projection(Width<float>(), Height<float>()),
+        viewport);
+}
+
 void WatoWindow::keyCallback(
     GLFWwindow* aWindow,
     int32_t     aKey,

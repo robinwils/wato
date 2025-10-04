@@ -8,10 +8,14 @@
 #include "components/creep.hpp"
 #include "components/health.hpp"
 #include "components/imgui.hpp"
+#include "components/path.hpp"
 #include "components/placement_mode.hpp"
 #include "components/rigid_body.hpp"
 #include "components/scene_object.hpp"
+#include "components/spawner.hpp"
 #include "components/transform3d.hpp"
+#include "components/velocity.hpp"
+#include "core/graph.hpp"
 #include "core/physics.hpp"
 #include "core/tower_building_handler.hpp"
 #include "input/action.hpp"
@@ -55,27 +59,37 @@ void DefaultContextHandler::operator()(
 void DefaultContextHandler::operator()(Registry& aRegistry, const SendCreepPayload& aPayload)
 {
     auto& phy   = aRegistry.ctx().get<Physics&>();
-    auto  creep = aRegistry.create();
-    auto& t     = aRegistry.emplace<Transform3D>(
-        creep,
-        glm::vec3(2.0f, 0.0f, 2.0f),
-        glm::identity<glm::quat>(),
-        glm::vec3(0.5f));
+    auto& graph = aRegistry.ctx().get<Graph&>();
 
-    aRegistry.emplace<Health>(creep, 100.0f);
-    aRegistry.emplace<Creep>(creep, aPayload.Type);
-    aRegistry.emplace<SceneObject>(creep, "phoenix"_hs);
-    aRegistry.emplace<Animator>(creep, 0.0f, "Take 001");
+    for (auto&& [entity, spawnTransform] : aRegistry.view<Spawner, Transform3D>().each()) {
+        auto  creep          = aRegistry.create();
+        auto& creepTransform = aRegistry.emplace<Transform3D>(
+            creep,
+            spawnTransform.Position,
+            glm::identity<glm::quat>(),
+            glm::vec3(0.5f));
 
-    auto* body = phy.CreateRigidBody(
-        creep,
-        aRegistry,
-        RigidBodyParams{
-            .Type           = rp3d::BodyType::DYNAMIC,
-            .Transform      = t.ToRP3D(),
-            .GravityEnabled = false});
-    rp3d::Collider* collider = phy.AddCapsuleCollider(body, 0.1f, 0.05f);
-    collider->setCollisionCategoryBits(Category::Entities);
+        aRegistry.emplace<Health>(creep, 100.0f);
+        aRegistry.emplace<Velocity>(creep, 0.01f);
+        aRegistry.emplace<Creep>(creep, aPayload.Type);
+        aRegistry.emplace<SceneObject>(creep, "phoenix"_hs);
+        aRegistry.emplace<ImguiDrawable>(creep, "phoenix", true);
+        aRegistry.emplace<Animator>(creep, 0.0f, "Take 001");
+        aRegistry.emplace<Path>(
+            creep,
+            GraphCell::FromWorldPoint(spawnTransform.Position),
+            graph.GetNextCell(GraphCell::FromWorldPoint(spawnTransform.Position)));
+
+        auto* body = phy.CreateRigidBody(
+            creep,
+            aRegistry,
+            RigidBodyParams{
+                .Type           = rp3d::BodyType::KINEMATIC,
+                .Transform      = creepTransform.ToRP3D(),
+                .GravityEnabled = false});
+        rp3d::Collider* collider = phy.AddCapsuleCollider(body, 0.1f, 0.05f);
+        collider->setCollisionCategoryBits(Category::Entities);
+    }
 }
 
 void DefaultContextHandler::operator()(Registry& aRegistry, const PlacementModePayload& aPayload)
@@ -94,7 +108,6 @@ void DefaultContextHandler::operator()(Registry& aRegistry, const PlacementModeP
 
     auto ghostTower = aRegistry.create();
     aRegistry.emplace<SceneObject>(ghostTower, "tower_model"_hs);
-    aRegistry.emplace<Tower>(ghostTower, aPayload.Tower);
     auto& t = aRegistry.emplace<Transform3D>(
         ghostTower,
         glm::vec3(0.0f),
@@ -136,17 +149,9 @@ void PlacementModeContextHandler::operator()(Registry& aRegistry, const BuildTow
         return;
     }
     for (auto tower : aRegistry.view<PlacementMode>()) {
-        auto& rb = aRegistry.get<RigidBody>(tower);
-
-        rb.Body->getCollider(0)->setIsSimulationCollider(true);
-        rb.Body->getCollider(0)->setCollisionCategoryBits(Category::Entities);
-        rb.Body->getCollider(0)->setCollideWithMaskBits(
-            Category::Terrain | Category::PlacementGhostTower);
-        rb.Body->setType(rp3d::BodyType::STATIC);
-
-        aRegistry.emplace<Health>(tower, 100.0F);
+        aRegistry.emplace<Tower>(tower, aPayload.Tower);
         aRegistry.remove<PlacementMode>(tower);
-        aRegistry.remove<ImguiDrawable>(tower);
+        break;
     }
     SPDLOG_DEBUG("exiting placement mode");
     ExitPlacement(aRegistry);
@@ -163,16 +168,11 @@ void ServerContextHandler::operator()(Registry& aRegistry, const BuildTowerPaylo
     auto  tower = aRegistry.create();
     auto& phy   = aRegistry.ctx().get<Physics>();
 
-    aRegistry.emplace<SceneObject>(tower, "tower_model"_hs);
-    aRegistry.emplace<Tower>(tower, aPayload.Tower);
-
     auto& t = aRegistry.emplace<Transform3D>(
         tower,
         aPayload.Position,
         glm::identity<glm::quat>(),
         glm::vec3(0.1f));
-    aRegistry.emplace<PlacementMode>(tower);
-    aRegistry.emplace<ImguiDrawable>(tower, "Ghost Tower");
 
     rp3d::RigidBody* body = phy.CreateRigidBody(
         tower,
@@ -193,7 +193,10 @@ void ServerContextHandler::operator()(Registry& aRegistry, const BuildTowerPaylo
 
     if (!handler.CanBuildTower) {
         phy.DeleteRigidBody(aRegistry, tower);
+        aRegistry.destroy(tower);
+        return;
     }
+    aRegistry.emplace<Tower>(tower, aPayload.Tower);
 }
 
 template <typename Derived>

@@ -7,15 +7,16 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstring>
+#include <entt/entt.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <iterator>
 #include <span>
-#include <stdexcept>
 
 #include "components/health.hpp"
 #include "components/rigid_body.hpp"
 #include "components/transform3d.hpp"
 #include "core/physics.hpp"
+#include "core/types.hpp"
 
 class ByteInputArchive
 {
@@ -47,18 +48,14 @@ class ByteInputArchive
     template <typename T, std::output_iterator<T> Out>
     void Read(Out aDestination, std::size_t aN)
     {
-        if (mIdx + aN * sizeof(T) > mStorage.size()) {
-            throw std::out_of_range(fmt::format(
-                " mIdx = {:d}, asked = {:d}, size = {:d}",
-                mIdx,
-                aN * sizeof(T),
-                mStorage.size()));
-        }
+        SafeU32 idx = SafeU32(mIdx) + aN * sizeof(T);
+
+        idx = idx < mStorage.size() ? idx : SafeU32(-1);
 
         // spdlog::info("reading {:d} elts with type size {:d}", aN, sizeof(T));
         // bx::memCopy(aDestination, &mStorage[mIdx], aN * sizeof(T));
         std::copy_n(reinterpret_cast<const T*>(&mStorage[mIdx]), aN, aDestination);
-        mIdx += aN * sizeof(T);
+        mIdx = idx;
     }
 
    private:
@@ -103,10 +100,31 @@ class ByteOutputArchive
 };
 
 template <typename OutArchive>
-void SaveRegistry(const entt::registry& aRegistry, OutArchive& aArchive);
+void SaveRegistry(const entt::registry& aRegistry, OutArchive& aArchive)
+{
+    // TODO: Header with version
+    entt::snapshot{aRegistry}
+        .template get<entt::entity>(aArchive)
+        .template get<Transform3D>(aArchive)
+        .template get<Health>(aArchive);
+    // .template get<Physics>(aArchive);
+    //
+    const auto& phy = aRegistry.ctx().get<const Physics&>();
+    Physics::Serialize(aArchive, phy);
+}
 
 template <typename InArchive>
-void LoadRegistry(entt::registry& aRegistry, InArchive& aArchive);
+void LoadRegistry(entt::registry& aRegistry, InArchive& aArchive)
+{
+    // TODO: Header with version
+    entt::snapshot_loader{aRegistry}
+        .template get<entt::entity>(aArchive)
+        .template get<Transform3D>(aArchive)
+        .template get<Health>(aArchive);
+    Physics::Deserialize(aArchive, aRegistry);
+    // .template get<Physics>(aArchive);
+    // .template get<Physics>([](auto& reg, entt::entity e, auto& ar) {});
+}
 
 #include "doctest.h"
 TEST_CASE("snapshot.simple")
@@ -129,7 +147,8 @@ TEST_CASE("snapshot.simple")
         RigidBodyParams{
             .Type           = rp3d::BodyType::STATIC,
             .Transform      = rp3d::Transform::identity(),
-            .GravityEnabled = false});
+            .GravityEnabled = false,
+        });
 
     std::vector<uint8_t> storage;
     ByteOutputArchive    outAr(storage);
@@ -144,5 +163,5 @@ TEST_CASE("snapshot.simple")
     CHECK(dest.valid(e3));
     CHECK_EQ(dest.get<Transform3D>(e1).Position, glm::vec3(0.0f, 2.0f, 1.5f));
     CHECK_EQ(dest.get<Health>(e2).Health, 300.0f);
-    CHECK_EQ(dest.get<RigidBody>(e3).RigidBody->getTransform(), rp3d::Transform::identity());
+    CHECK_EQ(dest.get<RigidBody>(e3).Body->getTransform(), rp3d::Transform::identity());
 }

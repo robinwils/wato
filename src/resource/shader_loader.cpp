@@ -20,10 +20,18 @@ ShaderLoader::result_type ShaderLoader::operator()(
     bgfx::RendererType::Enum type = bgfx::getRendererType();
 
     bgfx::ShaderHandle vsh = bgfx::createEmbeddedShader(kEmbeddedShaders, type, aVsName);
+
+    if (!bgfx::isValid(vsh)) {
+        throw std::runtime_error(fmt::format("shader {} is invalid", aVsName));
+    }
+
     bgfx::ShaderHandle fsh = BGFX_INVALID_HANDLE;
     if (aFsName != nullptr) {
         fsh = bgfx::createEmbeddedShader(kEmbeddedShaders, type, aFsName);
+        if (!bgfx::isValid(fsh)) {
+            throw std::runtime_error(fmt::format("shader {} is invalid", aFsName));
+        }
     }
 
-    return std::make_shared<Shader>(bgfx::createProgram(vsh, fsh, true), uniformHandles);
+    return std::make_shared<Shader>(bgfx::createProgram(vsh, fsh, true), std::move(uniformHandles));
 }

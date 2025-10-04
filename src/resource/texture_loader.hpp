@@ -18,4 +18,13 @@ struct TextureLoader final {
         uint8_t                  aSkip        = 0,
         bgfx::TextureInfo*       aInfo        = nullptr,
         bimg::Orientation::Enum* aOrientation = nullptr);
+
+    result_type operator()(
+        uint16_t                  aWidth,
+        uint16_t                  aHeight,
+        bool                      aHasMips,
+        uint16_t                  aNumLayers,
+        bgfx::TextureFormat::Enum aFormat,
+        uint64_t                  aFlags = BGFX_TEXTURE_NONE | BGFX_SAMPLER_NONE,
+        const void*               aData  = nullptr);
 };

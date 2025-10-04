@@ -9,6 +9,7 @@
 #include <glm/ext/matrix_float4x4.hpp>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <memory>
 #include <variant>
 
 #include "components/animator.hpp"
@@ -18,6 +19,7 @@
 #include "core/types.hpp"
 #include "core/window.hpp"
 #include "imgui_helper.h"
+#include "input/action.hpp"
 #include "resource/cache.hpp"
 
 void RenderSystem::operator()(Registry& aRegistry, const float aDeltaTime)
@@ -50,7 +52,7 @@ void RenderSystem::operator()(Registry& aRegistry, const float aDeltaTime)
 
     for (auto&& [entity, obj, t] : aRegistry.view<SceneObject, Transform3D>().each()) {
         if (check.contains(entity)) {
-            // DBG("GOT Placement mode entity!")
+            renderGrid(aRegistry);
         }
 
         if (auto model = aRegistry.ctx().get<ModelCache>()[obj.ModelHash]; model) {
@@ -70,6 +72,15 @@ void RenderSystem::operator()(Registry& aRegistry, const float aDeltaTime)
     }
 }
 
+void RenderSystem::renderGrid(Registry& aRegistry)
+{
+    if (auto grid = aRegistry.ctx().get<ModelCache>()["grid"_hs]; grid) {
+        // spdlog::debug("grid is {}", *grid);
+        // spdlog::debug("{}", aRegistry.ctx().get<Graph>());
+        grid->Submit(glm::identity<glm::mat4>(), BGFX_STATE_DEFAULT | BGFX_STATE_PT_LINES);
+    }
+}
+
 void RenderImguiSystem::operator()(Registry& aRegistry, const float aDeltaTime)
 {
     auto& window = aRegistry.ctx().get<WatoWindow&>();
@@ -78,7 +89,7 @@ void RenderImguiSystem::operator()(Registry& aRegistry, const float aDeltaTime)
 
     for (auto&& [entity, imgui] : aRegistry.view<ImguiDrawable>().each()) {
         auto [camera, transform] = aRegistry.try_get<Camera, Transform3D>(entity);
-        ImGui::Text("%s Settings", imgui.name.c_str());
+        ImGui::Text("%s Settings", imgui.Name.c_str());
         if (camera && transform) {
             window.GetInput().DrawImgui(*camera, transform->Position, window);
             ImGui::DragFloat3("Position", glm::value_ptr(transform->Position), 0.1f, 5.0f);
@@ -137,6 +148,43 @@ void RenderImguiSystem::operator()(Registry& aRegistry, const float aDeltaTime)
         phy.Params.RenderContactNormals);
 #endif
 
+    ImGui::End();
+
+#if WATO_DEBUG
+    Camera      cam;
+    Transform3D camT;
+
+    for (auto&& [entity, camera, t] : aRegistry.view<Camera, Transform3D>().each()) {
+        cam  = camera;
+        camT = t;
+        break;
+    }
+
+    auto& graph = aRegistry.ctx().get<Graph>();
+    for (auto&& [entity, imgui, t] : aRegistry.view<ImguiDrawable, Transform3D>().each()) {
+        if (imgui.PosOnUnit) {
+            GraphCell c      = GraphCell::FromWorldPoint(t.Position);
+            glm::vec3 screen = window.ProjectPosition(t.Position, cam, camT.Position);
+            text(
+                screen.x,
+                window.Height<float>() - screen.y,
+                fmt::format("graph_pos_{}", entt::id_type(entity)),
+                fmt::format("{} {}", c.Location.x, c.Location.y));
+
+            if (auto next = graph.GetNextCell(GraphCell::FromWorldPoint(t.Position))) {
+                screen = window.ProjectPosition(next->ToWorld(), cam, camT.Position);
+
+                text(
+                    screen.x,
+                    window.Height<float>() - screen.y - 20.0f,
+                    fmt::format("next_graph_pos_{}", entt::id_type(entity)),
+                    fmt::format("{} {}", next->Location.x, next->Location.y),
+                    imguiRGBA(255, 0, 0));
+            }
+        }
+    }
+#endif
+
     imguiEndFrame();
 }
 
@@ -189,8 +237,8 @@ void PhysicsDebugSystem::operator()(Registry& aRegistry, const float aDeltaTime)
     auto nTri   = debugRenderer.getNbTriangles();
     auto nLines = debugRenderer.getNbLines();
 
-    auto  debugShader = aRegistry.ctx().get<ShaderCache>()["simple"_hs];
-    auto* debugMat    = new Material(debugShader);
+    auto debugShader = aRegistry.ctx().get<ShaderCache>()["simple"_hs];
+    auto debugMat    = std::make_unique<Material>(debugShader);
     if (nTri > 0) {
         auto state = BGFX_STATE_WRITE_RGB | BGFX_STATE_DEPTH_TEST_ALWAYS;
         if (3 * nTri == bgfx::getAvailTransientVertexBuffer(3 * nTri, PosColor::msLayout)) {

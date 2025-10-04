@@ -17,7 +17,13 @@ class Material
 
     virtual void Submit() const {}
 
-    bgfx::ProgramHandle Program() const { return mShader->Program(); }
+    bgfx::ProgramHandle Program() const
+    {
+        BX_ASSERT(
+            mShader.handle() != nullptr && bgfx::isValid(mShader->Program()),
+            "invalid shader handler");
+        return mShader->Program();
+    }
 
    protected:
     entt::resource<Shader> mShader;

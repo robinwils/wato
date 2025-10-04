@@ -6,7 +6,16 @@
 #include <entt/entity/fwd.hpp>
 #include <glm/glm.hpp>
 
+#include "core/graph.hpp"
 #include "registry/registry.hpp"
+
+template <>
+struct fmt::formatter<rp3d::Vector3> : fmt::formatter<std::string> {
+    auto format(rp3d::Vector3 aObj, format_context& aCtx) const -> decltype(aCtx.out())
+    {
+        return fmt::format_to(aCtx.out(), "rp3d::Vector3({}, {}, {})", aObj.x, aObj.y, aObj.z);
+    }
+};
 
 // Enumeration for categories
 enum Category { PlacementGhostTower = 0x0001, Terrain = 0x0002, Entities = 0x0004 };
@@ -41,8 +50,9 @@ class Physics
 {
    public:
     Physics() {}
-    Physics(const Physics&) = delete;
     Physics(Physics&& aPhy) : mWorld(aPhy.mWorld) {}
+
+    Physics(const Physics&)            = delete;
     Physics& operator=(const Physics&) = delete;
     Physics& operator=(Physics&&)      = delete;
 
@@ -83,7 +93,7 @@ class Physics
             aArchive.template Write<rp3d::BodyType>(&type, 1);
             aArchive.template Write<float>(&position.x, 3);
             aArchive.template Write<float>(&orientation.x, 4);
-            aArchive.template Write<float>(&gravity, 1);
+            aArchive.template Write<bool>(&gravity, 1);
             aArchive.template Write<entt::entity>(&data->Entity, 1);
         }
     }
@@ -111,7 +121,7 @@ class Physics
             aArchive.template Read<rp3d::BodyType>(&type, 1);
             aArchive.template Read<float>(&position.x, 3);
             aArchive.template Read<float>(&orientation.x, 4);
-            aArchive.template Read<float>(&gravity, 1);
+            aArchive.template Read<bool>(&gravity, 1);
             aArchive.template Read<entt::entity>(&entity, 1);
 
             phy.CreateRigidBody(
@@ -137,10 +147,12 @@ inline rp3d::Vector3 ToRP3D(const glm::vec3 aVector)
     return rp3d::Vector3(aVector.x, aVector.y, aVector.z);
 }
 
+void ToggleObstacle(const rp3d::Collider* aCollider, Graph& aGraph, bool aAdd);
+
 struct WorldRaycastCallback : public rp3d::RaycastCallback {
     virtual rp3d::decimal notifyRaycastHit(const rp3d::RaycastInfo& aInfo) override
     {
-        if (aInfo.hitFraction == 0.0f) return rp3d::decimal(-1.0f);
+        if (aInfo.hitFraction == 0.0f) return -1.0f;
         Hits.push_back(glm::vec3(aInfo.worldPoint.x, aInfo.worldPoint.y, aInfo.worldPoint.z));
 
         // Return a fraction of 1.0 to gather all hits

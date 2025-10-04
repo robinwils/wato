@@ -3,21 +3,26 @@
 #include <bx/bx.h>
 
 #include <chrono>
-#include <thread>
+#include <entt/core/fwd.hpp>
+#include <memory>
 
 #include "components/game.hpp"
 #include "components/imgui.hpp"
-#include "components/tile.hpp"
+#include "components/tower.hpp"
 #include "core/net/enet_client.hpp"
 #include "core/net/net.hpp"
+#include "core/types.hpp"
 #include "core/window.hpp"
 #include "registry/game_registry.hpp"
 #include "registry/registry.hpp"
+#include "renderer/grid_preview_material.hpp"
+#include "renderer/primitive.hpp"
 #include "renderer/renderer.hpp"
 #include "systems/render.hpp"
 #include "systems/system.hpp"
 
 using namespace std::literals::chrono_literals;
+using namespace entt::literals;
 
 void GameClient::Init()
 {
@@ -43,9 +48,13 @@ void GameClient::Init()
 #endif
 
     mSystemsFT.push_back(DeterministicActionSystem::MakeDelegate(mFTActionSystem));
+    mSystemsFT.push_back(TowerBuiltSystem::MakeDelegate(mTowerBuiltSystem));
+    mSystemsFT.push_back(AiSystem::MakeDelegate(mAiSystem));
     mSystemsFT.push_back(AnimationSystem::MakeDelegate(mAnimationSystem));
     mSystemsFT.push_back(PhysicsSystem::MakeDelegate(mPhysicsSystem));
     mSystemsFT.push_back(NetworkSyncSystem::MakeDelegate(mNetworkSyncSystem));
+
+    setupObservers();
 
     auto graph = organizerFixedTime.graph();
     spdlog::info("graph size: {}", graph.size());
@@ -90,7 +99,6 @@ int GameClient::Run()
         }
     } else {
         StartGameInstance(mRegistry, 0, false);
-        spawnPlayerAndCamera();
     }
 
     while (!window.ShouldClose()) {
@@ -166,14 +174,78 @@ void GameClient::spawnPlayerAndCamera()
     // pos, orientation, scale
     mRegistry.emplace<Transform3D>(
         camera,
-        glm::vec3(0.0f, 2.0f, 1.5f),
+        glm::vec3(3.0f, 2.0f, 3.0f),
         glm::identity<glm::quat>(),
         glm::vec3(1.0f));
     mRegistry.emplace<ImguiDrawable>(camera, "Camera");
 
     auto player = mRegistry.create();
     // TODO: ID should be something coming from outside (menu, DB, etc...)
-    mRegistry.emplace<Player>(player, 0u, "stion", camera);
+    mRegistry.emplace<Player>(player, 0u);
+    mRegistry.emplace<Name>(player, "stion");
+}
+
+void GameClient::prepareGridPreview()
+{
+    const auto& graph = mRegistry.ctx().get<Graph>();
+
+    GraphCell::size_type numVertsX = graph.Width() + 1;
+    GraphCell::size_type numVertsY = graph.Height() + 1;
+
+    std::vector<PositionVertex> vertices;
+    std::vector<uint16_t>       indices;
+
+    for (GraphCell::size_type i = 0; i < numVertsY; ++i) {
+        for (GraphCell::size_type j = 0; j < numVertsX; ++j) {
+            GraphCell cell(j, i);
+            vertices.emplace_back(cell.ToWorld());
+            if (i != 0) {
+                indices.push_back(SafeU16(i) * numVertsX + j);
+                indices.push_back((SafeU16(i) - 1) * numVertsX + j);
+            }
+            if (j != 0) {
+                indices.push_back(SafeU16(i) * numVertsX + j);
+                indices.push_back(SafeU16(i) * numVertsX + j - 1);
+            }
+        }
+    }
+
+    auto [texture, loaded] = mRegistry.ctx().get<TextureCache>().load(
+        "grid_tex"_hs,
+        graph.Width(),
+        graph.Height(),
+        false,
+        1,
+        bgfx::TextureFormat::R8,
+        0,
+        nullptr);
+
+    const entt::resource<Shader>& shader = mRegistry.ctx().get<ShaderCache>()["grid"_hs];
+    auto                          mat    = std::make_unique<GridPreviewMaterial>(
+        shader,
+        glm::vec4(graph.Width(), graph.Height(), GraphCell::kCellsPerAxis, 0),
+        texture->second);
+    auto primitive = std::make_unique<Primitive<PositionVertex>>(vertices, indices, std::move(mat));
+
+    // Put texture in context variables because I am not sure entt:resource_cache can be updated
+    // easily
+    mRegistry.ctx().get<ModelCache>().load("grid"_hs, std::move(primitive));
+    bgfx::updateTexture2D(
+        texture->second,
+        0,
+        0,
+        0,
+        0,
+        graph.Width(),
+        graph.Height(),
+        bgfx::copy(graph.GridLayout().data(), graph.Width() * graph.Height()));
+}
+
+void GameClient::OnGameInstanceCreated()
+{
+    spawnPlayerAndCamera();
+    prepareGridPreview();
+    mRegistry.ctx().get<Physics>().World()->setEventListener(&mPhysicsEventHandler);
 }
 
 void GameClient::consumeNetworkResponses()
@@ -191,11 +263,20 @@ void GameClient::consumeNetworkResponses()
                 },
                 [&](const NewGameResponse& aResp) {
                     StartGameInstance(mRegistry, aResp.GameID, false);
-                    spawnPlayerAndCamera();
                     spdlog::info("game {} created", aResp.GameID);
                 },
             },
             ev->Payload);
         delete ev;
     }
+}
+
+void GameClient::setupObservers()
+{
+    entt::hashed_string obsHash = "tower_built_observer";
+
+    auto& storage = mRegistry.storage<entt::reactive>("tower_built_observer"_hs);
+    storage.on_construct<Tower>();
+
+    mObserverNames.push_back(obsHash);
 }

@@ -1,6 +1,9 @@
 #include "resource/texture_loader.hpp"
 
+#include <bgfx/bgfx.h>
 #include <fmt/format.h>
+
+#include <memory>
 
 #include "core/sys/log.hpp"
 #include "core/sys/mem.hpp"
@@ -97,6 +100,42 @@ TextureLoader::result_type TextureLoader::operator()(
                     bgfx::TextureFormat::Enum(imageContainer->m_format));
             }
         }
+    }
+
+    return std::make_shared<bgfx::TextureHandle>(handle);
+}
+
+TextureLoader::result_type TextureLoader::operator()(
+    uint16_t                  aWidth,
+    uint16_t                  aHeight,
+    bool                      aHasMips,
+    uint16_t                  aNumLayers,
+    bgfx::TextureFormat::Enum aFormat,
+    uint64_t                  aFlags,
+    const void*               aMem)
+{
+    bgfx::TextureHandle handle = BGFX_INVALID_HANDLE;
+
+    if (aMem == nullptr) {
+        handle =
+            bgfx::createTexture2D(aWidth, aHeight, aHasMips, aNumLayers, aFormat, aFlags, nullptr);
+    } else {
+        handle = bgfx::createTexture2D(
+            aWidth,
+            aHeight,
+            aHasMips,
+            aNumLayers,
+            aFormat,
+            aFlags,
+            bgfx::copy(aMem, aWidth * aHeight));
+    }
+
+    if (bgfx::isValid(handle)) {
+        DBG("{}x{} {} texture created ",
+            aWidth,
+            aHeight,
+            aMem == nullptr ? "mutable" : "immutable");
+        bgfx::setName(handle, "buffer texture");
     }
 
     return std::make_shared<bgfx::TextureHandle>(handle);

@@ -3,6 +3,7 @@
 #include <optional>
 #include <unordered_map>
 
+#include "core/sys/log.hpp"
 #include "renderer/animation.hpp"
 #include "renderer/primitive.hpp"
 #include "renderer/skeleton.hpp"
@@ -31,7 +32,11 @@ class Model final
     {
     }
 
-    void Submit(glm::mat4 aModelMatrix, uint64_t aState = BGFX_STATE_DEFAULT);
+    ~Model() { TRACE("Model destructor called"); }
+
+    void Submit(
+        glm::mat4 aModelMatrix = glm::identity<glm::mat4>(),
+        uint64_t  aState       = BGFX_STATE_DEFAULT);
 
     const ::Skeleton&              Skeleton() const { return mSkeleton; }
     const std::optional<Animation> GetAnimation(const std::string& aName) const
@@ -49,4 +54,18 @@ class Model final
     animation_map  mAnimations;
     ::Skeleton     mSkeleton;  // bind pose
     glm::mat4      mGlobalInverseTransform;
+
+    friend struct fmt::formatter<Model>;
+};
+
+template <>
+struct fmt::formatter<Model> : fmt::formatter<std::string> {
+    auto format(Model aObj, format_context& aCtx) const -> decltype(aCtx.out())
+    {
+        return fmt::format_to(
+            aCtx.out(),
+            "Model with {} meshes: {}\n",
+            aObj.mMeshes.size(),
+            aObj.mMeshes);
+    }
 };

@@ -139,6 +139,8 @@ foreach(dep ${FETCHED_DEPS_NAMES} ${OTHER_DEPS})
   endif()
 endforeach()
 
+find_path(SAFEINT_INCLUDE_DIRS "SafeInt.hpp" REQUIRED)
+
 include(CTest)
 
 add_library(wato_common INTERFACE)
@@ -164,8 +166,10 @@ target_compile_definitions(wato_common
     SPDLOG_ACTIVE_LEVEL=$<IF:$<CONFIG:Debug>,SPDLOG_LEVEL_TRACE,SPDLOG_LEVEL_INFO>
     WATO_DEBUG=$<IF:$<CONFIG:Debug>,1,0>
     GLM_FORCE_SIZE_T_LENGTH
-    DOCTEST_CONFIG_DISABLE
 )
+
+target_compile_definitions(watolib PUBLIC DOCTEST_CONFIG_DISABLE)
+target_compile_definitions(wato PUBLIC DOCTEST_CONFIG_DISABLE)
 
 if(UNIX)
   target_compile_options(wato_common
@@ -198,6 +202,7 @@ wato_set_project_warnings(wato_common
 
 target_compile_features(wato_common INTERFACE cxx_std_${CMAKE_CXX_STANDARD})
 
+target_include_directories(wato_common INTERFACE ${SAFEINT_INCLUDE_DIRS})
 target_include_directories(wato
   PRIVATE
     src
@@ -250,6 +255,8 @@ endif()
 bgfx_compile_shaders(
   TYPE VERTEX
   SHADERS
+    shaders/vs_simple.sc
+    shaders/vs_grid.sc
     shaders/vs_blinnphong.sc
     shaders/vs_blinnphong_skinned.sc
   VARYING_DEF ${CMAKE_SOURCE_DIR}/shaders/varying.def.sc
@@ -260,6 +267,8 @@ bgfx_compile_shaders(
 bgfx_compile_shaders(
   TYPE FRAGMENT
   SHADERS
+    shaders/fs_simple.sc
+    shaders/fs_grid.sc
     shaders/fs_blinnphong.sc
   VARYING_DEF ${CMAKE_SOURCE_DIR}/shaders/varying.def.sc
   OUTPUT_DIR ${CMAKE_BINARY_DIR}/include/generated/shaders
@@ -273,16 +282,20 @@ target_sources(watolib
     src/components/animator.hpp
     src/components/camera.hpp
     src/components/color.hpp
+    src/components/creep.hpp
     src/components/direction.hpp
     src/components/health.hpp
     src/components/imgui.hpp
+    src/components/path.hpp
     src/components/placement_mode.hpp
     src/components/rigid_body.hpp
     src/components/scene_object.hpp
     src/components/tile.hpp
     src/components/transform3d.hpp
+    src/components/velocity.hpp
     src/core/app/app.hpp
     src/core/event_handler.hpp
+    src/core/graph.hpp
     src/core/physics.hpp
     src/core/queue/ring_buffer.hpp
     src/core/snapshot.hpp
@@ -290,16 +303,19 @@ target_sources(watolib
     src/core/sys/log.hpp
     src/core/tower_building_handler.hpp
     src/registry/registry.hpp
+    src/systems/ai.hpp
     src/systems/physics.hpp
     src/systems/system.hpp
 
   PRIVATE
     src/core/app/app.cpp
     src/core/event_handler.cpp
+    src/core/graph.cpp
     src/core/physics.cpp
     src/core/snapshot.cpp
     src/core/sys/backtrace.cpp
     src/core/tower_building_handler.cpp
+    src/systems/ai.cpp
     src/systems/physics.cpp
 )
 
@@ -319,6 +335,7 @@ target_sources(wato
     src/renderer/animation.hpp
     src/renderer/bgfx_utils.hpp
     src/renderer/blinn_phong_material.hpp
+    src/renderer/grid_preview_material.hpp
     src/renderer/material.hpp
     src/renderer/model.hpp
     src/renderer/plane_primitive.hpp
@@ -336,6 +353,7 @@ target_sources(wato
     src/systems/input.hpp
     src/systems/render.hpp
     src/systems/sync.hpp
+    src/systems/tower_built.hpp
 
   PRIVATE
     deps/imgui/imgui.cpp
@@ -366,10 +384,15 @@ target_sources(wato
     src/systems/input.cpp
     src/systems/render.cpp
     src/systems/sync.cpp
+    src/systems/tower_built.cpp
 
+    shaders/fs_blinnphong.sc
+    shaders/fs_grid.sc
+    shaders/fs_simple.sc
     shaders/vs_blinnphong.sc
     shaders/vs_blinnphong_skinned.sc
-    shaders/fs_blinnphong.sc
+    shaders/vs_grid.sc
+    shaders/vs_simple.sc
 )
 
 target_include_directories(wato_common INTERFACE "${CMAKE_CURRENT_BINARY_DIR}")

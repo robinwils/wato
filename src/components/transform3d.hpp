@@ -13,20 +13,14 @@
 
 struct Transform3D {
     glm::vec3 Position;
-    glm::quat Orientation;
-    glm::vec3 Scale;
+    glm::quat Orientation{glm::identity<glm::quat>()};
+    glm::vec3 Scale{1.0f};
 
     [[nodiscard]] rp3d::Transform ToRP3D() const
     {
         return rp3d::Transform(
             rp3d::Vector3(Position.x, Position.y, Position.z),
             rp3d::Quaternion(Orientation.x, Orientation.y, Orientation.z, Orientation.w));
-    }
-
-    [[nodiscard]] std::string ToString() const
-    {
-        return "Transform3D: position = " + glm::to_string(Position) + ", rotation = "
-               + glm::to_string(Orientation) + ", scale = " + glm::to_string(Scale);
     }
 
     void FromRP3D(const rp3d::Transform& aTransform)

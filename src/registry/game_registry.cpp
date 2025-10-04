@@ -3,10 +3,11 @@
 #include <bgfx/bgfx.h>
 
 #include <glm/ext/vector_float3.hpp>
+#include <glm/fwd.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include "components/imgui.hpp"
 #include "components/light_source.hpp"
-#include "components/tile.hpp"
 #include "registry/registry.hpp"
 #include "renderer/blinn_phong_material.hpp"
 #include "renderer/plane_primitive.hpp"
@@ -49,9 +50,17 @@ void LoadShaders(Registry& aRegistry)
     });
     aRegistry.ctx().get<ShaderCache>().load(
         "simple"_hs,
-        "vs_cubes",
-        "fs_cubes",
+        "vs_simple",
+        "fs_simple",
         ShaderLoader::uniform_desc_map{});
+    aRegistry.ctx().get<ShaderCache>().load(
+        "grid"_hs,
+        "vs_grid",
+        "fs_grid",
+        ShaderLoader::uniform_desc_map{
+            {"s_gridTex",  {bgfx::UniformType::Sampler}},
+            {"u_gridInfo", {bgfx::UniformType::Vec4}   },
+    });
 }
 
 void LoadTextures(Registry& aRegistry, uint32_t aWidth, uint32_t aHeight)
@@ -79,7 +88,8 @@ void LoadTextures(Registry& aRegistry, uint32_t aWidth, uint32_t aHeight)
 
     aRegistry.ctx().get<ModelCache>().load(
         "grass_tile"_hs,
-        new PlanePrimitive(new BlinnPhongMaterial(shader, diffuse, specular)));
+        std::make_unique<PlanePrimitive>(
+            std::make_unique<BlinnPhongMaterial>(shader, diffuse, specular)));
 }
 
 void SpawnLight(Registry& aRegistry)

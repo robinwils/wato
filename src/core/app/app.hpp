@@ -4,10 +4,12 @@
 
 #include <atomic>
 #include <chrono>
+#include <entt/core/fwd.hpp>
 
 #include "core/options.hpp"
 #include "core/types.hpp"
 #include "registry/registry.hpp"
+#include "systems/ai.hpp"
 #include "systems/creep.hpp"
 #include "systems/physics.hpp"
 #include "systems/system.hpp"
@@ -34,15 +36,20 @@ class Application
     void StartGameInstance(Registry& aRegistry, const GameInstanceID aGameID, const bool aIsServer);
     void AdvanceSimulation(Registry& aRegistry, const float aDeltaTime);
     void SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeight);
+    void ClearAllObservers(Registry& aRegistry);
+
+    virtual void OnGameInstanceCreated() = 0;
 
     Options mOptions;
 
     PhysicsSystem         mPhysicsSystem;
     UpdateTransformsSytem mUpdateTransformsSystem;
-    CreepSystem           mCreepSystem;
+    AiSystem              mAiSystem;
 
     SystemRegistry mSystems;
     SystemRegistry mSystemsFT;
 
     std::atomic_bool mRunning;
+
+    std::vector<entt::hashed_string> mObserverNames;
 };

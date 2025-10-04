@@ -84,6 +84,7 @@ void ENetClient::OnConnect(ENetEvent& aEvent)
         .PlayerID = 0,
         .Payload  = ConnectedResponse{},
     });
+    mConnected = true;
 }
 
 void ENetClient::OnReceive(ENetEvent& aEvent)

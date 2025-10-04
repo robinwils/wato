@@ -35,7 +35,7 @@ template <typename KT>
 struct fmt::formatter<AnimationKeyFrame<KT>> : fmt::formatter<std::string> {
     auto format(AnimationKeyFrame<KT> aObj, format_context& aCtx) const -> decltype(aCtx.out())
     {
-        return fmt::format_to(aCtx.out(), "{} at time {}", glm::to_string(aObj.Key), aObj.Time);
+        return fmt::format_to(aCtx.out(), "{} at time {}", aObj.Key, aObj.Time);
     }
 };
 

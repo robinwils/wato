@@ -7,7 +7,13 @@
 using PlayerID = uint32_t;
 
 struct Player {
-    PlayerID     ID;
-    std::string  Username;
-    entt::entity Camera;
+    PlayerID ID;
+};
+
+struct Name {
+    std::string Username;
+};
+
+struct Owner {
+    PlayerID ID;
 };

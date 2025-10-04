@@ -3,5 +3,7 @@
 #include <string>
 
 struct ImguiDrawable {
-    std::string name;
+    std::string Name;
+
+    bool PosOnUnit;
 };

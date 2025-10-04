@@ -42,6 +42,8 @@ struct fmt::formatter<ActionType> : fmt::formatter<std::string> {
                 return fmt::format_to(aCtx.out(), "Enter Placement Mode");
             case ActionType::ExitPlacementMode:
                 return fmt::format_to(aCtx.out(), "Exit Placement Mode");
+            default:
+                return fmt::format_to(aCtx.out(), "Unknown");
         }
     }
 };
@@ -60,6 +62,8 @@ struct fmt::formatter<ActionTag> : fmt::formatter<std::string> {
                 return fmt::format_to(aCtx.out(), "Fixed Time");
             case ActionTag::FrameTime:
                 return fmt::format_to(aCtx.out(), "Frame Time");
+            default:
+                return fmt::format_to(aCtx.out(), "Unknown");
         }
     }
 };
@@ -90,7 +94,7 @@ struct SendCreepPayload {
 
 struct BuildTowerPayload {
     TowerType Tower;
-    glm::vec3 Position;
+    glm::vec3 Position{0.0f};
 };
 
 struct PlacementModePayload {
@@ -104,7 +108,7 @@ struct Action {
     ActionType   Type;
     ActionTag    Tag;
     payload_type Payload;
-    bool         IsProcessed;
+    bool         IsProcessed = false;
 
     constexpr static auto Serialize(auto& aArchive, const auto& aSelf)
     {

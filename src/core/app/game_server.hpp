@@ -34,6 +34,9 @@ class GameServer : public Application
                | static_cast<std::uint64_t>(counter++);
     }
 
+   protected:
+    virtual void OnGameInstanceCreated() override {}
+
    private:
     GameInstanceID createGameInstance(const NewGameRequest& aNewGame);
     tf::Taskflow   mNetTaskflow;
