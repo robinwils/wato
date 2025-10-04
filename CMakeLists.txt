@@ -87,6 +87,7 @@ set(OTHER_DEPS
   spdlog
   Sodium
   bgfx
+  imgui
 )
 
 if(APPLE)
@@ -212,7 +213,6 @@ target_include_directories(wato
 
 target_include_directories(wato
   SYSTEM PRIVATE
-    deps/imgui
     src/imgui
 )
 
@@ -356,10 +356,6 @@ target_sources(wato
     src/systems/tower_built.hpp
 
   PRIVATE
-    deps/imgui/imgui.cpp
-    deps/imgui/imgui_draw.cpp
-    deps/imgui/imgui_tables.cpp
-    deps/imgui/imgui_widgets.cpp
     src/core/app/game_client.cpp
     src/core/physics/event_handler.cpp
     src/core/net/enet_base.cpp
@@ -417,6 +413,7 @@ target_link_libraries(wato
   bgfx::bgfx
   bgfx::bimg_decode
   bgfx::bimg
+  imgui::imgui
 )
 
 if(LINUX)
