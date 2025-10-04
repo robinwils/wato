@@ -8,6 +8,7 @@
 #include <cstddef>
 #include <cstring>
 #include <entt/entt.hpp>
+#include <glm/fwd.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <iterator>
 #include <span>
@@ -29,13 +30,13 @@ class ByteInputArchive
     void operator()(entt::entity& aEntity)
     {
         Read<entt::entity>(&aEntity, 1);
-        // spdlog::info("in entity {:d}", static_cast<ENTT_ID_TYPE>(aEntity));
+        spdlog::debug("read entity {:d}", static_cast<ENTT_ID_TYPE>(aEntity));
     }
 
     void operator()(std::underlying_type_t<entt::entity>& aEntity)
     {
         Read<std::underlying_type_t<entt::entity>>(&aEntity, 1);
-        // spdlog::info("in underlying type entity {:d}", aEntity);
+        spdlog::debug("read set of size {:d}", aEntity);
     }
 
     template <typename T>
@@ -51,8 +52,13 @@ class ByteInputArchive
         SafeU32 idx = SafeU32(mIdx) + aN * sizeof(T);
 
         idx = idx < mStorage.size() ? idx : SafeU32(-1);
+        spdlog::debug(
+            "reading {:d} elts [size  = {:d}] at index {} [total size = {}]",
+            aN,
+            sizeof(T),
+            static_cast<uint32_t>(idx),
+            aN * sizeof(T));
 
-        // spdlog::info("reading {:d} elts with type size {:d}", aN, sizeof(T));
         // bx::memCopy(aDestination, &mStorage[mIdx], aN * sizeof(T));
         std::copy_n(reinterpret_cast<const T*>(&mStorage[mIdx]), aN, aDestination);
         mIdx = idx;
@@ -72,10 +78,15 @@ class ByteOutputArchive
     ByteOutputArchive() = default;
     explicit ByteOutputArchive(byte_stream& aOutStream) : mStorage(aOutStream) {}
 
-    void operator()(entt::entity aEntity) { Write<entt::entity>(&aEntity, 1); }
+    void operator()(entt::entity aEntity)
+    {
+        spdlog::debug("writing entity {:d}", static_cast<ENTT_ID_TYPE>(aEntity));
+        Write<entt::entity>(&aEntity, 1);
+    }
 
     void operator()(std::underlying_type_t<entt::entity> aEntity)
     {
+        spdlog::debug("writing set of size {:d}", aEntity);
         Write<std::underlying_type_t<entt::entity>>(&aEntity, 1);
     }
 
@@ -88,6 +99,7 @@ class ByteOutputArchive
     template <typename T, std::input_iterator In>
     void Write(const In& aData, std::size_t aN)
     {
+        spdlog::debug("writing {} elts [size = {}, total = {}]", aN, sizeof(T), aN * sizeof(T));
         auto* p = reinterpret_cast<const byte*>(aData);
         mStorage.insert(mStorage.end(), p, p + aN * sizeof(T));
     }
@@ -107,10 +119,6 @@ void SaveRegistry(const entt::registry& aRegistry, OutArchive& aArchive)
         .template get<entt::entity>(aArchive)
         .template get<Transform3D>(aArchive)
         .template get<Health>(aArchive);
-    // .template get<Physics>(aArchive);
-    //
-    const auto& phy = aRegistry.ctx().get<const Physics&>();
-    Physics::Serialize(aArchive, phy);
 }
 
 template <typename InArchive>
@@ -121,38 +129,23 @@ void LoadRegistry(entt::registry& aRegistry, InArchive& aArchive)
         .template get<entt::entity>(aArchive)
         .template get<Transform3D>(aArchive)
         .template get<Health>(aArchive);
-    Physics::Deserialize(aArchive, aRegistry);
-    // .template get<Physics>(aArchive);
-    // .template get<Physics>([](auto& reg, entt::entity e, auto& ar) {});
 }
 
 #include "doctest.h"
 TEST_CASE("snapshot.simple")
 {
     entt::registry src;
-    auto&          phy = src.ctx().emplace<Physics>();
-    phy.Init(src);
 
     auto e1 = src.create();
-    src.emplace<Transform3D>(e1, glm::vec3(0.0f, 2.0f, 1.5f), glm::vec3(1.0f), glm::vec3(1.0f));
+    src.emplace<Transform3D>(e1, glm::vec3(0.0f, 2.0f, 1.5f));
 
-    auto        e2 = src.create();
-    const auto& t  = src.emplace<Transform3D>(
+    auto e2 = src.create();
+    src.emplace<Transform3D>(
         e2,
         glm::vec3(4.2f, 2.1f, 0.42f),
-        glm::vec3(42.0f),
+        glm::identity<glm::quat>(),
         glm::vec3(0.5f));
     src.emplace<Health>(e2, 300.0f);
-
-    auto e3 = src.create();
-    phy.CreateRigidBody(
-        RigidBodyParams{
-            .Type           = rp3d::BodyType::STATIC,
-            .Velocity       = 21.0f,
-            .Direction      = glm::vec3(42.0f),
-            .GravityEnabled = false,
-        },
-        t);
 
     std::vector<uint8_t> storage;
     ByteOutputArchive    outAr(storage);
@@ -164,8 +157,6 @@ TEST_CASE("snapshot.simple")
 
     CHECK(dest.valid(e1));
     CHECK(dest.valid(e2));
-    CHECK(dest.valid(e3));
     CHECK_EQ(dest.get<Transform3D>(e1).Position, glm::vec3(0.0f, 2.0f, 1.5f));
     CHECK_EQ(dest.get<Health>(e2).Health, 300.0f);
-    CHECK_EQ(dest.get<RigidBody>(e3).Velocity, 21.0f);
 }

@@ -97,60 +97,6 @@ class Physics
               const std::optional<Transform3D>& aTransform = std::nullopt);
     rp3d::RigidBody* CreateRigidBody(const RigidBodyParams& aParams, const Transform3D& aTransform);
 
-    static constexpr auto Serialize(auto& aArchive, const auto& aSelf)
-    {
-        uint32_t nbRigidBodies = aSelf.World()->getNbRigidBodies();
-        aArchive.template Write<uint32_t>(&nbRigidBodies, 1);
-        for (uint32_t rbIdx = 0; rbIdx < nbRigidBodies; ++rbIdx) {
-            rp3d::RigidBody*        body        = aSelf.World()->getRigidBody(rbIdx);
-            const rp3d::Transform&  transform   = body->getTransform();
-            const rp3d::Vector3&    position    = transform.getPosition();
-            const rp3d::Quaternion& orientation = transform.getOrientation();
-            const rp3d::BodyType    type        = body->getType();
-            const bool              gravity     = body->isGravityEnabled();
-
-            aArchive.template Write<rp3d::BodyType>(&type, 1);
-            aArchive.template Write<float>(&position.x, 3);
-            aArchive.template Write<float>(&orientation.x, 4);
-            aArchive.template Write<bool>(&gravity, 1);
-        }
-    }
-
-    /**
-     * @brief special deserialize with registry because Physics is used as a context variable
-     *
-     * @param aArchive snapshot archive
-     * @param aRegistry entt registry
-     */
-    static auto Deserialize(auto& aArchive, auto& aRegistry)
-    {
-        auto& phy = aRegistry.ctx().template emplace<Physics>();
-        phy.Init(aRegistry);
-
-        uint32_t nbRigidBodies = 0;
-        aArchive.template Read<uint32_t>(&nbRigidBodies, 1);
-        for (uint32_t rbIdx = 0; rbIdx < nbRigidBodies; ++rbIdx) {
-            rp3d::BodyType type;
-            float          velocity;
-            glm::vec3      direction;
-            entt::entity   entity;
-            bool           gravity;
-
-            aArchive.template Read<rp3d::BodyType>(&type, 1);
-            aArchive.template Read<float>(&velocity, 1);
-            aArchive.template Read<float>(glm::value_ptr(direction), 3);
-            aArchive.template Read<bool>(&gravity, 1);
-            aArchive.template Read<entt::entity>(&entity, 1);
-
-            phy.CreateRigidBody(RigidBodyParams{
-                .Type           = type,
-                .Velocity       = velocity,
-                .Direction      = direction,
-                .GravityEnabled = gravity});
-        }
-        return true;
-    }
-
     PhysicsParams Params;
 
    private:
