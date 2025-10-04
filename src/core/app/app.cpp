@@ -144,14 +144,14 @@ void Application::SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeigh
         messages);
 
     // Create physics body
-    glm::vec3        translate = glm::vec3(0.75f, 0.004f, 0.75f);
+    glm::vec3        translate = glm::vec3(aWidth + 1, 1.004f, aHeight + 1) / 2.0f - 0.5f;
     rp3d::Transform  transform(ToRP3D(translate), rp3d::Quaternion::identity());
     rp3d::RigidBody* body = physics.CreateRigidBody(
         first,
         aRegistry,
         RigidBodyParams{
             .Type           = rp3d::BodyType::STATIC,
-            .Transform      = transform,
+            .Transform      = rp3d::Transform::identity(),
             .GravityEnabled = false});
     rp3d::HeightFieldShape* heightFieldShape = physics.Common().createHeightFieldShape(heightField);
     rp3d::Collider*         collider         = body->addCollider(heightFieldShape, transform);
