@@ -51,13 +51,13 @@ class ByteInputArchive
     {
         SafeU32 idx = SafeU32(mIdx) + aN * sizeof(T);
 
-        idx = idx < mStorage.size() ? idx : SafeU32(-1);
         spdlog::debug(
             "reading {:d} elts [size  = {:d}] at index {} [total size = {}]",
             aN,
             sizeof(T),
             static_cast<uint32_t>(idx),
             aN * sizeof(T));
+        idx = idx <= mStorage.size() ? idx : SafeU32(-1);
 
         // bx::memCopy(aDestination, &mStorage[mIdx], aN * sizeof(T));
         std::copy_n(reinterpret_cast<const T*>(&mStorage[mIdx]), aN, aDestination);
