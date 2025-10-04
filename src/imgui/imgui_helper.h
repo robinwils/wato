@@ -88,7 +88,7 @@ inline void Image(
     const ImVec4&       aTintCol   = ImVec4(1.0f, 1.0f, 1.0f, 1.0f),
     const ImVec4&       aBorderCol = ImVec4(0.0f, 0.0f, 0.0f, 0.0f))
 {
-    Image(toId(aHandle, aFlags, aMip), aSize, aUv0, aUv1, aTintCol, aBorderCol);
+    ImageWithBg(toId(aHandle, aFlags, aMip), aSize, aUv0, aUv1, aTintCol, aBorderCol);
 }
 
 // Helper function for passing bgfx::TextureHandle to ImGui::Image.
