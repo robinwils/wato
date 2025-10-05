@@ -1,16 +1,11 @@
 #include "input.hpp"
 
-#include <imgui.h>
 #include <fmt/ranges.h>
+#include <imgui.h>
 
 #include <cstring>
 #include <glm/gtx/string_cast.hpp>
 #include <vector>
-
-#include "components/camera.hpp"
-#include "core/queue/ring_buffer.hpp"
-#include "core/sys/log.hpp"
-#include "core/window.hpp"
 
 std::string MouseState::String() const
 {
@@ -351,13 +346,4 @@ std::string KeyboardState::String() const
         }
     }
     return str;
-}
-
-void Input::DrawImgui(const Camera& aCam, const glm::vec3& aCamPos, WatoWindow& aWin)
-{
-    const auto& [origin, end] = aWin.MouseUnproject(aCam, aCamPos);
-
-    ImGui::Text("Input Information");
-    ImGui::Text("Mouse: %s", glm::to_string(MouseState.Pos).c_str());
-    ImGui::Text("Mouse Ray: %s", glm::to_string(end - origin).c_str());
 }

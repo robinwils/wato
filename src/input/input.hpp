@@ -5,10 +5,6 @@
 #include <glm/glm.hpp>
 #include <string>
 
-#include "components/camera.hpp"
-
-class WatoWindow;
-
 struct Keyboard {
     enum Key {
         Space,
@@ -257,24 +253,6 @@ class Input
 
     [[nodiscard]] bool IsPlacementMode() const noexcept { return mTowerPlacementMode; }
     [[nodiscard]] bool IsAbleToBuild() const noexcept { return mCanBuild; }
-
-    void SetCanBuild(bool aEnable) noexcept { mCanBuild = aEnable; }
-
-    void DrawImgui(const Camera& aCamera, const glm::vec3& aCamPos, WatoWindow& aWin);
-
-    /**
-     * @brief unproject mouse screen coordinates to world view
-     *
-     * @param cam camera component
-     * @param cam_pos camera position
-     * @param w screen width
-     * @param h screen height
-     */
-    glm::vec3 WorldMousePos(
-        const Camera&    aCam,
-        const glm::vec3& aCamPos,
-        const float      aWidth,
-        const float      aHeight) const;
 
     struct MouseState    MouseState, PrevMouseState;
     struct KeyboardState KeyboardState, PrevKeyboardState;
