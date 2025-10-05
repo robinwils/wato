@@ -22,7 +22,7 @@
 #include "iconfonts/IconsFontAwesome4.h_fontawesome-webfont.ttf.h"
 #include "iconfonts/IconsKenney.h_kenney-icon-font.ttf.h"
 
-static const bgfx::EmbeddedShader EMBEDDED_SHADERS[] = {
+static const bgfx::EmbeddedShader kEmbeddedShaders[] = {
     BGFX_EMBEDDED_SHADER(vs_ocornut_imgui),
     BGFX_EMBEDDED_SHADER(fs_ocornut_imgui),
     BGFX_EMBEDDED_SHADER(vs_imgui_image),
@@ -208,14 +208,14 @@ struct OcornutImguiContext {
 
         bgfx::RendererType::Enum type = bgfx::getRendererType();
         Program                       = bgfx::createProgram(
-            bgfx::createEmbeddedShader(EMBEDDED_SHADERS, type, "vs_ocornut_imgui"),
-            bgfx::createEmbeddedShader(EMBEDDED_SHADERS, type, "fs_ocornut_imgui"),
+            bgfx::createEmbeddedShader(kEmbeddedShaders, type, "vs_ocornut_imgui"),
+            bgfx::createEmbeddedShader(kEmbeddedShaders, type, "fs_ocornut_imgui"),
             true);
 
         UniformImageLodEnabled = bgfx::createUniform("u_imageLodEnabled", bgfx::UniformType::Vec4);
         ImageProgram           = bgfx::createProgram(
-            bgfx::createEmbeddedShader(EMBEDDED_SHADERS, type, "vs_imgui_image"),
-            bgfx::createEmbeddedShader(EMBEDDED_SHADERS, type, "fs_imgui_image"),
+            bgfx::createEmbeddedShader(kEmbeddedShaders, type, "vs_imgui_image"),
+            bgfx::createEmbeddedShader(kEmbeddedShaders, type, "fs_imgui_image"),
             true);
 
         Layout.begin()
@@ -356,7 +356,7 @@ struct OcornutImguiContext {
     bgfx::UniformHandle UniformImageLodEnabled;
     ImFont*             Fonts[ImGui::Font::Count];
     int64_t             Last;
-    double              LastScroll;
+    float               LastScroll;
     bgfx::ViewId        ViewID;
 #if USE_ENTRY
     ImGuiKey m_keyMap[(int)entry::Key::Count];
@@ -396,7 +396,7 @@ void imguiBeginFrame(
 
 void imguiEndFrame() { sCtx.EndFrame(); }
 struct SampleData {
-    static constexpr uint32_t NUM_SAMPLES = 100;
+    static constexpr uint32_t kNumSamples = 100;
 
     SampleData() { Reset(); }
 
@@ -413,13 +413,13 @@ struct SampleData {
     void PushSample(float aValue)
     {
         Values[Offset] = aValue;
-        Offset         = (Offset + 1) % NUM_SAMPLES;
+        Offset         = (Offset + 1) % kNumSamples;
 
         float min = bx::max<float>();
         float max = bx::min<float>();
         float avg = 0.0f;
 
-        for (uint32_t ii = 0; ii < NUM_SAMPLES; ++ii) {
+        for (uint32_t ii = 0; ii < kNumSamples; ++ii) {
             const float val  = Values[ii];
             min              = bx::min(min, val);
             max              = bx::max(max, val);
@@ -428,11 +428,11 @@ struct SampleData {
 
         Min = min;
         Max = max;
-        Avg = avg / NUM_SAMPLES;
+        Avg = avg / kNumSamples;
     }
 
     int32_t Offset;
-    float   Values[NUM_SAMPLES];
+    float   Values[kNumSamples];
 
     float Min;
     float Max;
@@ -472,7 +472,7 @@ static bool bar(float aWidth, float aMaxWidth, float aHeight, const ImVec4& aCol
     return itemHovered;
 }
 
-static const ImVec4 RESOURCE_COLOR(0.5f, 0.5f, 0.5f, 1.0f);
+static const ImVec4 kResourceColor(0.5f, 0.5f, 0.5f, 1.0f);
 
 static void resourceBar(
     const char* aName,
@@ -490,7 +490,7 @@ static void resourceBar(
 
     const float percentage = float(aNum) / float(aMax);
 
-    itemHovered |= bar(bx::max(1.0f, percentage * aMaxWidth), aMaxWidth, aHeight, RESOURCE_COLOR);
+    itemHovered |= bar(bx::max(1.0f, percentage * aMaxWidth), aMaxWidth, aHeight, kResourceColor);
     ImGui::SameLine();
 
     ImGui::Text("%5.2f%%", percentage * 100.0f);
@@ -590,7 +590,7 @@ void showStatsDialog(const char* aErrorText)
     ImGui::PlotHistogram(
         "Frame",
         sFrameTime.Values,
-        SampleData::NUM_SAMPLES,
+        SampleData::kNumSamples,
         sFrameTime.Offset,
         frameTextOverlay,
         0.0f,
