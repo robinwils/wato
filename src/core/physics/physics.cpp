@@ -1,4 +1,4 @@
-#include "core/physics.hpp"
+#include "core/physics/physics.hpp"
 
 #include <fmt/ranges.h>
 #include <spdlog/spdlog.h>
@@ -18,7 +18,6 @@ void Physics::Init(Registry& aRegistry)
     mWorld->setIsDebugRenderingEnabled(true);
 #endif
     InitLogger();
-    aRegistry.on_destroy<RigidBody>().connect<&Physics::DeleteRigidBody>(this);
 }
 
 void Physics::InitLogger()
@@ -42,56 +41,62 @@ void Physics::InitLogger()
     mCommon.setLogger(Params.Logger);
 }
 
-rp3d::RigidBody* Physics::CreateRigidBody(
-    const entt::entity&   aEntity,
-    Registry&             aRegistry,
-    const RigidBodyParams aParams)
+rp3d::CollisionShape* Physics::CreateCollisionShape(const ColliderShapeParams& aShapeParams)
 {
-    auto* body = mWorld->createRigidBody(aParams.Transform);
+    rp3d::CollisionShape* shape = nullptr;
+    std::visit(
+        VariantVisitor{
+            [&](const BoxShapeParams& aParams) {
+                shape = mCommon.createBoxShape(ToRP3D(aParams.HalfExtents));
+            },
+            [&](const CapsuleShapeParams& aParams) {
+                shape = mCommon.createCapsuleShape(aParams.Radius, aParams.Height);
+            },
+            [&](const HeightFieldShapeParams& aParams) {
+                std::vector<rp3d::Message> messages;
+                shape = mCommon.createHeightFieldShape(mCommon.createHeightField(
+                    aParams.Columns,
+                    aParams.Rows,
+                    aParams.Data.data(),
+                    rp3d::HeightField::HeightDataType::HEIGHT_FLOAT_TYPE,
+                    messages));
+            },
+        },
+        aShapeParams);
+    return shape;
+}
+
+rp3d::Collider* Physics::AddCollider(rp3d::RigidBody* aBody, const ColliderParams& aParams)
+{
+    rp3d::CollisionShape* shape    = CreateCollisionShape(aParams.ShapeParams);
+    rp3d::Collider*       collider = aBody->addCollider(shape, aParams.Offset.ToRP3D());
+
+    collider->setCollisionCategoryBits(aParams.CollisionCategoryBits);
+    collider->setCollideWithMaskBits(aParams.CollideWithMaskBits);
+    collider->setIsTrigger(aParams.IsTrigger);
+
+    return collider;
+}
+
+rp3d::RigidBody* Physics::CreateRigidBody(
+    const RigidBodyParams& aParams,
+    const Transform3D&     aTransform)
+{
+    auto* body = mWorld->createRigidBody(aTransform.ToRP3D());
     body->setType(aParams.Type);
     body->enableGravity(aParams.GravityEnabled);
 
-    // destroyed in on_destroy listener
-    body->setUserData(new RigidBodyData(aEntity));
+    if (aParams.Type == rp3d::BodyType::KINEMATIC && aParams.Velocity != 0.0f) {
+        body->setLinearVelocity(ToRP3D(aParams.Velocity * aParams.Direction));
+    }
+
+    body->setUserData(aParams.Data);
+
 #if WATO_DEBUG
     body->setIsDebugEnabled(true);
 #endif
 
-    aRegistry.emplace<RigidBody>(aEntity, body);
     return body;
-}
-
-rp3d::Collider*
-Physics::AddBoxCollider(rp3d::RigidBody* aBody, const rp3d::Vector3& aSize, const bool aIsTrigger)
-{
-    auto* box      = mCommon.createBoxShape(aSize);
-    auto* collider = aBody->addCollider(box, rp3d::Transform::identity());
-
-    collider->setIsTrigger(aIsTrigger);
-    return collider;
-}
-
-rp3d::Collider* Physics::AddCapsuleCollider(
-    rp3d::RigidBody* aBody,
-    const float&     aRadius,
-    const float&     aHeight,
-    const bool       aIsTrigger)
-{
-    auto* box      = mCommon.createCapsuleShape(aRadius, aHeight);
-    auto* collider = aBody->addCollider(box, rp3d::Transform::identity());
-
-    collider->setIsTrigger(aIsTrigger);
-    return collider;
-}
-
-void Physics::DeleteRigidBody(Registry& aRegistry, entt::entity aEntity)
-{
-    const auto& body = aRegistry.get<RigidBody>(aEntity);
-    if (body.Body && body.Body->getUserData()) {
-        auto* uData = static_cast<RigidBodyData*>(body.Body->getUserData());
-        delete uData;
-        aRegistry.ctx().get<Physics&>().World()->destroyRigidBody(body.Body);
-    }
 }
 
 void ToggleObstacle(const rp3d::Collider* aCollider, Graph& aGraph, bool aAdd)

@@ -294,9 +294,9 @@ target_sources(watolib
     src/components/transform3d.hpp
     src/components/velocity.hpp
     src/core/app/app.hpp
-    src/core/event_handler.hpp
+    src/core/physics/event_handler.hpp
     src/core/graph.hpp
-    src/core/physics.hpp
+    src/core/physics/physics.hpp
     src/core/queue/ring_buffer.hpp
     src/core/snapshot.hpp
     src/core/sys/backtrace.hpp
@@ -309,9 +309,9 @@ target_sources(watolib
 
   PRIVATE
     src/core/app/app.cpp
-    src/core/event_handler.cpp
+    src/core/physics/event_handler.cpp
     src/core/graph.cpp
-    src/core/physics.cpp
+    src/core/physics/physics.cpp
     src/core/snapshot.cpp
     src/core/sys/backtrace.cpp
     src/core/tower_building_handler.cpp
@@ -324,7 +324,6 @@ target_sources(wato
   BASE_DIRS src
   FILES
     src/core/app/game_client.hpp
-    src/core/event_handler.hpp
     src/core/net/enet_base.hpp
     src/core/net/enet_client.hpp
     src/core/tile.hpp
@@ -352,6 +351,7 @@ target_sources(wato
     src/systems/animation.hpp
     src/systems/input.hpp
     src/systems/render.hpp
+    src/systems/rigid_bodies_update.hpp
     src/systems/sync.hpp
     src/systems/tower_built.hpp
 
@@ -361,7 +361,7 @@ target_sources(wato
     deps/imgui/imgui_tables.cpp
     deps/imgui/imgui_widgets.cpp
     src/core/app/game_client.cpp
-    src/core/event_handler.cpp
+    src/core/physics/event_handler.cpp
     src/core/net/enet_base.cpp
     src/core/net/enet_client.cpp
     src/core/sys/mem.cpp
@@ -383,6 +383,7 @@ target_sources(wato
     src/systems/animation.cpp
     src/systems/input.cpp
     src/systems/render.cpp
+    src/systems/rigid_bodies_update.cpp
     src/systems/sync.cpp
     src/systems/tower_built.cpp
 

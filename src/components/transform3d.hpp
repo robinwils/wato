@@ -1,5 +1,7 @@
 #pragma once
 
+#include <reactphysics3d/reactphysics3d.h>
+
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/ext/vector_float3.hpp>
 #include <glm/fwd.hpp>
@@ -7,12 +9,11 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/string_cast.hpp>
 #include <glm/trigonometric.hpp>
-#include <string>
 
-#include "reactphysics3d/reactphysics3d.h"
+#include "core/sys/log.hpp"
 
 struct Transform3D {
-    glm::vec3 Position;
+    glm::vec3 Position{0.0f};
     glm::quat Orientation{glm::identity<glm::quat>()};
     glm::vec3 Scale{1.0f};
 
@@ -55,5 +56,18 @@ struct Transform3D {
         aArchive.template Read<float>(glm::value_ptr(aSelf.Orientation), 4);
         aArchive.template Read<float>(glm::value_ptr(aSelf.Scale), 3);
         return true;
+    }
+};
+
+template <>
+struct fmt::formatter<Transform3D> : fmt::formatter<std::string> {
+    auto format(const Transform3D& aObj, format_context& aCtx) const -> decltype(aCtx.out())
+    {
+        return fmt::format_to(
+            aCtx.out(),
+            "Position = {}, Orientation = {}, Scale = {}",
+            aObj.Position,
+            aObj.Orientation,
+            aObj.Scale);
     }
 };

@@ -6,7 +6,7 @@
 #include "components/placement_mode.hpp"
 #include "components/scene_object.hpp"
 #include "components/transform3d.hpp"
-#include "core/physics.hpp"
+#include "core/physics/physics.hpp"
 #include "registry/registry.hpp"
 #include "systems/system.hpp"
 
