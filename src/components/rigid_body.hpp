@@ -20,5 +20,5 @@ struct RigidBody {
 
 struct Collider {
     ColliderParams  Params;
-    rp3d::Collider* Collider{nullptr};
+    rp3d::Collider* Handle{nullptr};
 };

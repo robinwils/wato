@@ -233,8 +233,8 @@ void ServerContextHandler::operator()(Registry& aRegistry, const BuildTowerPaylo
             },
     };
 
-    body.Body         = phy.CreateRigidBody(body.Params, t);
-    collider.Collider = phy.AddCollider(body.Body, collider.Params);
+    body.Body       = phy.CreateRigidBody(body.Params, t);
+    collider.Handle = phy.AddCollider(body.Body, collider.Params);
 
     TowerBuildingHandler handler;
     phy.World()->testCollision(body.Body, handler);

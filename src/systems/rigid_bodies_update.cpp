@@ -34,8 +34,8 @@ void RigidBodiesUpdateSystem::operator()(Registry& aRegistry, const float aDelta
         auto& t  = aRegistry.get<Transform3D>(e);
 
         if (!rb.Body) {
-            rb.Body    = physics.CreateRigidBody(rb.Params, t);
-            c.Collider = physics.AddCollider(rb.Body, c.Params);
+            rb.Body  = physics.CreateRigidBody(rb.Params, t);
+            c.Handle = physics.AddCollider(rb.Body, c.Params);
         }
 
         if (rb.Params.Data != rb.Body->getUserData()) {
