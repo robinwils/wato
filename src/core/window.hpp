@@ -5,6 +5,7 @@
 
 #include <memory>
 
+#include "components/camera.hpp"
 #include "core/queue/ring_buffer.hpp"
 #include "input/input.hpp"
 

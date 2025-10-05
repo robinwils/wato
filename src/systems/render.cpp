@@ -13,6 +13,7 @@
 #include <variant>
 
 #include "components/animator.hpp"
+#include "components/camera.hpp"
 #include "components/imgui.hpp"
 #include "components/scene_object.hpp"
 #include "core/physics/physics.hpp"
@@ -91,7 +92,12 @@ void RenderImguiSystem::operator()(Registry& aRegistry, const float aDeltaTime)
         auto [camera, transform] = aRegistry.try_get<Camera, Transform3D>(entity);
         ImGui::Text("%s Settings", imgui.Name.c_str());
         if (camera && transform) {
-            window.GetInput().DrawImgui(*camera, transform->Position, window);
+            const auto& [origin, end] = window.MouseUnproject(*camera, transform->Position);
+
+            ImGui::Text("Input Information");
+            ImGui::Text("Mouse: %s", glm::to_string(window.GetInput().MouseState.Pos).c_str());
+            ImGui::Text("Mouse Ray: %s", glm::to_string(end - origin).c_str());
+
             ImGui::DragFloat3("Position", glm::value_ptr(transform->Position), 0.1f, 5.0f);
             ImGui::DragFloat3("Direction", glm::value_ptr(camera->Dir), 0.1f, 2.0f);
             ImGui::DragFloat("FoV (Degree)", &camera->Fov, 10.0f, 120.0f);

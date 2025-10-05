@@ -5,6 +5,7 @@
 #include <variant>
 
 #include "components/animator.hpp"
+#include "components/camera.hpp"
 #include "components/creep.hpp"
 #include "components/health.hpp"
 #include "components/imgui.hpp"

@@ -3,13 +3,21 @@
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
-#include "imgui_helper.h"
-
 #include <bgfx/bgfx.h>
 #include <bgfx/embedded_shader.h>
 #include <bx/allocator.h>
 #include <bx/math.h>
 #include <bx/timer.h>
+
+#include <renderer/bgfx_utils.hpp>
+
+BX_PRAGMA_DIAGNOSTIC_PUSH();
+BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wdouble-promotion")
+BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wold-style-cast")
+BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wcast-align")
+BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wimplicit-int-float-conversion")
+BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wsign-conversion")
+
 #include <imgui/fs_imgui_image.bin.h>
 #include <imgui/fs_ocornut_imgui.bin.h>
 #include <imgui/roboto_regular.ttf.h>
@@ -17,12 +25,11 @@
 #include <imgui/vs_imgui_image.bin.h>
 #include <imgui/vs_ocornut_imgui.bin.h>
 
-#include <renderer/bgfx_utils.hpp>
-
 #include "iconfonts/IconsFontAwesome4.h_fontawesome-webfont.ttf.h"
 #include "iconfonts/IconsKenney.h_kenney-icon-font.ttf.h"
+#include "imgui_helper.h"
 
-static const bgfx::EmbeddedShader EMBEDDED_SHADERS[] = {
+static const bgfx::EmbeddedShader kEmbeddedShaders[] = {
     BGFX_EMBEDDED_SHADER(vs_ocornut_imgui),
     BGFX_EMBEDDED_SHADER(fs_ocornut_imgui),
     BGFX_EMBEDDED_SHADER(vs_imgui_image),
@@ -36,7 +43,7 @@ struct FontRangeMerge {
 };
 
 static FontRangeMerge sFontRangeMerge[] = {
-    {s_kenney_icon_font_ttf,    sizeof(s_kenney_icon_font_ttf),    {ICON_MIN_KI, ICON_MAX_KI, 0}},
+    {s_kenney_icon_font_ttf, sizeof(s_kenney_icon_font_ttf), {ICON_MIN_KI, ICON_MAX_KI, 0}},
     {s_fontawesome_webfont_ttf, sizeof(s_fontawesome_webfont_ttf), {ICON_MIN_FA, ICON_MAX_FA, 0}},
 };
 
@@ -63,7 +70,8 @@ struct OcornutImguiContext {
             float width  = aDrawData->DisplaySize.x;
             float height = aDrawData->DisplaySize.y;
 
-            bx::mtxOrtho(ortho,
+            bx::mtxOrtho(
+                ortho,
                 x,
                 x + width,
                 y + height,
@@ -107,8 +115,8 @@ struct OcornutImguiContext {
 
             for (const ImDrawCmd *cmd    = drawList->CmdBuffer.begin(),
                                  *cmdEnd = drawList->CmdBuffer.end();
-                cmd != cmdEnd;
-                ++cmd) {
+                 cmd != cmdEnd;
+                 ++cmd) {
                 if (cmd->UserCallback) {
                     cmd->UserCallback(drawList, cmd);
                 } else if (0 != cmd->ElemCount) {
@@ -128,12 +136,14 @@ struct OcornutImguiContext {
                             } State;
                         } texture  = {cmd->TextureId};
                         state     |= 0 != (IMGUI_FLAGS_ALPHA_BLEND & texture.State.Flags)
-                                         ? BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA,
+                                         ? BGFX_STATE_BLEND_FUNC(
+                                           BGFX_STATE_BLEND_SRC_ALPHA,
                                            BGFX_STATE_BLEND_INV_SRC_ALPHA)
                                          : BGFX_STATE_NONE;
                         th         = texture.State.Handle;
                         if (0 != texture.State.Mip) {
-                            const float lodEnabled[4] = {float(texture.State.Mip),
+                            const float lodEnabled[4] = {
+                                float(texture.State.Mip),
                                 1.0f,
                                 0.0f,
                                 0.0f};
@@ -141,7 +151,8 @@ struct OcornutImguiContext {
                             program = ImageProgram;
                         }
                     } else {
-                        state |= BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA,
+                        state |= BGFX_STATE_BLEND_FUNC(
+                            BGFX_STATE_BLEND_SRC_ALPHA,
                             BGFX_STATE_BLEND_INV_SRC_ALPHA);
                     }
 
@@ -156,7 +167,8 @@ struct OcornutImguiContext {
                         && clipRect.w >= 0.0f) {
                         const uint16_t xx = uint16_t(bx::max(clipRect.x, 0.0f));
                         const uint16_t yy = uint16_t(bx::max(clipRect.y, 0.0f));
-                        encoder->setScissor(xx,
+                        encoder->setScissor(
+                            xx,
                             yy,
                             uint16_t(bx::min(clipRect.z, 65535.0f) - xx),
                             uint16_t(bx::min(clipRect.w, 65535.0f) - yy));
@@ -203,14 +215,14 @@ struct OcornutImguiContext {
 
         bgfx::RendererType::Enum type = bgfx::getRendererType();
         Program                       = bgfx::createProgram(
-            bgfx::createEmbeddedShader(EMBEDDED_SHADERS, type, "vs_ocornut_imgui"),
-            bgfx::createEmbeddedShader(EMBEDDED_SHADERS, type, "fs_ocornut_imgui"),
+            bgfx::createEmbeddedShader(kEmbeddedShaders, type, "vs_ocornut_imgui"),
+            bgfx::createEmbeddedShader(kEmbeddedShaders, type, "fs_ocornut_imgui"),
             true);
 
         UniformImageLodEnabled = bgfx::createUniform("u_imageLodEnabled", bgfx::UniformType::Vec4);
         ImageProgram           = bgfx::createProgram(
-            bgfx::createEmbeddedShader(EMBEDDED_SHADERS, type, "vs_imgui_image"),
-            bgfx::createEmbeddedShader(EMBEDDED_SHADERS, type, "fs_imgui_image"),
+            bgfx::createEmbeddedShader(kEmbeddedShaders, type, "vs_imgui_image"),
+            bgfx::createEmbeddedShader(kEmbeddedShaders, type, "fs_imgui_image"),
             true);
 
         Layout.begin()
@@ -231,12 +243,14 @@ struct OcornutImguiContext {
             //			config.MergeGlyphCenterV = true;
 
             const ImWchar* ranges       = io.Fonts->GetGlyphRangesCyrillic();
-            Fonts[ImGui::Font::Regular] = io.Fonts->AddFontFromMemoryTTF((void*)s_robotoRegularTtf,
+            Fonts[ImGui::Font::Regular] = io.Fonts->AddFontFromMemoryTTF(
+                (void*)s_robotoRegularTtf,
                 sizeof(s_robotoRegularTtf),
                 aFontSize,
                 &config,
                 ranges);
-            Fonts[ImGui::Font::Mono] = io.Fonts->AddFontFromMemoryTTF((void*)s_robotoMonoRegularTtf,
+            Fonts[ImGui::Font::Mono] = io.Fonts->AddFontFromMemoryTTF(
+                (void*)s_robotoMonoRegularTtf,
                 sizeof(s_robotoMonoRegularTtf),
                 aFontSize - 3.0f,
                 &config,
@@ -248,7 +262,8 @@ struct OcornutImguiContext {
             for (uint32_t ii = 0; ii < BX_COUNTOF(sFontRangeMerge); ++ii) {
                 const FontRangeMerge& frm = sFontRangeMerge[ii];
 
-                io.Fonts->AddFontFromMemoryTTF((void*)frm.Data,
+                io.Fonts->AddFontFromMemoryTTF(
+                    (void*)frm.Data,
                     (int)frm.Size,
                     aFontSize - 3.0f,
                     &config,
@@ -258,7 +273,8 @@ struct OcornutImguiContext {
 
         io.Fonts->GetTexDataAsRGBA32(&data, &width, &height);
 
-        Texture = bgfx::createTexture2D((uint16_t)width,
+        Texture = bgfx::createTexture2D(
+            (uint16_t)width,
             (uint16_t)height,
             false,
             1,
@@ -296,11 +312,8 @@ struct OcornutImguiContext {
         style.WindowBorderSize = 0.0f;
     }
 
-    void BeginFrame(const Input& aInput,
-        int                      aWidth,
-        int                      aHeight,
-        int                      aInputChar,
-        bgfx::ViewId             aViewId)
+    void
+    BeginFrame(const Input& aInput, int aWidth, int aHeight, int aInputChar, bgfx::ViewId aViewId)
     {
         ViewID = aViewId;
 
@@ -319,11 +332,14 @@ struct OcornutImguiContext {
 
         io.AddMousePosEvent((float)aInput.MouseState.Pos.x, (float)aInput.MouseState.Pos.y);
 
-        io.AddMouseButtonEvent(ImGuiMouseButton_Left,
+        io.AddMouseButtonEvent(
+            ImGuiMouseButton_Left,
             aInput.MouseState.IsKeyPressed(Mouse::Button::Left));
-        io.AddMouseButtonEvent(ImGuiMouseButton_Right,
+        io.AddMouseButtonEvent(
+            ImGuiMouseButton_Right,
             aInput.MouseState.IsKeyPressed(Mouse::Button::Right));
-        io.AddMouseButtonEvent(ImGuiMouseButton_Middle,
+        io.AddMouseButtonEvent(
+            ImGuiMouseButton_Middle,
             aInput.MouseState.IsKeyPressed(Mouse::Button::Middle));
         io.AddMouseWheelEvent(0.0f, (float)(aInput.MouseState.Scroll.y - LastScroll));
         LastScroll = aInput.MouseState.Scroll.y;
@@ -347,7 +363,7 @@ struct OcornutImguiContext {
     bgfx::UniformHandle UniformImageLodEnabled;
     ImFont*             Fonts[ImGui::Font::Count];
     int64_t             Last;
-    double              LastScroll;
+    float               LastScroll;
     bgfx::ViewId        ViewID;
 #if USE_ENTRY
     ImGuiKey m_keyMap[(int)entry::Key::Count];
@@ -375,18 +391,19 @@ void imguiCreate(float aFontSize, bx::AllocatorI* aAllocator)
 
 void imguiDestroy() { sCtx.Destroy(); }
 
-void imguiBeginFrame(const Input& aInput,
-    int                           aWidth,
-    int                           aHeight,
-    int                           aInputChar,
-    bgfx::ViewId                  aViewId)
+void imguiBeginFrame(
+    const Input& aInput,
+    int          aWidth,
+    int          aHeight,
+    int          aInputChar,
+    bgfx::ViewId aViewId)
 {
     sCtx.BeginFrame(aInput, aWidth, aHeight, aInputChar, aViewId);
 }
 
 void imguiEndFrame() { sCtx.EndFrame(); }
 struct SampleData {
-    static constexpr uint32_t NUM_SAMPLES = 100;
+    static constexpr uint32_t kNumSamples = 100;
 
     SampleData() { Reset(); }
 
@@ -403,13 +420,13 @@ struct SampleData {
     void PushSample(float aValue)
     {
         Values[Offset] = aValue;
-        Offset         = (Offset + 1) % NUM_SAMPLES;
+        Offset         = (Offset + 1) % kNumSamples;
 
         float min = bx::max<float>();
         float max = bx::min<float>();
         float avg = 0.0f;
 
-        for (uint32_t ii = 0; ii < NUM_SAMPLES; ++ii) {
+        for (uint32_t ii = 0; ii < kNumSamples; ++ii) {
             const float val  = Values[ii];
             min              = bx::min(min, val);
             max              = bx::max(max, val);
@@ -418,11 +435,11 @@ struct SampleData {
 
         Min = min;
         Max = max;
-        Avg = avg / NUM_SAMPLES;
+        Avg = avg / kNumSamples;
     }
 
     int32_t Offset;
-    float   Values[NUM_SAMPLES];
+    float   Values[kNumSamples];
 
     float Min;
     float Max;
@@ -435,7 +452,8 @@ static bool bar(float aWidth, float aMaxWidth, float aHeight, const ImVec4& aCol
 {
     const ImGuiStyle& style = ImGui::GetStyle();
 
-    ImVec4 hoveredColor(aColor.x + aColor.x * 0.1f,
+    ImVec4 hoveredColor(
+        aColor.x + aColor.x * 0.1f,
         aColor.y + aColor.y * 0.1f,
         aColor.z + aColor.z * 0.1f,
         aColor.w + aColor.w * 0.1f);
@@ -461,14 +479,15 @@ static bool bar(float aWidth, float aMaxWidth, float aHeight, const ImVec4& aCol
     return itemHovered;
 }
 
-static const ImVec4 RESOURCE_COLOR(0.5f, 0.5f, 0.5f, 1.0f);
+static const ImVec4 kResourceColor(0.5f, 0.5f, 0.5f, 1.0f);
 
-static void resourceBar(const char* aName,
-    const char*                     aTooltip,
-    uint32_t                        aNum,
-    uint32_t                        aMax,
-    float                           aMaxWidth,
-    float                           aHeight)
+static void resourceBar(
+    const char* aName,
+    const char* aTooltip,
+    uint32_t    aNum,
+    uint32_t    aMax,
+    float       aMaxWidth,
+    float       aHeight)
 {
     bool itemHovered = false;
 
@@ -478,7 +497,7 @@ static void resourceBar(const char* aName,
 
     const float percentage = float(aNum) / float(aMax);
 
-    itemHovered |= bar(bx::max(1.0f, percentage * aMaxWidth), aMaxWidth, aHeight, RESOURCE_COLOR);
+    itemHovered |= bar(bx::max(1.0f, percentage * aMaxWidth), aMaxWidth, aHeight, kResourceColor);
     ImGui::SameLine();
 
     ImGui::Text("%5.2f%%", percentage * 100.0f);
@@ -532,7 +551,8 @@ void showStatsDialog(const char* aErrorText)
 
         bool blink = time > 0.5f;
 
-        ImGui::PushStyleColor(ImGuiCol_Text,
+        ImGui::PushStyleColor(
+            ImGuiCol_Text,
             blink ? ImVec4(1.0, 0.0, 0.0, 1.0) : ImVec4(1.0, 1.0, 1.0, 1.0));
         ImGui::TextWrapped("%s", aErrorText);
         ImGui::Separator();
@@ -562,7 +582,8 @@ void showStatsDialog(const char* aErrorText)
     sFrameTime.PushSample(float(frameMs));
 
     char frameTextOverlay[256];
-    bx::snprintf(frameTextOverlay,
+    bx::snprintf(
+        frameTextOverlay,
         BX_COUNTOF(frameTextOverlay),
         "%s%.3fms, %s%.3fms\nAvg: %.3fms, %.1f FPS",
         ICON_FA_ARROW_DOWN,
@@ -573,9 +594,10 @@ void showStatsDialog(const char* aErrorText)
         1000.0f / sFrameTime.Avg);
 
     ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImColor(0.0f, 0.5f, 0.15f, 1.0f).Value);
-    ImGui::PlotHistogram("Frame",
+    ImGui::PlotHistogram(
+        "Frame",
         sFrameTime.Values,
-        SampleData::NUM_SAMPLES,
+        SampleData::kNumSamples,
         sFrameTime.Offset,
         frameTextOverlay,
         0.0f,
@@ -583,7 +605,8 @@ void showStatsDialog(const char* aErrorText)
         ImVec2(0.0f, 45.0f));
     ImGui::PopStyleColor();
 
-    ImGui::Text("Submit CPU %0.3f, GPU %0.3f (L: %d)",
+    ImGui::Text(
+        "Submit CPU %0.3f, GPU %0.3f (L: %d)",
         double(stats->cpuTimeEnd - stats->cpuTimeBegin) * toMsCpu,
         double(stats->gpuTimeEnd - stats->gpuTimeBegin) * toMsGpu,
         stats->maxGpuLatency);
@@ -610,67 +633,78 @@ void showStatsDialog(const char* aErrorText)
 
                 ImGui::PushFont(ImGui::Font::Mono);
                 ImGui::Text("Res: Num  / Max");
-                resourceBar("DIB",
+                resourceBar(
+                    "DIB",
                     "Dynamic index buffers",
                     stats->numDynamicIndexBuffers,
                     caps->limits.maxDynamicIndexBuffers,
                     maxWidth,
                     itemHeight);
-                resourceBar("DVB",
+                resourceBar(
+                    "DVB",
                     "Dynamic vertex buffers",
                     stats->numDynamicVertexBuffers,
                     caps->limits.maxDynamicVertexBuffers,
                     maxWidth,
                     itemHeight);
-                resourceBar(" FB",
+                resourceBar(
+                    " FB",
                     "Frame buffers",
                     stats->numFrameBuffers,
                     caps->limits.maxFrameBuffers,
                     maxWidth,
                     itemHeight);
-                resourceBar(" IB",
+                resourceBar(
+                    " IB",
                     "Index buffers",
                     stats->numIndexBuffers,
                     caps->limits.maxIndexBuffers,
                     maxWidth,
                     itemHeight);
-                resourceBar(" OQ",
+                resourceBar(
+                    " OQ",
                     "Occlusion queries",
                     stats->numOcclusionQueries,
                     caps->limits.maxOcclusionQueries,
                     maxWidth,
                     itemHeight);
-                resourceBar("  P",
+                resourceBar(
+                    "  P",
                     "Programs",
                     stats->numPrograms,
                     caps->limits.maxPrograms,
                     maxWidth,
                     itemHeight);
-                resourceBar("  S",
+                resourceBar(
+                    "  S",
                     "Shaders",
                     stats->numShaders,
                     caps->limits.maxShaders,
                     maxWidth,
                     itemHeight);
-                resourceBar("  T",
+                resourceBar(
+                    "  T",
                     "Textures",
                     stats->numTextures,
                     caps->limits.maxTextures,
                     maxWidth,
                     itemHeight);
-                resourceBar("  U",
+                resourceBar(
+                    "  U",
                     "Uniforms",
                     stats->numUniforms,
                     caps->limits.maxUniforms,
                     maxWidth,
                     itemHeight);
-                resourceBar(" VB",
+                resourceBar(
+                    " VB",
                     "Vertex buffers",
                     stats->numVertexBuffers,
                     caps->limits.maxVertexBuffers,
                     maxWidth,
                     itemHeight);
-                resourceBar(" VL",
+                resourceBar(
+                    " VL",
                     "Vertex layouts",
                     stats->numVertexLayouts,
                     caps->limits.maxVertexLayouts,
@@ -695,15 +729,17 @@ void showStatsDialog(const char* aErrorText)
                         const double toGpuMs               = 1000.0 / double(stats->gpuTimerFreq);
                         const float  scale                 = 3.0f;
 
-                        if (ImGui::BeginListBox("Encoders",
-                                ImVec2(ImGui::GetWindowWidth(),
+                        if (ImGui::BeginListBox(
+                                "Encoders",
+                                ImVec2(
+                                    ImGui::GetWindowWidth(),
                                     stats->numEncoders * itemHeightWithSpacing))) {
                             ImGuiListClipper clipper;
                             clipper.Begin(stats->numEncoders, itemHeight);
 
                             while (clipper.Step()) {
                                 for (int32_t pos = clipper.DisplayStart; pos < clipper.DisplayEnd;
-                                    ++pos) {
+                                     ++pos) {
                                     const bgfx::EncoderStats& encoderStats =
                                         stats->encoderStats[pos];
 
@@ -711,9 +747,9 @@ void showStatsDialog(const char* aErrorText)
                                     ImGui::SameLine(64.0f);
 
                                     const float maxWidth = 30.0f * scale;
-                                    const float cpuMs =
-                                        float((encoderStats.cpuTimeEnd - encoderStats.cpuTimeBegin)
-                                              * toCpuMs);
+                                    const float cpuMs    = float(
+                                        (encoderStats.cpuTimeEnd - encoderStats.cpuTimeBegin)
+                                        * toCpuMs);
                                     const float cpuWidth = bx::clamp(cpuMs * scale, 1.0f, maxWidth);
 
                                     if (bar(cpuWidth, maxWidth, itemHeight, cpuColor)) {
@@ -727,15 +763,17 @@ void showStatsDialog(const char* aErrorText)
 
                         ImGui::Separator();
 
-                        if (ImGui::BeginListBox("Views",
-                                ImVec2(ImGui::GetWindowWidth(),
+                        if (ImGui::BeginListBox(
+                                "Views",
+                                ImVec2(
+                                    ImGui::GetWindowWidth(),
                                     stats->numViews * itemHeightWithSpacing))) {
                             ImGuiListClipper clipper;
                             clipper.Begin(stats->numViews, itemHeight);
 
                             while (clipper.Step()) {
                                 for (int32_t pos = clipper.DisplayStart; pos < clipper.DisplayEnd;
-                                    ++pos) {
+                                     ++pos) {
                                     const bgfx::ViewStats& viewStats = stats->viewStats[pos];
 
                                     ImGui::Text("%3d %3d %s", pos, viewStats.view, viewStats.name);
@@ -753,7 +791,8 @@ void showStatsDialog(const char* aErrorText)
                                     ImGui::SameLine(64.0f);
 
                                     if (bar(cpuWidth, maxWidth, itemHeight, cpuColor)) {
-                                        ImGui::SetTooltip("View %d \"%s\", CPU: %f [ms]",
+                                        ImGui::SetTooltip(
+                                            "View %d \"%s\", CPU: %f [ms]",
                                             pos,
                                             viewStats.name,
                                             cpuTimeElapsed);
@@ -761,7 +800,8 @@ void showStatsDialog(const char* aErrorText)
 
                                     ImGui::SameLine();
                                     if (bar(gpuWidth, maxWidth, itemHeight, gpuColor)) {
-                                        ImGui::SetTooltip("View: %d \"%s\", GPU: %f [ms]",
+                                        ImGui::SetTooltip(
+                                            "View: %d \"%s\", GPU: %f [ms]",
                                             pos,
                                             viewStats.name,
                                             gpuTimeElapsed);
@@ -852,20 +892,4 @@ void ImString::Clear()
 
 bool ImString::IsEmpty() const { return NULL == mPtr; }
 }  // namespace ImGui
-
-BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(
-    4505);  // error C4505: '' : unreferenced local function has been removed
-BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC(
-    "-Wunused-function");  // warning: 'int rect_width_compare(const void*, const
-                           // void*)' defined but not used
-BX_PRAGMA_DIAGNOSTIC_PUSH();
-BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wunknown-pragmas")
-BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC(
-    "-Wtype-limits");  // warning: comparison is always true due to limited range of data type
-/*#define STBTT_malloc(_size, _userData) memAlloc(_size, _userData)
-#define STBTT_free(_ptr, _userData) memFree(_ptr, _userData)
-#define STB_RECT_PACK_IMPLEMENTATION
-#include <stb/stb_rect_pack.h>
-#define STB_TRUETYPE_IMPLEMENTATION
-#include <stb/stb_truetype.h>*/
 BX_PRAGMA_DIAGNOSTIC_POP();

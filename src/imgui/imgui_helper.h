@@ -35,11 +35,12 @@ struct AllocatorI;
 void imguiCreate(float aFontSize = 18.0f, bx::AllocatorI* aAllocator = NULL);
 void imguiDestroy();
 
-void imguiBeginFrame(const Input& aInput,
-    int                           aWidth,
-    int                           aHeight,
-    int                           aInputChar = -1,
-    bgfx::ViewId                  aView      = 255);
+void imguiBeginFrame(
+    const Input& aInput,
+    int          aWidth,
+    int          aHeight,
+    int          aInputChar = -1,
+    bgfx::ViewId aView      = 255);
 
 void imguiEndFrame();
 
@@ -77,49 +78,53 @@ inline ImTextureID toId(bgfx::TextureHandle aHandle, uint8_t aFlags, uint8_t aMi
 }
 
 // Helper function for passing bgfx::TextureHandle to ImGui::Image.
-inline void Image(bgfx::TextureHandle aHandle,
-    uint8_t                           aFlags,
-    uint8_t                           aMip,
-    const ImVec2&                     aSize,
-    const ImVec2&                     aUv0       = ImVec2(0.0f, 0.0f),
-    const ImVec2&                     aUv1       = ImVec2(1.0f, 1.0f),
-    const ImVec4&                     aTintCol   = ImVec4(1.0f, 1.0f, 1.0f, 1.0f),
-    const ImVec4&                     aBorderCol = ImVec4(0.0f, 0.0f, 0.0f, 0.0f))
+inline void Image(
+    bgfx::TextureHandle aHandle,
+    uint8_t             aFlags,
+    uint8_t             aMip,
+    const ImVec2&       aSize,
+    const ImVec2&       aUv0       = ImVec2(0.0f, 0.0f),
+    const ImVec2&       aUv1       = ImVec2(1.0f, 1.0f),
+    const ImVec4&       aTintCol   = ImVec4(1.0f, 1.0f, 1.0f, 1.0f),
+    const ImVec4&       aBorderCol = ImVec4(0.0f, 0.0f, 0.0f, 0.0f))
 {
-    Image(toId(aHandle, aFlags, aMip), aSize, aUv0, aUv1, aTintCol, aBorderCol);
+    ImageWithBg(toId(aHandle, aFlags, aMip), aSize, aUv0, aUv1, aTintCol, aBorderCol);
 }
 
 // Helper function for passing bgfx::TextureHandle to ImGui::Image.
-inline void Image(bgfx::TextureHandle aHandle,
-    const ImVec2&                     aSize,
-    const ImVec2&                     aUv0       = ImVec2(0.0f, 0.0f),
-    const ImVec2&                     aUv1       = ImVec2(1.0f, 1.0f),
-    const ImVec4&                     aTintCol   = ImVec4(1.0f, 1.0f, 1.0f, 1.0f),
-    const ImVec4&                     aBorderCol = ImVec4(0.0f, 0.0f, 0.0f, 0.0f))
+inline void Image(
+    bgfx::TextureHandle aHandle,
+    const ImVec2&       aSize,
+    const ImVec2&       aUv0       = ImVec2(0.0f, 0.0f),
+    const ImVec2&       aUv1       = ImVec2(1.0f, 1.0f),
+    const ImVec4&       aTintCol   = ImVec4(1.0f, 1.0f, 1.0f, 1.0f),
+    const ImVec4&       aBorderCol = ImVec4(0.0f, 0.0f, 0.0f, 0.0f))
 {
     Image(aHandle, IMGUI_FLAGS_ALPHA_BLEND, 0, aSize, aUv0, aUv1, aTintCol, aBorderCol);
 }
 
 // Helper function for passing bgfx::TextureHandle to ImGui::ImageButton.
-inline bool ImageButton(bgfx::TextureHandle aHandle,
-    uint8_t                                 aFlags,
-    uint8_t                                 aMip,
-    const ImVec2&                           aSize,
-    const ImVec2&                           aUv0     = ImVec2(0.0f, 0.0f),
-    const ImVec2&                           aUv1     = ImVec2(1.0f, 1.0f),
-    const ImVec4&                           aBgCol   = ImVec4(0.0f, 0.0f, 0.0f, 0.0f),
-    const ImVec4&                           aTintCol = ImVec4(1.0f, 1.0f, 1.0f, 1.0f))
+inline bool ImageButton(
+    bgfx::TextureHandle aHandle,
+    uint8_t             aFlags,
+    uint8_t             aMip,
+    const ImVec2&       aSize,
+    const ImVec2&       aUv0     = ImVec2(0.0f, 0.0f),
+    const ImVec2&       aUv1     = ImVec2(1.0f, 1.0f),
+    const ImVec4&       aBgCol   = ImVec4(0.0f, 0.0f, 0.0f, 0.0f),
+    const ImVec4&       aTintCol = ImVec4(1.0f, 1.0f, 1.0f, 1.0f))
 {
     return ImageButton("image", toId(aHandle, aFlags, aMip), aSize, aUv0, aUv1, aBgCol, aTintCol);
 }
 
 // Helper function for passing bgfx::TextureHandle to ImGui::ImageButton.
-inline bool ImageButton(bgfx::TextureHandle aHandle,
-    const ImVec2&                           aSize,
-    const ImVec2&                           aUv0     = ImVec2(0.0f, 0.0f),
-    const ImVec2&                           aUv1     = ImVec2(1.0f, 1.0f),
-    const ImVec4&                           aBgCol   = ImVec4(0.0f, 0.0f, 0.0f, 0.0f),
-    const ImVec4&                           aTintCol = ImVec4(1.0f, 1.0f, 1.0f, 1.0f))
+inline bool ImageButton(
+    bgfx::TextureHandle aHandle,
+    const ImVec2&       aSize,
+    const ImVec2&       aUv0     = ImVec2(0.0f, 0.0f),
+    const ImVec2&       aUv1     = ImVec2(1.0f, 1.0f),
+    const ImVec4&       aBgCol   = ImVec4(0.0f, 0.0f, 0.0f, 0.0f),
+    const ImVec4&       aTintCol = ImVec4(1.0f, 1.0f, 1.0f, 1.0f))
 {
     return ImageButton(aHandle, IMGUI_FLAGS_ALPHA_BLEND, 0, aSize, aUv0, aUv1, aBgCol, aTintCol);
 }
