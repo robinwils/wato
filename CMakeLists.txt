@@ -328,6 +328,8 @@ target_sources(wato
     src/core/net/enet_client.hpp
     src/core/tile.hpp
     src/core/window.hpp
+    src/imgui/wato_imgui_config.h
+    src/imgui/imgui_helper.h
     src/input/action.hpp
     src/input/input.hpp
     src/registry/game_registry.hpp
