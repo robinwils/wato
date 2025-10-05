@@ -3,13 +3,21 @@
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
-#include "imgui_helper.h"
-
 #include <bgfx/bgfx.h>
 #include <bgfx/embedded_shader.h>
 #include <bx/allocator.h>
 #include <bx/math.h>
 #include <bx/timer.h>
+
+#include <renderer/bgfx_utils.hpp>
+
+BX_PRAGMA_DIAGNOSTIC_PUSH();
+BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wdouble-promotion")
+BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wold-style-cast")
+BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wcast-align")
+BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wimplicit-int-float-conversion")
+BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wsign-conversion")
+
 #include <imgui/fs_imgui_image.bin.h>
 #include <imgui/fs_ocornut_imgui.bin.h>
 #include <imgui/roboto_regular.ttf.h>
@@ -17,10 +25,9 @@
 #include <imgui/vs_imgui_image.bin.h>
 #include <imgui/vs_ocornut_imgui.bin.h>
 
-#include <renderer/bgfx_utils.hpp>
-
 #include "iconfonts/IconsFontAwesome4.h_fontawesome-webfont.ttf.h"
 #include "iconfonts/IconsKenney.h_kenney-icon-font.ttf.h"
+#include "imgui_helper.h"
 
 static const bgfx::EmbeddedShader kEmbeddedShaders[] = {
     BGFX_EMBEDDED_SHADER(vs_ocornut_imgui),
@@ -885,20 +892,4 @@ void ImString::Clear()
 
 bool ImString::IsEmpty() const { return NULL == mPtr; }
 }  // namespace ImGui
-
-BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(
-    4505);  // error C4505: '' : unreferenced local function has been removed
-BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC(
-    "-Wunused-function");  // warning: 'int rect_width_compare(const void*, const
-                           // void*)' defined but not used
-BX_PRAGMA_DIAGNOSTIC_PUSH();
-BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wunknown-pragmas")
-BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC(
-    "-Wtype-limits");  // warning: comparison is always true due to limited range of data type
-/*#define STBTT_malloc(_size, _userData) memAlloc(_size, _userData)
-#define STBTT_free(_ptr, _userData) memFree(_ptr, _userData)
-#define STB_RECT_PACK_IMPLEMENTATION
-#include <stb/stb_rect_pack.h>
-#define STB_TRUETYPE_IMPLEMENTATION
-#include <stb/stb_truetype.h>*/
 BX_PRAGMA_DIAGNOSTIC_POP();
