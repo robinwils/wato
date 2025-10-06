@@ -17,7 +17,7 @@ void LoadResources(Registry& aRegistry)
 {
     LoadShaders(aRegistry);
     SpawnLight(aRegistry);
-    LoadTextures(aRegistry, 20, 20);
+    LoadTextures(aRegistry);
     LoadModels(aRegistry);
 }
 
@@ -73,7 +73,7 @@ void LoadShaders(Registry& aRegistry)
         });
 }
 
-void LoadTextures(Registry& aRegistry, uint32_t aWidth, uint32_t aHeight)
+void LoadTextures(Registry& aRegistry)
 {
     const auto& diffuse = LoadResource(
         aRegistry.ctx().get<TextureCache>(),
