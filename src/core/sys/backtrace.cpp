@@ -50,5 +50,5 @@ void signalHandler(int aSignum)
     exit(1);
 }
 #else
-void signalHandler(int signum) {}
+void signalHandler(int signum) { BX_UNUSED(signum); }
 #endif
