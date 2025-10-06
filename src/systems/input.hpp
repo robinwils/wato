@@ -6,10 +6,10 @@
 class InputSystem : public System<InputSystem>
 {
    public:
-    void operator()(Registry& aRegistry, const float aDeltaTime);
+    void operator()(Registry& aRegistry);
 
     static constexpr const char* StaticName() { return "InputSystem"; }
 
    private:
-    void handleMouseMovement(Registry& aRegistry, const float aDeltaTime);
+    void handleMouseMovement(Registry& aRegistry);
 };

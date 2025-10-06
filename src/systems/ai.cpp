@@ -17,7 +17,7 @@
 #include "core/graph.hpp"
 #include "core/sys/log.hpp"
 
-void AiSystem::operator()(Registry& aRegistry, const float aDeltaTime)
+void AiSystem::operator()(Registry& aRegistry)
 {
     auto& graph = aRegistry.ctx().get<Graph>();
 

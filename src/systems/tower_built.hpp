@@ -19,7 +19,7 @@ class TowerBuiltSystem : public System<TowerBuiltSystem>
     {
         aOrganizer.emplace<&TowerBuiltSystem::operator()>(*this, StaticName());
     }
-    void operator()(Registry& aRegistry, const float aDeltaTime);
+    void operator()(Registry& aRegistry);
 
     static constexpr const char* StaticName() { return "TowerBuiltSystem"; }
 };

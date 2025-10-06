@@ -14,7 +14,7 @@
 
 using namespace entt::literals;
 
-void TowerBuiltSystem::operator()(Registry& aRegistry, const float aDeltaTime)
+void TowerBuiltSystem::operator()(Registry& aRegistry)
 {
     auto& graph   = aRegistry.ctx().get<Graph>();
     auto* storage = aRegistry.storage("tower_built_observer"_hs);
