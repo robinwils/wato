@@ -12,7 +12,7 @@
 inline static void imageReleaseCb(void* aPtr, void* aUserData)
 {
     BX_UNUSED(aPtr);
-    auto* imageContainer = (bimg::ImageContainer*)aUserData;
+    auto* imageContainer = static_cast<bimg::ImageContainer*>(aUserData);
     bimg::imageFree(imageContainer);
 }
 
@@ -131,7 +131,8 @@ TextureLoader::result_type TextureLoader::operator()(
     }
 
     if (bgfx::isValid(handle)) {
-        WATO_DBG("{}x{} {} texture created ",
+        WATO_DBG(
+            "{}x{} {} texture created ",
             aWidth,
             aHeight,
             aMem == nullptr ? "mutable" : "immutable");

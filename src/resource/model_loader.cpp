@@ -102,7 +102,8 @@ void ModelLoader::processBones(
         const aiBone*                     bone      = aMesh->mBones[boneIdx];
         const std::optional<std::size_t>& skBoneIdx = mBonesMap[bone->mName.C_Str()];
 
-        WATO_DBG("  bone {} (idx: {}) with {} vertex weights",
+        WATO_DBG(
+            "  bone {} (idx: {}) with {} vertex weights",
             bone->mName,
             skBoneIdx,
             bone->mNumWeights);
@@ -139,12 +140,12 @@ void ModelLoader::processBones(
         std::vector<std::pair<float, int>> influences = boneInfluences[i];
         PositionNormalUvBoneVertex&        vertex     = aVertices[i];
 
-        std::sort(influences.begin(), influences.end(), [](const auto& a, const auto& b) {
-            return a.first > b.first;
+        std::sort(influences.begin(), influences.end(), [](const auto& aX, const auto& aY) {
+            return aX.first > aY.first;
         });
 
         float totalWeight = 0.0f;
-        for (int j = 0; j < influences.size() && j < 4; ++j) {
+        for (size_t j = 0; j < influences.size() && j < 4; ++j) {
             vertex.BoneWeights[j] = influences[j].first;
             vertex.BoneIndices[j] = static_cast<float>(influences[j].second);
             WATO_TRACE(
@@ -155,7 +156,7 @@ void ModelLoader::processBones(
         }
 
         if (totalWeight > 0.0f) {
-            for (int j = 0; j < 4 && vertex.BoneWeights[j] != -1; ++j) {
+            for (size_t j = 0; j < 4 && vertex.BoneWeights[j] != -1; ++j) {
                 vertex.BoneWeights[j] /= totalWeight;
             }
         }
@@ -169,7 +170,8 @@ ModelLoader::mesh_type ModelLoader::processMesh(
     Skeleton&      aSkeleton,
     Registry&      aRegistry)
 {
-    WATO_DBG("mesh {} has {} vertices, {} indices, {} bones",
+    WATO_DBG(
+        "mesh {} has {} vertices, {} indices, {} bones",
         aMesh->mName,
         aMesh->mNumVertices,
         aMesh->mNumFaces,
@@ -314,7 +316,8 @@ ModelLoader::mesh_container ModelLoader::processNode(
     Skeleton&      aSkeleton,
     Registry&      aRegistry)
 {
-    WATO_DBG("node {} with {} meshes, {} children",
+    WATO_DBG(
+        "node {} with {} meshes, {} children",
         aNode->mName,
         aNode->mNumMeshes,
         aNode->mNumChildren);
@@ -356,7 +359,8 @@ Animation ModelLoader::processAnimation(const aiAnimation* aAnimation)
     for (unsigned int i = 0; i < aAnimation->mNumChannels; ++i) {
         const aiNodeAnim* channel = aAnimation->mChannels[i];
         NodeAnimation     nodeAnimation;
-        WATO_DBG("  node anim {} with {} position keys, {} rotation keys, {} scaling keys",
+        WATO_DBG(
+            "  node anim {} with {} position keys, {} rotation keys, {} scaling keys",
             channel->mNodeName,
             channel->mNumPositionKeys,
             channel->mNumRotationKeys,
@@ -389,7 +393,8 @@ ModelLoader::animation_map ModelLoader::processAnimations(const aiScene* aScene)
     ModelLoader::animation_map animations;
     for (unsigned int animIdx = 0; animIdx < aScene->mNumAnimations; ++animIdx) {
         const aiAnimation* anim = aScene->mAnimations[animIdx];
-        WATO_DBG("animation {} with duration {}, {} ticks/s",
+        WATO_DBG(
+            "animation {} with duration {}, {} ticks/s",
             anim->mName,
             anim->mDuration,
             anim->mTicksPerSecond);
@@ -427,7 +432,8 @@ std::size_t ModelLoader::buildSkeleton(
     std::string indent(aIndent, ' ');
     const bool  isBone = mBonesMap.contains(aNode->mName.C_Str());
 
-    WATO_DBG("{}building node {} with {} children, {} meshes, is bone ? {}",
+    WATO_DBG(
+        "{}building node {} with {} children, {} meshes, is bone ? {}",
         indent,
         aNode->mName,
         aNode->mNumChildren,
