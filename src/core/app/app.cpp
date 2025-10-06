@@ -84,9 +84,8 @@ void Application::AdvanceSimulation(Registry& aRegistry, const float aDeltaTime)
         actions.Push();
         actions.Latest().GameID = instance.GameID;
         actions.Latest().Tick   = ++instance.Tick;
+        ClearAllObservers(aRegistry);
     }
-
-    ClearAllObservers(aRegistry);
 }
 
 void Application::SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeight)
