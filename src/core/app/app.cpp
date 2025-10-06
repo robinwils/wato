@@ -90,8 +90,7 @@ void Application::AdvanceSimulation(Registry& aRegistry, const float aDeltaTime)
 
 void Application::SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeight)
 {
-    auto&        physics = aRegistry.ctx().get<Physics>();
-    entt::entity first   = entt::null;
+    entt::entity first = entt::null;
 
     auto& graph = aRegistry.ctx().emplace<Graph>(
         aWidth * GraphCell::kCellsPerAxis,
