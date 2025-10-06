@@ -59,12 +59,11 @@ void DefaultContextHandler::operator()(
 
 void DefaultContextHandler::operator()(Registry& aRegistry, const SendCreepPayload& aPayload)
 {
-    auto& phy   = aRegistry.ctx().get<Physics&>();
     auto& graph = aRegistry.ctx().get<Graph&>();
 
     for (auto&& [entity, spawnTransform] : aRegistry.view<Spawner, Transform3D>().each()) {
-        auto  creep          = aRegistry.create();
-        auto& creepTransform = aRegistry.emplace<Transform3D>(
+        auto creep = aRegistry.create();
+        aRegistry.emplace<Transform3D>(
             creep,
             spawnTransform.Position,
             glm::identity<glm::quat>(),
@@ -115,7 +114,6 @@ void DefaultContextHandler::operator()(Registry& aRegistry, const PlacementModeP
 {
     spdlog::trace("entering placement mode");
     auto& contextStack = aRegistry.ctx().get<ActionContextStack&>();
-    auto& phy          = aRegistry.ctx().get<Physics&>();
 
     ActionContext placementCtx{
         .State    = ActionContext::State::Placement,
@@ -126,14 +124,14 @@ void DefaultContextHandler::operator()(Registry& aRegistry, const PlacementModeP
 
     auto ghostTower = aRegistry.create();
     aRegistry.emplace<SceneObject>(ghostTower, "tower_model"_hs);
-    auto& t = aRegistry.emplace<Transform3D>(
+    aRegistry.emplace<Transform3D>(
         ghostTower,
         glm::vec3(0.0f),
         glm::identity<glm::quat>(),
         glm::vec3(0.1f));
     const auto& pm = aRegistry.emplace<PlacementMode>(ghostTower, new PlacementModeData());
     aRegistry.emplace<ImguiDrawable>(ghostTower, "Ghost Tower");
-    auto& rb = aRegistry.emplace<RigidBody>(
+    aRegistry.emplace<RigidBody>(
         ghostTower,
         RigidBody{
             .Params =

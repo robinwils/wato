@@ -19,7 +19,7 @@ class AiSystem : public System<AiSystem>
     {
         aOrganizer.emplace<&AiSystem::operator()>(*this, StaticName());
     }
-    void operator()(Registry& aRegistry, const float aDeltaTime);
+    void operator()(Registry& aRegistry);
 
     static constexpr const char* StaticName() { return "AiSystem"; }
 };

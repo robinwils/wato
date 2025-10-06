@@ -25,7 +25,7 @@ class Shader
 
     ~Shader()
     {
-        TRACE("shader destructor called");
+        WATO_TRACE("shader destructor called");
         bgfx::destroy(mHandle);
         for (const auto& u : mUniforms) {
             bgfx::destroy(u.second);

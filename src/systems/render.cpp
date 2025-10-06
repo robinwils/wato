@@ -23,7 +23,7 @@
 #include "input/action.hpp"
 #include "resource/cache.hpp"
 
-void RenderSystem::operator()(Registry& aRegistry, const float aDeltaTime)
+void RenderSystem::operator()(Registry& aRegistry)
 {
     // This dummy draw call is here to make sure that view 0 is cleared
     // if no other draw calls are submitted to view 0.
@@ -82,7 +82,7 @@ void RenderSystem::renderGrid(Registry& aRegistry)
     }
 }
 
-void RenderImguiSystem::operator()(Registry& aRegistry, const float aDeltaTime)
+void RenderImguiSystem::operator()(Registry& aRegistry)
 {
     auto& window = aRegistry.ctx().get<WatoWindow&>();
     imguiBeginFrame(window.GetInput(), window.Width<int>(), window.Height<int>());
@@ -194,7 +194,7 @@ void RenderImguiSystem::operator()(Registry& aRegistry, const float aDeltaTime)
     imguiEndFrame();
 }
 
-void CameraSystem::operator()(Registry& aRegistry, const float aDeltaTime)
+void CameraSystem::operator()(Registry& aRegistry)
 {
     auto& window = aRegistry.ctx().get<WatoWindow&>();
     for (auto&& [entity, camera, transform] : aRegistry.view<Camera, Transform3D>().each()) {
@@ -233,7 +233,7 @@ struct PosColor {
 };
 bgfx::VertexLayout PosColor::msLayout;
 
-void PhysicsDebugSystem::operator()(Registry& aRegistry, const float aDeltaTime)
+void PhysicsDebugSystem::operator()(Registry& aRegistry)
 {
     const auto&                phy           = aRegistry.ctx().get<Physics&>();
     rp3d::DebugRenderer const& debugRenderer = phy.World()->getDebugRenderer();

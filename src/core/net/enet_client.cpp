@@ -78,6 +78,7 @@ void ENetClient::ConsumeNetworkRequests()
 
 void ENetClient::OnConnect(ENetEvent& aEvent)
 {
+    BX_UNUSED(aEvent);
     // TODO: better player ID handling
     mRespQueue.push(new NetworkEvent<NetworkResponsePayload>{
         .Type     = PacketType::Connected,
@@ -108,10 +109,11 @@ void ENetClient::OnReceive(ENetEvent& aEvent)
 
 void ENetClient::OnDisconnect(ENetEvent& aEvent)
 {
+    BX_UNUSED(aEvent);
     mConnected = false;
     mRunning   = false;
 }
 
-void ENetClient::OnDisconnectTimeout(ENetEvent& aEvent) {}
+void ENetClient::OnDisconnectTimeout(ENetEvent& aEvent) { BX_UNUSED(aEvent); }
 
-void ENetClient::OnNone(ENetEvent& aEvent) {}
+void ENetClient::OnNone(ENetEvent& aEvent) { BX_UNUSED(aEvent); }

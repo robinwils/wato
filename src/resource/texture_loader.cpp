@@ -12,7 +12,7 @@
 inline static void imageReleaseCb(void* aPtr, void* aUserData)
 {
     BX_UNUSED(aPtr);
-    auto* imageContainer = (bimg::ImageContainer*)aUserData;
+    auto* imageContainer = static_cast<bimg::ImageContainer*>(aUserData);
     bimg::imageFree(imageContainer);
 }
 
@@ -84,7 +84,7 @@ TextureLoader::result_type TextureLoader::operator()(
             }
 
             if (bgfx::isValid(handle)) {
-                DBG("Loaded texture {}", assetPath);
+                WATO_DBG("Loaded texture {}", assetPath);
                 bgfx::setName(handle, assetPath.c_str());
             }
 
@@ -131,7 +131,8 @@ TextureLoader::result_type TextureLoader::operator()(
     }
 
     if (bgfx::isValid(handle)) {
-        DBG("{}x{} {} texture created ",
+        WATO_DBG(
+            "{}x{} {} texture created ",
             aWidth,
             aHeight,
             aMem == nullptr ? "mutable" : "immutable");

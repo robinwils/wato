@@ -21,18 +21,18 @@ class RenderSystem : public System<RenderSystem>
             *this,
             StaticName());
     }
-    void operator()(Registry& aRegistry, const float aDeltaTime);
+    void operator()(Registry& aRegistry);
+
+    static constexpr const char* StaticName() { return "RenderSystem"; }
 
    private:
     void renderGrid(Registry& aRegistry);
-
-    static constexpr const char* StaticName() { return "RenderSystem"; }
 };
 
 class RenderImguiSystem : public System<RenderImguiSystem>
 {
    public:
-    void operator()(Registry& aRegistry, const float aDeltaTime);
+    void operator()(Registry& aRegistry);
 
     static constexpr const char* StaticName() { return "RenderImguiSystem"; }
 };
@@ -40,7 +40,7 @@ class RenderImguiSystem : public System<RenderImguiSystem>
 class CameraSystem : public System<CameraSystem>
 {
    public:
-    void operator()(Registry& aRegistry, const float aDeltaTime);
+    void operator()(Registry& aRegistry);
 
     static constexpr const char* StaticName() { return "CameraSystem"; }
 };
@@ -53,7 +53,7 @@ class PhysicsDebugSystem : public System<PhysicsDebugSystem>
     {
         aOrganizer.emplace<&PhysicsDebugSystem::operator(), Physics>(*this, StaticName());
     }
-    void operator()(Registry& aRegistry, const float aDeltaTime);
+    void operator()(Registry& aRegistry);
 
     static constexpr const char* StaticName() { return "PhysicsDebugSystem "; }
 };

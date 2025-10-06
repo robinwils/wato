@@ -83,18 +83,10 @@ std::vector<entt::hashed_string> ModelLoader::processMaterialTextures(
             throw std::runtime_error("could not get texture");
         }
 
-        auto hs          = entt::hashed_string{aPath->C_Str()};
-        auto [_, loaded] = aRegistry.ctx().get<TextureCache>().load(hs, aPath->C_Str());
-        if (!loaded) {
-            throw std::runtime_error("could not load model material texture");
-        }
+        const auto& diffuse =
+            LoadResource(aRegistry.ctx().get<TextureCache>(), aPath->C_Str(), aPath->C_Str());
 
-        auto diffuse = aRegistry.ctx().get<TextureCache>()[hs];
-        if (!bgfx::isValid(diffuse)) {
-            throw std::runtime_error("could not load model material texture, invalid handle");
-        }
-
-        textures.push_back(hs);
+        textures.emplace_back(aPath->C_Str());
     }
 
     return textures;
@@ -110,7 +102,8 @@ void ModelLoader::processBones(
         const aiBone*                     bone      = aMesh->mBones[boneIdx];
         const std::optional<std::size_t>& skBoneIdx = mBonesMap[bone->mName.C_Str()];
 
-        DBG("  bone {} (idx: {}) with {} vertex weights",
+        WATO_DBG(
+            "  bone {} (idx: {}) with {} vertex weights",
             bone->mName,
             skBoneIdx,
             bone->mNumWeights);
@@ -126,7 +119,7 @@ void ModelLoader::processBones(
                 vertexW.mVertexId < aVertices.size(),
                 "vertex ID bigger than vertices parsed");
 
-            TRACE(
+            WATO_TRACE(
                 "    vertex weight {} with {} vertex weights",
                 vertexW.mVertexId,
                 vertexW.mWeight);
@@ -136,7 +129,7 @@ void ModelLoader::processBones(
                 aSkeleton.Bones[*skBoneIdx].Offset.emplace(toGLMMat4(bone->mOffsetMatrix));
             }
 
-            TRACE(
+            WATO_TRACE(
                 "    vertex weight {} with {} vertex weights",
                 vertexW.mVertexId,
                 vertexW.mWeight);
@@ -147,15 +140,15 @@ void ModelLoader::processBones(
         std::vector<std::pair<float, int>> influences = boneInfluences[i];
         PositionNormalUvBoneVertex&        vertex     = aVertices[i];
 
-        std::sort(influences.begin(), influences.end(), [](const auto& a, const auto& b) {
-            return a.first > b.first;
+        std::sort(influences.begin(), influences.end(), [](const auto& aX, const auto& aY) {
+            return aX.first > aY.first;
         });
 
         float totalWeight = 0.0f;
-        for (int j = 0; j < influences.size() && j < 4; ++j) {
+        for (size_t j = 0; j < influences.size() && j < 4; ++j) {
             vertex.BoneWeights[j] = influences[j].first;
             vertex.BoneIndices[j] = static_cast<float>(influences[j].second);
-            TRACE(
+            WATO_TRACE(
                 "keeping normalized vertex weight for bone index {}: {}",
                 vertex.BoneIndices[j],
                 vertex.BoneWeights[j]);
@@ -163,7 +156,7 @@ void ModelLoader::processBones(
         }
 
         if (totalWeight > 0.0f) {
-            for (int j = 0; j < 4 && vertex.BoneWeights[j] != -1; ++j) {
+            for (size_t j = 0; j < 4 && vertex.BoneWeights[j] != -1; ++j) {
                 vertex.BoneWeights[j] /= totalWeight;
             }
         }
@@ -177,7 +170,8 @@ ModelLoader::mesh_type ModelLoader::processMesh(
     Skeleton&      aSkeleton,
     Registry&      aRegistry)
 {
-    DBG("mesh {} has {} vertices, {} indices, {} bones",
+    WATO_DBG(
+        "mesh {} has {} vertices, {} indices, {} bones",
         aMesh->mName,
         aMesh->mNumVertices,
         aMesh->mNumFaces,
@@ -227,7 +221,7 @@ ModelLoader::mesh_type ModelLoader::processMesh(
                 fmt::format("could not load blinnphong shader {}", skinned ? "skinned" : ""));
         }
 
-        DBG("  {} diffuse and {} specular textures", textures.size(), specTextures.size());
+        WATO_DBG("  {} diffuse and {} specular textures", textures.size(), specTextures.size());
         m = std::make_unique<BlinnPhongMaterial>(shader);
 
         if (textures.size() > 0) {
@@ -236,7 +230,7 @@ ModelLoader::mesh_type ModelLoader::processMesh(
             // no material textures, get material info via properties
             aiColor3D diffuse;
             if (material->Get(AI_MATKEY_COLOR_DIFFUSE, diffuse) != AI_SUCCESS) {
-                WARN("failed to get diffuse color for mesh {}", aMesh->mName);
+                spdlog::warn("failed to get diffuse color for mesh {}", aMesh->mName);
             }
             m->SetDiffuse(glm::vec3(diffuse.r, diffuse.g, diffuse.b));
         }
@@ -246,7 +240,7 @@ ModelLoader::mesh_type ModelLoader::processMesh(
         } else {
             aiColor3D specular;
             if (material->Get(AI_MATKEY_COLOR_SPECULAR, specular) != AI_SUCCESS) {
-                WARN("failed to get specular color for mesh {}", aMesh->mName);
+                spdlog::warn("failed to get specular color for mesh {}", aMesh->mName);
             }
             m->SetSpecular(glm::vec3(specular.r, specular.g, specular.b));
         }
@@ -266,10 +260,10 @@ ModelLoader::mesh_type ModelLoader::processMesh(
 void ModelLoader::processMetaData(const aiNode* aNode, const aiScene* /*aScene*/)
 {
     if (!aNode->mMetaData) {
-        TRACE("  node {} metadata is null", aNode->mName);
+        WATO_TRACE("  node {} metadata is null", aNode->mName);
         return;
     }
-    TRACE("  node {} has {} metadata", aNode->mName, aNode->mMetaData->mNumProperties);
+    WATO_TRACE("  node {} has {} metadata", aNode->mName, aNode->mMetaData->mNumProperties);
     auto* mdata = aNode->mMetaData;
     for (unsigned int propIdx = 0; propIdx < mdata->mNumProperties; ++propIdx) {
         auto& key = mdata->mKeys[propIdx];
@@ -277,40 +271,40 @@ void ModelLoader::processMetaData(const aiNode* aNode, const aiScene* /*aScene*/
 
         switch (val.mType) {
             case AI_BOOL:
-                TRACE("  {}: bool", key);
+                WATO_TRACE("  {}: bool", key);
                 break;
             case AI_INT32:
-                TRACE("  {}: int32", key);
+                WATO_TRACE("  {}: int32", key);
                 break;
             case AI_UINT64:
-                TRACE("  {}: uint64", key);
+                WATO_TRACE("  {}: uint64", key);
                 break;
             case AI_FLOAT:
-                TRACE("  {}: float", key);
+                WATO_TRACE("  {}: float", key);
                 break;
             case AI_DOUBLE:
-                TRACE("  {}: double", key);
+                WATO_TRACE("  {}: double", key);
                 break;
             case AI_AISTRING:
-                TRACE("  {}: aistring", key);
+                WATO_TRACE("  {}: aistring", key);
                 break;
             case AI_AIVECTOR3D:
-                TRACE("  {}: vector3", key);
+                WATO_TRACE("  {}: vector3", key);
                 break;
             case AI_AIMETADATA:
-                TRACE("  {}: mdata", key);
+                WATO_TRACE("  {}: mdata", key);
                 break;
             case AI_INT64:
-                TRACE("  {}: int64", key);
+                WATO_TRACE("  {}: int64", key);
                 break;
             case AI_UINT32:
-                TRACE("  {}: uint32", key);
+                WATO_TRACE("  {}: uint32", key);
                 break;
             case AI_META_MAX:
-                TRACE("  {}: meta max", key);
+                WATO_TRACE("  {}: meta max", key);
                 break;
             case FORCE_32BIT:
-                TRACE("  {}: force 32bit", key);
+                WATO_TRACE("  {}: force 32bit", key);
                 break;
         }
     }
@@ -322,7 +316,8 @@ ModelLoader::mesh_container ModelLoader::processNode(
     Skeleton&      aSkeleton,
     Registry&      aRegistry)
 {
-    DBG("node {} with {} meshes, {} children",
+    WATO_DBG(
+        "node {} with {} meshes, {} children",
         aNode->mName,
         aNode->mNumMeshes,
         aNode->mNumChildren);
@@ -364,7 +359,8 @@ Animation ModelLoader::processAnimation(const aiAnimation* aAnimation)
     for (unsigned int i = 0; i < aAnimation->mNumChannels; ++i) {
         const aiNodeAnim* channel = aAnimation->mChannels[i];
         NodeAnimation     nodeAnimation;
-        DBG("  node anim {} with {} position keys, {} rotation keys, {} scaling keys",
+        WATO_DBG(
+            "  node anim {} with {} position keys, {} rotation keys, {} scaling keys",
             channel->mNodeName,
             channel->mNumPositionKeys,
             channel->mNumRotationKeys,
@@ -397,7 +393,8 @@ ModelLoader::animation_map ModelLoader::processAnimations(const aiScene* aScene)
     ModelLoader::animation_map animations;
     for (unsigned int animIdx = 0; animIdx < aScene->mNumAnimations; ++animIdx) {
         const aiAnimation* anim = aScene->mAnimations[animIdx];
-        DBG("animation {} with duration {}, {} ticks/s",
+        WATO_DBG(
+            "animation {} with duration {}, {} ticks/s",
             anim->mName,
             anim->mDuration,
             anim->mTicksPerSecond);
@@ -435,7 +432,8 @@ std::size_t ModelLoader::buildSkeleton(
     std::string indent(aIndent, ' ');
     const bool  isBone = mBonesMap.contains(aNode->mName.C_Str());
 
-    DBG("{}building node {} with {} children, {} meshes, is bone ? {}",
+    WATO_DBG(
+        "{}building node {} with {} children, {} meshes, is bone ? {}",
         indent,
         aNode->mName,
         aNode->mNumChildren,

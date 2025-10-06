@@ -51,7 +51,7 @@ void Application::StartGameInstance(
     aRegistry.ctx().emplace<ActionBuffer>();
     aRegistry.ctx().emplace<GameInstance>(aGameID, 0.0f, 0u);
 
-    physics.Init(aRegistry);
+    physics.Init();
 
     enum ActionContext::State actionContextState = ActionContext::State::Default;
     if (aIsServer) {
@@ -84,15 +84,13 @@ void Application::AdvanceSimulation(Registry& aRegistry, const float aDeltaTime)
         actions.Push();
         actions.Latest().GameID = instance.GameID;
         actions.Latest().Tick   = ++instance.Tick;
+        ClearAllObservers(aRegistry);
     }
-
-    ClearAllObservers(aRegistry);
 }
 
 void Application::SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeight)
 {
-    auto&        physics = aRegistry.ctx().get<Physics>();
-    entt::entity first   = entt::null;
+    entt::entity first = entt::null;
 
     auto& graph = aRegistry.ctx().emplace<Graph>(
         aWidth * GraphCell::kCellsPerAxis,

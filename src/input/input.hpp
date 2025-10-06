@@ -233,7 +233,7 @@ struct MouseState : public InputState<kNumButtons> {
     ~MouseState() = default;
 
     std::string String() const;
-    glm::fvec2  Pos, Scroll;
+    glm::dvec2  Pos, Scroll;
 };
 
 std::string key_string(const Keyboard::Key& aK);

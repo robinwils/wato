@@ -3,9 +3,7 @@
 #include <fmt/ranges.h>
 #include <spdlog/spdlog.h>
 
-#include "components/rigid_body.hpp"
-
-void Physics::Init(Registry& aRegistry)
+void Physics::Init()
 {
     mWorld = mCommon.createPhysicsWorld();
 

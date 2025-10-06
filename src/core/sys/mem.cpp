@@ -1,11 +1,12 @@
 #include "core/sys/mem.hpp"
 
 #include "core/sys/log.hpp"
+#include "core/types.hpp"
 
 const bgfx::Memory* loadMem(bx::FileReaderI* aReader, const char* aFilePath)
 {
     if (bx::open(aReader, aFilePath)) {
-        uint32_t            size = (uint32_t)bx::getSize(aReader);
+        SafeU32             size = bx::getSize(aReader);
         const bgfx::Memory* mem  = bgfx::alloc(size + 1);
         bx::read(aReader, mem->data, size, bx::ErrorAssert{});
         bx::close(aReader);
@@ -13,7 +14,7 @@ const bgfx::Memory* loadMem(bx::FileReaderI* aReader, const char* aFilePath)
         return mem;
     }
 
-    DBG("Failed to load {}.", aFilePath);
+    WATO_DBG("Failed to load {}.", aFilePath);
     return NULL;
 }
 
@@ -24,8 +25,8 @@ void* load(
     uint32_t*        aSize)
 {
     if (bx::open(aReader, aFilePath)) {
-        uint32_t size = (uint32_t)bx::getSize(aReader);
-        void*    data = bx::alloc(aAllocator, size);
+        SafeU32 size = bx::getSize(aReader);
+        void*   data = bx::alloc(aAllocator, size);
         bx::read(aReader, data, size, bx::ErrorAssert{});
         bx::close(aReader);
         if (NULL != aSize) {
@@ -33,7 +34,7 @@ void* load(
         }
         return data;
     } else {
-        DBG("Failed to open: {}.", aFilePath);
+        WATO_DBG("Failed to open: {}.", aFilePath);
     }
 
     if (NULL != aSize) {

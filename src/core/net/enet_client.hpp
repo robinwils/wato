@@ -12,7 +12,7 @@
 class ENetClient : public ENetBase
 {
    public:
-    ENetClient() : ENetBase(), mPeer(nullptr), mConnected(false) {}
+    ENetClient() : ENetBase(), mConnected(false), mPeer(nullptr) {}
     ENetClient(ENetClient&&)                 = delete;
     ENetClient(const ENetClient&)            = delete;
     ENetClient& operator=(ENetClient&&)      = delete;

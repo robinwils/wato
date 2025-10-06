@@ -6,7 +6,7 @@
 #include "input/action.hpp"
 #include "registry/registry.hpp"
 
-void NetworkSyncSystem::operator()(Registry& aRegistry, const float aDeltaTime)
+void NetworkSyncSystem::operator()(Registry& aRegistry)
 {
     auto& actions   = aRegistry.ctx().get<ActionBuffer&>();
     auto& netClient = aRegistry.ctx().get<ENetClient&>();

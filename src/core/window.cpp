@@ -369,8 +369,8 @@ std::pair<glm::vec3, glm::vec3> WatoWindow::MouseUnproject(
     const glm::vec3& aCamPos) const
 {
     const MouseState& mouseState = mInput.MouseState;
-    const float       x          = mouseState.Pos.x;
-    const float       y          = Height<float>() - mouseState.Pos.y;
+    const double      x          = mouseState.Pos.x;
+    const double      y          = Height<double>() - mouseState.Pos.y;
     const glm::mat4&  view       = aCam.View(aCamPos);
     const glm::mat4&  proj       = aCam.Projection(Width<float>(), Height<float>());
     const auto        viewport   = glm::vec4(0, 0, Width<float>(), Height<float>());
@@ -399,6 +399,7 @@ void WatoWindow::keyCallback(
     int32_t     aAction,
     int32_t     aMods)
 {
+    BX_UNUSED(aScancode);
     auto*         win   = static_cast<WatoWindow*>(glfwGetWindowUserPointer(aWindow));
     Input&        input = win->GetInput();
     Keyboard::Key key   = to_key(aKey);

@@ -17,6 +17,7 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wold-style-cast")
 BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wcast-align")
 BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wimplicit-int-float-conversion")
 BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wsign-conversion")
+BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wconversion")
 
 #include <imgui/fs_imgui_image.bin.h>
 #include <imgui/fs_ocornut_imgui.bin.h>
@@ -341,7 +342,7 @@ struct OcornutImguiContext {
         io.AddMouseButtonEvent(
             ImGuiMouseButton_Middle,
             aInput.MouseState.IsKeyPressed(Mouse::Button::Middle));
-        io.AddMouseWheelEvent(0.0f, (float)(aInput.MouseState.Scroll.y - LastScroll));
+        io.AddMouseWheelEvent(0.0f, aInput.MouseState.Scroll.y - LastScroll);
         LastScroll = aInput.MouseState.Scroll.y;
 
         ImGui::NewFrame();
@@ -363,7 +364,7 @@ struct OcornutImguiContext {
     bgfx::UniformHandle UniformImageLodEnabled;
     ImFont*             Fonts[ImGui::Font::Count];
     int64_t             Last;
-    float               LastScroll;
+    double              LastScroll;
     bgfx::ViewId        ViewID;
 #if USE_ENTRY
     ImGuiKey m_keyMap[(int)entry::Key::Count];

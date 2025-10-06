@@ -32,7 +32,7 @@ class Model final
     {
     }
 
-    ~Model() { TRACE("Model destructor called"); }
+    ~Model() { WATO_TRACE("Model destructor called"); }
 
     void Submit(
         glm::mat4 aModelMatrix = glm::identity<glm::mat4>(),

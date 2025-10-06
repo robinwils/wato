@@ -5,7 +5,7 @@
 class NetworkSyncSystem : public System<NetworkSyncSystem>
 {
    public:
-    void operator()(Registry& aRegistry, const float aDeltaTime);
+    void operator()(Registry& aRegistry);
 
     static constexpr const char* StaticName() { return "NetworkSyncSystem"; }
 };

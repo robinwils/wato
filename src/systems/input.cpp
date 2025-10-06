@@ -1,8 +1,8 @@
 #include "input/input.hpp"
 
+#include <fmt/ranges.h>
 #include <reactphysics3d/collision/RaycastInfo.h>
 #include <reactphysics3d/mathematics/Ray.h>
-#include <fmt/ranges.h>
 
 #include "components/placement_mode.hpp"
 #include "components/rigid_body.hpp"
@@ -14,7 +14,7 @@
 #include "registry/registry.hpp"
 #include "systems/input.hpp"
 
-void InputSystem::operator()(Registry& aRegistry, const float aDeltaTime)
+void InputSystem::operator()(Registry& aRegistry)
 {
     const Input&   input         = aRegistry.ctx().get<WatoWindow&>().GetInput();
     auto&          actionCtx     = aRegistry.ctx().get<ActionContextStack&>().front();
@@ -29,10 +29,10 @@ void InputSystem::operator()(Registry& aRegistry, const float aDeltaTime)
             curActions.begin(),
             curActions.end());
     }
-    handleMouseMovement(aRegistry, aDeltaTime);
+    handleMouseMovement(aRegistry);
 }
 
-void InputSystem::handleMouseMovement(Registry& aRegistry, const float aDeltaTime)
+void InputSystem::handleMouseMovement(Registry& aRegistry)
 {
     auto&       contextStack = aRegistry.ctx().get<ActionContextStack&>();
     const auto& currentCtx   = contextStack.front();

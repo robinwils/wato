@@ -15,7 +15,7 @@
 
 using namespace entt::literals;
 
-void RigidBodiesUpdateSystem::operator()(Registry& aRegistry, const float aDeltaTime)
+void RigidBodiesUpdateSystem::operator()(Registry& aRegistry)
 {
     auto& physics          = aRegistry.ctx().get<Physics>();
     auto* rbStorage        = aRegistry.storage("rigid_bodies_observer"_hs);
