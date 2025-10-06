@@ -51,7 +51,7 @@ void Application::StartGameInstance(
     aRegistry.ctx().emplace<ActionBuffer>();
     aRegistry.ctx().emplace<GameInstance>(aGameID, 0.0f, 0u);
 
-    physics.Init(aRegistry);
+    physics.Init();
 
     enum ActionContext::State actionContextState = ActionContext::State::Default;
     if (aIsServer) {

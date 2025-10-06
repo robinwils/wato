@@ -8,7 +8,6 @@
 
 #include "components/transform3d.hpp"
 #include "core/graph.hpp"
-#include "registry/registry.hpp"
 
 template <>
 struct fmt::formatter<rp3d::Vector3> : fmt::formatter<std::string> {
@@ -51,7 +50,7 @@ struct ColliderParams {
     unsigned short      CollisionCategoryBits;
     unsigned short      CollideWithMaskBits;
     bool                IsTrigger;
-    Transform3D         Offset;
+    Transform3D         Offset{};
     ColliderShapeParams ShapeParams;
 };
 
@@ -80,7 +79,7 @@ class Physics
     Physics& operator=(const Physics&) = delete;
     Physics& operator=(Physics&&)      = delete;
 
-    void                               Init(Registry& aRegistry);
+    void                               Init();
     void                               InitLogger();
     [[nodiscard]] rp3d::PhysicsWorld*  World() noexcept { return mWorld; }
     [[nodiscard]] rp3d::PhysicsWorld*  World() const noexcept { return mWorld; }

@@ -5,6 +5,7 @@
 #include <glm/ext/vector_float3.hpp>
 
 #include "core/physics/physics.hpp"
+#include "registry/registry.hpp"
 
 struct RigidBody {
     RigidBodyParams  Params;
