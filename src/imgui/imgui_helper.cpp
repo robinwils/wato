@@ -364,7 +364,7 @@ struct OcornutImguiContext {
     bgfx::UniformHandle UniformImageLodEnabled;
     ImFont*             Fonts[ImGui::Font::Count];
     int64_t             Last;
-    float               LastScroll;
+    double              LastScroll;
     bgfx::ViewId        ViewID;
 #if USE_ENTRY
     ImGuiKey m_keyMap[(int)entry::Key::Count];
