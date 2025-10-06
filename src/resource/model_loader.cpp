@@ -83,18 +83,10 @@ std::vector<entt::hashed_string> ModelLoader::processMaterialTextures(
             throw std::runtime_error("could not get texture");
         }
 
-        auto hs          = entt::hashed_string{aPath->C_Str()};
-        auto [_, loaded] = aRegistry.ctx().get<TextureCache>().load(hs, aPath->C_Str());
-        if (!loaded) {
-            throw std::runtime_error("could not load model material texture");
-        }
+        const auto& diffuse =
+            LoadResource(aRegistry.ctx().get<TextureCache>(), aPath->C_Str(), aPath->C_Str());
 
-        auto diffuse = aRegistry.ctx().get<TextureCache>()[hs];
-        if (!bgfx::isValid(diffuse)) {
-            throw std::runtime_error("could not load model material texture, invalid handle");
-        }
-
-        textures.push_back(hs);
+        textures.emplace_back(aPath->C_Str());
     }
 
     return textures;

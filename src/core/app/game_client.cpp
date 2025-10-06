@@ -212,8 +212,9 @@ void GameClient::prepareGridPreview()
         }
     }
 
-    auto [texture, loaded] = mRegistry.ctx().get<TextureCache>().load(
-        "grid_tex"_hs,
+    const auto& texture = LoadResource(
+        mRegistry.ctx().get<TextureCache>(),
+        "grid_tex",
         graph.Width(),
         graph.Height(),
         false,
@@ -226,14 +227,14 @@ void GameClient::prepareGridPreview()
     auto                          mat    = std::make_unique<GridPreviewMaterial>(
         shader,
         glm::vec4(graph.Width(), graph.Height(), GraphCell::kCellsPerAxis, 0),
-        texture->second);
+        texture);
     auto primitive = std::make_unique<Primitive<PositionVertex>>(vertices, indices, std::move(mat));
 
     // Put texture in context variables because I am not sure entt:resource_cache can be updated
     // easily
-    mRegistry.ctx().get<ModelCache>().load("grid"_hs, std::move(primitive));
+    LoadResource(mRegistry.ctx().get<ModelCache>(), "grid", std::move(primitive));
     bgfx::updateTexture2D(
-        texture->second,
+        texture,
         0,
         0,
         0,
