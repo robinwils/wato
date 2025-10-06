@@ -14,12 +14,6 @@
 #include <bx/string.h>
 
 ///
-void unload(void* aPtr);
-
-///
-bimg::ImageContainer* imageLoad(const char* aFilePath, bgfx::TextureFormat::Enum aDstFormat);
-
-///
 void calcTangents(
     void*              aVertices,
     uint16_t           aNumVertices,
@@ -56,35 +50,5 @@ inline uint32_t encodeNormalRgba8(float aX, float aY = 0.0f, float aZ = 0.0f, fl
     bx::packRgba8(&dst, src);
     return dst;
 }
-
-///
-struct MeshState {
-    struct Texture {
-        uint32_t            Flags;
-        bgfx::UniformHandle Sampler;
-        bgfx::TextureHandle Tex;
-        uint8_t             Stage;
-    };
-
-    Texture             Textures[4];
-    uint64_t            State;
-    bgfx::ProgramHandle Program;
-    uint8_t             NumTextures;
-    bgfx::ViewId        ViewID;
-};
-
-/// bgfx::RendererType::Enum to name.
-bx::StringView getName(bgfx::RendererType::Enum aType);
-
-/// Name to bgfx::RendererType::Enum.
-bgfx::RendererType::Enum getType(const bx::StringView& aName);
-
-///
-struct Args {
-    Args(int aArgc, const char* const* aArgv);
-
-    bgfx::RendererType::Enum MType;
-    uint16_t                 MPciId;
-};
 
 #endif  // BGFX_UTILS_H_HEADER_GUARD
