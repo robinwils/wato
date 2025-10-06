@@ -129,7 +129,7 @@ class Graph
     paths_type                    mPaths;
     std::optional<GraphCell>      mDest;
 
-    friend class fmt::formatter<Graph>;
+    friend struct fmt::formatter<Graph>;
 };
 
 template <>
