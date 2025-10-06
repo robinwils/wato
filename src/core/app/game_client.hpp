@@ -42,12 +42,12 @@ class GameClient : public Application
     virtual ~GameClient()
     {
         std::vector<entt::id_type> ids;
-        TRACE("Destroying GameClient");
+        WATO_TRACE("Destroying GameClient");
 
         for (auto [id, res] : mRegistry.ctx().get<ModelCache>()) {
             ids.push_back(id);
         }
-        TRACE("Destroying {} models", ids.size());
+        WATO_TRACE("Destroying {} models", ids.size());
         for (auto id : ids) {
             mRegistry.ctx().get<ModelCache>().erase(id);
         }
@@ -56,7 +56,7 @@ class GameClient : public Application
         for (auto [id, res] : mRegistry.ctx().get<ShaderCache>()) {
             ids.push_back(id);
         }
-        TRACE("Destroying {} shaders", ids.size());
+        WATO_TRACE("Destroying {} shaders", ids.size());
         for (auto id : ids) {
             mRegistry.ctx().get<ShaderCache>().erase(id);
         }
@@ -67,7 +67,7 @@ class GameClient : public Application
             bgfx::destroy(res);
             ids.push_back(id);
         }
-        TRACE("Destroying {} textures", ids.size());
+        WATO_TRACE("Destroying {} textures", ids.size());
         for (auto id : ids) {
             mRegistry.ctx().get<TextureCache>().erase(id);
         }

@@ -25,7 +25,7 @@ void ENetBase::Init()
 bool ENetBase::Send(ENetPeer* aPeer, const std::vector<uint8_t> aData)
 {
     if (aPeer == nullptr) {
-        DBG("client peer not initialized");
+        WATO_DBG("client peer not initialized");
         return false;
     }
 

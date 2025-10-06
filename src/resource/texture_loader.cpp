@@ -84,7 +84,7 @@ TextureLoader::result_type TextureLoader::operator()(
             }
 
             if (bgfx::isValid(handle)) {
-                DBG("Loaded texture {}", assetPath);
+                WATO_DBG("Loaded texture {}", assetPath);
                 bgfx::setName(handle, assetPath.c_str());
             }
 
@@ -131,7 +131,7 @@ TextureLoader::result_type TextureLoader::operator()(
     }
 
     if (bgfx::isValid(handle)) {
-        DBG("{}x{} {} texture created ",
+        WATO_DBG("{}x{} {} texture created ",
             aWidth,
             aHeight,
             aMem == nullptr ? "mutable" : "immutable");

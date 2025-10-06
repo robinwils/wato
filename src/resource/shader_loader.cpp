@@ -12,7 +12,7 @@ ShaderLoader::result_type ShaderLoader::operator()(
 {
     auto uniformHandles = Shader::uniform_map{};
     for (auto&& [name, desc] : aUniforms) {
-        DBG("creating uniform '{}'", name);
+        WATO_DBG("creating uniform '{}'", name);
         uniformHandles[name] = bgfx::createUniform(name.c_str(), desc.Type, desc.Number);
     }
 

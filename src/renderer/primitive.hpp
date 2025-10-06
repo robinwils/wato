@@ -57,7 +57,7 @@ class Primitive
 
         const bgfx::VertexLayout vertexLayout = layout_type::GetVertexLayout();
 
-        DBG("initializing primitive with {} vertices and {} vertex layout data size",
+        WATO_DBG("initializing primitive with {} vertices and {} vertex layout data size",
             mVertices.size(),
             sizeof(layout_type));
 
@@ -84,7 +84,7 @@ class Primitive
     virtual void destroyPrimitive()
     {
         if (mIsInitialized) {
-            TRACE(
+            WATO_TRACE(
                 "destroying vertex buffer {} and index buffer {}",
                 mVertexBufferHandle.idx,
                 mIndexBufferHandle.idx);

@@ -45,8 +45,5 @@ struct fmt::formatter<glm::qua<T, Q>> : fmt::formatter<std::string> {
     }
 };
 
-#define TRACE(...) SPDLOG_TRACE(__VA_ARGS__)
-#define DBG(...)   SPDLOG_DEBUG(__VA_ARGS__)
-#define INFO(...)  SPDLOG_INFO(__VA_ARGS__)
-#define WARN(...)  SPDLOG_WARN(__VA_ARGS__)
-#define ERROR(...) SPDLOG_ERROR(__VA_ARGS__)
+#define WATO_TRACE(...) SPDLOG_TRACE(__VA_ARGS__)
+#define WATO_DBG(...)   SPDLOG_DEBUG(__VA_ARGS__)
