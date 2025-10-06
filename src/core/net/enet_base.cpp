@@ -83,14 +83,16 @@ void ENetBase::Poll()
             }
 
             case ENET_EVENT_TYPE_DISCONNECT:
-                spdlog::info("{} disconnected.\n", (char*)event.peer->data);
+                spdlog::info("{} disconnected.\n", static_cast<char*>(event.peer->data));
                 OnDisconnect(event);
                 /* Reset the peer's client information. */
                 event.peer->data = NULL;
                 break;
 
             case ENET_EVENT_TYPE_DISCONNECT_TIMEOUT:
-                spdlog::info("{} disconnected due to timeout.\n", (char*)event.peer->data);
+                spdlog::info(
+                    "{} disconnected due to timeout.\n",
+                    static_cast<char*>(event.peer->data));
                 /* Reset the peer's client information. */
                 OnDisconnectTimeout(event);
                 event.peer->data = NULL;

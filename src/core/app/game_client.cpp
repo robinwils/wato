@@ -258,6 +258,7 @@ void GameClient::consumeNetworkResponses()
         std::visit(
             VariantVisitor{
                 [&](const ConnectedResponse& aResp) {
+                    BX_UNUSED(aResp);
                     netClient.EnqueueSend(new NetworkEvent<NetworkRequestPayload>{
                         .Type     = PacketType::NewGame,
                         .PlayerID = 0,
