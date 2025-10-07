@@ -53,12 +53,8 @@ void Application::StartGameInstance(
 
     physics.Init();
 
-    enum ActionContext::State actionContextState = ActionContext::State::Default;
-    if (aIsServer) {
-        actionContextState = ActionContext::State::Server;
-    }
     stack.push_back(ActionContext{
-        .State    = actionContextState,
+        .State    = aIsServer ? ActionContext::State::Server : ActionContext::State::Default,
         .Bindings = ActionBindings::Defaults(),
         .Payload  = NormalPayload{}});
     SpawnMap(aRegistry, 20, 20);
