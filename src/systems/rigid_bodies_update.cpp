@@ -2,6 +2,7 @@
 
 #include <bgfx/bgfx.h>
 #include <bx/bx.h>
+#include <spdlog/spdlog.h>
 
 #include <stdexcept>
 
@@ -34,12 +35,26 @@ void RigidBodiesUpdateSystem::operator()(Registry& aRegistry)
         auto& t  = aRegistry.get<Transform3D>(e);
 
         if (!rb.Body) {
+            spdlog::debug("rigid body creation for {}", e);
             rb.Body  = physics.CreateRigidBody(rb.Params, t);
             c.Handle = physics.AddCollider(rb.Body, c.Params);
+        } else {
+            spdlog::debug("rigid body update for {}:", e);
         }
 
         if (rb.Params.Data != rb.Body->getUserData()) {
+            spdlog::debug("   user data");
             rb.Body->setUserData(rb.Params.Data);
+        }
+
+        if (rb.Params.Type != rb.Body->getType()) {
+            spdlog::debug("  body type");
+            rb.Body->setType(rb.Params.Type);
+        }
+
+        if (rb.Params.Type == reactphysics3d::BodyType::KINEMATIC) {
+            spdlog::debug("  linear velocity: {} * {}", rb.Params.Direction, rb.Params.Velocity);
+            rb.Body->setLinearVelocity(ToRP3D(rb.Params.Direction * rb.Params.Velocity));
         }
     }
 

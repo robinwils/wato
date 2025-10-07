@@ -1,7 +1,5 @@
 #include "systems/action.hpp"
 
-#include <spdlog/spdlog.h>
-
 #include <variant>
 
 #include "components/animator.hpp"
@@ -18,6 +16,7 @@
 #include "components/velocity.hpp"
 #include "core/graph.hpp"
 #include "core/physics/physics.hpp"
+#include "core/sys/log.hpp"
 #include "core/tower_building_handler.hpp"
 #include "input/action.hpp"
 #include "registry/registry.hpp"
@@ -70,7 +69,6 @@ void DefaultContextHandler::operator()(Registry& aRegistry, const SendCreepPaylo
             glm::vec3(0.5f));
 
         aRegistry.emplace<Health>(creep, 100.0f);
-        aRegistry.emplace<Velocity>(creep, 0.01f);
         aRegistry.emplace<Creep>(creep, aPayload.Type);
         aRegistry.emplace<SceneObject>(creep, "phoenix"_hs);
         aRegistry.emplace<ImguiDrawable>(creep, "phoenix", true);
@@ -86,7 +84,7 @@ void DefaultContextHandler::operator()(Registry& aRegistry, const SendCreepPaylo
                 .Params =
                     RigidBodyParams{
                         .Type           = rp3d::BodyType::KINEMATIC,
-                        .Velocity       = 0.01f,
+                        .Velocity       = 0.4f,
                         .Direction      = glm::vec3(0.0f),
                         .GravityEnabled = false,
                     },
