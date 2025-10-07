@@ -31,16 +31,6 @@ void TowerBuiltSystem::operator()(Registry& aRegistry)
     for (auto tower : *storage) {
         auto& rb = aRegistry.get<RigidBody>(tower);
 
-        rb.Body->getCollider(0)->setIsSimulationCollider(true);
-        rb.Body->getCollider(0)->setCollisionCategoryBits(Category::Entities);
-        rb.Body->getCollider(0)->setCollideWithMaskBits(
-            Category::Terrain | Category::PlacementGhostTower);
-        rb.Body->setType(rp3d::BodyType::STATIC);
-
-        // FIXME: this sometimes does some weird entt crash saying slot is not available
-        aRegistry.emplace<Health>(tower, 100.0F);
-        aRegistry.remove<ImguiDrawable>(tower);
-
         ToggleObstacle(rb.Body->getCollider(0), aRegistry.ctx().get<Graph>(), true);
     }
 

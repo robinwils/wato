@@ -8,6 +8,7 @@
 
 #include "components/health.hpp"
 #include "components/imgui.hpp"
+#include "components/placement_mode.hpp"
 #include "components/rigid_body.hpp"
 #include "components/spawner.hpp"
 #include "components/transform3d.hpp"
@@ -27,6 +28,17 @@ void RigidBodiesUpdateSystem::operator()(Registry& aRegistry)
     }
     if (placementStorage == nullptr) {
         throw std::runtime_error("rigid_bodies_observer storage not initialized");
+    }
+
+    auto placementMode = aRegistry.view<PlacementMode>();
+
+    for (auto& e : *placementStorage) {
+        auto& rb = aRegistry.get<RigidBody>(e);
+        auto& t  = aRegistry.get<Transform3D>(e);
+
+        if (placementMode->contains(e)) {
+            rb.Body->setTransform(t.ToRP3D());
+        }
     }
 
     for (auto& e : *rbStorage) {
@@ -56,6 +68,20 @@ void RigidBodiesUpdateSystem::operator()(Registry& aRegistry)
             spdlog::debug("  linear velocity: {} * {}", rb.Params.Direction, rb.Params.Velocity);
             rb.Body->setLinearVelocity(ToRP3D(rb.Params.Direction * rb.Params.Velocity));
         }
+
+        if (c.Params.IsTrigger != c.Handle->getIsTrigger()) {
+            spdlog::debug("  is trigger {}", c.Params.IsTrigger);
+            c.Handle->setIsTrigger(c.Params.IsTrigger);
+            if (!c.Params.IsTrigger) {
+                c.Handle->setIsSimulationCollider(true);
+            }
+        }
+
+        if (c.Params.CollisionCategoryBits != c.Handle->getCollisionCategoryBits()
+            || c.Params.CollideWithMaskBits != c.Handle->getCollideWithMaskBits()) {
+            rb.Body->removeCollider(c.Handle);
+            c.Handle = physics.AddCollider(rb.Body, c.Params);
+        }
     }
 
     if (placementStorage->size() == 0) {
@@ -63,7 +89,4 @@ void RigidBodiesUpdateSystem::operator()(Registry& aRegistry)
     }
 
     // spdlog::trace("got {} transforms updated", placementStorage->size());
-
-    for (auto& e : *placementStorage) {
-    }
 }

@@ -121,6 +121,7 @@ void DefaultContextHandler::operator()(Registry& aRegistry, const PlacementModeP
     contextStack.push_front(std::move(placementCtx));
 
     auto ghostTower = aRegistry.create();
+    spdlog::debug("created ghost tower {}", ghostTower);
     aRegistry.emplace<SceneObject>(ghostTower, "tower_model"_hs);
     aRegistry.emplace<Transform3D>(
         ghostTower,
@@ -166,6 +167,7 @@ void DefaultContextHandler::ExitPlacement(Registry& aRegistry)
             auto view = aRegistry.view<PlacementMode>();
             for (auto entity : view) {
                 aRegistry.destroy(entity);
+                spdlog::debug("destroyed ghost tower {}", entity);
             }
         }
         contextStack.pop_front();
@@ -174,14 +176,24 @@ void DefaultContextHandler::ExitPlacement(Registry& aRegistry)
 
 void PlacementModeContextHandler::operator()(Registry& aRegistry, const BuildTowerPayload& aPayload)
 {
-    for (const auto&& [tower, pm] : aRegistry.view<PlacementMode>()->each()) {
+    for (const auto&& [tower, pm, rb, c] :
+         aRegistry.view<PlacementMode, RigidBody, Collider>().each()) {
         if (pm.Data) {
             if (pm.Data->Overlaps != 0) {
                 return;
             }
             aRegistry.emplace<Tower>(tower, aPayload.Tower);
+            aRegistry.emplace<Health>(tower, 100.0f);
+            aRegistry.remove<ImguiDrawable>(tower);
             // remove component so that ExitPlacement does not destroy the entity
             aRegistry.remove<PlacementMode>(tower);
+
+            aRegistry.patch<RigidBody>(tower, [](RigidBody& aBody) {
+                aBody.Params.Type = rp3d::BodyType::STATIC;
+            });
+            c.Params.CollisionCategoryBits = Category::Entities;
+            c.Params.CollideWithMaskBits   = Category::Terrain | Category::PlacementGhostTower;
+            c.Params.IsTrigger             = false;
         }
     }
 

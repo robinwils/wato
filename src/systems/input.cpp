@@ -55,15 +55,10 @@ void InputSystem::handleMouseMovement(Registry& aRegistry)
             if (!raycastCb.Hits.empty()) {
                 auto placementModeView = aRegistry.view<PlacementMode>();
                 for (auto ghostTower : placementModeView) {
-                    aRegistry.patch<Transform3D>(
-                        ghostTower,
-                        [raycastCb, &aRegistry, ghostTower](Transform3D& aT) {
-                            aT.Position.x = raycastCb.Hits[0].x;
-                            aT.Position.z = raycastCb.Hits[0].z;
-                            aRegistry.patch<RigidBody>(ghostTower, [aT](RigidBody& aRb) {
-                                aRb.Body->setTransform(aT.ToRP3D());
-                            });
-                        });
+                    aRegistry.patch<Transform3D>(ghostTower, [raycastCb](Transform3D& aT) {
+                        aT.Position.x = raycastCb.Hits[0].x;
+                        aT.Position.z = raycastCb.Hits[0].z;
+                    });
                 }
             }
             break;
