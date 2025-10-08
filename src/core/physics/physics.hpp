@@ -49,7 +49,7 @@ struct RigidBodyParams {
 struct ColliderParams {
     unsigned short      CollisionCategoryBits;
     unsigned short      CollideWithMaskBits;
-    bool                IsTrigger;
+    bool                IsTrigger{false};
     Transform3D         Offset{};
     ColliderShapeParams ShapeParams;
 };

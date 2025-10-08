@@ -1,7 +1,5 @@
 #include "systems/action.hpp"
 
-#include <spdlog/spdlog.h>
-
 #include <variant>
 
 #include "components/animator.hpp"
@@ -18,6 +16,7 @@
 #include "components/velocity.hpp"
 #include "core/graph.hpp"
 #include "core/physics/physics.hpp"
+#include "core/sys/log.hpp"
 #include "core/tower_building_handler.hpp"
 #include "input/action.hpp"
 #include "registry/registry.hpp"
@@ -70,7 +69,6 @@ void DefaultContextHandler::operator()(Registry& aRegistry, const SendCreepPaylo
             glm::vec3(0.5f));
 
         aRegistry.emplace<Health>(creep, 100.0f);
-        aRegistry.emplace<Velocity>(creep, 0.01f);
         aRegistry.emplace<Creep>(creep, aPayload.Type);
         aRegistry.emplace<SceneObject>(creep, "phoenix"_hs);
         aRegistry.emplace<ImguiDrawable>(creep, "phoenix", true);
@@ -86,7 +84,7 @@ void DefaultContextHandler::operator()(Registry& aRegistry, const SendCreepPaylo
                 .Params =
                     RigidBodyParams{
                         .Type           = rp3d::BodyType::KINEMATIC,
-                        .Velocity       = 0.01f,
+                        .Velocity       = 0.4f,
                         .Direction      = glm::vec3(0.0f),
                         .GravityEnabled = false,
                     },
@@ -123,6 +121,7 @@ void DefaultContextHandler::operator()(Registry& aRegistry, const PlacementModeP
     contextStack.push_front(std::move(placementCtx));
 
     auto ghostTower = aRegistry.create();
+    spdlog::debug("created ghost tower {}", ghostTower);
     aRegistry.emplace<SceneObject>(ghostTower, "tower_model"_hs);
     aRegistry.emplace<Transform3D>(
         ghostTower,
@@ -168,6 +167,7 @@ void DefaultContextHandler::ExitPlacement(Registry& aRegistry)
             auto view = aRegistry.view<PlacementMode>();
             for (auto entity : view) {
                 aRegistry.destroy(entity);
+                spdlog::debug("destroyed ghost tower {}", entity);
             }
         }
         contextStack.pop_front();
@@ -176,14 +176,24 @@ void DefaultContextHandler::ExitPlacement(Registry& aRegistry)
 
 void PlacementModeContextHandler::operator()(Registry& aRegistry, const BuildTowerPayload& aPayload)
 {
-    for (const auto&& [tower, pm] : aRegistry.view<PlacementMode>()->each()) {
+    for (const auto&& [tower, pm, rb, c] :
+         aRegistry.view<PlacementMode, RigidBody, Collider>().each()) {
         if (pm.Data) {
             if (pm.Data->Overlaps != 0) {
                 return;
             }
             aRegistry.emplace<Tower>(tower, aPayload.Tower);
+            aRegistry.emplace<Health>(tower, 100.0f);
+            aRegistry.remove<ImguiDrawable>(tower);
             // remove component so that ExitPlacement does not destroy the entity
             aRegistry.remove<PlacementMode>(tower);
+
+            aRegistry.patch<RigidBody>(tower, [](RigidBody& aBody) {
+                aBody.Params.Type = rp3d::BodyType::STATIC;
+            });
+            c.Params.CollisionCategoryBits = Category::Entities;
+            c.Params.CollideWithMaskBits   = Category::Terrain | Category::PlacementGhostTower;
+            c.Params.IsTrigger             = false;
         }
     }
 

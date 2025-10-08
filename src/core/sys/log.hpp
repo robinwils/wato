@@ -6,6 +6,7 @@
 #include <fmt/std.h>
 #include <spdlog/spdlog.h>
 
+#include <entt/entity/fwd.hpp>
 #include <glm/gtx/string_cast.hpp>
 
 template <typename T>
@@ -42,6 +43,14 @@ struct fmt::formatter<glm::qua<T, Q>> : fmt::formatter<std::string> {
     auto format(glm::qua<T, Q> const& aObj, format_context& aCtx) const -> decltype(aCtx.out())
     {
         return fmt::format_to(aCtx.out(), "{}", glm::to_string(aObj));
+    }
+};
+
+template <>
+struct fmt::formatter<entt::entity> : fmt::formatter<std::string> {
+    auto format(entt::entity const& aObj, format_context& aCtx) const -> decltype(aCtx.out())
+    {
+        return fmt::format_to(aCtx.out(), "entity #{}", fmt::underlying(aObj));
     }
 };
 
