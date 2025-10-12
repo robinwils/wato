@@ -14,8 +14,12 @@
 class GameServer : public Application
 {
    public:
-    explicit GameServer(char** aArgv) : Application(aArgv) {}
     virtual ~GameServer() = default;
+    explicit GameServer(char** aArgv) : Application(aArgv), mServer(mOptions.ServerAddr) {}
+    explicit GameServer(const Options& aOptions)
+        : Application(aOptions), mServer(mOptions.ServerAddr)
+    {
+    }
 
     GameServer(const GameServer&)            = delete;
     GameServer(GameServer&&)                 = delete;
@@ -25,6 +29,7 @@ class GameServer : public Application
     void Init() override;
     int  Run() override;
     void ConsumeNetworkRequests();
+    void Stop();
 
     static GameInstanceID GenerateGameInstanceID()
     {

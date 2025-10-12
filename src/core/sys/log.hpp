@@ -4,6 +4,8 @@
 #include <bx/string.h>
 #include <fmt/ranges.h>
 #include <fmt/std.h>
+#include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
 
 #include <entt/entity/fwd.hpp>
@@ -53,6 +55,25 @@ struct fmt::formatter<entt::entity> : fmt::formatter<std::string> {
         return fmt::format_to(aCtx.out(), "entity #{}", fmt::underlying(aObj));
     }
 };
+
+inline void InitLogger(const std::string& aLevel)
+{
+    auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+    auto fileSink    = std::make_shared<spdlog::sinks::basic_file_sink_mt>("wato_logs.txt", true);
+    spdlog::level::level_enum level = spdlog::level::from_str(aLevel);
+
+    consoleSink->set_level(level);
+    fileSink->set_level(level);
+    // FIXME: weird segfault when using %s and %# instead of %@
+    // or puting the thread info in separate []
+    consoleSink->set_pattern("[%H:%M:%S %z thread %t] [%^%L%$] %v %@");
+    fileSink->set_pattern("[%H:%M:%S %z thread %t] [%^%L%$] %v %@");
+
+    std::vector<spdlog::sink_ptr> sinks{consoleSink, fileSink};
+    auto logger = std::make_shared<spdlog::logger>("multi_sink", sinks.begin(), sinks.end());
+    spdlog::set_default_logger(logger);
+    logger->set_level(level);
+}
 
 #define WATO_TRACE(...) SPDLOG_TRACE(__VA_ARGS__)
 #define WATO_DBG(...)   SPDLOG_DEBUG(__VA_ARGS__)

@@ -3,6 +3,7 @@
 
 #include "core/app/game_client.hpp"
 #include "core/sys/backtrace.hpp"
+#include "core/sys/log.hpp"
 
 int main(int, char** argv)
 {
@@ -10,7 +11,10 @@ int main(int, char** argv)
     signal(SIGSEGV, signalHandler);
 #endif
 
-    GameClient game(1920, 1080, argv);
+    Options opts(argv);
+
+    InitLogger(opts.LogLevel());
+    GameClient game(1920, 1080, opts);
     game.Init();
 
     return game.Run();

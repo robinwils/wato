@@ -74,8 +74,14 @@ int GameServer::Run()
         }
     }
 
+    for (auto& [gameId, registry] : mGameInstances) {
+        StopGameInstance(registry);
+    }
+
     return 0;
 }
+
+void GameServer::Stop() { mRunning = false; }
 
 GameInstanceID GameServer::createGameInstance(const NewGameRequest& aNewGame)
 {

@@ -19,6 +19,7 @@ class Application
    public:
     static constexpr float kTimeStep = 1.0f / 60.0f;
 
+    explicit Application() : mRunning(false) {}
     explicit Application(char** aArgv) : mOptions(aArgv), mRunning(false) {}
     virtual ~Application() = default;
 
@@ -35,7 +36,11 @@ class Application
 
     void StartGameInstance(Registry& aRegistry, const GameInstanceID aGameID, const bool aIsServer);
     void AdvanceSimulation(Registry& aRegistry, const float aDeltaTime);
+    void StopGameInstance(Registry& aRegistry);
+
     void SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeight);
+
+    void SetupObservers(Registry& aRegistry);
     void ClearAllObservers(Registry& aRegistry);
 
     virtual void OnGameInstanceCreated() = 0;

@@ -56,7 +56,7 @@ void GameClient::Init()
     mSystemsFT.push_back(PhysicsSystem::MakeDelegate(mPhysicsSystem));
     mSystemsFT.push_back(NetworkSyncSystem::MakeDelegate(mNetworkSyncSystem));
 
-    setupObservers();
+    SetupObservers(mRegistry);
 
     auto graph = organizerFixedTime.graph();
     spdlog::info("graph size: {}", graph.size());
@@ -141,6 +141,7 @@ int GameClient::Run()
         netClient.Disconnect();
         mDiscTimerStart.emplace(clock_type::now());
     }
+    StopGameInstance(mRegistry);
     return 0;
 }
 
@@ -273,20 +274,4 @@ void GameClient::consumeNetworkResponses()
             ev->Payload);
         delete ev;
     }
-}
-
-void GameClient::setupObservers()
-{
-    mObserverNames.push_back("tower_built_observer");
-    auto& tbo = mRegistry.storage<entt::reactive>("tower_built_observer"_hs);
-    tbo.on_construct<Tower>();
-
-    mObserverNames.push_back("rigid_bodies_observer");
-    auto& rbo = mRegistry.storage<entt::reactive>("rigid_bodies_observer"_hs);
-    rbo.on_construct<RigidBody>();
-    rbo.on_update<RigidBody>();
-
-    mObserverNames.push_back("placement_mode_observer");
-    auto& pmo = mRegistry.storage<entt::reactive>("placement_mode_observer"_hs);
-    pmo.on_update<Transform3D>();
 }

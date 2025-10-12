@@ -10,7 +10,11 @@ int main(int, char** argv)
     signal(SIGSEGV, signalHandler);
 #endif
 
-    GameServer s(argv);
+    Options      opts(argv);
+
+    InitLogger(opts.LogLevel());
+
+    GameServer s(opts);
     s.Init();
     return s.Run();
 }

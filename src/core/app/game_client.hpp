@@ -26,14 +26,15 @@ class GameClient : public Application
     explicit GameClient(int aWidth, int aHeight, char** aArgv)
         : Application(aArgv), mPhysicsEventHandler(&mRegistry)
     {
-        mRegistry.ctx().emplace<ActionContextStack>();
-        mRegistry.ctx().emplace<WatoWindow>(aWidth, aHeight);
-        mRegistry.ctx().emplace<Renderer>(mOptions.Renderer());
-        mRegistry.ctx().emplace<ENetClient>();
-        mRegistry.ctx().emplace<TextureCache>();
-        mRegistry.ctx().emplace<ShaderCache>();
-        mRegistry.ctx().emplace<ModelCache>();
+        initContext(aWidth, aHeight);
     }
+
+    explicit GameClient(int aWidth, int aHeight, const Options& aOptions)
+        : Application(aOptions), mPhysicsEventHandler(&mRegistry)
+    {
+        initContext(aWidth, aHeight);
+    }
+
     GameClient(const GameClient&)            = delete;
     GameClient(GameClient&&)                 = delete;
     GameClient& operator=(const GameClient&) = delete;
@@ -89,11 +90,20 @@ class GameClient : public Application
     virtual void OnGameInstanceCreated() override;
 
    private:
+    inline void initContext(int aWidth, int aHeight)
+    {
+        mRegistry.ctx().emplace<ActionContextStack>();
+        mRegistry.ctx().emplace<WatoWindow>(aWidth, aHeight);
+        mRegistry.ctx().emplace<Renderer>(mOptions.Renderer());
+        mRegistry.ctx().emplace<ENetClient>();
+        mRegistry.ctx().emplace<TextureCache>();
+        mRegistry.ctx().emplace<ShaderCache>();
+        mRegistry.ctx().emplace<ModelCache>();
+    }
     void networkThread();
     void consumeNetworkResponses();
     void spawnPlayerAndCamera();
     void prepareGridPreview();
-    void setupObservers();
 
     Registry        mRegistry;
     entt::organizer mFrameTimeOrganizer;
