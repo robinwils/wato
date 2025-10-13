@@ -14,7 +14,7 @@
 int main(int, char** argv)
 {
 #if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
-    signal(SIGSEGV, signalHandler);
+    // signal(SIGSEGV, signalHandler);
 #endif
 
     Options opts(argv);
