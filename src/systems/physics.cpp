@@ -24,6 +24,9 @@ void UpdateTransformsSytem::operator()(Registry& aRegistry, const float aFactor)
     // update transforms
     for (auto&& [entity, t, rb] :
          aRegistry.view<Transform3D, RigidBody>(entt::exclude<Tile>).each()) {
+        if (!rb.Body) {
+            continue;
+        }
         auto updatedTransform = rb.Body->getTransform();
         auto interpolatedTransform =
             reactphysics3d::Transform::interpolateTransforms(t.ToRP3D(), updatedTransform, aFactor);
