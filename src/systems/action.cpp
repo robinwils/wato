@@ -247,13 +247,15 @@ void ServerContextHandler::operator()(Registry& aRegistry, const BuildTowerPaylo
     collider.Handle = phy.AddCollider(body.Body, collider.Params);
 
     TowerBuildingHandler handler;
-    phy.World()->testCollision(body.Body, handler);
+    phy.World()->testOverlap(handler);
 
     if (!handler.CanBuildTower) {
         phy.World()->destroyRigidBody(body.Body);
         aRegistry.destroy(tower);
+        spdlog::error("tower at {} invalidated", t.Position);
         return;
     }
+    spdlog::info("tower at {} validated", t.Position);
     aRegistry.emplace<Tower>(tower, aPayload.Tower);
     aRegistry.emplace<RigidBody>(tower, body);
     aRegistry.emplace<Collider>(tower, collider);

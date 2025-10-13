@@ -3,16 +3,17 @@
 #include <glm/vec3.hpp>
 
 #include "reactphysics3d/reactphysics3d.h"
-#include "registry/registry.hpp"
 
-class TowerBuildingHandler : public rp3d::EventListener
+class TowerBuildingHandler : public rp3d::OverlapCallback
 {
    public:
+    TowerBuildingHandler() : CanBuildTower(true) {}
+
     /// Called when some contacts occur
     /**
      * @param callbackData Contains information about all the contacts
      */
-    void onContact(const rp3d::CollisionCallback::CallbackData& /*callbackData*/) override;
+    virtual void onOverlap(CallbackData&) override;
 
     bool CanBuildTower;
 
