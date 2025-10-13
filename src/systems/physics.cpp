@@ -30,6 +30,10 @@ void UpdateTransformsSytem::operator()(Registry& aRegistry, const float aFactor)
         auto updatedTransform = rb.Body->getTransform();
         auto interpolatedTransform =
             reactphysics3d::Transform::interpolateTransforms(t.ToRP3D(), updatedTransform, aFactor);
-        t.FromRP3D(interpolatedTransform);
+
+        aRegistry.patch<Transform3D>(entity, [&](Transform3D& aT) {
+            aT.FromRP3D(interpolatedTransform);
+        });
+        // t.FromRP3D(interpolatedTransform);
     }
 }
