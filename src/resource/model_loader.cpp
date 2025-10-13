@@ -44,12 +44,12 @@ ModelLoader::operator()(Registry& aRegistry, const char* aName, unsigned int aPo
     Skeleton skeleton;
     if (scene->HasAnimations()) {
         populateBoneNames(scene->mRootNode, scene);
-        spdlog::debug("got bone names: {}", mBonesMap);
+        spdlog::trace("got bone names: {}", mBonesMap);
         buildSkeleton(scene->mRootNode, scene, skeleton, 0);
-        spdlog::info("skeleton with {} bones built for model {}", skeleton.Bones.size(), aName);
+        spdlog::debug("skeleton with {} bones built for model {}", skeleton.Bones.size(), aName);
         if (!mBonesMap.empty()) {
             for (std::size_t i = 0; i < skeleton.Bones.size(); ++i) {
-                spdlog::debug("Bone[{}]: {}", i, skeleton.Bones[i]);
+                spdlog::trace("Bone[{}]: {}", i, skeleton.Bones[i]);
             }
         } else {
             spdlog::warn("got animations but no bones");
@@ -60,8 +60,6 @@ ModelLoader::operator()(Registry& aRegistry, const char* aName, unsigned int aPo
     if (scene->HasAnimations()) {
         animations = processAnimations(scene);
     }
-
-    PrintSkeleton(skeleton);
 
     return std::make_shared<Model>(
         std::move(meshes),
@@ -102,7 +100,7 @@ void ModelLoader::processBones(
         const aiBone*                     bone      = aMesh->mBones[boneIdx];
         const std::optional<std::size_t>& skBoneIdx = mBonesMap[bone->mName.C_Str()];
 
-        WATO_DBG(
+        spdlog::trace(
             "  bone {} (idx: {}) with {} vertex weights",
             bone->mName,
             skBoneIdx,
@@ -170,7 +168,7 @@ ModelLoader::mesh_type ModelLoader::processMesh(
     Skeleton&      aSkeleton,
     Registry&      aRegistry)
 {
-    WATO_DBG(
+    spdlog::trace(
         "mesh {} has {} vertices, {} indices, {} bones",
         aMesh->mName,
         aMesh->mNumVertices,
@@ -221,7 +219,10 @@ ModelLoader::mesh_type ModelLoader::processMesh(
                 fmt::format("could not load blinnphong shader {}", skinned ? "skinned" : ""));
         }
 
-        WATO_DBG("  {} diffuse and {} specular textures", textures.size(), specTextures.size());
+        spdlog::trace(
+            "  {} diffuse and {} specular textures",
+            textures.size(),
+            specTextures.size());
         m = std::make_unique<BlinnPhongMaterial>(shader);
 
         if (textures.size() > 0) {
@@ -316,7 +317,7 @@ ModelLoader::mesh_container ModelLoader::processNode(
     Skeleton&      aSkeleton,
     Registry&      aRegistry)
 {
-    WATO_DBG(
+    spdlog::trace(
         "node {} with {} meshes, {} children",
         aNode->mName,
         aNode->mNumMeshes,
@@ -359,7 +360,7 @@ Animation ModelLoader::processAnimation(const aiAnimation* aAnimation)
     for (unsigned int i = 0; i < aAnimation->mNumChannels; ++i) {
         const aiNodeAnim* channel = aAnimation->mChannels[i];
         NodeAnimation     nodeAnimation;
-        WATO_DBG(
+        spdlog::trace(
             "  node anim {} with {} position keys, {} rotation keys, {} scaling keys",
             channel->mNodeName,
             channel->mNumPositionKeys,
@@ -393,7 +394,7 @@ ModelLoader::animation_map ModelLoader::processAnimations(const aiScene* aScene)
     ModelLoader::animation_map animations;
     for (unsigned int animIdx = 0; animIdx < aScene->mNumAnimations; ++animIdx) {
         const aiAnimation* anim = aScene->mAnimations[animIdx];
-        WATO_DBG(
+        spdlog::trace(
             "animation {} with duration {}, {} ticks/s",
             anim->mName,
             anim->mDuration,
@@ -432,7 +433,7 @@ std::size_t ModelLoader::buildSkeleton(
     std::string indent(aIndent, ' ');
     const bool  isBone = mBonesMap.contains(aNode->mName.C_Str());
 
-    WATO_DBG(
+    spdlog::trace(
         "{}building node {} with {} children, {} meshes, is bone ? {}",
         indent,
         aNode->mName,
