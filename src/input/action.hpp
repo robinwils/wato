@@ -234,53 +234,62 @@ struct fmt::formatter<Action> : fmt::formatter<std::string> {
 constexpr Action kMoveLeftAction = Action{
     .Type    = ActionType::Move,
     .Tag     = ActionTag::FrameTime,
-    .Payload = MovePayload{.Direction = MoveDirection::Left}};
+    .Payload = MovePayload{.Direction = MoveDirection::Left},
+};
 
 constexpr Action kMoveRightAction = Action{
     .Type    = ActionType::Move,
     .Tag     = ActionTag::FrameTime,
-    .Payload = MovePayload{.Direction = MoveDirection::Right}};
+    .Payload = MovePayload{.Direction = MoveDirection::Right},
+};
 
 constexpr Action kMoveFrontAction = Action{
     .Type    = ActionType::Move,
     .Tag     = ActionTag::FrameTime,
-    .Payload = MovePayload{.Direction = MoveDirection::Front}};
+    .Payload = MovePayload{.Direction = MoveDirection::Front},
+};
 
 constexpr Action kMoveBackAction = Action{
     .Type    = ActionType::Move,
     .Tag     = ActionTag::FrameTime,
-    .Payload = MovePayload{.Direction = MoveDirection::Back}};
+    .Payload = MovePayload{.Direction = MoveDirection::Back},
+};
 
 constexpr Action kMoveUpAction = Action{
     .Type    = ActionType::Move,
     .Tag     = ActionTag::FrameTime,
-    .Payload = MovePayload{.Direction = MoveDirection::Up}};
+    .Payload = MovePayload{.Direction = MoveDirection::Up},
+};
 
 constexpr Action kMoveDownAction = Action{
     .Type    = ActionType::Move,
     .Tag     = ActionTag::FrameTime,
-    .Payload = MovePayload{.Direction = MoveDirection::Down}};
+    .Payload = MovePayload{.Direction = MoveDirection::Down},
+};
 
 constexpr Action kEnterPlacementModeAction = Action{
     .Type    = ActionType::EnterPlacementMode,
     .Tag     = ActionTag::FrameTime,
-    .Payload = PlacementModePayload{.CanBuild = true, .Tower = TowerType::Arrow}
+    .Payload = PlacementModePayload{.CanBuild = true, .Tower = TowerType::Arrow},
 };
 
 constexpr Action kBuildTowerAction = Action{
     .Type    = ActionType::BuildTower,
     .Tag     = ActionTag::FixedTime,
-    .Payload = BuildTowerPayload{.Tower = TowerType::Arrow}};
+    .Payload = BuildTowerPayload{.Tower = TowerType::Arrow},
+};
 
 constexpr Action kExitPlacementModeAction = Action{
     .Type    = ActionType::ExitPlacementMode,
     .Tag     = ActionTag::FrameTime,
-    .Payload = PlacementModePayload{}};
+    .Payload = PlacementModePayload{},
+};
 
 constexpr Action kSendCreepAction = Action{
     .Type    = ActionType::SendCreep,
     .Tag     = ActionTag::FixedTime,
-    .Payload = SendCreepPayload{.Type = CreepType::Simple}};
+    .Payload = SendCreepPayload{.Type = CreepType::Simple},
+};
 
 struct ActionBinding {
     ActionBinding() = delete;
