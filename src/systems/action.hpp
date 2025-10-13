@@ -18,8 +18,8 @@ class ActionContextHandler
 class DefaultContextHandler : public ActionContextHandler
 {
    public:
-    void operator()(Registry& aRegistry, const MovePayload& aPayload, const float aDeltaTime)
-        override;
+    virtual void
+    operator()(Registry& aRegistry, const MovePayload& aPayload, const float aDeltaTime) override;
     void operator()(Registry& aRegistry, const SendCreepPayload& aPayload) override;
     void operator()(Registry&, const BuildTowerPayload&) override {};
     void operator()(Registry& aRegistry, const PlacementModePayload& aPayload) override;
