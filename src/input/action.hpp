@@ -94,7 +94,6 @@ struct SendCreepPayload {
 
 struct BuildTowerPayload {
     TowerType Tower;
-    glm::vec3 Position{0.0f};
 };
 
 struct PlacementModePayload {
@@ -126,7 +125,6 @@ struct Action {
                 },
                 [&](const BuildTowerPayload& aPayload) {
                     aArchive.template Write<TowerType>(&aPayload.Tower, 1);
-                    aArchive.template Write<float>(&aPayload.Position, 3);
                 },
                 [&](const PlacementModePayload& aPayload) {
                     aArchive.template Write<bool>(&aPayload.CanBuild, 1);
@@ -157,7 +155,6 @@ struct Action {
             case ActionType::BuildTower: {
                 BuildTowerPayload payload{};
                 aArchive.template Read<TowerType>(&payload.Tower, 1);
-                aArchive.template Read<float>(glm::value_ptr(payload.Position), 3);
                 aSelf.Payload = payload;
                 break;
             }

@@ -213,11 +213,7 @@ void ServerContextHandler::operator()(Registry& aRegistry, const BuildTowerPaylo
     auto  tower = aRegistry.create();
     auto& phy   = aRegistry.ctx().get<Physics>();
 
-    auto& t = aRegistry.emplace<Transform3D>(
-        tower,
-        aPayload.Position,
-        glm::identity<glm::quat>(),
-        glm::vec3(0.1f));
+    auto& t = aRegistry.emplace<Transform3D>(tower);
 
     RigidBody body = RigidBody{
         .Params =
