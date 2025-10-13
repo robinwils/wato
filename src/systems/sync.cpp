@@ -1,5 +1,6 @@
 #include "systems/sync.hpp"
 
+#include "components/game.hpp"
 #include "core/net/enet_client.hpp"
 #include "core/net/net.hpp"
 #include "core/snapshot.hpp"
@@ -8,29 +9,30 @@
 
 void NetworkSyncSystem::operator()(Registry& aRegistry)
 {
-    auto& actions   = aRegistry.ctx().get<ActionBuffer&>();
+    auto& buf       = aRegistry.ctx().get<GameStateBuffer&>();
     auto& netClient = aRegistry.ctx().get<ENetClient&>();
+    auto& instance  = aRegistry.ctx().get<GameInstance&>();
 
     if (!netClient.Running() || !netClient.Connected()) {
         return;
     }
 
-    const PlayerActions& latestActions = actions.Latest();
+    const GameState&     state = buf.Latest();
     std::vector<uint8_t> storage;
-    PlayerActions        filteredActions = latestActions;
+    GameState            filteredState = state;
 
-    filteredActions.Actions.clear();
-    for (const Action& action : latestActions.Actions) {
+    filteredState.Actions.clear();
+    for (const Action& action : state.Actions) {
         if (action.Tag == ActionTag::FixedTime) {
-            filteredActions.Actions.emplace_back(action);
+            filteredState.Actions.emplace_back(action);
         }
     }
 
-    if (!filteredActions.Actions.empty()) {
+    if (!filteredState.Actions.empty()) {
         netClient.EnqueueSend(new NetworkEvent<NetworkRequestPayload>{
-            .Type     = PacketType::Actions,
+            .Type     = PacketType::ClientSync,
             .PlayerID = 0,
-            .Payload  = filteredActions,
+            .Payload  = ClientSyncRequest{.GameID = instance.GameID, .State = filteredState},
         });
     }
 }

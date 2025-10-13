@@ -9,6 +9,7 @@
 #include "components/tile.hpp"
 #include "components/transform3d.hpp"
 #include "core/physics/physics.hpp"
+#include "core/state.hpp"
 #include "core/window.hpp"
 #include "input/action.hpp"
 #include "registry/registry.hpp"
@@ -16,18 +17,15 @@
 
 void InputSystem::operator()(Registry& aRegistry)
 {
-    const Input&   input         = aRegistry.ctx().get<WatoWindow&>().GetInput();
-    auto&          actionCtx     = aRegistry.ctx().get<ActionContextStack&>().front();
-    auto&          abuf          = aRegistry.ctx().get<ActionBuffer&>();
-    PlayerActions& latestActions = abuf.Latest();
-    const ActionBindings::actions_type& curActions = actionCtx.Bindings.ActionsFromInput(input);
+    const Input&       input       = aRegistry.ctx().get<WatoWindow&>().GetInput();
+    auto&              actionCtx   = aRegistry.ctx().get<ActionContextStack&>().front();
+    auto&              buf         = aRegistry.ctx().get<GameStateBuffer&>();
+    GameState&         latestState = buf.Latest();
+    const ActionsType& curActions  = actionCtx.Bindings.ActionsFromInput(input);
 
     if (!curActions.empty()) {
         spdlog::trace("inserting latest {} actions: {}", curActions.size(), curActions);
-        latestActions.Actions.insert(
-            latestActions.Actions.end(),
-            curActions.begin(),
-            curActions.end());
+        latestState.Actions.insert(latestState.Actions.end(), curActions.begin(), curActions.end());
     }
     handleMouseMovement(aRegistry);
 }

@@ -16,6 +16,7 @@
 #include "components/velocity.hpp"
 #include "core/graph.hpp"
 #include "core/physics/physics.hpp"
+#include "core/state.hpp"
 #include "core/sys/log.hpp"
 #include "core/tower_building_handler.hpp"
 #include "input/action.hpp"
@@ -293,20 +294,21 @@ void ActionSystem<Derived>::processActions(
     ActionTag   aFilterTag,
     const float aDeltaTime)
 {
-    auto&         abuf          = aRegistry.ctx().get<ActionBuffer&>();
-    PlayerActions latestActions = abuf.Latest();
+    auto&       buf           = aRegistry.ctx().get<GameStateBuffer&>();
+    ActionsType latestActions = buf.Latest().Actions;
 
-    if (!latestActions.Actions.empty()) {
-        spdlog::trace("processing {} actions", latestActions.Actions.size());
+    if (!latestActions.empty()) {
+        spdlog::trace("processing {} actions", latestActions.size());
     }
-    for (const Action& action : latestActions.Actions) {
+
+    for (const Action& action : latestActions) {
         if (action.Tag != aFilterTag || action.IsProcessed) {
             continue;
         }
         handleAction(aRegistry, action, aDeltaTime);
     }
 
-    for (Action& action : latestActions.Actions) {
+    for (Action& action : latestActions) {
         action.IsProcessed = true;
     }
 }

@@ -2,8 +2,6 @@
 
 #include <spdlog/spdlog.h>
 
-#include "components/tower.hpp"
-
 ActionBindings ActionBindings::Defaults()
 {
     ActionBindings bindings;
@@ -48,9 +46,9 @@ ActionBindings ActionBindings::PlacementDefaults()
     return bindings;
 }
 
-ActionBindings::actions_type ActionBindings::ActionsFromInput(const Input& aInput)
+ActionsType ActionBindings::ActionsFromInput(const Input& aInput)
 {
-    ActionBindings::actions_type actions;
+    ActionsType actions;
 
     for (const auto& [_, binding] : mBindings) {
         std::visit(

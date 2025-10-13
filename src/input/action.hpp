@@ -177,6 +177,8 @@ struct Action {
     }
 };
 
+using ActionsType = std::vector<Action>;
+
 template <>
 struct fmt::formatter<Action::payload_type> : fmt::formatter<std::string> {
     auto format(Action::payload_type aObj, format_context& aCtx) const -> decltype(aCtx.out())
@@ -294,10 +296,9 @@ class ActionBindings
 {
    public:
     using bindings_type = std::unordered_map<std::string, ActionBinding>;
-    using actions_type  = std::vector<Action>;
 
     void AddBinding(const std::string& aActionStr, const KeyState& aState, const Action& aAction);
-    actions_type          ActionsFromInput(const Input& aInput);
+    ActionsType           ActionsFromInput(const Input& aInput);
     static ActionBindings Defaults();
     static ActionBindings PlacementDefaults();
 
@@ -320,42 +321,4 @@ struct ActionContext {
     payload_type   Payload;
 };
 
-struct PlayerActions {
-    using actions_type = std::vector<Action>;
-
-    constexpr static auto Serialize(auto& aArchive, const auto& aSelf)
-    {
-        actions_type::size_type nActions = aSelf.Actions.size();
-
-        aArchive.template Write<PlayerID>(&aSelf.Player, 1);
-        aArchive.template Write<GameInstanceID>(&aSelf.GameID, 1);
-        aArchive.template Write<uint32_t>(&aSelf.Tick, 1);
-        aArchive.template Write<actions_type::size_type>(&nActions, 1);
-        for (const Action& action : aSelf.Actions) {
-            Action::Serialize(aArchive, action);
-        }
-    }
-    constexpr static auto Deserialize(auto& aArchive, auto& aSelf)
-    {
-        actions_type::size_type nActions = 0;
-        aArchive.template Read<PlayerID>(&aSelf.Player, 1);
-        aArchive.template Read<GameInstanceID>(&aSelf.GameID, 1);
-        aArchive.template Read<uint32_t>(&aSelf.Tick, 1);
-        aArchive.template Read<actions_type::size_type>(&nActions, 1);
-        for (actions_type::size_type idx = 0; idx < nActions; idx++) {
-            Action action;
-            if (!Action::Deserialize(aArchive, action)) {
-                throw std::runtime_error("cannot deserialize action");
-            }
-            aSelf.Actions.push_back(action);
-        }
-        return true;
-    }
-    PlayerID       Player;
-    GameInstanceID GameID;
-    uint32_t       Tick;
-    actions_type   Actions;
-};
-
 using ActionContextStack = std::list<ActionContext>;
-using ActionBuffer       = RingBuffer<PlayerActions, 128>;

@@ -36,15 +36,18 @@ void GameServer::ConsumeNetworkRequests()
     while (const NetworkEvent<NetworkRequestPayload>* ev = mServer.Queue().pop()) {
         std::visit(
             VariantVisitor{
-                [&](const PlayerActions& aActions) {
-                    if (!mGameInstances.contains(aActions.GameID)) {
-                        spdlog::warn("got event for non existing game {}", aActions.GameID);
+                [&](const ClientSyncRequest& aReq) {
+                    if (!mGameInstances.contains(aReq.GameID)) {
+                        spdlog::warn("got event for non existing game {}", aReq.GameID);
                         return;
                     }
-                    Registry& registry = mGameInstances[aActions.GameID];
-                    auto&     actions  = registry.ctx().get<ActionBuffer&>().Latest().Actions;
-                    spdlog::debug("got {} actions: {}", aActions.Actions.size(), aActions.Actions);
-                    actions.insert(actions.end(), aActions.Actions.begin(), aActions.Actions.end());
+
+                    const ActionsType& incoming = aReq.State.Actions;
+                    Registry&          registry = mGameInstances[aReq.GameID];
+                    auto& actions = registry.ctx().get<GameStateBuffer&>().Latest().Actions;
+
+                    spdlog::debug("got {} actions: {}", incoming.size(), incoming);
+                    actions.insert(actions.end(), incoming.begin(), incoming.end());
                 },
                 [&](const NewGameRequest& aNewGame) {
                     GameInstanceID gameID = createGameInstance(aNewGame);

@@ -14,6 +14,7 @@
 #include "core/graph.hpp"
 #include "core/physics/event_handler.hpp"
 #include "core/physics/physics.hpp"
+#include "core/state.hpp"
 #include "input/action.hpp"
 
 using namespace entt::literals;
@@ -29,7 +30,7 @@ void Application::StartGameInstance(
     auto& physics = aRegistry.ctx().emplace<Physics>();
     auto& stack   = aRegistry.ctx().emplace<ActionContextStack>();
 
-    aRegistry.ctx().emplace<ActionBuffer>();
+    aRegistry.ctx().emplace<GameStateBuffer>();
     aRegistry.ctx().emplace<GameInstance>(aGameID, 0.0f, 0u);
 
     physics.Init();
@@ -52,7 +53,7 @@ void Application::StopGameInstance(Registry& aRegistry)
 
 void Application::AdvanceSimulation(Registry& aRegistry, const float aDeltaTime)
 {
-    auto& actions  = aRegistry.ctx().get<ActionBuffer&>();
+    auto& state    = aRegistry.ctx().get<GameStateBuffer&>();
     auto& instance = aRegistry.ctx().get<GameInstance&>();
 
     instance.Accumulator += aDeltaTime;
@@ -66,9 +67,8 @@ void Application::AdvanceSimulation(Registry& aRegistry, const float aDeltaTime)
         for (const auto& system : mSystemsFT) {
             system(aRegistry, kTimeStep);
         }
-        actions.Push();
-        actions.Latest().GameID = instance.GameID;
-        actions.Latest().Tick   = ++instance.Tick;
+        state.Push();
+        state.Latest().Tick = ++instance.Tick;
         ClearAllObservers(aRegistry);
     }
 }

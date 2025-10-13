@@ -303,6 +303,7 @@ target_sources(watolib
     src/core/physics/physics.hpp
     src/core/queue/ring_buffer.hpp
     src/core/snapshot.hpp
+    src/core/state.hpp
     src/core/sys/backtrace.hpp
     src/core/sys/log.hpp
     src/core/tower_building_handler.hpp

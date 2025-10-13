@@ -6,6 +6,7 @@
 #include <variant>
 
 #include "components/player.hpp"
+#include "core/state.hpp"
 #include "core/types.hpp"
 #include "input/action.hpp"
 
@@ -33,6 +34,24 @@ struct NewGameRequest {
     }
 };
 
+struct ClientSyncRequest {
+    GameInstanceID GameID;
+    GameState      State;
+
+    constexpr static auto Serialize(auto& aArchive, const auto& aSelf)
+    {
+        aArchive.template Write<GameInstanceID>(&aSelf.GameID, 1);
+        GameState::Serialize(aArchive, aSelf.State);
+    }
+
+    constexpr static auto Deserialize(auto& aArchive, auto& aSelf)
+    {
+        aArchive.template Read<GameInstanceID>(&aSelf.GameID, 1);
+        GameState::Deserialize(aArchive, aSelf.State);
+        return true;
+    }
+};
+
 struct NewGameResponse {
     GameInstanceID GameID;
 
@@ -50,11 +69,11 @@ struct NewGameResponse {
 struct ConnectedResponse {
 };
 
-using NetworkRequestPayload  = std::variant<PlayerActions, NewGameRequest>;
+using NetworkRequestPayload  = std::variant<ClientSyncRequest, NewGameRequest>;
 using NetworkResponsePayload = std::variant<NewGameResponse, ConnectedResponse>;
 
 enum class PacketType {
-    Actions,
+    ClientSync,
     NewGame,
     Connected,
 };

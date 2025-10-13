@@ -78,10 +78,10 @@ void ENetServer::OnReceive(ENetEvent& aEvent)
     archive.Read<PacketType>(&ev->Type, sizeof(PacketType));
     archive.Read<PlayerID>(&ev->PlayerID, sizeof(PlayerID));
     switch (ev->Type) {
-        case PacketType::Actions: {
-            PlayerActions actions;
-            PlayerActions::Deserialize(archive, actions);
-            ev->Payload = actions;
+        case PacketType::ClientSync: {
+            ClientSyncRequest payload;
+            ClientSyncRequest::Deserialize(archive, payload);
+            ev->Payload = payload;
             break;
         }
         case PacketType::NewGame:
