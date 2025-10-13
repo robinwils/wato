@@ -73,7 +73,7 @@ class Physics
 {
    public:
     Physics() {}
-    Physics(Physics&& aPhy) : mWorld(aPhy.mWorld) {}
+    ~Physics() { spdlog::trace("destroying physics"); }
 
     Physics(const Physics&)            = delete;
     Physics& operator=(const Physics&) = delete;
