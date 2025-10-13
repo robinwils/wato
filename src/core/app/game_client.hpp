@@ -7,8 +7,8 @@
 #include <taskflow/taskflow.hpp>
 
 #include "core/app/app.hpp"
-#include "core/physics/event_handler.hpp"
 #include "core/net/enet_client.hpp"
+#include "core/physics/event_handler.hpp"
 #include "input/action.hpp"
 #include "renderer/renderer.hpp"
 #include "resource/cache.hpp"
@@ -42,8 +42,9 @@ class GameClient : public Application
 
     virtual ~GameClient()
     {
-        std::vector<entt::id_type> ids;
         WATO_TRACE("Destroying GameClient");
+
+        std::vector<entt::id_type> ids;
 
         for (auto [id, res] : mRegistry.ctx().get<ModelCache>()) {
             ids.push_back(id);
@@ -84,7 +85,7 @@ class GameClient : public Application
     }
 
     void Init() override;
-    int  Run() override;
+    int  Run(tf::Executor& aExecutor) override;
 
    protected:
     virtual void OnGameInstanceCreated() override;
@@ -108,8 +109,6 @@ class GameClient : public Application
     Registry        mRegistry;
     entt::organizer mFrameTimeOrganizer;
     tf::Taskflow    mTaskflow;
-    tf::Taskflow    mNetTaskflow;
-    tf::Executor    mNetExecutor;
 
     // systems
     InputSystem               mInputSystem;

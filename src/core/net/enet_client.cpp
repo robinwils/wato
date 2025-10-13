@@ -30,7 +30,6 @@ bool ENetClient::Connect()
 {
     ENetAddress address{};
 
-    /* Connect to some.server.net:1234. */
     enet_address_set_host(&address, "127.0.0.1");
     address.port = 7777;
 

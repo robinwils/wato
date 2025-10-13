@@ -10,7 +10,6 @@ struct Options {
         ServerAddr = mParser("server-addr", "").str();
     }
 
-    [[nodiscard]] bool        Multiplayer() const noexcept { return mParser["multi"]; }
     [[nodiscard]] std::string LogLevel() const noexcept
     {
         return mParser("loglevel", "info").str();

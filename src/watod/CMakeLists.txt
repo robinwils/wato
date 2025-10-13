@@ -7,16 +7,12 @@ target_sources(watod
   FILES
     ${CMAKE_SOURCE_DIR}/src/components/creep.hpp
     ${CMAKE_SOURCE_DIR}/src/core/app/game_server.hpp
-    ${CMAKE_SOURCE_DIR}/src/core/net/enet_base.hpp
-    ${CMAKE_SOURCE_DIR}/src/core/net/enet_server.hpp
     ${CMAKE_SOURCE_DIR}/src/input/action.hpp
     ${CMAKE_SOURCE_DIR}/src/systems/action.hpp
     ${CMAKE_SOURCE_DIR}/src/systems/creep.hpp
 
   PRIVATE
     ${CMAKE_SOURCE_DIR}/src/core/app/game_server.cpp
-    ${CMAKE_SOURCE_DIR}/src/core/net/enet_base.cpp
-    ${CMAKE_SOURCE_DIR}/src/core/net/enet_server.cpp
     ${CMAKE_SOURCE_DIR}/src/input/action.cpp
     ${CMAKE_SOURCE_DIR}/src/systems/action.cpp
     ${CMAKE_SOURCE_DIR}/src/systems/creep.cpp

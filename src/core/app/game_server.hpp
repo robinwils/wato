@@ -14,12 +14,12 @@
 class GameServer : public Application
 {
    public:
-    virtual ~GameServer() = default;
     explicit GameServer(char** aArgv) : Application(aArgv), mServer(mOptions.ServerAddr) {}
     explicit GameServer(const Options& aOptions)
         : Application(aOptions), mServer(mOptions.ServerAddr)
     {
     }
+    virtual ~GameServer();
 
     GameServer(const GameServer&)            = delete;
     GameServer(GameServer&&)                 = delete;
@@ -27,7 +27,7 @@ class GameServer : public Application
     GameServer& operator=(GameServer&&)      = delete;
 
     void Init() override;
-    int  Run() override;
+    int  Run(tf::Executor& aExecutor) override;
     void ConsumeNetworkRequests();
     void Stop();
 
@@ -45,7 +45,6 @@ class GameServer : public Application
    private:
     GameInstanceID createGameInstance(const NewGameRequest& aNewGame);
     tf::Taskflow   mNetTaskflow;
-    tf::Executor   mNetExecutor;
 
     ENetServer                                   mServer;
     std::unordered_map<GameInstanceID, Registry> mGameInstances;

@@ -2,6 +2,7 @@
 
 #include <bx/bx.h>
 #include <fmt/ranges.h>
+#include <spdlog/spdlog.h>
 
 #include <thread>
 
@@ -18,6 +19,16 @@ void GameServer::Init()
     mSystemsFT.push_back(PhysicsSystem::MakeDelegate(mPhysicsSystem));
     mSystemsFT.push_back(AiSystem::MakeDelegate(mAiSystem));
     mSystemsFT.push_back(ServerActionSystem::MakeDelegate(mActionSystem));
+}
+
+GameServer::~GameServer()
+{
+    spdlog::trace("destroying game server");
+    spdlog::trace("deleting {} worlds", mGameInstances.size());
+    for (auto& i : mGameInstances) {
+        auto& p = i.second.ctx().get<Physics>();
+        spdlog::trace("got world {}", fmt::ptr(p.World()));
+    }
 }
 
 void GameServer::ConsumeNetworkRequests()
@@ -49,18 +60,18 @@ void GameServer::ConsumeNetworkRequests()
     }
 }
 
-int GameServer::Run()
+int GameServer::Run(tf::Executor& aExecutor)
 {
+    spdlog::debug("running game server");
     auto prevTime = clock_type::now();
     mRunning      = true;
 
-    mNetTaskflow.emplace([&]() {
+    aExecutor.silent_async([&]() {
         while (mRunning) {
             mServer.ConsumeNetworkResponses();
             mServer.Poll();
         }
     });
-    mNetExecutor.run(mNetTaskflow);
 
     while (mRunning) {
         auto                         t  = clock_type::now();

@@ -42,6 +42,7 @@ bool ENetBase::Send(ENetPeer* aPeer, const std::vector<uint8_t> aData)
 
 void ENetBase::Poll()
 {
+    // TODO: not propagated if thrown in thread
     if (!mHost) {
         throw std::runtime_error("host is not initialized");
     }
@@ -83,7 +84,9 @@ void ENetBase::Poll()
             }
 
             case ENET_EVENT_TYPE_DISCONNECT:
-                spdlog::info("{} disconnected.\n", static_cast<char*>(event.peer->data));
+                spdlog::info(
+                    "{} disconnected.\n",
+                    event.peer->data ? static_cast<char*>(event.peer->data) : "?");
                 OnDisconnect(event);
                 /* Reset the peer's client information. */
                 event.peer->data = NULL;

@@ -80,28 +80,19 @@ void GameClient::Init()
     }
 }
 
-int GameClient::Run()
+int GameClient::Run(tf::Executor& aExecutor)
 {
-    tf::Executor executor;
-
     auto& window    = mRegistry.ctx().get<WatoWindow&>();
     auto& renderer  = mRegistry.ctx().get<Renderer&>();
     auto& netClient = mRegistry.ctx().get<ENetClient&>();
     auto  prevTime  = clock_type::now();
-    // std::optional<std::jthread>     netPollThread;
 
-    if (mOptions.Multiplayer()) {
-        mNetTaskflow.emplace([&]() { networkThread(); });
-        mNetExecutor.run(mNetTaskflow);
+    aExecutor.silent_async([&]() { networkThread(); });
 
-        // netPollThread.emplace(&GameClient::networkThread, this);
-        //
-        if (!netClient.Connect()) {
-            throw std::runtime_error("No available peers for initiating an ENet connection.");
-        }
-    } else {
-        StartGameInstance(mRegistry, 0, false);
+    if (!netClient.Connect()) {
+        throw std::runtime_error("No available peers for initiating an ENet connection.");
     }
+    spdlog::debug("connected to server");
 
     while (!window.ShouldClose()) {
         window.PollEvents();
@@ -116,9 +107,7 @@ int GameClient::Run()
 
         prevTime = now;
 
-        if (mOptions.Multiplayer()) {
-            consumeNetworkResponses();
-        }
+        consumeNetworkResponses();
 
         if (mRegistry.ctx().contains<GameInstance>()) {
             auto& instance = mRegistry.ctx().get<GameInstance&>();
@@ -137,11 +126,10 @@ int GameClient::Run()
         input.MouseState.Scroll.y = 0;
     }
 
-    if (mOptions.Multiplayer()) {
-        netClient.Disconnect();
-        mDiscTimerStart.emplace(clock_type::now());
-    }
     StopGameInstance(mRegistry);
+    netClient.Disconnect();
+    mDiscTimerStart.emplace(clock_type::now());
+
     return 0;
 }
 

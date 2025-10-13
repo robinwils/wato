@@ -5,6 +5,7 @@
 #include <atomic>
 #include <chrono>
 #include <entt/core/fwd.hpp>
+#include <taskflow/core/executor.hpp>
 
 #include "core/options.hpp"
 #include "core/types.hpp"
@@ -21,6 +22,9 @@ class Application
 
     explicit Application() : mRunning(false) {}
     explicit Application(char** aArgv) : mOptions(aArgv), mRunning(false) {}
+    explicit Application(const Options& aOptions) : mOptions(std::move(aOptions)), mRunning(false)
+    {
+    }
     virtual ~Application() = default;
 
     Application(const Application&)            = delete;
@@ -29,7 +33,7 @@ class Application
     Application& operator=(Application&&)      = delete;
 
     virtual void Init();
-    virtual int  Run() = 0;
+    virtual int  Run(tf::Executor& aExecutor) = 0;
 
    protected:
     using clock_type = std::chrono::steady_clock;

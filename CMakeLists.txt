@@ -294,8 +294,12 @@ target_sources(watolib
     src/components/transform3d.hpp
     src/components/velocity.hpp
     src/core/app/app.hpp
-    src/core/physics/event_handler.hpp
+    src/core/app/game_server.hpp
     src/core/graph.hpp
+    src/core/net/enet_base.hpp
+    src/core/net/enet_client.hpp
+    src/core/net/enet_server.hpp
+    src/core/physics/event_handler.hpp
     src/core/physics/physics.hpp
     src/core/queue/ring_buffer.hpp
     src/core/snapshot.hpp
@@ -309,8 +313,12 @@ target_sources(watolib
 
   PRIVATE
     src/core/app/app.cpp
-    src/core/physics/event_handler.cpp
+    src/core/app/game_server.cpp
     src/core/graph.cpp
+    src/core/net/enet_base.cpp
+    src/core/net/enet_client.cpp
+    src/core/net/enet_server.cpp
+    src/core/physics/event_handler.cpp
     src/core/physics/physics.cpp
     src/core/snapshot.cpp
     src/core/sys/backtrace.cpp
@@ -324,8 +332,6 @@ target_sources(wato
   BASE_DIRS src
   FILES
     src/core/app/game_client.hpp
-    src/core/net/enet_base.hpp
-    src/core/net/enet_client.hpp
     src/core/tile.hpp
     src/core/window.hpp
     src/imgui/wato_imgui_config.h
@@ -360,8 +366,6 @@ target_sources(wato
   PRIVATE
     src/core/app/game_client.cpp
     src/core/physics/event_handler.cpp
-    src/core/net/enet_base.cpp
-    src/core/net/enet_client.cpp
     src/core/sys/mem.cpp
     src/core/window.cpp
     src/imgui/imgui_helper.cpp

@@ -16,14 +16,31 @@ void ENetServer::Init()
 {
     ENetBase::Init();
 
+    const std::size_t pos  = mServerAddr.find(':');
+    enet_uint16       port = 7777;
+    std::string       host = mServerAddr;
+
+    if (pos != std::string::npos) {
+        host = mServerAddr.substr(0, pos);
+    }
+
     // Bind the server to the default localhost.
-    ENetAddress address = {.host = ENET_HOST_ANY, .port = 7777, .sin6_scope_id = 0};
+    ENetAddress address = {.host = ENET_HOST_ANY, .port = port, .sin6_scope_id = 0};
+
+    if (host != "any") {
+        if (-1 == enet_address_set_host(&address, host.c_str())) {
+            throw std::runtime_error(fmt::format(
+                "An error occurred while trying to set ENet server host on '{}'",
+                host.c_str()));
+        }
+    }
 
     mHost = enet_host_ptr{enet_host_create(&address, 128, 2, 0, 0)};
 
     if (!mHost) {
         throw std::runtime_error("An error occurred while trying to create an ENet server host.");
     }
+    spdlog::info("created ENet server at {}:{}", host, port);
 }
 
 void ENetServer::ConsumeNetworkResponses()
@@ -37,7 +54,7 @@ void ENetServer::ConsumeNetworkResponses()
         // write payload
         std::visit(
             VariantVisitor{
-                [&](const ConnectedResponse& aResp) {},
+                [&](const ConnectedResponse&) {},
                 [&](const NewGameResponse& aResp) { NewGameResponse::Serialize(archive, aResp); },
             },
             ev->Payload);
@@ -51,7 +68,7 @@ void ENetServer::ConsumeNetworkResponses()
     }
 }
 
-void ENetServer::OnConnect(ENetEvent& aEvent) {}
+void ENetServer::OnConnect(ENetEvent&) {}
 
 void ENetServer::OnReceive(ENetEvent& aEvent)
 {
@@ -81,8 +98,8 @@ void ENetServer::OnReceive(ENetEvent& aEvent)
     mQueue.push(ev);
 }
 
-void ENetServer::OnDisconnect(ENetEvent& aEvent) {}
+void ENetServer::OnDisconnect(ENetEvent&) {}
 
-void ENetServer::OnDisconnectTimeout(ENetEvent& aEvent) {}
+void ENetServer::OnDisconnectTimeout(ENetEvent&) {}
 
-void ENetServer::OnNone(ENetEvent& aEvent) {}
+void ENetServer::OnNone(ENetEvent&) {}
