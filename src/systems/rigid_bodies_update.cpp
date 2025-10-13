@@ -13,6 +13,8 @@
 #include "components/spawner.hpp"
 #include "components/transform3d.hpp"
 #include "core/graph.hpp"
+#include "core/snapshot.hpp"
+#include "core/state.hpp"
 #include "resource/cache.hpp"
 
 using namespace entt::literals;
@@ -20,19 +22,12 @@ using namespace entt::literals;
 void RigidBodiesUpdateSystem::operator()(Registry& aRegistry)
 {
     auto& physics          = aRegistry.ctx().get<Physics>();
-    auto* rbStorage        = aRegistry.storage("rigid_bodies_observer"_hs);
-    auto* placementStorage = aRegistry.storage("placement_mode_observer"_hs);
-
-    if (rbStorage == nullptr) {
-        throw std::runtime_error("rigid_bodies_observer storage not initialized");
-    }
-    if (placementStorage == nullptr) {
-        throw std::runtime_error("rigid_bodies_observer storage not initialized");
-    }
+    auto& rbStorage        = aRegistry.storage<entt::reactive>("rigid_bodies_observer"_hs);
+    auto& placementStorage = aRegistry.storage<entt::reactive>("placement_mode_observer"_hs);
 
     auto placementMode = aRegistry.view<PlacementMode>();
 
-    for (auto& e : *placementStorage) {
+    for (auto& e : placementStorage) {
         auto& rb = aRegistry.get<RigidBody>(e);
         auto& t  = aRegistry.get<Transform3D>(e);
 
@@ -41,7 +36,7 @@ void RigidBodiesUpdateSystem::operator()(Registry& aRegistry)
         }
     }
 
-    for (auto& e : *rbStorage) {
+    for (auto& e : rbStorage) {
         auto& rb = aRegistry.get<RigidBody>(e);
         auto& c  = aRegistry.get<Collider>(e);
         auto& t  = aRegistry.get<Transform3D>(e);
@@ -84,9 +79,13 @@ void RigidBodiesUpdateSystem::operator()(Registry& aRegistry)
         }
     }
 
-    if (placementStorage->size() == 0) {
-        return;
-    }
+    auto snapshotView = entt::basic_view{rbStorage, placementStorage};
 
-    // spdlog::trace("got {} transforms updated", placementStorage->size());
+    GameState&        state = aRegistry.ctx().get<GameStateBuffer&>().Latest();
+    ByteOutputArchive outAr(state.Snapshot);
+
+    entt::snapshot{aRegistry}
+        .get<Transform3D>(outAr, rbStorage.begin(), rbStorage.end())
+        .get<RigidBody>(outAr, rbStorage.begin(), rbStorage.end())
+        .get<Collider>(outAr, rbStorage.begin(), rbStorage.end());
 }
