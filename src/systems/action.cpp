@@ -243,7 +243,7 @@ void ServerContextHandler::operator()(Registry& aRegistry, const BuildTowerPaylo
     collider.Handle = phy.AddCollider(body.Body, collider.Params);
 
     TowerBuildingHandler handler;
-    phy.World()->testOverlap(handler);
+    phy.World()->testOverlap(body.Body, handler);
 
     if (!handler.CanBuildTower) {
         phy.World()->destroyRigidBody(body.Body);
