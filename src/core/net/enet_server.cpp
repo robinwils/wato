@@ -56,6 +56,7 @@ void ENetServer::ConsumeNetworkResponses()
             VariantVisitor{
                 [&](const ConnectedResponse&) {},
                 [&](const NewGameResponse& aResp) { NewGameResponse::Serialize(archive, aResp); },
+                [&](const SyncPayload&) {},
             },
             ev->Payload);
 
@@ -79,8 +80,8 @@ void ENetServer::OnReceive(ENetEvent& aEvent)
     archive.Read<PlayerID>(&ev->PlayerID, sizeof(PlayerID));
     switch (ev->Type) {
         case PacketType::ClientSync: {
-            ClientSyncRequest payload;
-            ClientSyncRequest::Deserialize(archive, payload);
+            SyncPayload payload;
+            SyncPayload::Deserialize(archive, payload);
             ev->Payload = payload;
             break;
         }

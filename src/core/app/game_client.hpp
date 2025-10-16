@@ -111,16 +111,16 @@ class GameClient : public Application
     tf::Taskflow    mTaskflow;
 
     // systems
-    InputSystem               mInputSystem;
-    RealTimeActionSystem      mRTActionSystem;
-    DeterministicActionSystem mFTActionSystem;
-    AnimationSystem           mAnimationSystem;
-    RenderSystem              mRenderSystem;
-    RenderImguiSystem         mRenderImguiSystem;
-    CameraSystem              mCameraSystem;
-    NetworkSyncSystem         mNetworkSyncSystem;
-    TowerBuiltSystem          mTowerBuiltSystem;
-    RigidBodiesUpdateSystem   mRBUpdatesSystem;
+    InputSystem                   mInputSystem;
+    RealTimeActionSystem          mRTActionSystem;
+    DeterministicActionSystem     mFTActionSystem;
+    AnimationSystem               mAnimationSystem;
+    RenderSystem                  mRenderSystem;
+    RenderImguiSystem             mRenderImguiSystem;
+    CameraSystem                  mCameraSystem;
+    NetworkSyncSystem<ENetClient> mNetworkSyncSystem;
+    TowerBuiltSystem              mTowerBuiltSystem;
+    RigidBodiesUpdateSystem       mRBUpdatesSystem;
 #if WATO_DEBUG
     PhysicsDebugSystem mPhysicsDbgSystem;
 #endif
