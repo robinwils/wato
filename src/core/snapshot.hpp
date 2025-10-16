@@ -80,13 +80,13 @@ class ByteOutputArchive
 
     void operator()(entt::entity aEntity)
     {
-        spdlog::debug("writing entity {:d}", static_cast<ENTT_ID_TYPE>(aEntity));
+        spdlog::trace("writing entity {:d}", static_cast<ENTT_ID_TYPE>(aEntity));
         Write<entt::entity>(&aEntity, 1);
     }
 
     void operator()(std::underlying_type_t<entt::entity> aEntity)
     {
-        spdlog::debug("writing set of size {:d}", aEntity);
+        spdlog::trace("writing set of size {:d}", aEntity);
         Write<std::underlying_type_t<entt::entity>>(&aEntity, 1);
     }
 
@@ -99,7 +99,7 @@ class ByteOutputArchive
     template <typename T, std::input_iterator In>
     void Write(const In& aData, std::size_t aN)
     {
-        spdlog::debug("writing {} elts [size = {}, total = {}]", aN, sizeof(T), aN * sizeof(T));
+        spdlog::trace("writing {} elts [size = {}, total = {}]", aN, sizeof(T), aN * sizeof(T));
         auto* p = reinterpret_cast<const byte*>(aData);
         mStorage.insert(mStorage.end(), p, p + aN * sizeof(T));
     }
