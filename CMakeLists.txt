@@ -32,7 +32,7 @@ include(FetchContent)
 FetchContent_Declare(
   entt
   GIT_REPOSITORY https://github.com/skypjack/entt
-  GIT_TAG v3.14.0
+  GIT_TAG v3.15.0
   FIND_PACKAGE_ARGS NAMES entt
 )
 FetchContent_Declare(
