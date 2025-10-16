@@ -24,26 +24,26 @@ void RigidBodiesUpdateSystem::operator()(Registry& aRegistry)
             rb.Body  = physics.CreateRigidBody(rb.Params, t);
             c.Handle = physics.AddCollider(rb.Body, c.Params);
         } else {
-            spdlog::debug("rigid body update for {}:", e);
+            spdlog::trace("rigid body update for {}:", e);
         }
 
         if (rb.Params.Data != rb.Body->getUserData()) {
-            spdlog::debug("   user data");
+            spdlog::trace("   user data");
             rb.Body->setUserData(rb.Params.Data);
         }
 
         if (rb.Params.Type != rb.Body->getType()) {
-            spdlog::debug("  body type");
+            spdlog::trace("  body type");
             rb.Body->setType(rb.Params.Type);
         }
 
         if (rb.Params.Type == reactphysics3d::BodyType::KINEMATIC) {
-            spdlog::debug("  linear velocity: {} * {}", rb.Params.Direction, rb.Params.Velocity);
+            spdlog::trace("  linear velocity: {} * {}", rb.Params.Direction, rb.Params.Velocity);
             rb.Body->setLinearVelocity(ToRP3D(rb.Params.Direction * rb.Params.Velocity));
         }
 
         if (c.Params.IsTrigger != c.Handle->getIsTrigger()) {
-            spdlog::debug("  is trigger {}", c.Params.IsTrigger);
+            spdlog::trace("  is trigger {}", c.Params.IsTrigger);
             c.Handle->setIsTrigger(c.Params.IsTrigger);
             if (!c.Params.IsTrigger) {
                 c.Handle->setIsSimulationCollider(true);
