@@ -3,6 +3,7 @@
 #include <array>
 #include <cstring>
 #include <glm/glm.hpp>
+#include <optional>
 #include <string>
 
 struct Keyboard {
@@ -244,19 +245,17 @@ class Input
    public:
     using mouse_state    = InputState<3>;
     using keyboard_state = InputState<Keyboard::Count>;
-    Input() : MouseState(), mTowerPlacementMode(false), mCanBuild(true) {}
+    Input() : MouseState() {}
 
     void Init();
 
-    void ExitTowerPlacementMode() { mTowerPlacementMode = false; }
-    void EnterTowerPlacementMode() { mTowerPlacementMode = true; }
-
-    [[nodiscard]] bool IsPlacementMode() const noexcept { return mTowerPlacementMode; }
-    [[nodiscard]] bool IsAbleToBuild() const noexcept { return mCanBuild; }
+    const std::optional<glm::vec3>& MouseWorldIntersect() const { return mMouseWorldIntersect; }
 
     struct MouseState    MouseState, PrevMouseState;
     struct KeyboardState KeyboardState, PrevKeyboardState;
 
    private:
-    bool mTowerPlacementMode, mCanBuild;
+    std::optional<glm::vec3> mMouseWorldIntersect;
+
+    friend class WatoWindow;
 };

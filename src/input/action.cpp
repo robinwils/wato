@@ -50,7 +50,7 @@ ActionsType ActionBindings::ActionsFromInput(const Input& aInput)
 {
     ActionsType actions;
 
-    for (const auto& [_, binding] : mBindings) {
+    for (auto& [_, binding] : mBindings) {
         std::visit(
             VariantVisitor{// handle keyboard binding
                            [&](const Keyboard::Key& aKey) {
@@ -72,12 +72,14 @@ ActionsType ActionBindings::ActionsFromInput(const Input& aInput)
                                    && ((aInput.MouseState.IsKeyPressed(aButton)
                                         && aInput.PrevMouseState.IsKeyPressed(aButton))
                                        || aInput.MouseState.IsKeyRepeat(aButton))) {
+                                   binding.Action.AddExtraInputInfo(aInput);
                                    actions.push_back(binding.Action);
                                } else if (
                                    binding.KeyState.State == KeyState::State::PressOnce
                                    && aInput.MouseState.IsKeyPressed(aButton)
                                    && (aInput.PrevMouseState.IsKeyReleased(aButton)
                                        || aInput.PrevMouseState.IsKeyUnknown(aButton))) {
+                                   binding.Action.AddExtraInputInfo(aInput);
                                    actions.push_back(binding.Action);
                                }
                            }},
