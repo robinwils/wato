@@ -301,6 +301,7 @@ target_sources(watolib
     src/core/net/enet_server.hpp
     src/core/physics/event_handler.hpp
     src/core/physics/physics.hpp
+    src/core/queue/channel.hpp
     src/core/queue/ring_buffer.hpp
     src/core/snapshot.hpp
     src/core/state.hpp
