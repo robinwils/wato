@@ -129,35 +129,7 @@ void DefaultContextHandler::operator()(Registry& aRegistry, const PlacementModeP
         glm::vec3(0.0f),
         glm::identity<glm::quat>(),
         glm::vec3(0.1f));
-    const auto& pm = aRegistry.emplace<PlacementMode>(ghostTower, new PlacementModeData());
-    aRegistry.emplace<ImguiDrawable>(ghostTower, "Ghost Tower");
-    aRegistry.emplace<RigidBody>(
-        ghostTower,
-        RigidBody{
-            .Params =
-                RigidBodyParams{
-                    .Type           = rp3d::BodyType::DYNAMIC,
-                    .Velocity       = 0.00f,
-                    .Direction      = glm::vec3(0.0f),
-                    .GravityEnabled = false,
-                    .Data           = pm.Data,
-                },
-        });
-    aRegistry.emplace<Collider>(
-        ghostTower,
-        Collider{
-            .Params =
-                ColliderParams{
-                    .CollisionCategoryBits = Category::PlacementGhostTower,
-                    .CollideWithMaskBits   = Category::Terrain | Category::Entities,
-                    .IsTrigger             = true,
-                    .Offset                = Transform3D{},
-                    .ShapeParams =
-                        BoxShapeParams{
-                            .HalfExtents = glm::vec3(0.35f, 0.65f, 0.35f),
-                        },
-                },
-        });
+    aRegistry.emplace<PlacementMode>(ghostTower);
 }
 
 void DefaultContextHandler::ExitPlacement(Registry& aRegistry)
@@ -177,25 +149,52 @@ void DefaultContextHandler::ExitPlacement(Registry& aRegistry)
 
 void PlacementModeContextHandler::operator()(Registry& aRegistry, const BuildTowerPayload& aPayload)
 {
-    for (const auto&& [tower, pm, rb, c] :
-         aRegistry.view<PlacementMode, RigidBody, Collider>().each()) {
-        if (pm.Data) {
-            if (pm.Data->Overlaps != 0) {
-                return;
-            }
-            aRegistry.emplace<Tower>(tower, aPayload.Tower);
-            aRegistry.emplace<Health>(tower, 100.0f);
-            aRegistry.remove<ImguiDrawable>(tower);
-            // remove component so that ExitPlacement does not destroy the entity
-            aRegistry.remove<PlacementMode>(tower);
+    auto& phy = aRegistry.ctx().get<Physics>();
 
-            aRegistry.patch<RigidBody>(tower, [](RigidBody& aBody) {
-                aBody.Params.Type = rp3d::BodyType::STATIC;
-            });
-            c.Params.CollisionCategoryBits = Category::Entities;
-            c.Params.CollideWithMaskBits   = Category::Terrain | Category::PlacementGhostTower;
-            c.Params.IsTrigger             = false;
+    for (const auto&& [tower, pm, t] : aRegistry.view<PlacementMode, Transform3D>().each()) {
+        TowerBuildingHandler handler;
+        RigidBody            body = RigidBody{
+                       .Params =
+                RigidBodyParams{
+                               .Type           = rp3d::BodyType::STATIC,
+                               .Velocity       = 0.0f,
+                               .Direction      = glm::vec3(0.0f),
+                               .GravityEnabled = false,
+                },
+        };
+        Collider collider = Collider{
+            .Params =
+                ColliderParams{
+                    .CollisionCategoryBits = Category::PlacementGhostTower,
+                    .CollideWithMaskBits   = Category::Terrain | Category::Entities,
+                    .IsTrigger             = false,
+                    .Offset                = Transform3D{},
+                    .ShapeParams =
+                        BoxShapeParams{
+                            .HalfExtents = glm::vec3(0.35f, 0.65f, 0.35f),
+                        },
+                },
+        };
+        body.Body       = phy.CreateRigidBody(body.Params, t);
+        collider.Handle = phy.AddCollider(body.Body, collider.Params);
+
+        phy.World()->testOverlap(body.Body, handler);
+        if (!handler.CanBuildTower) {
+            phy.World()->destroyRigidBody(body.Body);
+            aRegistry.destroy(tower);
+            break;
         }
+
+        collider.Params.CollisionCategoryBits = Category::Entities;
+        collider.Params.CollideWithMaskBits   = Category::Terrain | Category::PlacementGhostTower;
+
+        aRegistry.emplace<Tower>(tower, aPayload.Tower);
+        aRegistry.emplace<RigidBody>(tower, body);
+        aRegistry.emplace<Collider>(tower, collider);
+        aRegistry.emplace<Health>(tower, 100.0f);
+        aRegistry.remove<ImguiDrawable>(tower);
+        // remove component so that ExitPlacement does not destroy the entity
+        aRegistry.remove<PlacementMode>(tower);
     }
 
     SPDLOG_DEBUG("exiting placement mode");
@@ -224,7 +223,6 @@ void ServerContextHandler::operator()(Registry& aRegistry, const BuildTowerPaylo
                 .GravityEnabled = false,
             },
     };
-
     Collider collider = Collider{
         .Params =
             ColliderParams{
