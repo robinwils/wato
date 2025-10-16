@@ -66,9 +66,7 @@ void ENetClient::ConsumeNetworkRequests()
         // write payload
         std::visit(
             VariantVisitor{
-                [&](const ClientSyncRequest& aSync) {
-                    ClientSyncRequest::Serialize(archive, aSync);
-                },
+                [&](const SyncPayload& aSync) { SyncPayload::Serialize(archive, aSync); },
                 [&](const NewGameRequest& aReq) { NewGameRequest::Serialize(archive, aReq); },
             },
             ev->Payload);

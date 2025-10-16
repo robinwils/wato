@@ -34,7 +34,7 @@ struct NewGameRequest {
     }
 };
 
-struct ClientSyncRequest {
+struct SyncPayload {
     GameInstanceID GameID;
     GameState      State;
 
@@ -69,11 +69,12 @@ struct NewGameResponse {
 struct ConnectedResponse {
 };
 
-using NetworkRequestPayload  = std::variant<ClientSyncRequest, NewGameRequest>;
-using NetworkResponsePayload = std::variant<NewGameResponse, ConnectedResponse>;
+using NetworkRequestPayload  = std::variant<SyncPayload, NewGameRequest>;
+using NetworkResponsePayload = std::variant<NewGameResponse, ConnectedResponse, SyncPayload>;
 
 enum class PacketType {
     ClientSync,
+    ServerSync,
     NewGame,
     Connected,
 };

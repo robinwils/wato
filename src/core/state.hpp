@@ -4,9 +4,9 @@
 #include "input/action.hpp"
 
 struct GameState {
-    uint32_t             Tick;
-    ActionsType          Actions;
-    std::vector<uint8_t> Snapshot;
+    uint32_t             Tick{0};
+    ActionsType          Actions{};
+    std::vector<uint8_t> Snapshot{};
 
     constexpr static auto Serialize(auto& aArchive, const auto& aSelf)
     {

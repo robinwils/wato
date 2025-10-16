@@ -54,8 +54,7 @@ void GameClient::Init()
     mSystemsFT.push_back(RigidBodiesUpdateSystem::MakeDelegate(mRBUpdatesSystem));
     mSystemsFT.push_back(AnimationSystem::MakeDelegate(mAnimationSystem));
     mSystemsFT.push_back(PhysicsSystem::MakeDelegate(mPhysicsSystem));
-    mSystemsFT.push_back(NetworkSyncSystem::MakeDelegate(mNetworkSyncSystem));
-
+    mSystemsFT.push_back(NetworkSyncSystem<ENetClient>::MakeDelegate(mNetworkSyncSystem));
 
     auto graph = organizerFixedTime.graph();
     spdlog::info("graph size: {}", graph.size());
@@ -257,6 +256,7 @@ void GameClient::consumeNetworkResponses()
                     StartGameInstance(mRegistry, aResp.GameID, false);
                     spdlog::info("game {} created", aResp.GameID);
                 },
+                [&](const SyncPayload&) {},
             },
             ev->Payload);
         delete ev;
