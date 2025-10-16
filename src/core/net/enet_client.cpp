@@ -57,7 +57,7 @@ void ENetClient::ForceDisconnect()
 
 void ENetClient::ConsumeNetworkRequests()
 {
-    while (NetworkEvent<NetworkRequestPayload>* ev = mQueue.pop()) {
+    while (std::unique_ptr<channel_in_type> ev = mChannel.Recv()) {
         // write header
         ByteOutputArchive archive;
         archive.Write<int>(&ev->Type, sizeof(ev->Type));

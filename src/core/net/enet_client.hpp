@@ -7,11 +7,16 @@
 #include <optional>
 
 #include "core/net/enet_base.hpp"
+#include "core/queue/channel.hpp"
 #include "core/serialize.hpp"
 
 class ENetClient : public ENetBase
 {
    public:
+    using channel_in_type  = NetworkEvent<NetworkResponsePayload>;
+    using channel_out_type = NetworkEvent<NetworkRequestPayload>;
+    using channel_type     = Channel<channel_in_type, channel_out_type>;
+
     ENetClient() : ENetBase(), mConnected(false), mPeer(nullptr) {}
     ENetClient(ENetClient&&)                 = delete;
     ENetClient(const ENetClient&)            = delete;
@@ -43,7 +48,6 @@ class ENetClient : public ENetBase
     std::atomic_bool mConnected;
 
    private:
-    void send(const std::vector<uint8_t> aData);
-
-    ENetPeer* mPeer;
+    channel_type mChannel;
+    ENetPeer*    mPeer;
 };
