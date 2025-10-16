@@ -56,7 +56,6 @@ void GameClient::Init()
     mSystemsFT.push_back(PhysicsSystem::MakeDelegate(mPhysicsSystem));
     mSystemsFT.push_back(NetworkSyncSystem::MakeDelegate(mNetworkSyncSystem));
 
-    SetupObservers(mRegistry);
 
     auto graph = organizerFixedTime.graph();
     spdlog::info("graph size: {}", graph.size());

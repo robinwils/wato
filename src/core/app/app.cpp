@@ -39,6 +39,8 @@ void Application::StartGameInstance(
         .State    = aIsServer ? ActionContext::State::Server : ActionContext::State::Default,
         .Bindings = ActionBindings::Defaults(),
         .Payload  = NormalPayload{}});
+
+    SetupObservers(aRegistry);
     SpawnMap(aRegistry, 20, 20);
     OnGameInstanceCreated();
 }
