@@ -63,6 +63,12 @@ class WatoWindow
         const Camera&    aCam,
         const glm::vec3& aCamPos) const;
 
+    void SetMouseIntersect(const glm::vec3& aIntersect)
+    {
+        mInput.mMouseWorldIntersect = aIntersect;
+    }
+    void ResetMouseIntersect() { mInput.mMouseWorldIntersect.reset(); }
+
    private:
     struct GLFWwindowDeleter {
         void operator()(GLFWwindow* aWin) const noexcept

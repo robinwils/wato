@@ -94,6 +94,8 @@ class Physics
     rp3d::Collider*       AddCollider(rp3d::RigidBody* aBody, const ColliderParams& aParams);
     rp3d::RigidBody* CreateRigidBody(const RigidBodyParams& aParams, const Transform3D& aTransform);
 
+    std::optional<glm::vec3> RayTerrainIntersection(glm::vec3 aOrigin, glm::vec3 aEnd);
+
     PhysicsParams Params;
 
    private:

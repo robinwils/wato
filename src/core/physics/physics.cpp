@@ -97,6 +97,19 @@ rp3d::RigidBody* Physics::CreateRigidBody(
     return body;
 }
 
+std::optional<glm::vec3> Physics::RayTerrainIntersection(glm::vec3 aOrigin, glm::vec3 aEnd)
+{
+    WorldRaycastCallback raycastCb;
+
+    rp3d::Ray ray(ToRP3D(aOrigin), ToRP3D(aEnd));
+    mWorld->raycast(ray, &raycastCb, Category::Terrain);
+    if (!raycastCb.Hits.empty()) {
+        return glm::vec3(raycastCb.Hits[0].x, 0.0f, raycastCb.Hits[0].z);
+    } else {
+        return std::nullopt;
+    }
+}
+
 void ToggleObstacle(const rp3d::Collider* aCollider, Graph& aGraph, bool aAdd)
 {
     const rp3d::AABB& box = aCollider->getWorldAABB();
