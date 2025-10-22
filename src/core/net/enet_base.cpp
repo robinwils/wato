@@ -52,27 +52,32 @@ void ENetBase::Poll()
     while (enet_host_service(mHost.get(), &event, 5) > 0) {
         switch (event.type) {
             case ENET_EVENT_TYPE_CONNECT:
-                spdlog::info("A new client connected from {}.\n", event.peer->address);
+                if (event.peer) {
+                    spdlog::info("New {}.\n", *event.peer);
+                }
                 /* Store any relevant client information here. */
                 OnConnect(event);
                 break;
 
             case ENET_EVENT_TYPE_RECEIVE: {
-                std::string userData = "(null)";
-                if (event.packet->data) {
+                std::string userData   = "(null)";
+                std::size_t packetSize = 0;
+                if (event.packet && event.packet->data) {
                     userData = std::string(
                         reinterpret_cast<char*>(event.packet->data),
                         event.packet->dataLength);
+                    packetSize = event.packet->dataLength;
                 }
                 std::string peerData = "(null)";
-                if (event.peer->data) {
+                if (event.peer && event.peer->data) {
                     peerData = std::string(reinterpret_cast<char*>(event.peer->data));
                 }
+
                 spdlog::debug(
-                    "A packet of length {} was received from peer ID {} with data "
+                    "A packet of length {} was received from {} with data "
                     "{} on "
                     "channel {}.",
-                    event.packet->dataLength,
+                    packetSize,
                     enet_peer_get_id(event.peer),
                     peerData,
                     event.channelID);
@@ -84,9 +89,9 @@ void ENetBase::Poll()
             }
 
             case ENET_EVENT_TYPE_DISCONNECT:
-                spdlog::info(
-                    "{} disconnected.\n",
-                    event.peer->data ? static_cast<char*>(event.peer->data) : "?");
+                if (event.peer) {
+                    spdlog::info("{} disconnected.\n", *event.peer);
+                }
                 OnDisconnect(event);
                 /* Reset the peer's client information. */
                 event.peer->data = NULL;

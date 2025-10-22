@@ -205,3 +205,12 @@ struct fmt::formatter<ENetAddress> : fmt::formatter<std::string> {
         }
     }
 };
+
+template <>
+struct fmt::formatter<ENetPeer> : fmt::formatter<std::string> {
+    auto format(ENetPeer aObj, format_context& aCtx) const -> decltype(aCtx.out())
+    {
+        return fmt::format_to(aCtx.out(), "peer {} @ {}", enet_peer_get_id(&aObj), aObj.address);
+    }
+};
+
