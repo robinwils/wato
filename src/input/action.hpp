@@ -89,19 +89,39 @@ struct MovePayload {
     MoveDirection Direction;
 };
 
+inline bool operator==(const MovePayload& aLHS, const MovePayload& aRHS)
+{
+    return aLHS.Direction == aRHS.Direction;
+}
+
 struct SendCreepPayload {
     CreepType Type;
 };
+
+inline bool operator==(const SendCreepPayload& aLHS, const SendCreepPayload& aRHS)
+{
+    return aLHS.Type == aRHS.Type;
+}
 
 struct BuildTowerPayload {
     TowerType Tower;
     glm::vec3 Position{0.0f};
 };
 
+inline bool operator==(const BuildTowerPayload& aLHS, const BuildTowerPayload& aRHS)
+{
+    return aLHS.Tower == aRHS.Tower && aLHS.Position == aRHS.Position;
+}
+
 struct PlacementModePayload {
     bool      CanBuild;
     TowerType Tower;
 };
+
+inline bool operator==(const PlacementModePayload& aLHS, const PlacementModePayload& aRHS)
+{
+    return aLHS.CanBuild == aRHS.CanBuild && aLHS.Tower == aRHS.Tower;
+}
 
 struct Action {
     using payload_type =
@@ -194,6 +214,12 @@ struct Action {
         return true;
     }
 };
+
+inline bool operator==(const Action& aLHS, const Action& aRHS)
+{
+    return aLHS.Type == aRHS.Type && aLHS.Tag == aRHS.Tag && aLHS.Payload == aRHS.Payload
+           && aLHS.IsProcessed == aRHS.IsProcessed;
+}
 
 using ActionsType = std::vector<Action>;
 

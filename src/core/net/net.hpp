@@ -34,6 +34,11 @@ struct NewGameRequest {
     }
 };
 
+inline bool operator==(const NewGameRequest& aLHS, const NewGameRequest& aRHS)
+{
+    return aLHS.PlayerAID == aRHS.PlayerAID;
+}
+
 struct SyncPayload {
     GameInstanceID GameID;
     GameState      State;
@@ -52,6 +57,11 @@ struct SyncPayload {
     }
 };
 
+inline bool operator==(const SyncPayload& aLHS, const SyncPayload& aRHS)
+{
+    return aLHS.GameID == aRHS.GameID && aLHS.State == aRHS.State;
+}
+
 struct NewGameResponse {
     GameInstanceID GameID;
 
@@ -66,11 +76,15 @@ struct NewGameResponse {
     }
 };
 
+inline bool operator==(const NewGameResponse& aLHS, const NewGameResponse& aRHS)
+{
+    return aLHS.GameID == aRHS.GameID;
+}
+
 struct ConnectedResponse {
 };
 
-using NetworkRequestPayload  = std::variant<SyncPayload, NewGameRequest>;
-using NetworkResponsePayload = std::variant<NewGameResponse, ConnectedResponse, SyncPayload>;
+inline bool operator==(const ConnectedResponse&, const ConnectedResponse&) { return true; }
 
 enum class PacketType {
     ClientSync,
@@ -79,6 +93,9 @@ enum class PacketType {
     Connected,
 };
 
+using NetworkRequestPayload = std::variant<std::monostate, SyncPayload, NewGameRequest>;
+using NetworkResponsePayload =
+    std::variant<std::monostate, NewGameResponse, ConnectedResponse, SyncPayload>;
 template <typename _Payload>
 struct NetworkEvent {
     PacketType Type;

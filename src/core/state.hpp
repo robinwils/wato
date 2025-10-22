@@ -36,4 +36,10 @@ struct GameState {
         return true;
     }
 };
+
+inline bool operator==(const GameState& aLHS, const GameState& aRHS)
+{
+    return aLHS.Tick == aRHS.Tick && aLHS.Actions == aRHS.Actions && aLHS.Snapshot == aRHS.Snapshot;
+}
+
 using GameStateBuffer = RingBuffer<GameState, 128>;
