@@ -214,3 +214,28 @@ struct fmt::formatter<ENetPeer> : fmt::formatter<std::string> {
     }
 };
 
+#include "core/snapshot.hpp"
+#include "doctest.h"
+
+TEST_CASE("net.serialize")
+{
+    std::vector<uint8_t> storage;
+    ByteOutputArchive    outAr(storage);
+    auto*                ev = new NetworkRequest;
+
+    ev->PlayerID = 42;
+    ev->Type     = PacketType::ClientSync;
+    ev->Payload  = SyncPayload{.GameID = 21, .State = GameState{.Tick = 12}};
+
+    auto sev = std::shared_ptr<NetworkRequest>(ev);
+    NetworkRequest::Serialize(outAr, sev);
+
+    ByteInputArchive inAr(std::span(outAr.Bytes()));
+    auto*            ev2  = new NetworkRequest;
+    auto             sev2 = std::shared_ptr<NetworkRequest>(ev2);
+
+    NetworkRequest::Deserialize(inAr, ev2);
+    CHECK_EQ(ev->PlayerID, ev2->PlayerID);
+    CHECK_EQ(ev->Type, ev2->Type);
+    CHECK_EQ(ev->Payload, ev2->Payload);
+}
