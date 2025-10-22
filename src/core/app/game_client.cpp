@@ -8,8 +8,6 @@
 
 #include "components/game.hpp"
 #include "components/imgui.hpp"
-#include "components/rigid_body.hpp"
-#include "components/tower.hpp"
 #include "core/net/enet_client.hpp"
 #include "core/net/net.hpp"
 #include "core/snapshot.hpp"
@@ -50,7 +48,6 @@ void GameClient::Init()
 #endif
 
     mSystemsFT.push_back(DeterministicActionSystem::MakeDelegate(mFTActionSystem));
-    mSystemsFT.push_back(AiSystem::MakeDelegate(mAiSystem));
     mSystemsFT.push_back(TowerBuiltSystem::MakeDelegate(mTowerBuiltSystem));
     mSystemsFT.push_back(RigidBodiesUpdateSystem::MakeDelegate(mRBUpdatesSystem));
     mSystemsFT.push_back(AnimationSystem::MakeDelegate(mAnimationSystem));

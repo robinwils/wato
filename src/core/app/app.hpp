@@ -53,7 +53,6 @@ class Application
 
     PhysicsSystem         mPhysicsSystem;
     UpdateTransformsSytem mUpdateTransformsSystem;
-    AiSystem              mAiSystem;
 
     SystemRegistry mSystems;
     SystemRegistry mSystemsFT;
