@@ -43,60 +43,22 @@ void ENetServer::Init()
     spdlog::info("created ENet server at {}:{}", host, port);
 }
 
-void ENetServer::ConsumeNetworkResponses()
-{
-    while (NetworkEvent<NetworkResponsePayload>* ev = mRespQueue.pop()) {
-        // write header
-        ByteOutputArchive archive;
-        archive.Write<PacketType>(&ev->Type, sizeof(ev->Type));
-        archive.Write<PlayerID>(&ev->PlayerID, sizeof(ev->PlayerID));
-
-        // write payload
-        std::visit(
-            VariantVisitor{
-                [&](const ConnectedResponse&) {},
-                [&](const NewGameResponse& aResp) { NewGameResponse::Serialize(archive, aResp); },
-                [&](const SyncPayload&) {},
-            },
-            ev->Payload);
-
-        if (!mConnectedPeers.contains(ev->PlayerID)) {
-            throw std::runtime_error(fmt::format("player {} is not connected", ev->PlayerID));
-        } else {
-            Send(mConnectedPeers[ev->PlayerID], archive.Bytes());
-        }
-        delete ev;
-    }
-}
-
 void ENetServer::OnConnect(ENetEvent&) {}
 
 void ENetServer::OnReceive(ENetEvent& aEvent)
 {
     ByteInputArchive archive(std::span<uint8_t>(aEvent.packet->data, aEvent.packet->dataLength));
-    auto*            ev = new NetworkEvent<NetworkRequestPayload>();
+    auto             ev = new NetworkRequest;
 
-    archive.Read<PacketType>(&ev->Type, sizeof(PacketType));
-    archive.Read<PlayerID>(&ev->PlayerID, sizeof(PlayerID));
-    switch (ev->Type) {
-        case PacketType::ClientSync: {
-            SyncPayload payload;
-            SyncPayload::Deserialize(archive, payload);
-            ev->Payload = payload;
-            break;
+    NetworkRequest::Deserialize(archive, ev);
+
+    if (ev->Type == PacketType::NewGame) {
+        auto payload = std::get<NewGameRequest>(ev->Payload);
+        if (!mConnectedPeers.contains(payload.PlayerAID)) {
+            mConnectedPeers[payload.PlayerAID] = aEvent.peer;
         }
-        case PacketType::NewGame:
-            NewGameRequest payload;
-            NewGameRequest::Deserialize(archive, payload);
-            ev->Payload = payload;
-            if (!mConnectedPeers.contains(payload.PlayerAID)) {
-                mConnectedPeers[payload.PlayerAID] = aEvent.peer;
-            }
-            break;
-        default:
-            break;
     }
-    mQueue.push(ev);
+    mReqChannel.Send(ev);
 }
 
 void ENetServer::OnDisconnect(ENetEvent&) {}

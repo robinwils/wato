@@ -1,21 +1,23 @@
 #pragma once
 
 #include <bx/spscqueue.h>
+#include <spdlog/spdlog.h>
 
 #include <atomic>
 #include <entt/signal/dispatcher.hpp>
 #include <entt/signal/emitter.hpp>
 
 #include "core/net/net.hpp"
+#include "core/queue/channel.hpp"
 #include "registry/registry.hpp"
-
-using NetworkRequestQueue  = bx::SpScUnboundedQueueT<NetworkEvent<NetworkRequestPayload>>;
-using NetworkResponseQueue = bx::SpScUnboundedQueueT<NetworkEvent<NetworkResponsePayload>>;
 
 class ENetBase
 {
    public:
-    ENetBase() : mRunning(true), mQueue(&mAlloc), mRespQueue(&mAlloc) {}
+    using channel_response_t = Channel<NetworkResponse>;
+    using channel_request_t  = Channel<NetworkRequest>;
+
+    ENetBase() : mRunning(true) {}
     ENetBase(ENetBase&&)                 = delete;
     ENetBase(const ENetBase&)            = delete;
     ENetBase& operator=(ENetBase&&)      = delete;
@@ -27,9 +29,21 @@ class ENetBase
     // blocking: meant to be called in a dedicated thread
     virtual void Poll();
 
-    [[nodiscard]] bool                  Running() const noexcept { return mRunning; }
-    [[nodiscard]] NetworkRequestQueue&  Queue() noexcept { return mQueue; }
-    [[nodiscard]] NetworkResponseQueue& ResponseQueue() noexcept { return mRespQueue; }
+    [[nodiscard]] bool Running() const noexcept { return mRunning; }
+
+    template <typename Func>
+    void ConsumeNetworkResponses(Func&& aHandler)
+    {
+        mRespChannel.Drain(aHandler);
+    }
+    template <typename Func>
+    void ConsumeNetworkRequests(Func&& aHandler)
+    {
+        mReqChannel.Drain(aHandler);
+    }
+
+    void EnqueueResponse(NetworkResponse* aEvent) { mRespChannel.Send(aEvent); }
+    void EnqueueRequest(NetworkRequest* aEvent) { mReqChannel.Send(aEvent); }
 
    protected:
     bool Send(ENetPeer* aPeer, const std::vector<uint8_t> aData);
@@ -43,6 +57,7 @@ class ENetBase
     std::atomic_bool     mRunning;
     enet_host_ptr        mHost;
     bx::DefaultAllocator mAlloc;
-    NetworkRequestQueue  mQueue;
-    NetworkResponseQueue mRespQueue;
+
+    channel_request_t  mReqChannel;
+    channel_response_t mRespChannel;
 };

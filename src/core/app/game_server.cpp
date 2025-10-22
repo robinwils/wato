@@ -7,6 +7,7 @@
 #include <thread>
 
 #include "core/net/net.hpp"
+#include "core/snapshot.hpp"
 #include "core/types.hpp"
 #include "input/action.hpp"
 #include "registry/registry.hpp"
@@ -33,7 +34,7 @@ GameServer::~GameServer()
 
 void GameServer::ConsumeNetworkRequests()
 {
-    while (const NetworkEvent<NetworkRequestPayload>* ev = mServer.Queue().pop()) {
+    mServer.ConsumeNetworkRequests([&](std::shared_ptr<NetworkRequest> aEvent) {
         std::visit(
             VariantVisitor{
                 [&](const SyncPayload& aReq) {
@@ -52,15 +53,14 @@ void GameServer::ConsumeNetworkRequests()
                 [&](const NewGameRequest& aNewGame) {
                     GameInstanceID gameID = createGameInstance(aNewGame);
                     spdlog::info("Created game {}", gameID);
-                    mServer.EnqueueResponse(new NetworkEvent<NetworkResponsePayload>{
+                    mServer.EnqueueResponse(new NetworkResponse{
                         .Type     = PacketType::NewGame,
                         .PlayerID = 0,
                         .Payload  = NewGameResponse{.GameID = gameID}});
                 },
-            },
-            ev->Payload);
-        delete ev;
-    }
+                [&](const std::monostate&) {}},
+            aEvent->Payload);
+    });
 }
 
 int GameServer::Run(tf::Executor& aExecutor)
@@ -71,7 +71,15 @@ int GameServer::Run(tf::Executor& aExecutor)
 
     aExecutor.silent_async([&]() {
         while (mRunning) {
-            mServer.ConsumeNetworkResponses();
+            mServer.ConsumeNetworkResponses([&](std::shared_ptr<NetworkResponse> aEvent) {
+                ByteOutputArchive archive;
+                NetworkResponse::Serialize(archive, aEvent);
+
+                if (!mServer.Send(aEvent->PlayerID, archive.Bytes())) {
+                    spdlog::error("player {} is not connected", aEvent->PlayerID);
+                    mRunning = false;
+                }
+            });
             mServer.Poll();
         }
     });
@@ -97,7 +105,7 @@ int GameServer::Run(tf::Executor& aExecutor)
 
 void GameServer::Stop() { mRunning = false; }
 
-GameInstanceID GameServer::createGameInstance(const NewGameRequest& aNewGame)
+GameInstanceID GameServer::createGameInstance(const NewGameRequest&)
 {
     GameInstanceID gameID;
     do {

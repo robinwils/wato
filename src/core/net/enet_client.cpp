@@ -55,31 +55,11 @@ void ENetClient::ForceDisconnect()
     mRunning   = false;
 }
 
-void ENetClient::ConsumeNetworkRequests()
-{
-    while (NetworkEvent<NetworkRequestPayload>* ev = mQueue.pop()) {
-        // write header
-        ByteOutputArchive archive;
-        archive.Write<int>(&ev->Type, sizeof(ev->Type));
-        archive.Write<int>(&ev->PlayerID, sizeof(ev->PlayerID));
-
-        // write payload
-        std::visit(
-            VariantVisitor{
-                [&](const SyncPayload& aSync) { SyncPayload::Serialize(archive, aSync); },
-                [&](const NewGameRequest& aReq) { NewGameRequest::Serialize(archive, aReq); },
-            },
-            ev->Payload);
-        Send(mPeer, archive.Bytes());
-        delete ev;
-    }
-}
-
 void ENetClient::OnConnect(ENetEvent& aEvent)
 {
     BX_UNUSED(aEvent);
     // TODO: better player ID handling
-    mRespQueue.push(new NetworkEvent<NetworkResponsePayload>{
+    mRespChannel.Send(new NetworkResponse{
         .Type     = PacketType::Connected,
         .PlayerID = 0,
         .Payload  = ConnectedResponse{},
@@ -90,20 +70,11 @@ void ENetClient::OnConnect(ENetEvent& aEvent)
 void ENetClient::OnReceive(ENetEvent& aEvent)
 {
     ByteInputArchive archive(std::span<uint8_t>(aEvent.packet->data, aEvent.packet->dataLength));
-    auto*            ev = new NetworkEvent<NetworkResponsePayload>();
+    auto*            ev = new NetworkResponse;
 
-    archive.Read<PacketType>(&ev->Type, sizeof(PacketType));
-    switch (ev->Type) {
-        case PacketType::NewGame:
-            NewGameResponse resp;
-            NewGameResponse::Deserialize(archive, resp);
-            break;
-        default:
-            spdlog::error("unknown packet type {}", fmt::underlying(ev->Type));
-            delete ev;
-            return;
-    }
-    mRespQueue.push(ev);
+    NetworkResponse::Deserialize(archive, ev);
+
+    EnqueueResponse(ev);
 }
 
 void ENetClient::OnDisconnect(ENetEvent& aEvent)

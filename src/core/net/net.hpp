@@ -189,8 +189,8 @@ struct NetworkEvent {
     }
 };
 
-template struct NetworkEvent<NetworkRequestPayload>;
-template struct NetworkEvent<NetworkResponsePayload>;
+using NetworkResponse = NetworkEvent<NetworkResponsePayload>;
+using NetworkRequest  = NetworkEvent<NetworkRequestPayload>;
 
 template <>
 struct fmt::formatter<ENetAddress> : fmt::formatter<std::string> {

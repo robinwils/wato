@@ -12,6 +12,7 @@
 #include "components/tower.hpp"
 #include "core/net/enet_client.hpp"
 #include "core/net/net.hpp"
+#include "core/snapshot.hpp"
 #include "core/types.hpp"
 #include "core/window.hpp"
 #include "registry/game_registry.hpp"
@@ -141,7 +142,14 @@ void GameClient::networkThread()
             }
         }
 
-        netClient.ConsumeNetworkRequests();
+        netClient.ConsumeNetworkRequests([&](std::shared_ptr<NetworkRequest> aEvent) {
+            // write header
+            ByteOutputArchive archive;
+
+            NetworkRequest::Serialize(archive, aEvent);
+
+            netClient.Send(archive.Bytes());
+        });
         netClient.Poll();
     }
 }
@@ -241,12 +249,12 @@ void GameClient::OnGameInstanceCreated()
 void GameClient::consumeNetworkResponses()
 {
     auto& netClient = mRegistry.ctx().get<ENetClient>();
-    while (const NetworkEvent<NetworkResponsePayload>* ev = netClient.ResponseQueue().pop()) {
+    netClient.ConsumeNetworkResponses([&](std::shared_ptr<NetworkResponse> aEvent) {
         std::visit(
             VariantVisitor{
                 [&](const ConnectedResponse& aResp) {
                     BX_UNUSED(aResp);
-                    netClient.EnqueueSend(new NetworkEvent<NetworkRequestPayload>{
+                    netClient.EnqueueRequest(new NetworkRequest{
                         .Type     = PacketType::NewGame,
                         .PlayerID = 0,
                         .Payload  = NewGameRequest{.PlayerAID = 0},
@@ -257,8 +265,8 @@ void GameClient::consumeNetworkResponses()
                     spdlog::info("game {} created", aResp.GameID);
                 },
                 [&](const SyncPayload&) {},
+                [&](const std::monostate) {},
             },
-            ev->Payload);
-        delete ev;
-    }
+            aEvent->Payload);
+    });
 }

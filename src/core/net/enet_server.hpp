@@ -17,8 +17,15 @@ class ENetServer : public ENetBase
     ~ENetServer()                            = default;
 
     void Init() override;
-    void EnqueueResponse(NetworkEvent<NetworkResponsePayload>* aPkt) { mRespQueue.push(aPkt); }
-    void ConsumeNetworkResponses();
+
+    bool Send(PlayerID aID, const std::vector<uint8_t> aData)
+    {
+        if (!mConnectedPeers.contains(aID)) {
+            return false;
+        } else {
+            return ENetBase::Send(mConnectedPeers[aID], aData);
+        }
+    }
 
    protected:
     virtual void OnConnect(ENetEvent& aEvent) override;

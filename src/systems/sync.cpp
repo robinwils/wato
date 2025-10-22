@@ -29,7 +29,7 @@ void NetworkSyncSystem<ENetClient>::operator()(Registry& aRegistry)
     }
 
     if (!filteredState.Actions.empty() || !filteredState.Snapshot.empty()) {
-        net.EnqueueSend(new NetworkEvent<NetworkRequestPayload>{
+        net.EnqueueRequest(new NetworkRequest{
             .Type     = PacketType::ClientSync,
             .PlayerID = 0,
             .Payload  = SyncPayload{.GameID = instance.GameID, .State = filteredState},
@@ -54,7 +54,7 @@ void NetworkSyncSystem<ENetServer>::operator()(Registry& aRegistry)
         .get<RigidBody>(outAr, rbStorage.begin(), rbStorage.end())
         .get<Collider>(outAr, rbStorage.begin(), rbStorage.end());
 
-    net.EnqueueResponse(new NetworkEvent<NetworkResponsePayload>{
+    net.EnqueueResponse(new NetworkResponse{
         .Type     = PacketType::ServerSync,
         .PlayerID = 0,
         .Payload  = SyncPayload{.GameID = instance.GameID, .State = serverState},
