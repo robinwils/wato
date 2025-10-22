@@ -1,8 +1,8 @@
 #pragma once
 
-#include <glm/vec3.hpp>
+#include <reactphysics3d/reactphysics3d.h>
 
-#include "reactphysics3d/reactphysics3d.h"
+#include <glm/vec3.hpp>
 
 class TowerBuildingHandler : public rp3d::OverlapCallback
 {

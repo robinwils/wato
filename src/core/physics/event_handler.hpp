@@ -1,6 +1,7 @@
 #pragma once
 
-#include "reactphysics3d/reactphysics3d.h"
+#include <reactphysics3d/reactphysics3d.h>
+
 #include "registry/registry.hpp"
 
 class EventHandler : public rp3d::EventListener
