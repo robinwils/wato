@@ -10,12 +10,14 @@ target_sources(watod
     ${CMAKE_SOURCE_DIR}/src/input/action.hpp
     ${CMAKE_SOURCE_DIR}/src/systems/action.hpp
     ${CMAKE_SOURCE_DIR}/src/systems/creep.hpp
+    ${CMAKE_SOURCE_DIR}/src/systems/sync.hpp
 
   PRIVATE
     ${CMAKE_SOURCE_DIR}/src/core/app/game_server.cpp
     ${CMAKE_SOURCE_DIR}/src/input/action.cpp
     ${CMAKE_SOURCE_DIR}/src/systems/action.cpp
     ${CMAKE_SOURCE_DIR}/src/systems/creep.cpp
+    ${CMAKE_SOURCE_DIR}/src/systems/sync.cpp
     main.cpp
 )
 

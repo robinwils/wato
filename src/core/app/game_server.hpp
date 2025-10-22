@@ -10,6 +10,7 @@
 #include "core/net/enet_server.hpp"
 #include "core/types.hpp"
 #include "systems/action.hpp"
+#include "systems/sync.hpp"
 
 class GameServer : public Application
 {
@@ -50,5 +51,7 @@ class GameServer : public Application
     std::unordered_map<GameInstanceID, Registry> mGameInstances;
 
     // systems
-    ServerActionSystem mActionSystem;
+    ServerActionSystem            mActionSystem;
+    NetworkSyncSystem<ENetServer> mSyncSystem;
+    AiSystem                      mAiSystem;
 };
