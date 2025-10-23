@@ -34,10 +34,9 @@ class PlacementModeContextHandler : public DefaultContextHandler
     void operator()(Registry& aRegistry, const PlacementModePayload& aPayload) override;
 };
 
-class ServerContextHandler : public ActionContextHandler
+class ServerContextHandler : public DefaultContextHandler
 {
    public:
-    void operator()(Registry&, const SendCreepPayload&) override {};
     void operator()(Registry& aRegistry, const BuildTowerPayload& aPayload) override;
     void operator()(Registry&, const PlacementModePayload&) override {}
     void operator()(Registry&, const MovePayload&, const float) override {}
