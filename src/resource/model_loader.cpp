@@ -117,7 +117,7 @@ void ModelLoader::processBones(
                 vertexW.mVertexId < aVertices.size(),
                 "vertex ID bigger than vertices parsed");
 
-            WATO_TRACE(
+            spdlog::trace(
                 "    vertex weight {} with {} vertex weights",
                 vertexW.mVertexId,
                 vertexW.mWeight);
@@ -127,7 +127,7 @@ void ModelLoader::processBones(
                 aSkeleton.Bones[*skBoneIdx].Offset.emplace(toGLMMat4(bone->mOffsetMatrix));
             }
 
-            WATO_TRACE(
+            spdlog::trace(
                 "    vertex weight {} with {} vertex weights",
                 vertexW.mVertexId,
                 vertexW.mWeight);
@@ -146,7 +146,7 @@ void ModelLoader::processBones(
         for (size_t j = 0; j < influences.size() && j < 4; ++j) {
             vertex.BoneWeights[j] = influences[j].first;
             vertex.BoneIndices[j] = static_cast<float>(influences[j].second);
-            WATO_TRACE(
+            spdlog::trace(
                 "keeping normalized vertex weight for bone index {}: {}",
                 vertex.BoneIndices[j],
                 vertex.BoneWeights[j]);
@@ -261,10 +261,10 @@ ModelLoader::mesh_type ModelLoader::processMesh(
 void ModelLoader::processMetaData(const aiNode* aNode, const aiScene* /*aScene*/)
 {
     if (!aNode->mMetaData) {
-        WATO_TRACE("  node {} metadata is null", aNode->mName);
+        spdlog::trace("  node {} metadata is null", aNode->mName);
         return;
     }
-    WATO_TRACE("  node {} has {} metadata", aNode->mName, aNode->mMetaData->mNumProperties);
+    spdlog::trace("  node {} has {} metadata", aNode->mName, aNode->mMetaData->mNumProperties);
     auto* mdata = aNode->mMetaData;
     for (unsigned int propIdx = 0; propIdx < mdata->mNumProperties; ++propIdx) {
         auto& key = mdata->mKeys[propIdx];
@@ -272,40 +272,40 @@ void ModelLoader::processMetaData(const aiNode* aNode, const aiScene* /*aScene*/
 
         switch (val.mType) {
             case AI_BOOL:
-                WATO_TRACE("  {}: bool", key);
+                spdlog::trace("  {}: bool", key);
                 break;
             case AI_INT32:
-                WATO_TRACE("  {}: int32", key);
+                spdlog::trace("  {}: int32", key);
                 break;
             case AI_UINT64:
-                WATO_TRACE("  {}: uint64", key);
+                spdlog::trace("  {}: uint64", key);
                 break;
             case AI_FLOAT:
-                WATO_TRACE("  {}: float", key);
+                spdlog::trace("  {}: float", key);
                 break;
             case AI_DOUBLE:
-                WATO_TRACE("  {}: double", key);
+                spdlog::trace("  {}: double", key);
                 break;
             case AI_AISTRING:
-                WATO_TRACE("  {}: aistring", key);
+                spdlog::trace("  {}: aistring", key);
                 break;
             case AI_AIVECTOR3D:
-                WATO_TRACE("  {}: vector3", key);
+                spdlog::trace("  {}: vector3", key);
                 break;
             case AI_AIMETADATA:
-                WATO_TRACE("  {}: mdata", key);
+                spdlog::trace("  {}: mdata", key);
                 break;
             case AI_INT64:
-                WATO_TRACE("  {}: int64", key);
+                spdlog::trace("  {}: int64", key);
                 break;
             case AI_UINT32:
-                WATO_TRACE("  {}: uint32", key);
+                spdlog::trace("  {}: uint32", key);
                 break;
             case AI_META_MAX:
-                WATO_TRACE("  {}: meta max", key);
+                spdlog::trace("  {}: meta max", key);
                 break;
             case FORCE_32BIT:
-                WATO_TRACE("  {}: force 32bit", key);
+                spdlog::trace("  {}: force 32bit", key);
                 break;
         }
     }

@@ -30,13 +30,13 @@ class ByteInputArchive
     void operator()(entt::entity& aEntity)
     {
         Read<entt::entity>(&aEntity, 1);
-        spdlog::debug("read entity {:d}", static_cast<ENTT_ID_TYPE>(aEntity));
+        // WATO_DBG(aRegistry, "read entity {:d}", static_cast<ENTT_ID_TYPE>(aEntity));
     }
 
     void operator()(std::underlying_type_t<entt::entity>& aEntity)
     {
         Read<std::underlying_type_t<entt::entity>>(&aEntity, 1);
-        spdlog::debug("read set of size {:d}", aEntity);
+        // WATO_DBG(aRegistry, "read set of size {:d}", aEntity);
     }
 
     template <typename T>
@@ -51,12 +51,12 @@ class ByteInputArchive
     {
         SafeU32 idx = SafeU32(mIdx) + aN * sizeof(T);
 
-        spdlog::debug(
-            "reading {:d} elts [size  = {:d}] at index {} [total size = {}]",
-            aN,
-            sizeof(T),
-            static_cast<uint32_t>(idx),
-            aN * sizeof(T));
+        // WATO_DBG(aRegistry,
+        //     "reading {:d} elts [size  = {:d}] at index {} [total size = {}]",
+        //     aN,
+        //     sizeof(T),
+        //     static_cast<uint32_t>(idx),
+        //     aN * sizeof(T));
         idx = idx <= mStorage.size() ? idx : SafeU32(-1);
 
         // bx::memCopy(aDestination, &mStorage[mIdx], aN * sizeof(T));
@@ -80,13 +80,13 @@ class ByteOutputArchive
 
     void operator()(entt::entity aEntity)
     {
-        spdlog::trace("writing entity {:d}", static_cast<ENTT_ID_TYPE>(aEntity));
+        // WATO_TRACE(aRegistry, "writing entity {:d}", static_cast<ENTT_ID_TYPE>(aEntity));
         Write<entt::entity>(&aEntity, 1);
     }
 
     void operator()(std::underlying_type_t<entt::entity> aEntity)
     {
-        spdlog::trace("writing set of size {:d}", aEntity);
+        // WATO_TRACE(aRegistry, "writing set of size {:d}", aEntity);
         Write<std::underlying_type_t<entt::entity>>(&aEntity, 1);
     }
 
@@ -99,7 +99,12 @@ class ByteOutputArchive
     template <typename T, std::input_iterator In>
     void Write(const In& aData, std::size_t aN)
     {
-        spdlog::trace("writing {} elts [size = {}, total = {}]", aN, sizeof(T), aN * sizeof(T));
+        // WATO_TRACE(
+        //     aRegistry,
+        //     "writing {} elts [size = {}, total = {}]",
+        //     aN,
+        //     sizeof(T),
+        //     aN * sizeof(T));
         auto* p = reinterpret_cast<const byte*>(aData);
         mStorage.insert(mStorage.end(), p, p + aN * sizeof(T));
     }

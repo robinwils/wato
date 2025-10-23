@@ -26,10 +26,10 @@ void AiSystem::operator()(Registry& aRegistry)
         if (!p.NextCell || c == p.NextCell) {
             p.NextCell = graph.GetNextCell(c);
             p.LastFrom = c;
-            spdlog::trace("set next cell = {} and last from = {}", p.NextCell, p.LastFrom);
+            WATO_TRACE(aRegistry, "set next cell = {} and last from = {}", p.NextCell, p.LastFrom);
         } else if (p.NextCell != graph.GetNextCell(p.LastFrom)) {
             // the path has probably been updated (tower built)
-            spdlog::trace("path updated, setting next cell = ", graph.GetNextCell(p.LastFrom));
+            WATO_TRACE(aRegistry, "path updated, setting next cell = ", graph.GetNextCell(p.LastFrom));
             p.NextCell = graph.GetNextCell(p.LastFrom);
         }
 

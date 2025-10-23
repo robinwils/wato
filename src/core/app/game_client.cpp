@@ -1,6 +1,7 @@
 #include "core/app/game_client.hpp"
 
 #include <bx/bx.h>
+#include <spdlog/spdlog.h>
 
 #include <chrono>
 #include <entt/core/fwd.hpp>
@@ -27,6 +28,9 @@ using namespace entt::literals;
 void GameClient::Init()
 {
     Application::Init();
+
+    spdlog::set_default_logger(mLogger);
+
     auto& window    = mRegistry.ctx().get<WatoWindow>();
     auto& renderer  = mRegistry.ctx().get<Renderer>();
     auto& netClient = mRegistry.ctx().get<ENetClient>();
@@ -55,7 +59,7 @@ void GameClient::Init()
     mSystemsFT.push_back(NetworkSyncSystem<ENetClient>::MakeDelegate(mNetworkSyncSystem));
 
     auto graph = organizerFixedTime.graph();
-    spdlog::info("graph size: {}", graph.size());
+    WATO_INFO(mRegistry, "graph size: {}", graph.size());
     // TODO: use these tasks
     std::unordered_map<std::string, tf::Task> tasks;
 
@@ -88,7 +92,7 @@ int GameClient::Run(tf::Executor& aExecutor)
     if (!netClient.Connect()) {
         throw std::runtime_error("No available peers for initiating an ENet connection.");
     }
-    spdlog::debug("connected to server");
+    WATO_DBG(mRegistry, "connected to server");
 
     while (!window.ShouldClose()) {
         window.PollEvents();
@@ -251,6 +255,7 @@ void GameClient::consumeNetworkResponses()
             VariantVisitor{
                 [&](const ConnectedResponse& aResp) {
                     BX_UNUSED(aResp);
+                    WATO_INFO(mRegistry, "got connected response");
                     netClient.EnqueueRequest(new NetworkRequest{
                         .Type     = PacketType::NewGame,
                         .PlayerID = 0,
@@ -259,7 +264,7 @@ void GameClient::consumeNetworkResponses()
                 },
                 [&](const NewGameResponse& aResp) {
                     StartGameInstance(mRegistry, aResp.GameID, false);
-                    spdlog::info("game {} created", aResp.GameID);
+                    WATO_INFO(mRegistry, "game {} created", aResp.GameID);
                 },
                 [&](const SyncPayload&) {},
                 [&](const std::monostate) {},

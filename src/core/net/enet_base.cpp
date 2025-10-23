@@ -25,7 +25,7 @@ void ENetBase::Init()
 bool ENetBase::Send(ENetPeer* aPeer, const std::vector<uint8_t> aData)
 {
     if (aPeer == nullptr) {
-        WATO_DBG("client peer not initialized");
+        mLogger->debug("client peer not initialized");
         return false;
     }
 
@@ -53,7 +53,7 @@ void ENetBase::Poll()
         switch (event.type) {
             case ENET_EVENT_TYPE_CONNECT:
                 if (event.peer) {
-                    spdlog::info("New {}.\n", *event.peer);
+                    mLogger->info("New {}.\n", *event.peer);
                 }
                 /* Store any relevant client information here. */
                 OnConnect(event);
@@ -73,12 +73,12 @@ void ENetBase::Poll()
                     peerData = std::string(reinterpret_cast<char*>(event.peer->data));
                 }
 
-                spdlog::debug(
+                mLogger->debug(
                     "A packet of length {} was received from {} with data "
                     "{} on "
                     "channel {}.",
                     packetSize,
-                    enet_peer_get_id(event.peer),
+                    *event.peer,
                     peerData,
                     event.channelID);
                 OnReceive(event);
@@ -90,7 +90,7 @@ void ENetBase::Poll()
 
             case ENET_EVENT_TYPE_DISCONNECT:
                 if (event.peer) {
-                    spdlog::info("{} disconnected.\n", *event.peer);
+                    mLogger->info("{} disconnected.\n", *event.peer);
                 }
                 OnDisconnect(event);
                 /* Reset the peer's client information. */
@@ -98,7 +98,7 @@ void ENetBase::Poll()
                 break;
 
             case ENET_EVENT_TYPE_DISCONNECT_TIMEOUT:
-                spdlog::info(
+                mLogger->info(
                     "{} disconnected due to timeout.\n",
                     static_cast<char*>(event.peer->data));
                 /* Reset the peer's client information. */

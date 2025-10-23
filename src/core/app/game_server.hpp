@@ -15,9 +15,12 @@
 class GameServer : public Application
 {
    public:
-    explicit GameServer(char** aArgv) : Application(aArgv), mServer(mOptions.ServerAddr) {}
+    explicit GameServer(char** aArgv)
+        : Application("server", aArgv), mServer(mOptions.ServerAddr, mLogger)
+    {
+    }
     explicit GameServer(const Options& aOptions)
-        : Application(aOptions), mServer(mOptions.ServerAddr)
+        : Application("server", aOptions), mServer(mOptions.ServerAddr, mLogger)
     {
     }
     virtual ~GameServer();

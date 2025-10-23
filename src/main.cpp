@@ -19,8 +19,6 @@ int main(int, char** argv)
 
     Options opts(argv);
 
-    InitLogger(opts.LogLevel());
-
     tf::Taskflow                flow;
     tf::Executor                exec;
     tf::Future<void>            future;

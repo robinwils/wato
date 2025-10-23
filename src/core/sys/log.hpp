@@ -11,6 +11,8 @@
 #include <entt/entity/fwd.hpp>
 #include <glm/gtx/string_cast.hpp>
 
+using Logger = std::shared_ptr<spdlog::logger>;
+
 template <typename T>
 struct fmt::formatter<std::unique_ptr<T>> : fmt::formatter<std::string> {
     auto format(std::unique_ptr<T> const& aObj, format_context& aCtx) const -> decltype(aCtx.out())
@@ -56,24 +58,36 @@ struct fmt::formatter<entt::entity> : fmt::formatter<std::string> {
     }
 };
 
-inline void InitLogger(const std::string& aLevel)
+inline Logger CreateLogger(const std::string& aName, const std::string& aLevel)
 {
     auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-    auto fileSink    = std::make_shared<spdlog::sinks::basic_file_sink_mt>("wato_logs.txt", true);
+    auto fileSink    = std::make_shared<spdlog::sinks::basic_file_sink_mt>(
+        fmt::format("logs/wato_{}_logs.txt", aName),
+        true);
     spdlog::level::level_enum level = spdlog::level::from_str(aLevel);
 
     consoleSink->set_level(level);
-    fileSink->set_level(level);
+    fileSink->set_level(spdlog::level::trace);
     // FIXME: weird segfault when using %s and %# instead of %@
     // or puting the thread info in separate []
-    consoleSink->set_pattern("[%H:%M:%S %z thread %t] [%^%L%$] %v %@");
-    fileSink->set_pattern("[%H:%M:%S %z thread %t] [%^%L%$] %v %@");
+    //
+    std::string loggerFormat = "[%H:%M:%S %z T %t] [%n] [%^%L%$] %v %@";
+
+    consoleSink->set_pattern(loggerFormat);
+    fileSink->set_pattern(loggerFormat);
 
     std::vector<spdlog::sink_ptr> sinks{consoleSink, fileSink};
-    auto logger = std::make_shared<spdlog::logger>("multi_sink", sinks.begin(), sinks.end());
-    spdlog::set_default_logger(logger);
+    auto logger = std::make_shared<spdlog::logger>(aName, sinks.begin(), sinks.end());
+    spdlog::register_logger(logger);
     logger->set_level(level);
+
+    return logger;
 }
 
-#define WATO_TRACE(...) SPDLOG_TRACE(__VA_ARGS__)
-#define WATO_DBG(...)   SPDLOG_DEBUG(__VA_ARGS__)
+#define WATO_REG_LOGGER(reg) (reg.ctx().get<Logger>())
+
+#define WATO_TRACE(reg, ...) WATO_REG_LOGGER(reg)->trace(__VA_ARGS__)
+#define WATO_DBG(reg, ...)   WATO_REG_LOGGER(reg)->debug(__VA_ARGS__)
+#define WATO_INFO(reg, ...)  WATO_REG_LOGGER(reg)->info(__VA_ARGS__)
+#define WATO_WARN(reg, ...)  WATO_REG_LOGGER(reg)->warn(__VA_ARGS__)
+#define WATO_ERR(reg, ...)   WATO_REG_LOGGER(reg)->error(__VA_ARGS__)

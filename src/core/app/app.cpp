@@ -26,8 +26,8 @@ void Application::StartGameInstance(
     const GameInstanceID aGameID,
     const bool           aIsServer)
 {
-    spdlog::info("spawning game instance");
-    auto& physics = aRegistry.ctx().emplace<Physics>();
+    WATO_INFO(aRegistry, "spawning game instance");
+    auto& physics = aRegistry.ctx().emplace<Physics>(mLogger);
     auto& stack   = aRegistry.ctx().emplace<ActionContextStack>();
 
     aRegistry.ctx().emplace<GameStateBuffer>();
@@ -130,7 +130,7 @@ void Application::SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeigh
         });
 
     graph.ComputePaths(GraphCell::FromWorldPoint(baseTransform.Position));
-    spdlog::debug("{}", graph);
+    WATO_DBG(aRegistry, "{}", graph);
 
     aRegistry.emplace<RigidBody>(
         first,

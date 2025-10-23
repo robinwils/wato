@@ -8,6 +8,7 @@
 #include <taskflow/core/executor.hpp>
 
 #include "core/options.hpp"
+#include "core/sys/log.hpp"
 #include "core/types.hpp"
 #include "registry/registry.hpp"
 #include "systems/ai.hpp"
@@ -20,9 +21,18 @@ class Application
    public:
     static constexpr float kTimeStep = 1.0f / 60.0f;
 
-    explicit Application() : mRunning(false) {}
-    explicit Application(char** aArgv) : mOptions(aArgv), mRunning(false) {}
-    explicit Application(const Options& aOptions) : mOptions(std::move(aOptions)), mRunning(false)
+    explicit Application(const std::string& aName)
+        : mRunning(false), mLogger(CreateLogger(aName, "info"))
+    {
+    }
+    explicit Application(const std::string& aName, char** aArgv)
+        : mOptions(aArgv), mRunning(false), mLogger(CreateLogger(aName, mOptions.LogLevel()))
+    {
+    }
+    explicit Application(const std::string& aName, const Options& aOptions)
+        : mOptions(std::move(aOptions)),
+          mRunning(false),
+          mLogger(CreateLogger(aName, mOptions.LogLevel()))
     {
     }
     virtual ~Application() = default;
@@ -60,4 +70,6 @@ class Application
     std::atomic_bool mRunning;
 
     std::vector<entt::hashed_string> mObserverNames;
+
+    Logger mLogger;
 };

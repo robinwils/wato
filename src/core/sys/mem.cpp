@@ -14,7 +14,7 @@ const bgfx::Memory* loadMem(bx::FileReaderI* aReader, const char* aFilePath)
         return mem;
     }
 
-    WATO_DBG("Failed to load {}.", aFilePath);
+    spdlog::error("Failed to load {}.", aFilePath);
     return NULL;
 }
 
@@ -34,7 +34,7 @@ void* load(
         }
         return data;
     } else {
-        WATO_DBG("Failed to open: {}.", aFilePath);
+        spdlog::error("Failed to open: {}.", aFilePath);
     }
 
     if (NULL != aSize) {

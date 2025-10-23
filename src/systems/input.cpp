@@ -29,7 +29,7 @@ void InputSystem::operator()(Registry& aRegistry)
     const ActionsType& curActions = actionCtx.Bindings.ActionsFromInput(input);
 
     if (!curActions.empty()) {
-        spdlog::trace("inserting latest {} actions: {}", curActions.size(), curActions);
+        WATO_TRACE(aRegistry, "inserting latest {} actions: {}", curActions.size(), curActions);
         latestState.Actions.insert(latestState.Actions.end(), curActions.begin(), curActions.end());
     }
 }

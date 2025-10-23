@@ -111,7 +111,7 @@ void DefaultContextHandler::operator()(Registry& aRegistry, const SendCreepPaylo
 
 void DefaultContextHandler::operator()(Registry& aRegistry, const PlacementModePayload& aPayload)
 {
-    spdlog::trace("entering placement mode");
+    WATO_TRACE(aRegistry, "entering placement mode");
     auto& contextStack = aRegistry.ctx().get<ActionContextStack&>();
 
     ActionContext placementCtx{
@@ -122,7 +122,7 @@ void DefaultContextHandler::operator()(Registry& aRegistry, const PlacementModeP
     contextStack.push_front(std::move(placementCtx));
 
     auto ghostTower = aRegistry.create();
-    spdlog::debug("created ghost tower {}", ghostTower);
+    WATO_DBG(aRegistry, "created ghost tower {}", ghostTower);
     aRegistry.emplace<SceneObject>(ghostTower, "tower_model"_hs);
     aRegistry.emplace<Transform3D>(
         ghostTower,
@@ -140,7 +140,7 @@ void DefaultContextHandler::ExitPlacement(Registry& aRegistry)
             auto view = aRegistry.view<PlacementMode>();
             for (auto entity : view) {
                 aRegistry.destroy(entity);
-                spdlog::debug("destroyed ghost tower {}", entity);
+                WATO_DBG(aRegistry, "destroyed ghost tower {}", entity);
             }
         }
         contextStack.pop_front();
@@ -152,7 +152,7 @@ void PlacementModeContextHandler::operator()(Registry& aRegistry, const BuildTow
     auto& phy = aRegistry.ctx().get<Physics>();
 
     for (const auto&& [tower, pm, t] : aRegistry.view<PlacementMode, Transform3D>().each()) {
-        TowerBuildingHandler handler;
+        TowerBuildingHandler handler(WATO_REG_LOGGER(aRegistry));
 
         RigidBody body = RigidBody{
             .Params =
@@ -238,7 +238,7 @@ void ServerContextHandler::operator()(Registry& aRegistry, const BuildTowerPaylo
     body.Body       = phy.CreateRigidBody(body.Params, t);
     collider.Handle = phy.AddCollider(body.Body, collider.Params);
 
-    TowerBuildingHandler handler;
+    TowerBuildingHandler handler(WATO_REG_LOGGER(aRegistry));
     phy.World()->testOverlap(body.Body, handler);
 
     if (!handler.CanBuildTower) {
@@ -247,7 +247,7 @@ void ServerContextHandler::operator()(Registry& aRegistry, const BuildTowerPaylo
         spdlog::error("tower at {} invalidated", t.Position);
         return;
     }
-    spdlog::info("tower at {} validated", t.Position);
+    WATO_INFO(aRegistry, "tower at {} validated", t.Position);
     aRegistry.emplace<Tower>(tower, aPayload.Tower);
     aRegistry.emplace<RigidBody>(tower, body);
     aRegistry.emplace<Collider>(tower, collider);
@@ -259,7 +259,7 @@ void ActionSystem<Derived>::handleAction(
     const Action& aAction,
     const float   aDeltaTime)
 {
-    spdlog::trace("handling {}", aAction);
+    WATO_TRACE(aRegistry, "handling {}", aAction);
     auto&       contextStack = aRegistry.ctx().get<ActionContextStack&>();
     const auto& currentCtx   = contextStack.front();
 
@@ -292,7 +292,7 @@ void ActionSystem<Derived>::processActions(
     ActionsType latestActions = buf.Latest().Actions;
 
     if (!latestActions.empty()) {
-        spdlog::trace("processing {} actions", latestActions.size());
+        WATO_TRACE(aRegistry, "processing {} actions", latestActions.size());
     }
 
     for (const Action& action : latestActions) {

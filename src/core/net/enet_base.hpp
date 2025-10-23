@@ -1,7 +1,6 @@
 #pragma once
 
 #include <bx/spscqueue.h>
-#include <spdlog/spdlog.h>
 
 #include <atomic>
 #include <entt/signal/dispatcher.hpp>
@@ -9,6 +8,7 @@
 
 #include "core/net/net.hpp"
 #include "core/queue/channel.hpp"
+#include "core/sys/log.hpp"
 #include "registry/registry.hpp"
 
 class ENetBase
@@ -17,7 +17,8 @@ class ENetBase
     using channel_response_t = Channel<NetworkResponse>;
     using channel_request_t  = Channel<NetworkRequest>;
 
-    ENetBase() : mRunning(true) {}
+    ENetBase(Logger aLogger) : mRunning(true), mLogger(aLogger) {}
+    ENetBase(Logger aLogger, bool aRunning) : mRunning(aRunning), mLogger(aLogger) {}
     ENetBase(ENetBase&&)                 = delete;
     ENetBase(const ENetBase&)            = delete;
     ENetBase& operator=(ENetBase&&)      = delete;
@@ -60,4 +61,6 @@ class ENetBase
 
     channel_request_t  mReqChannel;
     channel_response_t mRespChannel;
+
+    Logger mLogger;
 };

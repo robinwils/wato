@@ -40,7 +40,7 @@ void ENetServer::Init()
     if (!mHost) {
         throw std::runtime_error("An error occurred while trying to create an ENet server host.");
     }
-    spdlog::info("created ENet server at {}:{}", host, port);
+    mLogger->info("created ENet server at {}:{}", host, port);
 }
 
 void ENetServer::OnConnect(ENetEvent&) {}

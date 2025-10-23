@@ -4,10 +4,12 @@
 
 #include <glm/vec3.hpp>
 
+#include "core/sys/log.hpp"
+
 class TowerBuildingHandler : public rp3d::OverlapCallback
 {
    public:
-    TowerBuildingHandler() : CanBuildTower(true) {}
+    TowerBuildingHandler(Logger aLogger) : CanBuildTower(true), mLogger(aLogger) {}
 
     /// Called when some contacts occur
     /**
@@ -18,4 +20,7 @@ class TowerBuildingHandler : public rp3d::OverlapCallback
     bool CanBuildTower;
 
     std::vector<glm::vec3> Contacts;
+
+   private:
+    Logger mLogger;
 };

@@ -19,8 +19,6 @@ int main(int, char** argv)
         opts.ServerAddr = "127.0.0.1:7777";
     }
 
-    InitLogger(opts.LogLevel());
-
     GameServer s(opts);
     s.Init();
     return s.Run(exec);

@@ -24,13 +24,13 @@ class GameClient : public Application
 {
    public:
     explicit GameClient(int aWidth, int aHeight, char** aArgv)
-        : Application(aArgv), mPhysicsEventHandler(&mRegistry)
+        : Application("client", aArgv), mPhysicsEventHandler(&mRegistry)
     {
         initContext(aWidth, aHeight);
     }
 
     explicit GameClient(int aWidth, int aHeight, const Options& aOptions)
-        : Application(aOptions), mPhysicsEventHandler(&mRegistry)
+        : Application("client", aOptions), mPhysicsEventHandler(&mRegistry)
     {
         initContext(aWidth, aHeight);
     }
@@ -42,14 +42,14 @@ class GameClient : public Application
 
     virtual ~GameClient()
     {
-        WATO_TRACE("Destroying GameClient");
+        WATO_TRACE(mRegistry, "Destroying GameClient");
 
         std::vector<entt::id_type> ids;
 
         for (auto [id, res] : mRegistry.ctx().get<ModelCache>()) {
             ids.push_back(id);
         }
-        WATO_TRACE("Destroying {} models", ids.size());
+        WATO_TRACE(mRegistry, "Destroying {} models", ids.size());
         for (auto id : ids) {
             mRegistry.ctx().get<ModelCache>().erase(id);
         }
@@ -58,7 +58,7 @@ class GameClient : public Application
         for (auto [id, res] : mRegistry.ctx().get<ShaderCache>()) {
             ids.push_back(id);
         }
-        WATO_TRACE("Destroying {} shaders", ids.size());
+        WATO_TRACE(mRegistry, "Destroying {} shaders", ids.size());
         for (auto id : ids) {
             mRegistry.ctx().get<ShaderCache>().erase(id);
         }
@@ -69,7 +69,7 @@ class GameClient : public Application
             bgfx::destroy(res);
             ids.push_back(id);
         }
-        WATO_TRACE("Destroying {} textures", ids.size());
+        WATO_TRACE(mRegistry, "Destroying {} textures", ids.size());
         for (auto id : ids) {
             mRegistry.ctx().get<TextureCache>().erase(id);
         }
@@ -93,10 +93,11 @@ class GameClient : public Application
    private:
     inline void initContext(int aWidth, int aHeight)
     {
+        mRegistry.ctx().emplace<Logger>(mLogger);
         mRegistry.ctx().emplace<ActionContextStack>();
         mRegistry.ctx().emplace<WatoWindow>(aWidth, aHeight);
         mRegistry.ctx().emplace<Renderer>(mOptions.Renderer());
-        mRegistry.ctx().emplace<ENetClient>();
+        mRegistry.ctx().emplace<ENetClient>(mLogger);
         mRegistry.ctx().emplace<TextureCache>();
         mRegistry.ctx().emplace<ShaderCache>();
         mRegistry.ctx().emplace<ModelCache>();

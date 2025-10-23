@@ -25,11 +25,11 @@ void GameServer::Init()
 
 GameServer::~GameServer()
 {
-    spdlog::trace("destroying game server");
-    spdlog::trace("deleting {} worlds", mGameInstances.size());
+    mLogger->trace("destroying game server");
+    mLogger->trace("deleting {} worlds", mGameInstances.size());
     for (auto& i : mGameInstances) {
         auto& p = i.second.ctx().get<Physics>();
-        spdlog::trace("got world {}", fmt::ptr(p.World()));
+        mLogger->trace("got world {}", fmt::ptr(p.World()));
     }
 }
 
@@ -40,7 +40,7 @@ void GameServer::ConsumeNetworkRequests()
             VariantVisitor{
                 [&](const SyncPayload& aReq) {
                     if (!mGameInstances.contains(aReq.GameID)) {
-                        spdlog::warn("got event for non existing game {}", aReq.GameID);
+                        mLogger->warn("got event for non existing game {}", aReq.GameID);
                         return;
                     }
 
@@ -48,12 +48,12 @@ void GameServer::ConsumeNetworkRequests()
                     Registry&          registry = mGameInstances[aReq.GameID];
                     auto& actions = registry.ctx().get<GameStateBuffer&>().Latest().Actions;
 
-                    spdlog::debug("got {} actions: {}", incoming.size(), incoming);
+                    mLogger->debug("got {} actions: {}", incoming.size(), incoming);
                     actions.insert(actions.end(), incoming.begin(), incoming.end());
                 },
                 [&](const NewGameRequest& aNewGame) {
                     GameInstanceID gameID = createGameInstance(aNewGame);
-                    spdlog::info("Created game {}", gameID);
+                    mLogger->info("Created game {}", gameID);
                     mServer.EnqueueResponse(new NetworkResponse{
                         .Type     = PacketType::NewGame,
                         .PlayerID = 0,
@@ -66,7 +66,7 @@ void GameServer::ConsumeNetworkRequests()
 
 int GameServer::Run(tf::Executor& aExecutor)
 {
-    spdlog::debug("running game server");
+    mLogger->debug("running game server");
     auto prevTime = clock_type::now();
     mRunning      = true;
 
@@ -77,7 +77,7 @@ int GameServer::Run(tf::Executor& aExecutor)
                 NetworkResponse::Serialize(archive, aEvent);
 
                 if (!mServer.Send(aEvent->PlayerID, archive.Bytes())) {
-                    spdlog::error("player {} is not connected", aEvent->PlayerID);
+                    mLogger->error("player {} is not connected", aEvent->PlayerID);
                     mRunning = false;
                 }
             });
@@ -115,6 +115,10 @@ GameInstanceID GameServer::createGameInstance(const NewGameRequest&)
 
     Registry& registry = mGameInstances[gameID];
 
+    registry.ctx().emplace<Logger>(mLogger);
+    registry.ctx().emplace<ENetServer&>(mServer);
+
     StartGameInstance(registry, gameID, true);
+
     return gameID;
 }

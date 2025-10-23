@@ -48,7 +48,7 @@ void ENetClient::Disconnect()
 void ENetClient::ForceDisconnect()
 {
     if (mPeer != nullptr) {
-        spdlog::info("forcing disconnect");
+        mLogger->info("forcing disconnect");
         enet_peer_reset(mPeer);
     }
     mConnected = false;

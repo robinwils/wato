@@ -20,30 +20,30 @@ void RigidBodiesUpdateSystem::operator()(Registry& aRegistry)
         auto& t  = aRegistry.get<Transform3D>(e);
 
         if (!rb.Body) {
-            spdlog::debug("rigid body creation for {}", e);
+            WATO_DBG(aRegistry, "rigid body creation for {}", e);
             rb.Body  = physics.CreateRigidBody(rb.Params, t);
             c.Handle = physics.AddCollider(rb.Body, c.Params);
         } else {
-            spdlog::trace("rigid body update for {}:", e);
+            WATO_TRACE(aRegistry, "rigid body update for {}:", e);
         }
 
         if (rb.Params.Data != rb.Body->getUserData()) {
-            spdlog::trace("   user data");
+            WATO_TRACE(aRegistry, "   user data");
             rb.Body->setUserData(rb.Params.Data);
         }
 
         if (rb.Params.Type != rb.Body->getType()) {
-            spdlog::trace("  body type");
+            WATO_TRACE(aRegistry, "  body type");
             rb.Body->setType(rb.Params.Type);
         }
 
         if (rb.Params.Type == reactphysics3d::BodyType::KINEMATIC) {
-            spdlog::trace("  linear velocity: {} * {}", rb.Params.Direction, rb.Params.Velocity);
+            WATO_TRACE(aRegistry, "  linear velocity: {} * {}", rb.Params.Direction, rb.Params.Velocity);
             rb.Body->setLinearVelocity(ToRP3D(rb.Params.Direction * rb.Params.Velocity));
         }
 
         if (c.Params.IsTrigger != c.Handle->getIsTrigger()) {
-            spdlog::trace("  is trigger {}", c.Params.IsTrigger);
+            WATO_TRACE(aRegistry, "  is trigger {}", c.Params.IsTrigger);
             c.Handle->setIsTrigger(c.Params.IsTrigger);
             if (!c.Params.IsTrigger) {
                 c.Handle->setIsSimulationCollider(true);

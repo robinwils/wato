@@ -84,7 +84,7 @@ TextureLoader::result_type TextureLoader::operator()(
             }
 
             if (bgfx::isValid(handle)) {
-                WATO_DBG("Loaded texture {}", assetPath);
+                spdlog::debug("Loaded texture {}", assetPath);
                 bgfx::setName(handle, assetPath.c_str());
             }
 
@@ -131,7 +131,7 @@ TextureLoader::result_type TextureLoader::operator()(
     }
 
     if (bgfx::isValid(handle)) {
-        WATO_DBG(
+        spdlog::debug(
             "{}x{} {} texture created ",
             aWidth,
             aHeight,

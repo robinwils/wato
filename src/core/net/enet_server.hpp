@@ -3,13 +3,17 @@
 #include <unordered_map>
 
 #include "core/net/enet_base.hpp"
+#include "core/sys/log.hpp"
 
 class ENetServer : public ENetBase
 {
     using peer_map = std::unordered_map<PlayerID, ENetPeer*>;
 
    public:
-    ENetServer(const std::string& aSrvAddr) : mServerAddr(aSrvAddr) {}
+    ENetServer(const std::string& aSrvAddr, Logger aLogger)
+        : ENetBase(aLogger, false), mServerAddr(aSrvAddr)
+    {
+    }
     ENetServer(ENetServer&&)                 = delete;
     ENetServer(const ENetServer&)            = delete;
     ENetServer& operator=(ENetServer&&)      = delete;
