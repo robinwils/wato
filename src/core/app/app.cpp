@@ -120,9 +120,8 @@ void Application::SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeigh
             .Params =
                 ColliderParams{
                     .CollisionCategoryBits = Category::Entities,
-                    .CollideWithMaskBits =
-                        Category::Terrain | Category::Entities | Category::PlacementGhostTower,
-                    .IsTrigger = true,
+                    .CollideWithMaskBits   = Category::Terrain | Category::Entities,
+                    .IsTrigger             = true,
                     .ShapeParams =
                         BoxShapeParams{
                             .HalfExtents = GraphCell(1, 1).ToWorld() * 0.5f,

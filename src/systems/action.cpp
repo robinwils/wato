@@ -153,19 +153,20 @@ void PlacementModeContextHandler::operator()(Registry& aRegistry, const BuildTow
 
     for (const auto&& [tower, pm, t] : aRegistry.view<PlacementMode, Transform3D>().each()) {
         TowerBuildingHandler handler;
-        RigidBody            body = RigidBody{
-                       .Params =
+
+        RigidBody body = RigidBody{
+            .Params =
                 RigidBodyParams{
-                               .Type           = rp3d::BodyType::STATIC,
-                               .Velocity       = 0.0f,
-                               .Direction      = glm::vec3(0.0f),
-                               .GravityEnabled = false,
+                    .Type           = rp3d::BodyType::STATIC,
+                    .Velocity       = 0.0f,
+                    .Direction      = glm::vec3(0.0f),
+                    .GravityEnabled = false,
                 },
         };
         Collider collider = Collider{
             .Params =
                 ColliderParams{
-                    .CollisionCategoryBits = Category::PlacementGhostTower,
+                    .CollisionCategoryBits = Category::Entities,
                     .CollideWithMaskBits   = Category::Terrain | Category::Entities,
                     .IsTrigger             = false,
                     .Offset                = Transform3D{},
@@ -184,9 +185,6 @@ void PlacementModeContextHandler::operator()(Registry& aRegistry, const BuildTow
             aRegistry.destroy(tower);
             break;
         }
-
-        collider.Params.CollisionCategoryBits = Category::Entities;
-        collider.Params.CollideWithMaskBits   = Category::Terrain | Category::PlacementGhostTower;
 
         aRegistry.emplace<Tower>(tower, aPayload.Tower);
         aRegistry.emplace<RigidBody>(tower, body);
@@ -227,7 +225,7 @@ void ServerContextHandler::operator()(Registry& aRegistry, const BuildTowerPaylo
         .Params =
             ColliderParams{
                 .CollisionCategoryBits = Category::Entities,
-                .CollideWithMaskBits   = Category::Terrain | Category::PlacementGhostTower,
+                .CollideWithMaskBits   = Category::Terrain | Category::Entities,
                 .IsTrigger             = false,
                 .Offset                = Transform3D{},
                 .ShapeParams =

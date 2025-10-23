@@ -18,7 +18,7 @@ struct fmt::formatter<rp3d::Vector3> : fmt::formatter<std::string> {
 };
 
 // Enumeration for categories
-enum Category { PlacementGhostTower = 0x0001, Terrain = 0x0002, Entities = 0x0004 };
+enum Category { Terrain = 0x0001, Entities = 0x0002 };
 
 struct BoxShapeParams {
     glm::vec3 HalfExtents;
