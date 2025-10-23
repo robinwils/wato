@@ -266,7 +266,25 @@ void GameClient::consumeNetworkResponses()
                     StartGameInstance(mRegistry, aResp.GameID, false);
                     WATO_INFO(mRegistry, "game {} created", aResp.GameID);
                 },
-                [&](const SyncPayload&) {},
+                [&](SyncPayload& aResp) {
+                    if (aResp.State.Snapshot.empty()) {
+                        return;
+                    }
+
+                    ByteInputArchive      inAr(aResp.State.Snapshot);
+                    Registry              tmp;
+                    entt::snapshot_loader loader{tmp};
+
+                    WATO_DBG(
+                        mRegistry,
+                        "loading state snapshot {} of size {}",
+                        aResp.State.Tick,
+                        aResp.State.Snapshot.size());
+                    loader.get<entt::entity>(inAr)
+                        .get<Transform3D>(inAr)
+                        .get<RigidBody>(inAr)
+                        .get<Collider>(inAr);
+                },
                 [&](const std::monostate) {},
             },
             aEvent->Payload);

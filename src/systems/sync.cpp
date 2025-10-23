@@ -50,9 +50,19 @@ void NetworkSyncSystem<ENetServer>::operator()(Registry& aRegistry)
     ByteOutputArchive outAr(serverState.Snapshot);
 
     entt::snapshot{aRegistry}
+        .get<entt::entity>(outAr)
         .get<Transform3D>(outAr, rbStorage.begin(), rbStorage.end())
         .get<RigidBody>(outAr, rbStorage.begin(), rbStorage.end())
         .get<Collider>(outAr, rbStorage.begin(), rbStorage.end());
+
+    if (serverState.Snapshot.empty()) {
+        return;
+    }
+
+    WATO_DBG(
+        aRegistry,
+        "sending server sync response with state of size {}",
+        serverState.Snapshot.size());
 
     net.EnqueueResponse(new NetworkResponse{
         .Type     = PacketType::ServerSync,
