@@ -177,6 +177,7 @@ if(UNIX)
     INTERFACE
       $<$<CONFIG:Debug>:-ggdb -fsanitize=address,undefined>
       -fdiagnostics-color=always
+      -ftime-trace
       -O$<IF:$<CONFIG:Debug>,0,3>
   )
   target_link_options(wato_common
