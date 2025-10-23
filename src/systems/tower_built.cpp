@@ -24,7 +24,7 @@ void TowerBuiltSystem::operator()(Registry& aRegistry)
         throw std::runtime_error("tower_built_observer storage not initialized");
     }
 
-    if (storage->size() == 0) {
+    if (storage->empty()) {
         return;
     }
     WATO_TRACE(aRegistry, "got {} towers built", storage->size());
