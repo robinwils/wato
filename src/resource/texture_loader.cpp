@@ -1,7 +1,7 @@
 #include "resource/texture_loader.hpp"
 
 #include <bgfx/bgfx.h>
-#include <fmt/format.h>
+#include <fmt/core.h>
 
 #include <memory>
 
