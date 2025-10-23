@@ -182,8 +182,7 @@ void PlacementModeContextHandler::operator()(Registry& aRegistry, const BuildTow
         phy.World()->testOverlap(body.Body, handler);
         if (!handler.CanBuildTower) {
             phy.World()->destroyRigidBody(body.Body);
-            aRegistry.destroy(tower);
-            break;
+            return;
         }
 
         aRegistry.emplace<Tower>(tower, aPayload.Tower);
