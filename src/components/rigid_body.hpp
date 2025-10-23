@@ -22,7 +22,7 @@ struct RigidBody {
 
     constexpr static auto Serialize(auto& aArchive, const auto& aSelf)
     {
-        aArchive.template Write<std::underlying_type_t<rp3d::BodyType>>(&aSelf.Params.Type, 1);
+        aArchive.template Write<rp3d::BodyType>(&aSelf.Params.Type, 1);
         ::Serialize(aArchive, aSelf.Params.Velocity);
         aArchive.template Write<float>(glm::value_ptr(aSelf.Params.Direction), 3);
         ::Serialize(aArchive, aSelf.Params.GravityEnabled);
@@ -30,7 +30,7 @@ struct RigidBody {
 
     constexpr static auto Deserialize(auto& aArchive, auto& aSelf)
     {
-        aArchive.template Read<std::underlying_type_t<rp3d::BodyType>>(&aSelf.Params.Type, 1);
+        aArchive.template Read<rp3d::BodyType>(&aSelf.Params.Type, 1);
         ::Deserialize(aArchive, aSelf.Params.Velocity);
         aArchive.template Read<float>(glm::value_ptr(aSelf.Params.Direction), 3);
         ::Deserialize(aArchive, aSelf.Params.GravityEnabled);
@@ -73,9 +73,9 @@ struct Collider {
     constexpr static auto Deserialize(auto& aArchive, auto& aSelf)
     {
         ::Deserialize(aArchive, aSelf.Params.CollisionCategoryBits);
-        ::Deserialize(aArchive, &aSelf.Params.CollideWithMaskBits);
-        ::Deserialize(aArchive, &aSelf.Params.IsTrigger);
-        Transform3D::Deserialize(aArchive, aSelf);
+        ::Deserialize(aArchive, aSelf.Params.CollideWithMaskBits);
+        ::Deserialize(aArchive, aSelf.Params.IsTrigger);
+        Transform3D::Deserialize(aArchive, aSelf.Params.Offset);
 
         int8_t shapeType = -1;
         ::Deserialize(aArchive, shapeType);
@@ -83,21 +83,23 @@ struct Collider {
             case 0: {
                 BoxShapeParams shapeP;
                 aArchive.template Read<float>(glm::value_ptr(shapeP.HalfExtents), 3);
+                return true;
             }
             case 1: {
                 CapsuleShapeParams shapeP;
                 ::Deserialize(aArchive, shapeP.Radius);
                 ::Deserialize(aArchive, shapeP.Height);
+                return true;
             }
             case 2: {
                 HeightFieldShapeParams shapeP;
                 ::Deserialize(aArchive, shapeP.Data);
                 ::Deserialize(aArchive, shapeP.Rows);
                 ::Deserialize(aArchive, shapeP.Columns);
+                return true;
             }
             default:
                 return false;
         }
-        return true;
     }
 };
