@@ -21,11 +21,12 @@
 
 class ByteInputArchive
 {
+   public:
     using byte        = uint8_t;
     using byte_stream = std::span<byte>;
 
-   public:
     ByteInputArchive(const byte_stream& aInStream) : mStorage(aInStream), mIdx(0) {}
+    ByteInputArchive(std::vector<byte> aInVec) : mStorage(aInVec.begin(), aInVec.size()), mIdx(0) {}
 
     void operator()(entt::entity& aEntity)
     {
@@ -46,6 +47,7 @@ class ByteInputArchive
     }
 
     byte_stream Bytes() const { return mStorage; }
+
     template <typename T, std::output_iterator<T> Out>
     void Read(Out aDestination, std::size_t aN)
     {
