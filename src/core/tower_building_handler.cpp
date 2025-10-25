@@ -14,7 +14,7 @@ void TowerBuildingHandler::onOverlap(CallbackData& aCallbackData)
         unsigned short c2Category = pair.getCollider2()->getCollisionCategoryBits();
 
         mLogger->debug("got overlap pair {}: 0x{:x}-0x{:x}", pairIdx, c1Category, c2Category);
-        if (c1Category == Category::Entities || c2Category == Category::Entities) {
+        if (c1Category == Category::Entities && c2Category == Category::Entities) {
             CanBuildTower = false;
         }
     }
