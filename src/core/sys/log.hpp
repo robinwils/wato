@@ -84,7 +84,7 @@ inline Logger CreateLogger(const std::string& aName, const std::string& aLevel)
     return logger;
 }
 
-#define WATO_REG_LOGGER(reg) (reg.ctx().get<Logger>())
+#define WATO_REG_LOGGER(reg) (reg.ctx().get<Logger&>())
 
 #define WATO_TRACE(reg, ...) WATO_REG_LOGGER(reg)->trace(__VA_ARGS__)
 #define WATO_DBG(reg, ...)   WATO_REG_LOGGER(reg)->debug(__VA_ARGS__)

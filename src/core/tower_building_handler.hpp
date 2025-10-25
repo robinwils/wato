@@ -9,7 +9,7 @@
 class TowerBuildingHandler : public rp3d::OverlapCallback
 {
    public:
-    TowerBuildingHandler(Logger aLogger) : CanBuildTower(true), mLogger(aLogger) {}
+    TowerBuildingHandler(const Logger& aLogger) : CanBuildTower(true), mLogger(aLogger) {}
 
     /// Called when some contacts occur
     /**

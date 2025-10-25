@@ -93,7 +93,7 @@ class GameClient : public Application
    private:
     inline void initContext(int aWidth, int aHeight)
     {
-        mRegistry.ctx().emplace<Logger>(mLogger);
+        mRegistry.ctx().emplace<Logger&>(mLogger);
         mRegistry.ctx().emplace<ActionContextStack>();
         mRegistry.ctx().emplace<WatoWindow>(aWidth, aHeight);
         mRegistry.ctx().emplace<Renderer>(mOptions.Renderer());
