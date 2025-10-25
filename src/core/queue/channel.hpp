@@ -19,14 +19,15 @@ class Channel
     Channel& operator=(Channel&&)      = default;
     ~Channel()                         = default;
 
-    void                   Send(_MsgT* aPkt) { mQueue.push(aPkt); }
-    std::shared_ptr<_MsgT> Recv() { return std::shared_ptr<_MsgT>(mQueue.pop()); }
+    void   Send(_MsgT* aPkt) { mQueue.push(aPkt); }
+    _MsgT* Recv() { return mQueue.pop(); }
 
     template <typename Func>
     void Drain(Func&& aHandler)
     {
-        while (std::shared_ptr<_MsgT> ev = Recv()) {
+        while (_MsgT* ev = Recv()) {
             aHandler(ev);
+            delete ev;
         }
     }
 

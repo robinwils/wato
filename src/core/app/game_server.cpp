@@ -36,7 +36,7 @@ GameServer::~GameServer()
 
 void GameServer::ConsumeNetworkRequests()
 {
-    mServer.ConsumeNetworkRequests([&](std::shared_ptr<NetworkRequest> aEvent) {
+    mServer.ConsumeNetworkRequests([&](NetworkRequest* aEvent) {
         std::visit(
             VariantVisitor{
                 [&](const SyncPayload& aReq) {
@@ -73,7 +73,7 @@ int GameServer::Run(tf::Executor& aExecutor)
 
     aExecutor.silent_async([&]() {
         while (mRunning) {
-            mServer.ConsumeNetworkResponses([&](std::shared_ptr<NetworkResponse> aEvent) {
+            mServer.ConsumeNetworkResponses([&](NetworkResponse* aEvent) {
                 ByteOutputArchive archive;
                 NetworkResponse::Serialize(archive, aEvent);
 

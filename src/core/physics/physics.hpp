@@ -72,7 +72,7 @@ struct PhysicsParams {
 class Physics
 {
    public:
-    Physics(Logger aLogger) : mLogger(aLogger) {}
+    Physics(const Logger& aLogger) : mLogger(aLogger) {}
     ~Physics() { mLogger->trace("destroying physics"); }
 
     Physics(const Physics&)            = delete;
@@ -101,9 +101,9 @@ class Physics
     PhysicsParams Params;
 
    private:
-    rp3d::PhysicsCommon             mCommon;
-    rp3d::PhysicsWorld*             mWorld = nullptr;
-    Logger mLogger;
+    rp3d::PhysicsCommon mCommon;
+    rp3d::PhysicsWorld* mWorld = nullptr;
+    Logger              mLogger;
 };
 
 inline rp3d::Vector3 ToRP3D(const glm::vec3 aVector)

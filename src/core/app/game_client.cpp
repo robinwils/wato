@@ -143,7 +143,7 @@ void GameClient::networkThread()
             }
         }
 
-        netClient.ConsumeNetworkRequests([&](std::shared_ptr<NetworkRequest> aEvent) {
+        netClient.ConsumeNetworkRequests([&](NetworkRequest* aEvent) {
             // write header
             ByteOutputArchive archive;
 
@@ -250,7 +250,7 @@ void GameClient::OnGameInstanceCreated()
 void GameClient::consumeNetworkResponses()
 {
     auto& netClient = mRegistry.ctx().get<ENetClient>();
-    netClient.ConsumeNetworkResponses([&](std::shared_ptr<NetworkResponse> aEvent) {
+    netClient.ConsumeNetworkResponses([&](NetworkResponse* aEvent) {
         std::visit(
             VariantVisitor{
                 [&](const ConnectedResponse& aResp) {

@@ -175,7 +175,7 @@ struct NetworkEvent {
     ::PlayerID PlayerID;
     _Payload   Payload;
 
-    constexpr static auto Serialize(auto& aArchive, std::shared_ptr<NetworkEvent<_Payload>> aSelf)
+    constexpr static auto Serialize(auto& aArchive, NetworkEvent<_Payload>* aSelf)
     {
         aArchive.template Write<PacketType>(&aSelf->Type, sizeof(aSelf->Type));
         aArchive.template Write<::PlayerID>(&aSelf->PlayerID, sizeof(aSelf->PlayerID));
@@ -227,12 +227,10 @@ TEST_CASE("net.serialize")
     ev->Type     = PacketType::ClientSync;
     ev->Payload  = SyncPayload{.GameID = 21, .State = GameState{.Tick = 12}};
 
-    auto sev = std::shared_ptr<NetworkRequest>(ev);
-    NetworkRequest::Serialize(outAr, sev);
+    NetworkRequest::Serialize(outAr, ev);
 
     ByteInputArchive inAr(std::span(outAr.Bytes()));
-    auto*            ev2  = new NetworkRequest;
-    auto             sev2 = std::shared_ptr<NetworkRequest>(ev2);
+    auto*            ev2 = new NetworkRequest;
 
     NetworkRequest::Deserialize(inAr, ev2);
     CHECK_EQ(ev->PlayerID, ev2->PlayerID);
