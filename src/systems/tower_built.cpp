@@ -10,7 +10,6 @@
 #include "components/rigid_body.hpp"
 #include "components/spawner.hpp"
 #include "core/graph.hpp"
-#include "resource/cache.hpp"
 
 using namespace entt::literals;
 
@@ -43,18 +42,5 @@ void TowerBuiltSystem::operator()(Registry& aRegistry)
         WATO_DBG(aRegistry, "{}", aRegistry.ctx().get<Graph>());
         break;
     }
-
-    BX_ASSERT(
-        graph.GridLayout().size() == graph.Width() * graph.Height(),
-        "incorrect graph data length");
-    entt::resource<bgfx::TextureHandle> handle = aRegistry.ctx().get<TextureCache>()["grid_tex"_hs];
-    bgfx::updateTexture2D(
-        handle,
-        0,
-        0,
-        0,
-        0,
-        graph.Width(),
-        graph.Height(),
-        bgfx::copy(graph.GridLayout().data(), graph.Width() * graph.Height()));
+    graph.GridDirty = true;
 }

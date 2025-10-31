@@ -121,6 +121,8 @@ class Graph
     void AddObstacle(const GraphCell& aCell) { mObstacles.emplace(aCell); }
     void RemoveObstacle(const GraphCell& aCell) { mObstacles.erase(aCell); }
 
+    bool GridDirty = false;
+
    private:
     size_type mWidth;
     size_type mHeight;

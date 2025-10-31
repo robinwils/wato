@@ -26,6 +26,7 @@ class RenderSystem : public System<RenderSystem>
     static constexpr const char* StaticName() { return "RenderSystem"; }
 
    private:
+    void updateGridTexture(Registry& aRegistry);
     void renderGrid(Registry& aRegistry);
 };
 

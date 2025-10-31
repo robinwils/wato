@@ -49,13 +49,16 @@ void RenderSystem::operator()(Registry& aRegistry)
             bpSkinnedShader->Uniform("u_lightCol"),
             glm::value_ptr(glm::vec4(source.color, 0.0f)));
     }
-    auto check = aRegistry.view<const PlacementMode>();
+
+    if (aRegistry.ctx().get<Graph>().GridDirty) {
+        updateGridTexture(aRegistry);
+    }
+
+    if (!aRegistry.view<const PlacementMode>()->empty()) {
+        renderGrid(aRegistry);
+    }
 
     for (auto&& [entity, obj, t] : aRegistry.view<SceneObject, Transform3D>().each()) {
-        if (check.contains(entity)) {
-            renderGrid(aRegistry);
-        }
-
         if (auto model = aRegistry.ctx().get<ModelCache>()[obj.ModelHash]; model) {
             if (const Animator* animator = aRegistry.try_get<Animator>(entity);
                 animator && !animator->FinalBonesMatrices.empty()) {
@@ -71,6 +74,27 @@ void RenderSystem::operator()(Registry& aRegistry)
             model->Submit(t.ModelMat(), state);
         }
     }
+}
+
+void RenderSystem::updateGridTexture(Registry& aRegistry)
+{
+    auto& graph = aRegistry.ctx().get<Graph>();
+
+    BX_ASSERT(
+        graph.GridLayout().size() == graph.Width() * graph.Height(),
+        "incorrect graph data length");
+
+    entt::resource<bgfx::TextureHandle> handle = aRegistry.ctx().get<TextureCache>()["grid_tex"_hs];
+    bgfx::updateTexture2D(
+        handle,
+        0,
+        0,
+        0,
+        0,
+        graph.Width(),
+        graph.Height(),
+        bgfx::copy(graph.GridLayout().data(), graph.Width() * graph.Height()));
+    graph.GridDirty = false;
 }
 
 void RenderSystem::renderGrid(Registry& aRegistry)
