@@ -312,7 +312,9 @@ target_sources(watolib
     src/registry/registry.hpp
     src/systems/ai.hpp
     src/systems/physics.hpp
+    src/systems/rigid_bodies_update.hpp
     src/systems/system.hpp
+    src/systems/tower_built.hpp
 
   PRIVATE
     src/core/app/app.cpp
@@ -323,11 +325,12 @@ target_sources(watolib
     src/core/net/enet_server.cpp
     src/core/physics/event_handler.cpp
     src/core/physics/physics.cpp
-    src/core/snapshot.cpp
     src/core/sys/backtrace.cpp
     src/core/tower_building_handler.cpp
     src/systems/ai.cpp
     src/systems/physics.cpp
+    src/systems/rigid_bodies_update.cpp
+    src/systems/tower_built.cpp
 )
 
 target_sources(wato
@@ -362,9 +365,7 @@ target_sources(wato
     src/systems/animation.hpp
     src/systems/input.hpp
     src/systems/render.hpp
-    src/systems/rigid_bodies_update.hpp
     src/systems/sync.hpp
-    src/systems/tower_built.hpp
 
   PRIVATE
     src/core/app/game_client.cpp
@@ -388,9 +389,7 @@ target_sources(wato
     src/systems/animation.cpp
     src/systems/input.cpp
     src/systems/render.cpp
-    src/systems/rigid_bodies_update.cpp
     src/systems/sync.cpp
-    src/systems/tower_built.cpp
 
     shaders/fs_blinnphong.sc
     shaders/fs_grid.sc

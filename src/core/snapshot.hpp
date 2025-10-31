@@ -200,7 +200,131 @@ void LoadRegistry(entt::registry& aRegistry, InArchive& aArchive)
         .template get<Collider>(aArchive);
 }
 
-#include "doctest.h"
+#ifndef DOCTEST_CONFIG_DISABLE
+#include "test.hpp"
+
+enum class TestEnum : uint32_t { A = 1, B = 2, C = 3 };
+
+TEST_CASE("serialize.scalar")
+{
+    ByteOutputArchive outAr;
+
+    int32_t i = 123456;
+    float   f = 3.14159f;
+    Serialize(outAr, i);
+    Serialize(outAr, f);
+
+    ByteInputArchive inAr(std::span(outAr.Bytes()));
+    int32_t          i2 = 0;
+    float            f2 = 0.0f;
+    Deserialize(inAr, i2);
+    Deserialize(inAr, f2);
+
+    CHECK(i2 == i);
+    CHECK(f2 == doctest::Approx(f));
+}
+
+TEST_CASE("serialize.vector_of_scalars")
+{
+    ByteOutputArchive outAr;
+
+    std::vector<uint16_t> v = {10, 20, 30, 40, 50};
+    Serialize(outAr, v);
+
+    ByteInputArchive      inAr(std::span(outAr.Bytes()));
+    std::vector<uint16_t> v2;
+    Deserialize(inAr, v2);
+
+    CHECK(v2 == v);
+}
+
+TEST_CASE("serialize.enum")
+{
+    ByteOutputArchive outAr;
+
+    TestEnum e = TestEnum::B;
+    Serialize(outAr, e);
+
+    ByteInputArchive inAr(std::span(outAr.Bytes()));
+    TestEnum         e2 = TestEnum::A;
+    Deserialize(inAr, e2);
+
+    CHECK(e2 == e);
+}
+
+TEST_CASE("serialize.vector_of_enum")
+{
+    ByteOutputArchive outAr;
+
+    std::vector<TestEnum> v = {TestEnum::A, TestEnum::C, TestEnum::B};
+    Serialize(outAr, v);
+
+    ByteInputArchive      inAr(std::span(outAr.Bytes()));
+    std::vector<TestEnum> v2(3);
+    Deserialize(inAr, v2);
+
+    CHECK(v2 == v);
+}
+
+TEST_CASE("serialize.rigidbody")
+{
+    ByteOutputArchive outAr;
+
+    RigidBody rb;
+    rb.Params.Type           = rp3d::BodyType::DYNAMIC;
+    rb.Params.Velocity       = 42.0f;
+    rb.Params.Direction      = glm::vec3(0.5f, 0.5f, 0.5f);
+    rb.Params.GravityEnabled = true;
+
+    RigidBody::Serialize(outAr, rb);
+
+    ByteInputArchive inAr(std::span(outAr.Bytes()));
+    RigidBody        rb2;
+    RigidBody::Deserialize(inAr, rb2);
+
+    CHECK(rb2.Params.Type == rb.Params.Type);
+    CHECK(rb2.Params.Velocity == rb.Params.Velocity);
+    CHECK(rb2.Params.Direction == rb.Params.Direction);
+    CHECK(rb2.Params.GravityEnabled == rb.Params.GravityEnabled);
+}
+
+TEST_CASE("serialize.collider.box")
+{
+    ByteOutputArchive outAr;
+
+    Collider c;
+    c.Params.CollisionCategoryBits = 0x01;
+    c.Params.CollideWithMaskBits   = 0xFF;
+    c.Params.IsTrigger             = false;
+    c.Params.Offset.Position       = glm::vec3(1.0f, 2.0f, 3.0f);
+    c.Params.Offset.Orientation    = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
+
+    BoxShapeParams box;
+    box.HalfExtents      = glm::vec3(0.5f, 0.5f, 0.5f);
+    c.Params.ShapeParams = box;
+
+    Collider::Serialize(outAr, c);
+
+    ByteInputArchive inAr(std::span(outAr.Bytes()));
+    Collider         c2;
+    Collider::Deserialize(inAr, c2);
+
+    CHECK(c2.Params.CollisionCategoryBits == c.Params.CollisionCategoryBits);
+    CHECK(c2.Params.CollideWithMaskBits == c.Params.CollideWithMaskBits);
+    CHECK(c2.Params.IsTrigger == c.Params.IsTrigger);
+    CHECK(c2.Params.Offset.Position == c.Params.Offset.Position);
+    // Rotation equality may need to use Approx or custom check
+    CHECK(glm::all(glm::epsilonEqual(
+        glm::quat(c2.Params.Offset.Orientation),
+        glm::quat(c.Params.Offset.Orientation),
+        0.0001f)));
+    CHECK(std::holds_alternative<BoxShapeParams>(c2.Params.ShapeParams));
+    if (std::holds_alternative<BoxShapeParams>(c2.Params.ShapeParams)) {
+        auto& b1 = std::get<BoxShapeParams>(c.Params.ShapeParams);
+        auto& b2 = std::get<BoxShapeParams>(c2.Params.ShapeParams);
+        CHECK(b2.HalfExtents == b1.HalfExtents);
+    }
+}
 TEST_CASE("snapshot.simple")
 {
     entt::registry src;
@@ -217,7 +341,7 @@ TEST_CASE("snapshot.simple")
     src.emplace<Health>(e2, 300.0f);
 
     std::vector<uint8_t> storage;
-    ByteOutputArchive    outAr(storage);
+    ByteOutputArchive    outAr;
     entt::registry       dest;
     SaveRegistry(src, outAr);
 
@@ -226,6 +350,109 @@ TEST_CASE("snapshot.simple")
 
     CHECK(dest.valid(e1));
     CHECK(dest.valid(e2));
-    CHECK_EQ(dest.get<Transform3D>(e1).Position, glm::vec3(0.0f, 2.0f, 1.5f));
-    CHECK_EQ(dest.get<Health>(e2).Health, 300.0f);
+    auto& t1 = dest.get<Transform3D>(e1);
+    auto& h2 = dest.get<Health>(e2);
+    CHECK_EQ(t1.Position, glm::vec3(0.0f, 2.0f, 1.5f));
+    CHECK_EQ(h2.Health, 300.0f);
 }
+
+TEST_CASE("snapshot.full")
+{
+    entt::registry src;
+
+    auto            e1 = src.create();
+    RigidBodyParams rbParams;
+    rbParams.Type           = rp3d::BodyType::DYNAMIC;
+    rbParams.GravityEnabled = true;
+    rbParams.Velocity       = 42.0f;
+    rbParams.Direction      = glm::vec3(0.0f, 1.0f, 0.0f);
+    src.emplace<RigidBody>(e1, RigidBody{rbParams, nullptr});
+    ColliderParams boxParams;
+    boxParams.CollisionCategoryBits = 0x0002;
+    boxParams.CollideWithMaskBits   = 0x0001;
+    boxParams.IsTrigger             = false;
+    boxParams.Offset.Position       = glm::vec3(1.0f, 2.0f, 3.0f);
+    boxParams.Offset.Orientation    = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
+    boxParams.Offset.Scale          = glm::vec3(1.0f);
+    BoxShapeParams boxShape;
+    boxShape.HalfExtents  = glm::vec3(0.5f, 0.5f, 0.5f);
+    boxParams.ShapeParams = boxShape;
+    src.emplace<Collider>(e1, Collider{boxParams, nullptr});
+
+    auto           e2 = src.create();
+    ColliderParams capsuleParams;
+    capsuleParams.CollisionCategoryBits = 0x0004;
+    capsuleParams.CollideWithMaskBits   = 0x0008;
+    capsuleParams.IsTrigger             = true;
+    capsuleParams.Offset.Position       = glm::vec3(2.0f, 3.0f, 4.0f);
+    capsuleParams.Offset.Orientation    = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
+    capsuleParams.Offset.Scale          = glm::vec3(2.0f);
+    CapsuleShapeParams capsuleShape;
+    capsuleShape.Radius       = 1.5f;
+    capsuleShape.Height       = 3.5f;
+    capsuleParams.ShapeParams = capsuleShape;
+    src.emplace<Collider>(e2, Collider{capsuleParams, nullptr});
+
+    auto           e3 = src.create();
+    ColliderParams heightfieldParams;
+    heightfieldParams.CollisionCategoryBits = 0x0010;
+    heightfieldParams.CollideWithMaskBits   = 0x0020;
+    heightfieldParams.IsTrigger             = false;
+    heightfieldParams.Offset.Position       = glm::vec3(3.0f, 4.0f, 5.0f);
+    heightfieldParams.Offset.Orientation    = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
+    heightfieldParams.Offset.Scale          = glm::vec3(3.0f);
+    HeightFieldShapeParams heightfieldShape;
+    heightfieldShape.Data         = {1.0f, 2.0f, 3.0f, 4.0f};
+    heightfieldShape.Rows         = 2;
+    heightfieldShape.Columns      = 2;
+    heightfieldParams.ShapeParams = heightfieldShape;
+    src.emplace<Collider>(e3, Collider{heightfieldParams, nullptr});
+
+    ByteOutputArchive outAr;
+    entt::registry    dest;
+    SaveRegistry(src, outAr);
+
+    ByteInputArchive inAr(std::span(outAr.Bytes()));
+    LoadRegistry(dest, inAr);
+
+    CHECK(dest.valid(e1));
+    CHECK(dest.valid(e2));
+    CHECK(dest.valid(e3));
+
+    const auto& rb = dest.get<RigidBody>(e1);
+    CHECK(rb.Params.Type == rp3d::BodyType::DYNAMIC);
+    CHECK(rb.Params.GravityEnabled == true);
+    CHECK(rb.Params.Velocity == doctest::Approx(42.0f));
+    CHECK(rb.Params.Direction == glm::vec3(0.0f, 1.0f, 0.0f));
+
+    const auto& colBox = dest.get<Collider>(e1);
+    CHECK(colBox.Params.CollisionCategoryBits == 0x0002);
+    CHECK(colBox.Params.CollideWithMaskBits == 0x0001);
+    CHECK(colBox.Params.IsTrigger == false);
+    CHECK(colBox.Params.Offset.Position == glm::vec3(1.0f, 2.0f, 3.0f));
+    CHECK(std::holds_alternative<BoxShapeParams>(colBox.Params.ShapeParams));
+    const auto& box = std::get<BoxShapeParams>(colBox.Params.ShapeParams);
+    CHECK(box.HalfExtents == glm::vec3(0.5f, 0.5f, 0.5f));
+
+    const auto& colCapsule = dest.get<Collider>(e2);
+    CHECK(colCapsule.Params.CollisionCategoryBits == 0x0004);
+    CHECK(colCapsule.Params.CollideWithMaskBits == 0x0008);
+    CHECK(colCapsule.Params.IsTrigger == true);
+    CHECK(colCapsule.Params.Offset.Position == glm::vec3(2.0f, 3.0f, 4.0f));
+    CHECK(std::holds_alternative<CapsuleShapeParams>(colCapsule.Params.ShapeParams));
+    const auto& capsule = std::get<CapsuleShapeParams>(colCapsule.Params.ShapeParams);
+    CHECK(capsule.Radius == doctest::Approx(1.5f));
+    CHECK(capsule.Height == doctest::Approx(3.5f));
+
+    const auto& colHeightfield = dest.get<Collider>(e3);
+    CHECK(colHeightfield.Params.CollisionCategoryBits == 0x0010);
+    CHECK(colHeightfield.Params.CollideWithMaskBits == 0x0020);
+    CHECK(colHeightfield.Params.IsTrigger == false);
+    CHECK(colHeightfield.Params.Offset.Position == glm::vec3(3.0f, 4.0f, 5.0f));
+    CHECK(std::holds_alternative<HeightFieldShapeParams>(colHeightfield.Params.ShapeParams));
+    const auto& heightfield = std::get<HeightFieldShapeParams>(colHeightfield.Params.ShapeParams);
+    CHECK(heightfield.Data == std::vector<float>({1.0f, 2.0f, 3.0f, 4.0f}));
+    CHECK(heightfield.Rows == 2);
+    CHECK(heightfield.Columns == 2);
+}
+#endif
