@@ -243,7 +243,7 @@ void ServerContextHandler::operator()(Registry& aRegistry, const BuildTowerPaylo
     if (!handler.CanBuildTower) {
         phy.World()->destroyRigidBody(body.Body);
         aRegistry.destroy(tower);
-        spdlog::error("tower at {} invalidated", t.Position);
+        WATO_ERR(aRegistry, "tower at {} invalidated", t.Position);
         return;
     }
     WATO_INFO(aRegistry, "tower at {} validated", t.Position);
