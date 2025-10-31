@@ -15,6 +15,7 @@
 #include "components/player.hpp"
 #include "components/tower.hpp"
 #include "core/queue/ring_buffer.hpp"
+#include "core/serialize.hpp"
 #include "core/types.hpp"
 #include "input/input.hpp"
 
@@ -150,25 +151,21 @@ struct Action {
 
     constexpr static auto Serialize(auto& aArchive, const auto& aSelf)
     {
-        aArchive.template Write<ActionType>(&aSelf.Type, 1);
-        aArchive.template Write<ActionTag>(&aSelf.Tag, 1);
+        ::Serialize(aArchive, aSelf.Type);
+        ::Serialize(aArchive, aSelf.Tag);
 
         // Then serialize the actual payload based on type
         std::visit(
             VariantVisitor{
-                [&](const MovePayload& aPayload) {
-                    aArchive.template Write<MoveDirection>(&aPayload.Direction, 1);
-                },
-                [&](const SendCreepPayload& aPayload) {
-                    aArchive.template Write<CreepType>(&aPayload.Type, 1);
-                },
+                [&](const MovePayload& aPayload) { ::Serialize(aArchive, aPayload.Direction); },
+                [&](const SendCreepPayload& aPayload) { ::Serialize(aArchive, aPayload.Type); },
                 [&](const BuildTowerPayload& aPayload) {
-                    aArchive.template Write<TowerType>(&aPayload.Tower, 1);
-                    aArchive.template Write<float>(glm::value_ptr(aPayload.Position), 3);
+                    ::Serialize(aArchive, aPayload.Tower);
+                    ::Serialize(aArchive, aPayload.Position);
                 },
                 [&](const PlacementModePayload& aPayload) {
-                    aArchive.template Write<bool>(&aPayload.CanBuild, 1);
-                    aArchive.template Write<TowerType>(&aPayload.Tower, 1);
+                    aArchive.Write(aPayload.CanBuild);
+                    ::Serialize(aArchive, aPayload.Tower);
                 },
             },
             aSelf.Payload);
@@ -176,34 +173,34 @@ struct Action {
 
     constexpr static auto Deserialize(auto& aArchive, auto& aSelf)
     {
-        aArchive.template Read<ActionType>(&aSelf.Type, 1);
-        aArchive.template Read<ActionTag>(&aSelf.Tag, 1);
+        ::Deserialize(aArchive, aSelf.Type);
+        ::Deserialize(aArchive, aSelf.Tag);
 
         switch (aSelf.Type) {
             case ActionType::Move: {
                 MovePayload payload{};
-                aArchive.template Read<MoveDirection>(&payload.Direction, 1);
+                ::Deserialize(aArchive, payload.Direction);
                 aSelf.Payload = payload;
                 break;
             }
             case ActionType::SendCreep: {
                 SendCreepPayload payload{};
-                aArchive.template Read<CreepType>(&payload.Type, 1);
+                ::Deserialize(aArchive, payload.Type);
                 aSelf.Payload = payload;
                 break;
             }
             case ActionType::BuildTower: {
                 BuildTowerPayload payload{};
-                aArchive.template Read<TowerType>(&payload.Tower, 1);
-                aArchive.template Read<float>(glm::value_ptr(payload.Position), 3);
+                ::Deserialize(aArchive, payload.Tower);
+                ::Deserialize(aArchive, payload.Position);
                 aSelf.Payload = payload;
                 break;
             }
             case ActionType::EnterPlacementMode:
             case ActionType::ExitPlacementMode: {
                 PlacementModePayload payload{};
-                aArchive.template Read<bool>(&payload.CanBuild, 1);
-                aArchive.template Read<TowerType>(&payload.Tower, 1);
+                aArchive.Read(payload.CanBuild);
+                ::Deserialize(aArchive, payload.Tower);
                 aSelf.Payload = payload;
                 break;
             }

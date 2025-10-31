@@ -7,11 +7,13 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstring>
+#include <entt/entity/fwd.hpp>
 #include <entt/entt.hpp>
 #include <glm/fwd.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <iterator>
 #include <span>
+#include <type_traits>
 
 #include "components/health.hpp"
 #include "components/rigid_body.hpp"
@@ -25,19 +27,28 @@ class ByteInputArchive
     using byte        = uint8_t;
     using byte_stream = std::span<byte>;
 
-    ByteInputArchive(const byte_stream& aInStream) : mStorage(aInStream), mIdx(0) {}
-    ByteInputArchive(std::vector<byte> aInVec) : mStorage(aInVec.begin(), aInVec.size()), mIdx(0) {}
+    ByteInputArchive(const byte_stream& aInStream, const Logger& aLogger = spdlog::default_logger())
+        : mStorage(aInStream), mIdx(0), mLogger(aLogger)
+    {
+        mLogger->set_level(spdlog::level::off);
+    }
+    ByteInputArchive(std::vector<byte> aInVec, const Logger& aLogger = spdlog::default_logger())
+        : mStorage(aInVec.begin(), aInVec.size()), mIdx(0), mLogger(aLogger)
+    {
+    }
 
     void operator()(entt::entity& aEntity)
     {
-        Read<entt::entity>(&aEntity, 1);
-        // WATO_DBG(aRegistry, "read entity {:d}", static_cast<ENTT_ID_TYPE>(aEntity));
+        ENTT_ID_TYPE entityV;
+        Read<ENTT_ID_TYPE>(&entityV, 1);
+        aEntity = static_cast<entt::entity>(entityV);
+        mLogger->info("read entity {:d}", static_cast<ENTT_ID_TYPE>(aEntity));
     }
 
     void operator()(std::underlying_type_t<entt::entity>& aEntity)
     {
+        mLogger->info("=====> reading set of size {:d} <=====", aEntity);
         Read<std::underlying_type_t<entt::entity>>(&aEntity, 1);
-        // WATO_DBG(aRegistry, "read set of size {:d}", aEntity);
     }
 
     template <typename T>
@@ -48,27 +59,50 @@ class ByteInputArchive
 
     byte_stream Bytes() const { return mStorage; }
 
-    template <typename T, std::output_iterator<T> Out>
-    void Read(Out aDestination, std::size_t aN)
+    void Read(bool& aV)
     {
-        SafeU32 idx = SafeU32(mIdx) + aN * sizeof(T);
+        ensure(1);
+        mLogger->info("reading 1 bool");
 
-        // WATO_DBG(aRegistry,
-        //     "reading {:d} elts [size  = {:d}] at index {} [total size = {}]",
-        //     aN,
-        //     sizeof(T),
-        //     static_cast<uint32_t>(idx),
-        //     aN * sizeof(T));
-        idx = idx <= mStorage.size() ? idx : SafeU32(-1);
+        aV = mStorage[mIdx++] != 0;
+    }
 
-        // bx::memCopy(aDestination, &mStorage[mIdx], aN * sizeof(T));
-        std::copy_n(reinterpret_cast<const T*>(&mStorage[mIdx]), aN, aDestination);
-        mIdx = idx;
+    template <class T, std::output_iterator<T> Out, std::endian Endian = std::endian::little>
+        requires(wire_native<T>)
+    void Read(Out aOut, std::size_t aN = 1)
+    {
+        std::size_t dataSize = aN * sizeof(T);
+        ensure(dataSize);
+
+        mLogger->info("reading from buffer of size {}: {::#x}", mStorage.size(), mStorage);
+        mLogger->info("reading {} * {} = {} bytes at {}", aN, sizeof(T), dataSize, mIdx);
+        if constexpr (std::endian::native == Endian || sizeof(T) == 1) {
+            mLogger->info("  native endian");
+            std::memcpy(std::to_address(aOut), &mStorage[mIdx], dataSize);
+
+            mIdx += dataSize;
+        } else {
+            mLogger->info("  swap endian");
+
+            for (std::size_t i = 0; i < aN; ++i, mIdx += sizeof(T)) {
+                T v;
+                std::memcpy(&v, mStorage.data() + mIdx, sizeof(T));
+                *aOut++ = bswap_any(v);
+            }
+        }
     }
 
    private:
+    void ensure(std::size_t aNeed) const
+    {
+        auto idx = SafeU32(mIdx) + aNeed;
+
+        idx = idx <= mStorage.size() ? idx : SafeU32(-1);
+    }
+
     byte_stream mStorage;
     uint32_t    mIdx;
+    Logger      mLogger;
 };
 
 class ByteOutputArchive
@@ -77,19 +111,22 @@ class ByteOutputArchive
     using byte_stream = std::vector<byte>;
 
    public:
-    ByteOutputArchive() = default;
-    explicit ByteOutputArchive(byte_stream& aOutStream) : mStorage(aOutStream) {}
+    ByteOutputArchive(const Logger& aLogger = spdlog::default_logger()) : mLogger(aLogger)
+    {
+        mLogger->set_level(spdlog::level::off);
+    }
 
     void operator()(entt::entity aEntity)
     {
-        // WATO_TRACE(aRegistry, "writing entity {:d}", static_cast<ENTT_ID_TYPE>(aEntity));
-        Write<entt::entity>(&aEntity, 1);
+        ENTT_ID_TYPE entityV = static_cast<ENTT_ID_TYPE>(aEntity);
+        mLogger->info("writing entity {:d}", static_cast<ENTT_ID_TYPE>(aEntity));
+        Write(&entityV, 1);
     }
 
     void operator()(std::underlying_type_t<entt::entity> aEntity)
     {
-        // WATO_TRACE(aRegistry, "writing set of size {:d}", aEntity);
-        Write<std::underlying_type_t<entt::entity>>(&aEntity, 1);
+        mLogger->info("<===== writing set of size {:d} =====> ", aEntity);
+        Write(&aEntity, 1);
     }
 
     template <typename T>
@@ -98,17 +135,37 @@ class ByteOutputArchive
         T::Serialize(*this, aObj);
     }
 
-    template <typename T, std::input_iterator In>
-    void Write(const In& aData, std::size_t aN)
+    void Write(bool aV)
     {
-        // WATO_TRACE(
-        //     aRegistry,
-        //     "writing {} elts [size = {}, total = {}]",
-        //     aN,
-        //     sizeof(T),
-        //     aN * sizeof(T));
-        auto* p = reinterpret_cast<const byte*>(aData);
-        mStorage.insert(mStorage.end(), p, p + aN * sizeof(T));
+        mLogger->info("writing 1 byte");
+        mStorage.push_back(static_cast<byte>(aV ? 1 : 0));
+    }
+
+    template <std::input_iterator In, std::endian Endian = std::endian::little>
+        requires(wire_native<std::iter_value_t<In>>)
+    void Write(In aSrc, std::size_t aN = 1)
+    {
+        using T = std::iter_value_t<In>;
+
+        std::size_t dataSize = aN * sizeof(T);
+        std::size_t old      = SafeI32(mStorage.size());
+
+        mStorage.resize(mStorage.size() + dataSize);
+
+        mLogger->info("writing {} * {} bytes", aN, sizeof(T));
+        if constexpr (std::endian::native == Endian || sizeof(T) == 1) {
+            mLogger->info("  native endian");
+            std::memcpy(&mStorage[old], std::to_address(aSrc), dataSize);
+        } else {
+            mLogger->info("  swap endian");
+            std::vector<byte> tmp(dataSize);
+            for (std::size_t i = 0; i < aN; ++i, ++aSrc) {
+                T swapped = bswap_any(*aSrc);
+                std::memcpy(tmp.data() + i * sizeof(T), &swapped, sizeof(T));
+            }
+            std::memcpy(&mStorage[old], tmp.data(), dataSize);
+        }
+        mLogger->info("wrote to buffer of size {}: {::#x}", mStorage.size(), mStorage);
     }
 
     byte_stream  Bytes() const { return mStorage; }
@@ -116,6 +173,7 @@ class ByteOutputArchive
 
    private:
     byte_stream mStorage;
+    Logger      mLogger;
 };
 
 template <typename OutArchive>

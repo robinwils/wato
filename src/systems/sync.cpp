@@ -47,7 +47,7 @@ void NetworkSyncSystem<ENetServer>::operator()(Registry& aRegistry)
     auto  snapshotView = entt::basic_view{rbStorage};
 
     GameState         serverState = GameState{.Tick = buf.Latest().Tick};
-    ByteOutputArchive outAr(serverState.Snapshot);
+    ByteOutputArchive outAr;
 
     entt::snapshot{aRegistry}
         .get<entt::entity>(outAr)
@@ -55,9 +55,11 @@ void NetworkSyncSystem<ENetServer>::operator()(Registry& aRegistry)
         .get<RigidBody>(outAr, rbStorage.begin(), rbStorage.end())
         .get<Collider>(outAr, rbStorage.begin(), rbStorage.end());
 
-    if (serverState.Snapshot.empty()) {
+    if (outAr.Bytes().empty()) {
         return;
     }
+
+    serverState.Snapshot = std::move(outAr.Bytes());
 
     WATO_DBG(
         aRegistry,

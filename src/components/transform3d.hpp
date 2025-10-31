@@ -10,6 +10,7 @@
 #include <glm/gtx/string_cast.hpp>
 #include <glm/trigonometric.hpp>
 
+#include "core/serialize.hpp"
 #include "core/sys/log.hpp"
 
 struct Transform3D {
@@ -45,16 +46,16 @@ struct Transform3D {
 
     constexpr static auto Serialize(auto& aArchive, const auto& aSelf)
     {
-        aArchive.template Write<float>(glm::value_ptr(aSelf.Position), 3);
-        aArchive.template Write<float>(glm::value_ptr(aSelf.Orientation), 4);
-        aArchive.template Write<float>(glm::value_ptr(aSelf.Scale), 3);
+        ::Serialize(aArchive, aSelf.Position);
+        ::Serialize(aArchive, aSelf.Orientation);
+        ::Serialize(aArchive, aSelf.Scale);
     }
 
     constexpr static auto Deserialize(auto& aArchive, auto& aSelf)
     {
-        aArchive.template Read<float>(glm::value_ptr(aSelf.Position), 3);
-        aArchive.template Read<float>(glm::value_ptr(aSelf.Orientation), 4);
-        aArchive.template Read<float>(glm::value_ptr(aSelf.Scale), 3);
+        ::Deserialize(aArchive, aSelf.Position);
+        ::Deserialize(aArchive, aSelf.Orientation);
+        ::Deserialize(aArchive, aSelf.Scale);
         return true;
     }
 };

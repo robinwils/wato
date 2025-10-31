@@ -271,7 +271,9 @@ void GameClient::consumeNetworkResponses()
                         return;
                     }
 
-                    ByteInputArchive      inAr(aResp.State.Snapshot);
+                    ByteInputArchive      inAr(ByteInputArchive::byte_stream(
+                        aResp.State.Snapshot.data(),
+                        aResp.State.Snapshot.size()));
                     Registry              tmp;
                     entt::snapshot_loader loader{tmp};
 

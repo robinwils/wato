@@ -25,11 +25,11 @@ struct NewGameRequest {
 
     constexpr static auto Serialize(auto& aArchive, const auto& aSelf)
     {
-        aArchive.template Write<PlayerID>(&aSelf.PlayerAID, 1);
+        ::Serialize(aArchive, aSelf.PlayerAID);
     }
     constexpr static auto Deserialize(auto& aArchive, auto& aSelf)
     {
-        aArchive.template Read<PlayerID>(&aSelf.PlayerAID, 1);
+        ::Deserialize(aArchive, aSelf.PlayerAID);
         return true;
     }
 };
@@ -45,13 +45,13 @@ struct SyncPayload {
 
     constexpr static auto Serialize(auto& aArchive, const auto& aSelf)
     {
-        aArchive.template Write<GameInstanceID>(&aSelf.GameID, 1);
+        ::Serialize(aArchive, aSelf.GameID);
         GameState::Serialize(aArchive, aSelf.State);
     }
 
     constexpr static auto Deserialize(auto& aArchive, auto& aSelf)
     {
-        aArchive.template Read<GameInstanceID>(&aSelf.GameID, 1);
+        ::Deserialize(aArchive, aSelf.GameID);
         GameState::Deserialize(aArchive, aSelf.State);
         return true;
     }
@@ -67,11 +67,11 @@ struct NewGameResponse {
 
     constexpr static auto Serialize(auto& aArchive, const auto& aSelf)
     {
-        aArchive.template Write<GameInstanceID>(&aSelf.GameID, 1);
+        ::Serialize(aArchive, aSelf.GameID);
     }
     constexpr static auto Deserialize(auto& aArchive, auto& aSelf)
     {
-        aArchive.template Read<GameInstanceID>(&aSelf.GameID, 1);
+        ::Deserialize(aArchive, aSelf.GameID);
         return true;
     }
 };
@@ -177,14 +177,14 @@ struct NetworkEvent {
 
     constexpr static auto Serialize(auto& aArchive, NetworkEvent<_Payload>* aSelf)
     {
-        aArchive.template Write<PacketType>(&aSelf->Type, sizeof(aSelf->Type));
-        aArchive.template Write<::PlayerID>(&aSelf->PlayerID, sizeof(aSelf->PlayerID));
+        ::Serialize(aArchive, aSelf->Type);
+        ::Serialize(aArchive, aSelf->PlayerID);
         ::Serialize(aArchive, aSelf->Payload);
     }
     constexpr static auto Deserialize(auto& aArchive, NetworkEvent<_Payload>* aSelf)
     {
-        aArchive.template Read<PacketType>(&aSelf->Type, sizeof(PacketType));
-        aArchive.template Read<::PlayerID>(&aSelf->PlayerID, sizeof(aSelf->PlayerID));
+        ::Deserialize(aArchive, aSelf->Type);
+        ::Deserialize(aArchive, aSelf->PlayerID);
         ::Deserialize(aArchive, aSelf->Payload, aSelf->Type);
     }
 };
@@ -219,9 +219,8 @@ struct fmt::formatter<ENetPeer> : fmt::formatter<std::string> {
 
 TEST_CASE("net.serialize")
 {
-    std::vector<uint8_t> storage;
-    ByteOutputArchive    outAr(storage);
-    auto*                ev = new NetworkRequest;
+    ByteOutputArchive outAr;
+    auto*             ev = new NetworkRequest;
 
     ev->PlayerID = 42;
     ev->Type     = PacketType::ClientSync;
@@ -236,4 +235,6 @@ TEST_CASE("net.serialize")
     CHECK_EQ(ev->PlayerID, ev2->PlayerID);
     CHECK_EQ(ev->Type, ev2->Type);
     CHECK_EQ(ev->Payload, ev2->Payload);
+    delete ev;
+    delete ev2;
 }

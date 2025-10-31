@@ -22,18 +22,18 @@ struct RigidBody {
 
     constexpr static auto Serialize(auto& aArchive, const auto& aSelf)
     {
-        aArchive.template Write<rp3d::BodyType>(&aSelf.Params.Type, 1);
+        ::Serialize(aArchive, aSelf.Params.Type);
         ::Serialize(aArchive, aSelf.Params.Velocity);
-        aArchive.template Write<float>(glm::value_ptr(aSelf.Params.Direction), 3);
-        ::Serialize(aArchive, aSelf.Params.GravityEnabled);
+        ::Serialize(aArchive, aSelf.Params.Direction);
+        aArchive.Write(aSelf.Params.GravityEnabled);
     }
 
     constexpr static auto Deserialize(auto& aArchive, auto& aSelf)
     {
-        aArchive.template Read<rp3d::BodyType>(&aSelf.Params.Type, 1);
+        ::Deserialize(aArchive, aSelf.Params.Type);
         ::Deserialize(aArchive, aSelf.Params.Velocity);
-        aArchive.template Read<float>(glm::value_ptr(aSelf.Params.Direction), 3);
-        ::Deserialize(aArchive, aSelf.Params.GravityEnabled);
+        ::Deserialize(aArchive, aSelf.Params.Direction);
+        aArchive.Read(aSelf.Params.GravityEnabled);
     }
 };
 
@@ -43,25 +43,24 @@ struct Collider {
 
     constexpr static auto Serialize(auto& aArchive, const auto& aSelf)
     {
-        aArchive.template Write<unsigned short>(&aSelf.Params.CollisionCategoryBits, 1);
-        aArchive.template Write<unsigned short>(&aSelf.Params.CollideWithMaskBits, 1);
-        aArchive.template Write<bool>(&aSelf.Params.IsTrigger, 1);
+        ::Serialize(aArchive, aSelf.Params.CollisionCategoryBits);
+        ::Serialize(aArchive, aSelf.Params.CollideWithMaskBits);
+        aArchive.Write(aSelf.Params.IsTrigger);
         Transform3D::Serialize(aArchive, aSelf.Params.Offset);
-        aArchive.template Write<rp3d::BoxShape>(&aSelf.Params.IsTrigger, 1);
 
         std::visit(
             VariantVisitor{
                 [&](const BoxShapeParams& aShapeP) {
-                    ::Serialize(aArchive, 0);
-                    aArchive.template Write<float>(glm::value_ptr(aShapeP.HalfExtents), 3);
+                    ::Serialize(aArchive, static_cast<int8_t>(0));
+                    ::Serialize(aArchive, aShapeP.HalfExtents);
                 },
                 [&](const CapsuleShapeParams& aShapeP) {
-                    ::Serialize(aArchive, 1);
+                    ::Serialize(aArchive, static_cast<int8_t>(1));
                     ::Serialize(aArchive, aShapeP.Radius);
                     ::Serialize(aArchive, aShapeP.Height);
                 },
                 [&](const HeightFieldShapeParams& aShapeP) {
-                    ::Serialize(aArchive, 2);
+                    ::Serialize(aArchive, static_cast<int8_t>(2));
                     ::Serialize(aArchive, aShapeP.Data);
                     ::Serialize(aArchive, aShapeP.Rows);
                     ::Serialize(aArchive, aShapeP.Columns);
@@ -74,7 +73,7 @@ struct Collider {
     {
         ::Deserialize(aArchive, aSelf.Params.CollisionCategoryBits);
         ::Deserialize(aArchive, aSelf.Params.CollideWithMaskBits);
-        ::Deserialize(aArchive, aSelf.Params.IsTrigger);
+        aArchive.Read(aSelf.Params.IsTrigger);
         Transform3D::Deserialize(aArchive, aSelf.Params.Offset);
 
         int8_t shapeType = -1;
@@ -82,13 +81,15 @@ struct Collider {
         switch (shapeType) {
             case 0: {
                 BoxShapeParams shapeP;
-                aArchive.template Read<float>(glm::value_ptr(shapeP.HalfExtents), 3);
+                ::Deserialize(aArchive, shapeP.HalfExtents);
+                aSelf.Params.ShapeParams = shapeP;
                 return true;
             }
             case 1: {
                 CapsuleShapeParams shapeP;
                 ::Deserialize(aArchive, shapeP.Radius);
                 ::Deserialize(aArchive, shapeP.Height);
+                aSelf.Params.ShapeParams = shapeP;
                 return true;
             }
             case 2: {
@@ -96,6 +97,7 @@ struct Collider {
                 ::Deserialize(aArchive, shapeP.Data);
                 ::Deserialize(aArchive, shapeP.Rows);
                 ::Deserialize(aArchive, shapeP.Columns);
+                aSelf.Params.ShapeParams = shapeP;
                 return true;
             }
             default:

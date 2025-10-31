@@ -30,7 +30,7 @@ struct CapsuleShapeParams {
 };
 
 struct HeightFieldShapeParams {
-    std::vector<float> Data;
+    std::vector<float> Data{};
     int                Rows;
     int                Columns;
 };
