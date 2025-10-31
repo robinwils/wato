@@ -88,9 +88,23 @@ struct ConnectedResponse {
 
 inline bool operator==(const ConnectedResponse&, const ConnectedResponse&) { return true; }
 
-enum class PacketType {
+struct TowerValidationResponse {
+    bool         Valid;
+    entt::entity Entity;
+
+    constexpr static auto Serialize(auto&, const auto&) {}
+    constexpr static auto Deserialize(auto&, auto&) { return true; }
+};
+
+inline bool operator==(const TowerValidationResponse& aLHS, const TowerValidationResponse& aRHS)
+{
+    return aLHS.Valid == aRHS.Valid && aLHS.Entity == aRHS.Entity;
+}
+
+enum class PacketType : std::uint16_t {
     ClientSync,
     ServerSync,
+    TowerValidation,
     NewGame,
     Connected,
 };
