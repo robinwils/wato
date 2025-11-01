@@ -203,8 +203,6 @@ void LoadRegistry(entt::registry& aRegistry, InArchive& aArchive)
 #ifndef DOCTEST_CONFIG_DISABLE
 #include "test.hpp"
 
-enum class TestEnum : uint32_t { A = 1, B = 2, C = 3 };
-
 TEST_CASE("serialize.scalar")
 {
     ByteOutputArchive outAr;
