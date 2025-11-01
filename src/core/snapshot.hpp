@@ -420,7 +420,7 @@ TEST_CASE("snapshot.full")
     const auto& rb = dest.get<RigidBody>(e1);
     CHECK(rb.Params.Type == rp3d::BodyType::DYNAMIC);
     CHECK(rb.Params.GravityEnabled == true);
-    CHECK(rb.Params.Velocity == doctest::Approx(42.0f));
+    CHECK(rb.Params.Velocity == doctest::Approx(42.0));
     CHECK(rb.Params.Direction == glm::vec3(0.0f, 1.0f, 0.0f));
 
     const auto& colBox = dest.get<Collider>(e1);
@@ -439,8 +439,8 @@ TEST_CASE("snapshot.full")
     CHECK(colCapsule.Params.Offset.Position == glm::vec3(2.0f, 3.0f, 4.0f));
     CHECK(std::holds_alternative<CapsuleShapeParams>(colCapsule.Params.ShapeParams));
     const auto& capsule = std::get<CapsuleShapeParams>(colCapsule.Params.ShapeParams);
-    CHECK(capsule.Radius == doctest::Approx(1.5f));
-    CHECK(capsule.Height == doctest::Approx(3.5f));
+    CHECK(capsule.Radius == doctest::Approx(1.5));
+    CHECK(capsule.Height == doctest::Approx(3.5));
 
     const auto& colHeightfield = dest.get<Collider>(e3);
     CHECK(colHeightfield.Params.CollisionCategoryBits == 0x0010);
