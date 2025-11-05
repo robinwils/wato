@@ -130,6 +130,7 @@ void DefaultContextHandler::operator()(Registry& aRegistry, const PlacementModeP
         glm::identity<glm::quat>(),
         glm::vec3(0.1f));
     aRegistry.emplace<PlacementMode>(ghostTower);
+    aRegistry.emplace<ImguiDrawable>(ghostTower, "Placement ghost tower", true);
 }
 
 void DefaultContextHandler::ExitPlacement(Registry& aRegistry)
