@@ -176,6 +176,78 @@ class ByteOutputArchive
     Logger      mLogger;
 };
 
+class BitInputArchive : public StreamDecoder
+{
+   public:
+    BitInputArchive(BitReader::bit_stream&& aBits, const Logger& aLogger = spdlog::default_logger())
+        : StreamDecoder(std::move(aBits)), mLogger(aLogger)
+    {
+        mLogger->set_level(spdlog::level::off);
+    }
+    BitInputArchive(BitReader::bit_buffer& aBits, const Logger& aLogger = spdlog::default_logger())
+        : StreamDecoder(aBits), mLogger(aLogger)
+    {
+        mLogger->set_level(spdlog::level::off);
+    }
+
+    void operator()(entt::entity& aEntity)
+    {
+        ENTT_ID_TYPE entityV;
+        DecodeUInt(entityV, 0, std::numeric_limits<uint32_t>::max());
+
+        aEntity = entt::entity(entityV);
+        mLogger->info("read entity {:d}", static_cast<ENTT_ID_TYPE>(aEntity));
+    }
+
+    void operator()(std::underlying_type_t<entt::entity>& aEntity)
+    {
+        DecodeUInt(aEntity, 0, std::numeric_limits<uint32_t>::max());
+        mLogger->info("=====> reading set of size {:d} <=====", aEntity);
+    }
+
+    template <typename T>
+    void operator()(T& aObj)
+    {
+        aObj.Deserialize(*this);
+    }
+
+   private:
+    Logger mLogger;
+};
+
+class BitOutputArchive : public StreamEncoder
+{
+   public:
+    BitOutputArchive(const Logger& aLogger = spdlog::default_logger()) : mLogger(aLogger)
+    {
+        mLogger->set_level(spdlog::level::off);
+    }
+
+    void operator()(entt::entity aEntity)
+    {
+        ENTT_ID_TYPE entityV = static_cast<ENTT_ID_TYPE>(aEntity);
+        mLogger->info("writing entity {:d}", static_cast<ENTT_ID_TYPE>(aEntity));
+        EncodeUInt(entityV, 0, std::numeric_limits<uint32_t>::max());
+    }
+
+    void operator()(std::underlying_type_t<entt::entity> aEntity)
+    {
+        mLogger->info("<===== writing set of size {:d} =====> ", aEntity);
+        EncodeUInt(aEntity, 0, std::numeric_limits<uint32_t>::max());
+    }
+
+    template <typename T>
+    void operator()(const T& aObj)
+    {
+        aObj.Serialize(*this);
+    }
+
+    BitWriter::bit_buffer& Data() { return mBits.Data(); }
+
+   private:
+    Logger mLogger;
+};
+
 template <typename OutArchive>
 void SaveRegistry(const entt::registry& aRegistry, OutArchive& aArchive)
 {
@@ -323,6 +395,37 @@ TEST_CASE("serialize.collider.box")
         CHECK(b2.HalfExtents == b1.HalfExtents);
     }
 }
+
+TEST_CASE("snapshot.bit.simple")
+{
+    entt::registry src;
+
+    auto e1 = src.create();
+    src.emplace<Transform3D>(e1, glm::vec3(0.0f, 2.0f, 1.5f));
+
+    auto e2 = src.create();
+    src.emplace<Transform3D>(
+        e2,
+        glm::vec3(4.2f, 2.1f, 0.42f),
+        glm::identity<glm::quat>(),
+        glm::vec3(0.5f));
+    src.emplace<Health>(e2, 100.0f);
+
+    BitOutputArchive outAr;
+    entt::registry   dest;
+    entt::snapshot{src}.get<entt::entity>(outAr).get<Transform3D>(outAr).get<Health>(outAr);
+
+    BitInputArchive inAr(outAr.Data());
+    entt::snapshot_loader{dest}.get<entt::entity>(inAr).get<Transform3D>(inAr).get<Health>(inAr);
+
+    CHECK(dest.valid(e1));
+    CHECK(dest.valid(e2));
+    auto& t1 = dest.get<Transform3D>(e1);
+    auto& h2 = dest.get<Health>(e2);
+    CHECK_EQ(t1.Position, glm::vec3(0.0f, 2.0f, 1.5f));
+    CHECK_EQ(h2.Health, 100.0f);
+}
+
 TEST_CASE("snapshot.simple")
 {
     entt::registry src;
@@ -338,9 +441,8 @@ TEST_CASE("snapshot.simple")
         glm::vec3(0.5f));
     src.emplace<Health>(e2, 300.0f);
 
-    std::vector<uint8_t> storage;
-    ByteOutputArchive    outAr;
-    entt::registry       dest;
+    ByteOutputArchive outAr;
+    entt::registry    dest;
     SaveRegistry(src, outAr);
 
     ByteInputArchive inAr(std::span(outAr.Bytes()));
