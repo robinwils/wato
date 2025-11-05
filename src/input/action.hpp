@@ -27,6 +27,7 @@ enum class ActionType {
     BuildTower,
     EnterPlacementMode,
     ExitPlacementMode,
+    Count,
 };
 
 template <>
@@ -53,6 +54,7 @@ struct fmt::formatter<ActionType> : fmt::formatter<std::string> {
 enum class ActionTag {
     FixedTime,
     FrameTime,
+    Count,
 };
 
 template <>
@@ -84,10 +86,16 @@ struct KeyState {
     uint8_t     Modifiers;
 };
 
-enum class MoveDirection { Left, Right, Front, Back, Up, Down };
+enum class MoveDirection { Left, Right, Front, Back, Up, Down, Count };
 
 struct MovePayload {
     MoveDirection Direction;
+
+    bool Archive(auto& aArchive)
+    {
+        if (!ArchiveValue(aArchive, Direction, 0u, uint32_t(MoveDirection::Count))) return false;
+        return true;
+    }
 };
 
 inline bool operator==(const MovePayload& aLHS, const MovePayload& aRHS)
@@ -97,6 +105,12 @@ inline bool operator==(const MovePayload& aLHS, const MovePayload& aRHS)
 
 struct SendCreepPayload {
     CreepType Type;
+
+    bool Archive(auto& aArchive)
+    {
+        if (!ArchiveValue(aArchive, Type, 0u, uint32_t(CreepType::Count))) return false;
+        return true;
+    }
 };
 
 inline bool operator==(const SendCreepPayload& aLHS, const SendCreepPayload& aRHS)
@@ -107,6 +121,13 @@ inline bool operator==(const SendCreepPayload& aLHS, const SendCreepPayload& aRH
 struct BuildTowerPayload {
     TowerType Tower;
     glm::vec3 Position{0.0f};
+
+    bool Archive(auto& aArchive)
+    {
+        if (!ArchiveValue(aArchive, Tower, 0u, uint32_t(TowerType::Count))) return false;
+        if (!ArchiveVector(aArchive, Position, 0.0f, 20.0f)) return false;
+        return true;
+    }
 };
 
 inline bool operator==(const BuildTowerPayload& aLHS, const BuildTowerPayload& aRHS)
@@ -117,6 +138,13 @@ inline bool operator==(const BuildTowerPayload& aLHS, const BuildTowerPayload& a
 struct PlacementModePayload {
     bool      CanBuild;
     TowerType Tower;
+
+    bool Archive(auto& aArchive)
+    {
+        if (!ArchiveBool(aArchive, CanBuild)) return false;
+        if (!ArchiveValue(aArchive, Tower, 0u, uint32_t(TowerType::Count))) return false;
+        return true;
+    }
 };
 
 inline bool operator==(const PlacementModePayload& aLHS, const PlacementModePayload& aRHS)
@@ -147,6 +175,14 @@ struct Action {
                 [&](PlacementModePayload&) {},
             },
             Payload);
+    }
+
+    bool Archive(auto& aArchive)
+    {
+        if (!ArchiveValue(aArchive, Type, 0u, uint32_t(ActionType::Count))) return false;
+        if (!ArchiveValue(aArchive, Tag, 0u, uint32_t(ActionTag::Count))) return false;
+        if (!ArchiveVariant(aArchive, Payload)) return false;
+        return true;
     }
 
     constexpr static auto Serialize(auto& aArchive, const auto& aSelf)
@@ -241,6 +277,8 @@ struct fmt::formatter<Action::payload_type> : fmt::formatter<std::string> {
                             return fmt::format_to(aCtx.out(), "Up");
                         case MoveDirection::Down:
                             return fmt::format_to(aCtx.out(), "Down");
+                        case MoveDirection::Count:
+                            return fmt::format_to(aCtx.out(), "Count");
                     }
                 } else if constexpr (std::is_same_v<T, SendCreepPayload>) {
                     return fmt::format_to(
@@ -372,3 +410,26 @@ struct ActionContext {
 };
 
 using ActionContextStack = std::list<ActionContext>;
+
+#ifndef DOCTEST_CONFIG_DISABLE
+#include "test.hpp"
+TEST_CASE("encode.action")
+{
+    StreamEncoder enc;
+    Action        ae1 = kBuildTowerAction;
+    Action        ae2 = kSendCreepAction;
+
+    ae1.Archive(enc);
+    ae2.Archive(enc);
+
+    StreamDecoder dec(enc.Data());
+    Action        ad1;
+    Action        ad2;
+
+    CHECK_EQ(ad1.Archive(dec), true);
+    CHECK_EQ(ad1, ae1);
+
+    CHECK_EQ(ad2.Archive(dec), true);
+    CHECK_EQ(ad2, ae2);
+}
+#endif

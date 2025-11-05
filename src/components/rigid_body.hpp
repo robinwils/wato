@@ -20,6 +20,15 @@ struct RigidBody {
         }
     }
 
+    bool Archive(auto& aArchive)
+    {
+        if (!ArchiveValue(aArchive, Params.Type, 0, 3)) return false;
+        if (!ArchiveValue(aArchive, Params.Velocity, 0.0f, 100.0f)) return false;
+        if (!ArchiveVector(aArchive, Params.Direction, 0.0f, 1.0f)) return false;
+        if (!ArchiveBool(aArchive, Params.GravityEnabled)) return false;
+        return true;
+    }
+
     constexpr static auto Serialize(auto& aArchive, const auto& aSelf)
     {
         ::Serialize(aArchive, aSelf.Params.Type);
@@ -40,6 +49,46 @@ struct RigidBody {
 struct Collider {
     ColliderParams  Params;
     rp3d::Collider* Handle{nullptr};
+
+    bool Archive(auto& aArchive)
+    {
+        uint32_t maxCategoryValue = SafeI32(Category::Count);
+        if (!ArchiveValue(aArchive, Params.CollisionCategoryBits, 0u, maxCategoryValue))
+            return false;
+        if (!ArchiveValue(aArchive, Params.CollideWithMaskBits, 0u, maxCategoryValue)) return false;
+        if (!ArchiveBool(aArchive, Params.IsTrigger)) return false;
+        Params.Offset.Archive(aArchive);
+
+        // uint32_t variantSize = SafeU32(std::variant_size_v<ColliderShapeParams>);
+        // if (!std::visit(
+        //         VariantVisitor{
+        //             [&](BoxShapeParams& aShapeP) {
+        //                 uint32_t tag = 0;
+        //                 if (!ArchiveValue(aArchive, tag, 0u, variantSize)) return false;
+        //                 if (!ArchiveVector(aArchive, aShapeP.HalfExtents, 0.0f, 10.0f))
+        //                     return false;
+        //                 return true;
+        //             },
+        //             [&](CapsuleShapeParams& aShapeP) {
+        //                 uint32_t tag = 1;
+        //                 if (!ArchiveValue(aArchive, tag, 0u, variantSize)) return false;
+        //                 if (!ArchiveValue(aArchive, aShapeP.Radius, 0.0f, 10.0f)) return false;
+        //                 if (!ArchiveValue(aArchive, aShapeP.Height, 0.0f, 10.0f)) return false;
+        //                 return true;
+        //             },
+        //             [&](HeightFieldShapeParams& aShapeP) {
+        //                 uint32_t tag = 3;
+        //                 if (!ArchiveValue(aArchive, tag, 0u, variantSize)) return false;
+        //                 if (!ArchiveValue(aArchive, aShapeP.Rows, 0, 1000)) return false;
+        //                 if (!ArchiveValue(aArchive, aShapeP.Columns, 0, 1000)) return false;
+        //                 return true;
+        //             },
+        //         },
+        //         Params.ShapeParams))
+        //     return false;
+        ArchiveVariant(aArchive, Params.ShapeParams);
+        return true;
+    }
 
     constexpr static auto Serialize(auto& aArchive, const auto& aSelf)
     {

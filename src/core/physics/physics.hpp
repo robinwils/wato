@@ -18,21 +18,41 @@ struct fmt::formatter<rp3d::Vector3> : fmt::formatter<std::string> {
 };
 
 // Enumeration for categories
-enum Category { Terrain = 0x0001, Entities = 0x0002 };
+enum Category { Terrain = 0x0001, Entities = 0x0002, Count = (Entities << 1) - 1 };
 
 struct BoxShapeParams {
     glm::vec3 HalfExtents;
+
+    bool Archive(auto& aArchive)
+    {
+        if (!ArchiveVector(aArchive, HalfExtents, 0.0f, 10.0f)) return false;
+        return true;
+    }
 };
 
 struct CapsuleShapeParams {
     float Radius;
     float Height;
+
+    bool Archive(auto& aArchive)
+    {
+        if (!ArchiveValue(aArchive, Radius, 0.0f, 10.0f)) return false;
+        if (!ArchiveValue(aArchive, Height, 0.0f, 10.0f)) return false;
+        return true;
+    }
 };
 
 struct HeightFieldShapeParams {
     std::vector<float> Data{};
     int                Rows;
     int                Columns;
+
+    bool Archive(auto& aArchive)
+    {
+        if (!ArchiveValue(aArchive, Rows, 0, 1000)) return false;
+        if (!ArchiveValue(aArchive, Columns, 0, 1000)) return false;
+        return true;
+    }
 };
 
 using ColliderShapeParams =

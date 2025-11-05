@@ -12,8 +12,10 @@
 #include <optional>
 #include <span>
 #include <stdexcept>
+#include <variant>
 #include <vector>
 
+#include "core/sys/log.hpp"
 #include "core/types.hpp"
 
 #if defined(_MSC_VER)
@@ -184,7 +186,7 @@ class StreamEncoder
         mBits.Write(aVal - aMin, uint32_t(std::bit_width(aMax - aMin)));
     }
 
-    void EncodeFloat(float aVal, float aMin, float aMax)
+    void EncodeFloat16(float aVal, float aMin, float aMax)
     {
         auto bits = PackFloat<uint16_t>(aVal, aMin, aMax);
         mBits.Write(bits, 16u);
@@ -219,10 +221,7 @@ class StreamDecoder
             return false;
         }
     }
-    bool DecodeInt(
-        int32_t& aVal,
-        int32_t  aMin = std::numeric_limits<int32_t>::min(),
-        int32_t  aMax = std::numeric_limits<int32_t>::max())
+    bool DecodeInt(int32_t& aVal, int32_t aMin, int32_t aMax)
     {
         BX_ASSERT(aMin < aMax, "min is higher or equal than max");
         BX_ASSERT(aVal >= aMin, "value is less than min");
@@ -252,10 +251,7 @@ class StreamDecoder
         }
     }
 
-    bool DecodeFloat(
-        float& aVal,
-        float  aMin = std::numeric_limits<float>::min(),
-        float  aMax = std::numeric_limits<float>::max())
+    bool DecodeFloat16(float& aVal, float aMin, float aMax)
     {
         BX_ASSERT(aMin < aMax, "min is higher or equal than max");
         BX_ASSERT(aVal >= aMin, "value is less than min");
@@ -280,15 +276,145 @@ class StreamDecoder
     BitReader mBits;
 };
 
-template <typename T, typename Out>
-concept Serializable = requires(T aObj, Out& aOut) {
-    { T::Serialize(aOut, aObj) } -> std::same_as<void>;
+template <typename T>
+concept IsStreamEncoder = requires(T t) {
+    { t.EncodeInt(std::declval<int>(), std::declval<int>(), std::declval<int>()) };
+    {
+        t.EncodeUInt16(std::declval<uint16_t>(), std::declval<uint32_t>(), std::declval<uint32_t>())
+    };
+    { t.EncodeUInt(std::declval<uint32_t>(), std::declval<uint32_t>(), std::declval<uint32_t>()) };
+    { t.EncodeFloat16(std::declval<float>(), std::declval<float>(), std::declval<float>()) };
 };
 
-template <typename T, typename In>
-concept Deserializable = requires(T aObj, In& aIn) {
-    { T::Deserialize(aIn, aObj) } -> std::same_as<bool>;
+template <typename T>
+concept IsStreamDecoder = requires(T t, int32_t& vi, uint16_t& vu16, uint32_t& vu, float& vf) {
+    { t.DecodeInt(vi, std::declval<int>(), std::declval<int>()) } -> std::same_as<bool>;
+    {
+        t.DecodeUInt16(vu16, std::declval<uint16_t>(), std::declval<uint32_t>())
+    } -> std::same_as<bool>;
+    { t.DecodeUInt(vu, std::declval<uint32_t>(), std::declval<uint32_t>()) } -> std::same_as<bool>;
+    { t.DecodeFloat16(vf, std::declval<float>(), std::declval<float>()) } -> std::same_as<bool>;
 };
+
+template <typename Archive>
+    requires IsStreamEncoder<Archive>
+bool ArchiveBool(Archive& aR, const bool& aValue)
+{
+    aR.EncodeBool(aValue);
+    return true;
+}
+
+template <typename Archive>
+    requires IsStreamDecoder<Archive>
+bool ArchiveBool(Archive& aR, bool& aValue)
+{
+    if (!aR.DecodeBool(aValue)) return false;
+    return true;
+}
+
+template <typename Archive, typename T, typename MinMaxT>
+    requires IsStreamEncoder<Archive>
+bool ArchiveValue(Archive& aR, const T& aValue, MinMaxT aMin, MinMaxT aMax)
+{
+    using value_t = std::remove_cv_t<T>;
+    if constexpr (std::is_enum_v<value_t>) {
+        using U = std::underlying_type_t<value_t>;
+        spdlog::info("encoding enum {}", static_cast<U>(aValue));
+        return ArchiveValue(aR, static_cast<U>(aValue), static_cast<U>(aMin), static_cast<U>(aMax));
+    } else if constexpr (std::is_same_v<value_t, float>) {
+        spdlog::info("encoding float {}", aValue);
+        aR.EncodeFloat16(aValue, aMin, aMax);
+        return true;
+    } else if constexpr (std::is_integral_v<value_t> && std::is_signed_v<value_t>) {
+        spdlog::info("encoding int {}", aValue);
+        aR.EncodeInt(aValue, aMin, aMax);
+        return true;
+    } else if constexpr (
+        std::is_integral_v<value_t> && std::is_unsigned_v<value_t> && sizeof(T) == 2) {
+        spdlog::info("encoding uint16 {}", aValue);
+        aR.EncodeUInt16(aValue, aMin, aMax);
+        return true;
+    } else if constexpr (std::is_integral_v<value_t> && std::is_unsigned_v<value_t>) {
+        spdlog::info("encoding uint32 {}", aValue);
+        aR.EncodeUInt(aValue, aMin, aMax);
+        return true;
+    }
+    return false;
+}
+
+template <typename Archive, typename T, typename MinMaxT>
+    requires IsStreamDecoder<Archive>
+bool ArchiveValue(Archive& aR, T& aValue, MinMaxT aMin, MinMaxT aMax)
+{
+    using value_t = std::remove_cv_t<T>;
+
+    if constexpr (std::is_enum_v<value_t>) {
+        using U = std::underlying_type_t<value_t>;
+        U tmp;
+        if (!ArchiveValue(aR, tmp, static_cast<U>(aMin), static_cast<U>(aMax))) return false;
+        aValue = static_cast<value_t>(tmp);
+        spdlog::info("decoded enum {}", tmp);
+        return true;
+    } else if constexpr (std::is_same_v<value_t, float>) {
+        if (!aR.DecodeFloat16(aValue, aMin, aMax)) return false;
+        if (aValue > aMax || aValue < aMin) return false;
+        spdlog::info("decoded float {}", aValue);
+        return true;
+    } else if constexpr (std::is_integral_v<value_t> && std::is_signed_v<value_t>) {
+        if (!aR.DecodeInt(aValue, aMin, aMax)) return false;
+        if (aValue > aMax || aValue < aMin) return false;
+        spdlog::info("decoded int {}", aValue);
+        return true;
+    } else if constexpr (
+        std::is_integral_v<value_t> && std::is_unsigned_v<value_t> && sizeof(T) == 2) {
+        aR.DecodeUInt16(aValue, aMin, aMax);
+        spdlog::info("decoded uint16 {}", aValue);
+        return true;
+    } else if constexpr (std::is_integral_v<value_t> && std::is_unsigned_v<value_t>) {
+        if (!aR.DecodeUInt(aValue, aMin, aMax)) return false;
+        if (aValue > aMax || aValue < aMin) return false;
+        spdlog::info("decoded uint32 {}", aValue);
+        return true;
+    }
+    return false;
+}
+
+template <typename Archive, typename... Ts>
+bool ArchiveVariant(Archive& aR, std::variant<Ts...>& aVar)
+{
+    using variant_t = std::variant<Ts...>;
+    using index_t   = uint32_t;
+
+    constexpr index_t variantSize = SafeU32(std::variant_size_v<variant_t>);
+    if constexpr (IsStreamEncoder<Archive>) {
+        index_t tag = static_cast<index_t>(aVar.index());
+        if (!ArchiveValue(aR, tag, 0u, variantSize)) return false;
+        return std::visit([&](auto& aV) { return aV.Archive(aR); }, aVar);
+    } else if constexpr (IsStreamDecoder<Archive>) {
+        index_t tag = 0;
+        if (!ArchiveValue(aR, tag, 0u, variantSize)) return false;
+
+        bool ok     = false;
+        auto assign = [&](auto aIdx) {
+            using T = std::tuple_element_t<aIdx, std::tuple<Ts...>>;
+            T value;
+            ok = value.Archive(aR);
+            if (ok) aVar = std::move(value);
+        };
+        bool found = false;
+        for (index_t i = 0; i < variantSize; ++i) {
+            if (tag == i) {
+                ([&]<std::size_t... Is>(std::index_sequence<Is...>) {
+                    ((i == Is ? assign(std::integral_constant<std::size_t, Is>{}) : void()), ...);
+                })(std::make_index_sequence<sizeof...(Ts)>{});
+                found = true;
+                break;
+            }
+        }
+        return ok && found;
+    }
+    return false;
+}
 
 template <class T>
 concept not_bool = !std::same_as<std::remove_cv_t<T>, bool>;
@@ -383,6 +509,41 @@ template <glm::length_t L, typename T, glm::qualifier Q>
 constexpr auto Deserialize(auto& aArchive, glm::vec<L, T, Q>& aObj)
 {
     aArchive.template Read<T>(glm::value_ptr(aObj), L);
+}
+
+template <glm::length_t L, typename T, glm::qualifier Q, typename MinMaxT>
+constexpr bool
+ArchiveVector(auto& aArchive, glm::vec<L, T, Q>& aObj, const MinMaxT aMin, const MinMaxT aMax)
+{
+    for (std::size_t idx = 0; idx < L; ++idx) {
+        if (!ArchiveValue(aArchive, aObj[idx], aMin, aMax)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+template <glm::length_t L, typename T, glm::qualifier Q, typename MinMaxT>
+constexpr bool
+ArchiveVector(auto& aArchive, const glm::vec<L, T, Q>& aObj, const MinMaxT aMin, const MinMaxT aMax)
+{
+    for (std::size_t idx = 0; idx < L; ++idx) {
+        if (!ArchiveValue(aArchive, aObj[idx], aMin, aMax)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+template <typename T, glm::qualifier Q>
+constexpr bool ArchiveQuaternion(auto& aArchive, glm::qua<T, Q>& aObj)
+{
+    for (std::size_t idx = 0; idx < 4; ++idx) {
+        if (!ArchiveValue(aArchive, aObj[idx], -1.0f, 1.0f)) {
+            return false;
+        }
+    }
+    return true;
 }
 
 template <typename T, glm::qualifier Q>
@@ -489,16 +650,33 @@ TEST_CASE("encode.float")
 {
     StreamEncoder enc;
 
-    enc.EncodeFloat(3.14159f, 0.0f, 5.0f);
-    enc.EncodeFloat(-3.14159f, -5.0f, 5.0f);
+    enc.EncodeFloat16(3.14159f, 0.0f, 5.0f);
+    enc.EncodeFloat16(-3.14159f, -5.0f, 5.0f);
 
     StreamDecoder dec(enc.Data());
     float         val;
 
-    CHECK_EQ(dec.DecodeFloat(val, 0.0f, 5.0f), true);
+    CHECK_EQ(dec.DecodeFloat16(val, 0.0f, 5.0f), true);
     CHECK_EQ(val, doctest::Approx(3.14159));
 
-    CHECK_EQ(dec.DecodeFloat(val, -5.0f, 5.0f), true);
+    CHECK_EQ(dec.DecodeFloat16(val, -5.0f, 5.0f), true);
+    CHECK_EQ(val, doctest::Approx(-3.14159));
+}
+
+TEST_CASE("encode.value")
+{
+    StreamEncoder enc;
+
+    ArchiveValue(enc, 3.14159f, 0.0f, 5.0f);
+    ArchiveValue(enc, -3.14159f, -5.0f, 5.0f);
+
+    StreamDecoder dec(enc.Data());
+    float         val;
+
+    CHECK_EQ(ArchiveValue(dec, val, 0.0f, 5.0f), true);
+    CHECK_EQ(val, doctest::Approx(3.14159));
+
+    CHECK_EQ(ArchiveValue(dec, val, -5.0f, 5.0f), true);
     CHECK_EQ(val, doctest::Approx(-3.14159));
 }
 

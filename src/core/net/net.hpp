@@ -23,6 +23,12 @@ using enet_host_ptr = std::unique_ptr<ENetHost, ENetHostDeleter>;
 struct NewGameRequest {
     PlayerID PlayerAID;
 
+    bool Archive(auto& aArchive)
+    {
+        if (!ArchiveValue(aArchive, PlayerAID, 0u, 1000000000u)) return false;
+        return true;
+    }
+
     constexpr static auto Serialize(auto& aArchive, const auto& aSelf)
     {
         ::Serialize(aArchive, aSelf.PlayerAID);
@@ -42,6 +48,14 @@ inline bool operator==(const NewGameRequest& aLHS, const NewGameRequest& aRHS)
 struct SyncPayload {
     GameInstanceID GameID;
     GameState      State;
+
+    bool Archive(auto& aArchive)
+    {
+        if (!ArchiveValue(aArchive, GameID, 0ul, std::numeric_limits<uint64_t>::max()))
+            return false;
+        if (!State.Archive(aArchive)) return false;
+        return true;
+    }
 
     constexpr static auto Serialize(auto& aArchive, const auto& aSelf)
     {
@@ -65,6 +79,12 @@ inline bool operator==(const SyncPayload& aLHS, const SyncPayload& aRHS)
 struct NewGameResponse {
     GameInstanceID GameID;
 
+    bool Archive(auto& aArchive)
+    {
+        if (!ArchiveValue(aArchive, GameID, 0u, std::numeric_limits<uint64_t>::max())) return false;
+        return true;
+    }
+
     constexpr static auto Serialize(auto& aArchive, const auto& aSelf)
     {
         ::Serialize(aArchive, aSelf.GameID);
@@ -82,6 +102,7 @@ inline bool operator==(const NewGameResponse& aLHS, const NewGameResponse& aRHS)
 }
 
 struct ConnectedResponse {
+    bool                  Archive(auto& aArchive) { return true; }
     constexpr static auto Serialize(auto&, const auto&) {}
     constexpr static auto Deserialize(auto&, auto&) { return true; }
 };
@@ -92,6 +113,7 @@ struct TowerValidationResponse {
     bool         Valid;
     entt::entity Entity;
 
+    bool                  Archive(auto& aArchive) { return true; }
     constexpr static auto Serialize(auto&, const auto&) {}
     constexpr static auto Deserialize(auto&, auto&) { return true; }
 };
@@ -107,6 +129,7 @@ enum class PacketType : std::uint16_t {
     TowerValidation,
     NewGame,
     Connected,
+    Count,
 };
 
 using NetworkRequestPayload = std::variant<std::monostate, SyncPayload, NewGameRequest>;
@@ -189,6 +212,14 @@ struct NetworkEvent {
     ::PlayerID PlayerID;
     _Payload   Payload;
 
+    bool Archive(auto& aArchive)
+    {
+        if (!ArchiveValue(aArchive, Type, 0u, uint32_t(PacketType::Count))) return false;
+        if (!ArchiveValue(aArchive, PlayerID, 0u, 1000000000u)) return false;
+        if (!ArchiveVariant(aArchive, Payload)) return false;
+        return true;
+    }
+
     constexpr static auto Serialize(auto& aArchive, NetworkEvent<_Payload>* aSelf)
     {
         ::Serialize(aArchive, aSelf->Type);
@@ -228,27 +259,35 @@ struct fmt::formatter<ENetPeer> : fmt::formatter<std::string> {
     }
 };
 
+#ifndef DOCTEST_CONFIG_DISABLE
 #include "core/snapshot.hpp"
-#include "doctest.h"
+#include "test.hpp"
 
 TEST_CASE("net.serialize")
 {
-    ByteOutputArchive outAr;
-    auto*             ev = new NetworkRequest;
+    BitOutputArchive outAr;
+    auto*            ev = new NetworkRequest;
+
+    std::uint64_t gameID =
+        (static_cast<std::uint64_t>(std::chrono::steady_clock::now().time_since_epoch().count())
+         << 32)
+        | 42ul;
 
     ev->PlayerID = 42;
     ev->Type     = PacketType::ClientSync;
-    ev->Payload  = SyncPayload{.GameID = 21, .State = GameState{.Tick = 12}};
+    ev->Payload  = SyncPayload{.GameID = gameID, .State = GameState{.Tick = 12}};
 
-    NetworkRequest::Serialize(outAr, ev);
+    ev->Archive(outAr);
 
-    ByteInputArchive inAr(std::span(outAr.Bytes()));
-    auto*            ev2 = new NetworkRequest;
+    BitInputArchive inAr(outAr.Data());
+    auto*           ev2 = new NetworkRequest;
 
-    NetworkRequest::Deserialize(inAr, ev2);
+    ev2->Archive(inAr);
+
     CHECK_EQ(ev->PlayerID, ev2->PlayerID);
     CHECK_EQ(ev->Type, ev2->Type);
     CHECK_EQ(ev->Payload, ev2->Payload);
     delete ev;
     delete ev2;
 }
+#endif

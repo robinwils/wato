@@ -3,6 +3,7 @@
 #include <string_view>
 enum class TowerType {
     Arrow,
+    Count,
 };
 
 [[nodiscard]] constexpr std::string_view TowerTypeToString(TowerType aType)

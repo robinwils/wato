@@ -44,6 +44,14 @@ struct Transform3D {
                * glm::scale(glm::identity<glm::mat4>(), Scale);
     }
 
+    bool Archive(auto& aArchive)
+    {
+        if (!ArchiveVector(aArchive, Position, 0.0f, 20.0f)) return false;
+        if (!ArchiveQuaternion(aArchive, Orientation)) return false;
+        if (!ArchiveVector(aArchive, Scale, 0.0f, 20.0f)) return false;
+        return true;
+    }
+
     constexpr static auto Serialize(auto& aArchive, const auto& aSelf)
     {
         ::Serialize(aArchive, aSelf.Position);
