@@ -27,14 +27,25 @@ class ByteInputArchive
     using byte        = uint8_t;
     using byte_stream = std::span<byte>;
 
-    ByteInputArchive(const byte_stream& aInStream, const Logger& aLogger = spdlog::default_logger())
+    ByteInputArchive(
+        const byte_stream& aInStream,
+        bool               aEnableLogger = false,
+        const Logger&      aLogger       = spdlog::default_logger())
         : mStorage(aInStream), mIdx(0), mLogger(aLogger)
     {
-        mLogger->set_level(spdlog::level::off);
+        if (!aEnableLogger) {
+            mLogger->set_level(spdlog::level::off);
+        }
     }
-    ByteInputArchive(std::vector<byte> aInVec, const Logger& aLogger = spdlog::default_logger())
+    ByteInputArchive(
+        std::vector<byte> aInVec,
+        bool              aEnableLogger = false,
+        const Logger&     aLogger       = spdlog::default_logger())
         : mStorage(aInVec.begin(), aInVec.size()), mIdx(0), mLogger(aLogger)
     {
+        if (!aEnableLogger) {
+            mLogger->set_level(spdlog::level::off);
+        }
     }
 
     void operator()(entt::entity& aEntity)
@@ -111,9 +122,12 @@ class ByteOutputArchive
     using byte_stream = std::vector<byte>;
 
    public:
-    ByteOutputArchive(const Logger& aLogger = spdlog::default_logger()) : mLogger(aLogger)
+    ByteOutputArchive(bool aEnableLogger = false, const Logger& aLogger = spdlog::default_logger())
+        : mLogger(aLogger)
     {
-        mLogger->set_level(spdlog::level::off);
+        if (!aEnableLogger) {
+            mLogger->set_level(spdlog::level::off);
+        }
     }
 
     void operator()(entt::entity aEntity)
@@ -179,21 +193,34 @@ class ByteOutputArchive
 class BitInputArchive : public StreamDecoder
 {
    public:
-    BitInputArchive(BitReader::bit_stream&& aBits, const Logger& aLogger = spdlog::default_logger())
+    BitInputArchive(
+        BitReader::bit_stream&& aBits,
+        bool                    aEnableLogger = false,
+        const Logger&           aLogger       = spdlog::default_logger())
         : StreamDecoder(std::move(aBits)), mLogger(aLogger)
     {
-        mLogger->set_level(spdlog::level::off);
+        if (!aEnableLogger) {
+            mLogger->set_level(spdlog::level::off);
+        }
     }
-    BitInputArchive(BitReader::bit_buffer& aBits, const Logger& aLogger = spdlog::default_logger())
+    BitInputArchive(
+        BitReader::bit_buffer& aBits,
+        bool                   aEnableLogger = false,
+        const Logger&          aLogger       = spdlog::default_logger())
         : StreamDecoder(aBits), mLogger(aLogger)
     {
-        mLogger->set_level(spdlog::level::off);
+        if (!aEnableLogger) {
+            mLogger->set_level(spdlog::level::off);
+        }
     }
 
     void operator()(entt::entity& aEntity)
     {
         ENTT_ID_TYPE entityV;
-        DecodeUInt(entityV, 0, std::numeric_limits<uint32_t>::max());
+        if (!DecodeUInt(entityV, 0, std::numeric_limits<uint32_t>::max())) {
+            mLogger->critical("could not decode entity");
+            return;
+        }
 
         aEntity = entt::entity(entityV);
         mLogger->info("read entity {:d}", static_cast<ENTT_ID_TYPE>(aEntity));
@@ -201,14 +228,19 @@ class BitInputArchive : public StreamDecoder
 
     void operator()(std::underlying_type_t<entt::entity>& aEntity)
     {
-        DecodeUInt(aEntity, 0, std::numeric_limits<uint32_t>::max());
+        if (!DecodeUInt(aEntity, 0, std::numeric_limits<uint32_t>::max())) {
+            mLogger->critical("could not read component set size");
+            return;
+        }
         mLogger->info("=====> reading set of size {:d} <=====", aEntity);
     }
 
     template <typename T>
     void operator()(T& aObj)
     {
-        aObj.Deserialize(*this);
+        if (!aObj.Archive(*this)) {
+            mLogger->critical("could not read component from archive");
+        }
     }
 
    private:
@@ -218,9 +250,12 @@ class BitInputArchive : public StreamDecoder
 class BitOutputArchive : public StreamEncoder
 {
    public:
-    BitOutputArchive(const Logger& aLogger = spdlog::default_logger()) : mLogger(aLogger)
+    BitOutputArchive(bool aEnableLogger = false, const Logger& aLogger = spdlog::default_logger())
+        : mLogger(aLogger)
     {
-        mLogger->set_level(spdlog::level::off);
+        if (!aEnableLogger) {
+            mLogger->set_level(spdlog::level::off);
+        }
     }
 
     void operator()(entt::entity aEntity)
