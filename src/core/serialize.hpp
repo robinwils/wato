@@ -177,6 +177,15 @@ class StreamEncoder
         mBits.Write(value, uint32_t(std::bit_width(uint32_t(diff))));
     }
 
+    void EncodeUInt16(uint16_t aVal, uint32_t aMin, uint32_t aMax)
+    {
+        BX_ASSERT(aMin < aMax, "min is higher or equal than max");
+        BX_ASSERT(aVal >= aMin, "value is less than min");
+        BX_ASSERT(aVal <= aMax, "value is more than max");
+
+        mBits.Write(aVal - aMin, uint32_t(std::bit_width(aMax - aMin)));
+    }
+
     void EncodeUInt(uint32_t aVal, uint32_t aMin, uint32_t aMax)
     {
         BX_ASSERT(aMin < aMax, "min is higher or equal than max");
@@ -230,6 +239,21 @@ class StreamDecoder
         uint32_t bits = uint32_t(std::bit_width(uint32_t(aMax - aMin)));
         if (auto r = mBits.Read(bits); r) {
             aVal = int32_t(*r) + aMin;
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    bool DecodeUInt16(uint16_t& aVal, uint32_t aMin, uint32_t aMax)
+    {
+        BX_ASSERT(aMin < aMax, "min is higher or equal than max");
+        BX_ASSERT(aVal >= aMin, "value is less than min");
+        BX_ASSERT(aVal <= aMax, "value is more than max");
+
+        uint32_t bits = uint32_t(std::bit_width(aMax - aMin));
+        if (auto r = mBits.Read(bits); r) {
+            aVal = uint16_t(*r + aMin);
             return true;
         } else {
             return false;
