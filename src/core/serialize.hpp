@@ -62,6 +62,19 @@ class BitWriter
     BitWriter() : mScratch(0), mCurBit(0) {}
     BitWriter(const BitWriter& aBuf) : mBuf(aBuf.mBuf), mScratch(0), mCurBit(0) {}
 
+    void Write(uint64_t aData, uint32_t aN)
+    {
+        uint32_t lo = uint32_t(aData & 0xffffffff);
+        uint32_t hi = uint32_t(aData >> 32);
+
+        if (aN <= 32) {
+            Write(lo, aN);
+        } else {
+            Write(lo, 32);
+            Write(hi, aN - 32);
+        }
+    }
+
     void Write(uint32_t aData, uint32_t aN)
     {
         BX_ASSERT(aN <= 32, "cannot write more than 32 bits");
@@ -143,14 +156,36 @@ class BitReader
     {
     }
 
-    std::optional<uint32_t> Read(uint32_t aN)
+    bool Read(uint64_t& aData, uint32_t aN)
+    {
+        if (aN <= 32) {
+            uint32_t lo = 0;
+            if (!Read(lo, aN)) {
+                return false;
+            }
+            aData = lo;
+        } else {
+            uint32_t lo = 0;
+            uint32_t hi = 0;
+            if (!Read(lo, 32)) {
+                return false;
+            }
+            if (!Read(hi, aN - 32)) {
+                return false;
+            }
+            aData = (uint64_t(hi) << 32) | lo;
+        }
+        return true;
+    }
+
+    bool Read(uint32_t& aData, uint32_t aN)
     {
         BX_ASSERT(aN <= 32, "cannot write more than 32 bits");
 
         // not enough bits in scratch, read next word
         if (aN > mCurBit) {
             if (!mNext || mNext >= mBuf.data() + mBuf.size()) {
-                return std::nullopt;
+                return false;
             }
             uint32_t next = *mNext++;
 
@@ -162,11 +197,11 @@ class BitReader
             mCurBit += 32;
         }
 
-        uint32_t data   = SafeU32(mScratch & (1lu << aN) - 1);
-        mScratch      >>= aN;
-        mCurBit        -= aN;
+        aData      = SafeU32(mScratch & (1lu << aN) - 1);
+        mScratch >>= aN;
+        mCurBit   -= aN;
 
-        return data;
+        return true;
     }
 
    private:
@@ -181,34 +216,70 @@ class StreamEncoder
    public:
     StreamEncoder() = default;
 
-    void EncodeBool(bool aVal) { mBits.Write(aVal ? 1 : 0, 1); }
+    void EncodeBool(bool aVal) { mBits.Write(aVal ? 1u : 0u, 1); }
 
-    void EncodeInt(int32_t aVal, int32_t aMin, int32_t aMax)
+    template <typename IntT>
+        requires(std::is_integral_v<IntT> && !std::is_unsigned_v<IntT>)
+    void EncodeInt(IntT aVal, int64_t aMin, int64_t aMax)
     {
         BX_ASSERT(aMin < aMax, "min is higher or equal than max");
+
+        uint32_t diff = uint32_t(aMax - aMin);
+
+        if constexpr (sizeof(IntT) <= sizeof(int32_t)) {
+            BX_ASSERT(
+                aMax <= std::numeric_limits<IntT>::max(),
+                "max %d is higher than %d",
+                aMax,
+                std::numeric_limits<IntT>::max());
+            BX_ASSERT(
+                aMin < std::numeric_limits<IntT>::max(),
+                "min %d is higher than %d",
+                aMin,
+                std::numeric_limits<IntT>::max() - 1);
+        }
+
         BX_ASSERT(aVal >= aMin, "value is less than min");
         BX_ASSERT(aVal <= aMax, "value is more than max");
-        uint32_t value = uint32_t(aVal - aMin);
-        auto     diff  = int64_t(aMax) - int64_t(aMin);
-        mBits.Write(value, uint32_t(std::bit_width(uint32_t(diff))));
+
+        // uint32_t value = uint32_t(aVal - aMin);
+        // auto     diff  = int64_t(aMax) - int64_t(aMin);
+        // mBits.Write(value, uint32_t(std::bit_width(uint32_t(diff))));
+
+        if constexpr (sizeof(IntT) <= sizeof(int32_t)) {
+            mBits.Write(uint32_t(aVal - aMin), uint32_t(std::bit_width(diff)));
+        } else {
+            mBits.Write(uint64_t(aVal - aMin), uint32_t(std::bit_width(diff)));
+        }
     }
 
-    void EncodeUInt16(uint16_t aVal, uint32_t aMin, uint32_t aMax)
+    template <typename UIntT>
+        requires(std::is_integral_v<UIntT> && std::is_unsigned_v<UIntT>)
+    void EncodeUInt(UIntT aVal, uint64_t aMin, uint64_t aMax)
     {
         BX_ASSERT(aMin < aMax, "min is higher or equal than max");
+
+        if constexpr (sizeof(UIntT) <= sizeof(uint32_t)) {
+            BX_ASSERT(
+                aMax <= std::numeric_limits<UIntT>::max(),
+                "max %u is higher than %u",
+                aMax,
+                std::numeric_limits<UIntT>::max());
+            BX_ASSERT(
+                aMin < std::numeric_limits<UIntT>::max(),
+                "min %u is higher than %u",
+                aMin,
+                std::numeric_limits<UIntT>::max() - 1);
+        }
+
         BX_ASSERT(aVal >= aMin, "value is less than min");
         BX_ASSERT(aVal <= aMax, "value is more than max");
 
-        mBits.Write(aVal - aMin, uint32_t(std::bit_width(aMax - aMin)));
-    }
-
-    void EncodeUInt(uint32_t aVal, uint32_t aMin, uint32_t aMax)
-    {
-        BX_ASSERT(aMin < aMax, "min is higher or equal than max");
-        BX_ASSERT(aVal >= aMin, "value is less than min");
-        BX_ASSERT(aVal <= aMax, "value is more than max");
-
-        mBits.Write(aVal - aMin, uint32_t(std::bit_width(aMax - aMin)));
+        if constexpr (sizeof(UIntT) <= sizeof(uint32_t)) {
+            mBits.Write(uint32_t(aVal - aMin), uint32_t(std::bit_width(aMax - aMin)));
+        } else {
+            mBits.Write(uint64_t(aVal - aMin), uint32_t(std::bit_width(aMax - aMin)));
+        }
     }
 
     void EncodeFloat16(float aVal, float aMin, float aMax)
@@ -239,70 +310,96 @@ class StreamDecoder
 
     bool DecodeBool(bool& aVal)
     {
-        if (auto r = mBits.Read(1); r) {
-            aVal = r == 1;
-            return true;
-        } else {
+        uint32_t v = 0;
+        if (!mBits.Read(v, 1)) {
             return false;
         }
+
+        aVal = v == 1u;
+        return true;
     }
-    bool DecodeInt(int32_t& aVal, int32_t aMin, int32_t aMax)
+
+    template <typename IntT>
+        requires(std::is_integral_v<IntT> && !std::is_unsigned_v<IntT>)
+    bool DecodeInt(IntT& aVal, int64_t aMin, int64_t aMax)
     {
         BX_ASSERT(aMin < aMax, "min is higher or equal than max");
-        BX_ASSERT(aVal >= aMin, "value is less than min");
-        BX_ASSERT(aVal <= aMax, "value is more than max");
+
+        if constexpr (sizeof(IntT) <= sizeof(int32_t)) {
+            BX_ASSERT(
+                aMax <= std::numeric_limits<IntT>::max(),
+                "max %d is higher than %d",
+                aMax,
+                std::numeric_limits<IntT>::max());
+            BX_ASSERT(
+                aMin < std::numeric_limits<IntT>::max(),
+                "min %d is higher than %d",
+                aMin,
+                std::numeric_limits<IntT>::max() - 1);
+        }
 
         uint32_t bits = uint32_t(std::bit_width(uint32_t(aMax - aMin)));
-        if (auto r = mBits.Read(bits); r) {
-            aVal = int32_t(*r) + aMin;
-            return true;
+
+        if constexpr (sizeof(IntT) <= sizeof(int32_t)) {
+            uint32_t v = 0;
+            if (!mBits.Read(v, bits)) {
+                return false;
+            }
+            aVal = IntT(v) + IntT(aMin);
         } else {
-            return false;
+            uint64_t v = 0;
+            if (!mBits.Read(v, bits)) {
+                return false;
+            }
+            aVal = IntT(v) + aMin;
         }
+        return true;
     }
 
-    bool DecodeUInt16(uint16_t& aVal, uint32_t aMin, uint32_t aMax)
+    template <typename UIntT>
+        requires(std::is_integral_v<UIntT> && std::is_unsigned_v<UIntT>)
+    bool DecodeUInt(UIntT& aVal, uint64_t aMin, uint64_t aMax)
     {
         BX_ASSERT(aMin < aMax, "min is higher or equal than max");
-        BX_ASSERT(aVal >= aMin, "value is less than min");
-        BX_ASSERT(aVal <= aMax, "value is more than max");
 
-        uint32_t bits = uint32_t(std::bit_width(aMax - aMin));
-        if (auto r = mBits.Read(bits); r) {
-            aVal = uint16_t(*r + aMin);
-            return true;
+        if constexpr (sizeof(UIntT) <= sizeof(uint32_t)) {
+            BX_ASSERT(
+                aMax <= std::numeric_limits<UIntT>::max(),
+                "max %u is higher than %u",
+                aMax,
+                std::numeric_limits<UIntT>::max());
+            BX_ASSERT(
+                aMin < std::numeric_limits<UIntT>::max(),
+                "min %u is higher than %u",
+                aMin,
+                std::numeric_limits<UIntT>::max() - 1);
+
+            uint32_t v;
+            if (!mBits.Read(v, uint32_t(std::bit_width(aMax - aMin)))) {
+                return false;
+            }
+            aVal = UIntT(v) + UIntT(aMin);
         } else {
-            return false;
+            uint64_t v;
+            if (!mBits.Read(v, uint32_t(std::bit_width(aMax - aMin)))) {
+                return false;
+            }
+            aVal = v + aMin;
         }
-    }
-
-    bool DecodeUInt(uint32_t& aVal, uint32_t aMin, uint32_t aMax)
-    {
-        BX_ASSERT(aMin < aMax, "min is higher or equal than max");
-        BX_ASSERT(aVal >= aMin, "value is less than min");
-        BX_ASSERT(aVal <= aMax, "value is more than max");
-
-        uint32_t bits = uint32_t(std::bit_width(aMax - aMin));
-        if (auto r = mBits.Read(bits); r) {
-            aVal = *r + aMin;
-            return true;
-        } else {
-            return false;
-        }
+        return true;
     }
 
     bool DecodeFloat16(float& aVal, float aMin, float aMax)
     {
         BX_ASSERT(aMin < aMax, "min is higher or equal than max");
-        BX_ASSERT(aVal >= aMin, "value is less than min");
-        BX_ASSERT(aVal <= aMax, "value is more than max");
+        uint32_t v = 0;
 
-        if (auto r = mBits.Read(16u); r) {
-            aVal = UnpackFloat<uint16_t>(*r, aMin, aMax);
-            return true;
-        } else {
+        if (!mBits.Read(v, 16u)) {
             return false;
         }
+
+        aVal = UnpackFloat<uint16_t>(v, aMin, aMax);
+        return true;
     }
 
    protected:
@@ -319,22 +416,27 @@ class StreamDecoder
 template <typename T>
 concept IsStreamEncoder = requires(T t) {
     { t.EncodeInt(std::declval<int>(), std::declval<int>(), std::declval<int>()) };
-    {
-        t.EncodeUInt16(std::declval<uint16_t>(), std::declval<uint32_t>(), std::declval<uint32_t>())
-    };
+    { t.EncodeUInt(std::declval<uint8_t>(), std::declval<uint32_t>(), std::declval<uint32_t>()) };
+    { t.EncodeUInt(std::declval<uint16_t>(), std::declval<uint32_t>(), std::declval<uint32_t>()) };
     { t.EncodeUInt(std::declval<uint32_t>(), std::declval<uint32_t>(), std::declval<uint32_t>()) };
     { t.EncodeFloat16(std::declval<float>(), std::declval<float>(), std::declval<float>()) };
 };
 
 template <typename T>
-concept IsStreamDecoder = requires(T t, int32_t& vi, uint16_t& vu16, uint32_t& vu, float& vf) {
-    { t.DecodeInt(vi, std::declval<int>(), std::declval<int>()) } -> std::same_as<bool>;
-    {
-        t.DecodeUInt16(vu16, std::declval<uint16_t>(), std::declval<uint32_t>())
-    } -> std::same_as<bool>;
-    { t.DecodeUInt(vu, std::declval<uint32_t>(), std::declval<uint32_t>()) } -> std::same_as<bool>;
-    { t.DecodeFloat16(vf, std::declval<float>(), std::declval<float>()) } -> std::same_as<bool>;
-};
+concept IsStreamDecoder =
+    requires(T t, int32_t& vi, uint8_t& vu8, uint16_t& vu16, uint32_t& vu, float& vf) {
+        { t.DecodeInt(vi, std::declval<int>(), std::declval<int>()) } -> std::same_as<bool>;
+        {
+            t.DecodeUInt(vu8, std::declval<uint32_t>(), std::declval<uint32_t>())
+        } -> std::same_as<bool>;
+        {
+            t.DecodeUInt(vu16, std::declval<uint32_t>(), std::declval<uint32_t>())
+        } -> std::same_as<bool>;
+        {
+            t.DecodeUInt(vu, std::declval<uint32_t>(), std::declval<uint32_t>())
+        } -> std::same_as<bool>;
+        { t.DecodeFloat16(vf, std::declval<float>(), std::declval<float>()) } -> std::same_as<bool>;
+    };
 
 template <typename Archive>
     requires IsStreamEncoder<Archive>
@@ -369,13 +471,8 @@ bool ArchiveValue(Archive& aR, const T& aValue, MinMaxT aMin, MinMaxT aMax)
         spdlog::info("encoding int {}", aValue);
         aR.EncodeInt(aValue, aMin, aMax);
         return true;
-    } else if constexpr (
-        std::is_integral_v<value_t> && std::is_unsigned_v<value_t> && sizeof(T) == 2) {
-        spdlog::info("encoding uint16 {}", aValue);
-        aR.EncodeUInt16(aValue, aMin, aMax);
-        return true;
     } else if constexpr (std::is_integral_v<value_t> && std::is_unsigned_v<value_t>) {
-        spdlog::info("encoding uint32 {}", aValue);
+        spdlog::info("encoding uint{}_t {}", sizeof(value_t), aValue);
         aR.EncodeUInt(aValue, aMin, aMax);
         return true;
     }
@@ -395,7 +492,7 @@ bool ArchiveValue(Archive& aR, T& aValue, MinMaxT aMin, MinMaxT aMax)
         aValue = static_cast<value_t>(tmp);
         spdlog::info("decoded enum {}", tmp);
         return true;
-    } else if constexpr (std::is_same_v<value_t, float>) {
+    } else if constexpr (std::is_floating_point_v<value_t>) {
         if (!aR.DecodeFloat16(aValue, aMin, aMax)) return false;
         if (aValue > aMax || aValue < aMin) return false;
         spdlog::info("decoded float {}", aValue);
@@ -405,18 +502,68 @@ bool ArchiveValue(Archive& aR, T& aValue, MinMaxT aMin, MinMaxT aMax)
         if (aValue > aMax || aValue < aMin) return false;
         spdlog::info("decoded int {}", aValue);
         return true;
-    } else if constexpr (
-        std::is_integral_v<value_t> && std::is_unsigned_v<value_t> && sizeof(T) == 2) {
-        aR.DecodeUInt16(aValue, aMin, aMax);
-        spdlog::info("decoded uint16 {}", aValue);
-        return true;
     } else if constexpr (std::is_integral_v<value_t> && std::is_unsigned_v<value_t>) {
         if (!aR.DecodeUInt(aValue, aMin, aMax)) return false;
         if (aValue > aMax || aValue < aMin) return false;
-        spdlog::info("decoded uint32 {}", aValue);
+        spdlog::info("decoded uint{}_t {}", sizeof(value_t), aValue);
         return true;
     }
     return false;
+}
+
+template <typename Archive, typename T>
+bool ArchiveVector(Archive& aR, const std::vector<T>& aVec, uint32_t aMaxSize)
+{
+    ArchiveValue(aR, aVec.size(), 0u, aMaxSize);
+    for (const T& elt : aVec) {
+        elt.Archive(aR);
+    }
+    return true;
+}
+
+template <typename Archive, typename T>
+bool ArchiveVector(Archive& aR, std::vector<T>& aVec, uint32_t aMaxSize)
+{
+    uint32_t s = 0;
+    ArchiveValue(aR, s, 0u, aMaxSize);
+    aVec.resize(s);
+    for (std::size_t idx = 0; idx < s; ++idx) {
+        T elt;
+        if (!elt.Archive(aR)) return false;
+        aVec.push_back(std::move(elt));
+    }
+    return true;
+}
+
+template <typename Archive, typename T, typename MinMaxT>
+    requires(std::is_integral_v<T> || std::is_floating_point_v<T> || std::is_enum_v<T>)
+bool ArchiveVector(
+    Archive&              aR,
+    const std::vector<T>& aVec,
+    MinMaxT               aMin,
+    MinMaxT               aMax,
+    uint32_t              aMaxSize)
+{
+    ArchiveValue(aR, aVec.size(), 0u, aMaxSize);
+    for (const T& elt : aVec) {
+        ArchiveValue(aR, elt, aMin, aMax);
+    }
+    return true;
+}
+
+template <typename Archive, typename T, typename MinMaxT>
+    requires(std::is_integral_v<T> || std::is_floating_point_v<T> || std::is_enum_v<T>)
+bool ArchiveVector(Archive& aR, std::vector<T>& aVec, MinMaxT aMin, MinMaxT aMax, uint32_t aMaxSize)
+{
+    uint32_t s = 0;
+    ArchiveValue(aR, s, 0u, aMaxSize);
+    aVec.resize(s);
+    for (std::size_t idx = 0; idx < s; ++idx) {
+        T elt{};
+        if (!ArchiveValue(aR, elt, aMin, aMax)) return false;
+        aVec.push_back(std::move(elt));
+    }
+    return true;
 }
 
 template <typename Archive, typename... Ts>
@@ -429,7 +576,15 @@ bool ArchiveVariant(Archive& aR, std::variant<Ts...>& aVar)
     if constexpr (IsStreamEncoder<Archive>) {
         index_t tag = static_cast<index_t>(aVar.index());
         if (!ArchiveValue(aR, tag, 0u, variantSize)) return false;
-        return std::visit([&](auto& aV) { return aV.Archive(aR); }, aVar);
+        return std::visit(
+            [&](auto& aV) {
+                using T = std::decay_t<decltype(aV)>;
+                if constexpr (std::is_same_v<T, std::monostate>)
+                    return true;
+                else
+                    return aV.Archive(aR);
+            },
+            aVar);
     } else if constexpr (IsStreamDecoder<Archive>) {
         index_t tag = 0;
         if (!ArchiveValue(aR, tag, 0u, variantSize)) return false;
@@ -438,7 +593,11 @@ bool ArchiveVariant(Archive& aR, std::variant<Ts...>& aVar)
         auto assign = [&](auto aIdx) {
             using T = std::tuple_element_t<aIdx, std::tuple<Ts...>>;
             T value;
-            ok = value.Archive(aR);
+            if constexpr (std::is_same_v<T, std::monostate>) {
+                ok = true;
+            } else {
+                ok = value.Archive(aR);
+            }
             if (ok) aVar = std::move(value);
         };
         bool found = false;
@@ -609,7 +768,10 @@ TEST_CASE("bitbuffer.single")
     buf.Write(value, 6);
     BitReader reader(buf.Data());
 
-    CHECK_EQ(reader.Read(6), value);
+    uint32_t r = 0;
+
+    CHECK(reader.Read(r, 6));
+    CHECK_EQ(r, value);
 }
 
 TEST_CASE("bitbuffer.multiple")
@@ -622,13 +784,10 @@ TEST_CASE("bitbuffer.multiple")
 
     std::vector<uint32_t> out(values.size());
     for (auto& v : out) {
-        if (auto r = reader.Read(5); r) {
-            v = *r;
-        } else {
-            break;
-        }
+        CHECK(reader.Read(v, 5));
     }
-    CHECK(out == values);
+
+    CHECK_EQ(out, values);
 }
 
 TEST_CASE("bitbuffer.edge_cases")
@@ -637,12 +796,16 @@ TEST_CASE("bitbuffer.edge_cases")
     uint32_t  max32 = 0xFFFFFFFF;
 
     buf.Write(max32, 32);
-    buf.Write(1, 1);
+    buf.Write(1u, 1);
 
     BitReader reader(buf.Data());
+    uint32_t  r = 0;
 
-    CHECK_EQ(reader.Read(32), max32);
-    CHECK_EQ(reader.Read(1), 1);
+    CHECK(reader.Read(r, 32));
+    CHECK_EQ(r, max32);
+
+    CHECK(reader.Read(r, 1));
+    CHECK_EQ(r, 1);
 }
 
 TEST_CASE("bitbuffer.zero")
@@ -653,7 +816,10 @@ TEST_CASE("bitbuffer.zero")
     buf.Write(dummy, 0);
 
     BitReader reader(buf.Data());
-    CHECK_EQ(reader.Read(0), 0);
+    uint32_t  r = 0;
+
+    CHECK(reader.Read(r, 0));
+    CHECK_EQ(r, 0);
 }
 
 TEST_CASE("bitbuffer.write_more_32")
@@ -665,8 +831,14 @@ TEST_CASE("bitbuffer.write_more_32")
     buf.Write(max32, 31);
 
     BitReader reader(buf.Data());
-    CHECK_EQ(max32 >> 1, reader.Read(31));
-    CHECK_EQ(max32 >> 1, reader.Read(31));
+
+    uint32_t r = 0;
+
+    CHECK(reader.Read(r, 31));
+    CHECK_EQ(r, max32 >> 1);
+
+    CHECK(reader.Read(r, 31));
+    CHECK_EQ(r, max32 >> 1);
 }
 
 TEST_CASE("encode.int")
@@ -679,11 +851,39 @@ TEST_CASE("encode.int")
     StreamDecoder dec(enc.Data());
     int           val = 0;
 
-    CHECK_EQ(dec.DecodeInt(val, 0, 100), true);
+    CHECK(dec.DecodeInt(val, 0, 100));
     CHECK_EQ(val, 42);
 
-    CHECK_EQ(dec.DecodeInt(val, -100, 100), true);
+    CHECK(dec.DecodeInt(val, -100, 100));
     CHECK_EQ(val, -42);
+}
+
+TEST_CASE("encode.unsigned")
+{
+    StreamEncoder enc;
+
+    uint16_t v16 = 21;
+    uint64_t v64 = 84;
+    uint32_t v32 = 42;
+
+    enc.EncodeUInt(v16, 0, 100);
+    enc.EncodeUInt(v64, 0, 100);
+    enc.EncodeUInt(v32, 0, 100);
+
+    StreamDecoder dec(enc.Data());
+
+    uint16_t r16 = 0;
+    uint64_t r64 = 0;
+    uint32_t r32 = 0;
+
+    CHECK(dec.DecodeUInt(r16, 0, 100));
+    CHECK_EQ(r16, v16);
+
+    CHECK(dec.DecodeUInt(r64, 0, 100));
+    CHECK_EQ(r64, v64);
+
+    CHECK(dec.DecodeUInt(r32, 0, 100));
+    CHECK_EQ(r32, v32);
 }
 
 TEST_CASE("encode.float")
@@ -718,6 +918,34 @@ TEST_CASE("encode.value")
 
     CHECK_EQ(ArchiveValue(dec, val, -5.0f, 5.0f), true);
     CHECK_EQ(val, doctest::Approx(-3.14159));
+}
+
+TEST_CASE("encode.limits")
+{
+    StreamEncoder enc;
+
+    uint16_t v16 = std::numeric_limits<uint16_t>::max();
+    uint64_t v64 = std::numeric_limits<uint64_t>::max();
+    uint32_t v32 = std::numeric_limits<uint32_t>::max();
+
+    enc.EncodeUInt(v16, v16 - 1, v16);
+    enc.EncodeUInt(v64, v64 - 1, v64);
+    enc.EncodeUInt(v32, v32 - 1, v32);
+
+    StreamDecoder dec(enc.Data());
+
+    uint16_t r16 = 0;
+    uint64_t r64 = 0;
+    uint32_t r32 = 0;
+
+    CHECK(dec.DecodeUInt(r16, v16 - 1, v16));
+    CHECK_EQ(r16, v16);
+
+    CHECK(dec.DecodeUInt(r64, v64 - 1, v64));
+    CHECK_EQ(r64, v64);
+
+    CHECK(dec.DecodeUInt(r32, v32 - 1, v32));
+    CHECK_EQ(r32, v32);
 }
 
 #endif

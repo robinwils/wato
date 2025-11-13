@@ -81,7 +81,8 @@ struct NewGameResponse {
 
     bool Archive(auto& aArchive)
     {
-        if (!ArchiveValue(aArchive, GameID, 0u, std::numeric_limits<uint64_t>::max())) return false;
+        if (!ArchiveValue(aArchive, GameID, 0ul, std::numeric_limits<uint64_t>::max()))
+            return false;
         return true;
     }
 
