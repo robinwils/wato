@@ -23,6 +23,7 @@ target_sources(wato_tests
     ${CMAKE_SOURCE_DIR}/src/core/snapshot.hpp
     ${CMAKE_SOURCE_DIR}/src/core/net/net.hpp
     ${CMAKE_SOURCE_DIR}/src/core/queue/ring_buffer.hpp
+    ${CMAKE_SOURCE_DIR}/src/input/action.hpp
     test.hpp
   PRIVATE
     ${CMAKE_SOURCE_DIR}/src/core/physics/physics.cpp

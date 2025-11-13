@@ -22,7 +22,7 @@ void ENetBase::Init()
     }
 }
 
-bool ENetBase::Send(ENetPeer* aPeer, const std::vector<uint8_t> aData)
+bool ENetBase::Send(ENetPeer* aPeer, const std::span<uint8_t> aData)
 {
     if (aPeer == nullptr) {
         mLogger->debug("client peer not initialized");

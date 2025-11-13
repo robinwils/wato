@@ -46,8 +46,8 @@ void NetworkSyncSystem<ENetServer>::operator()(Registry& aRegistry)
     auto& rbStorage    = aRegistry.storage<entt::reactive>("rigid_bodies_observer"_hs);
     auto  snapshotView = entt::basic_view{rbStorage};
 
-    GameState         serverState = GameState{.Tick = buf.Latest().Tick};
-    ByteOutputArchive outAr;
+    GameState        serverState = GameState{.Tick = buf.Latest().Tick};
+    BitOutputArchive outAr;
 
     entt::snapshot{aRegistry}
         .get<entt::entity>(outAr)
@@ -55,11 +55,11 @@ void NetworkSyncSystem<ENetServer>::operator()(Registry& aRegistry)
         .get<RigidBody>(outAr, rbStorage.begin(), rbStorage.end())
         .get<Collider>(outAr, rbStorage.begin(), rbStorage.end());
 
-    if (outAr.Bytes().empty()) {
+    if (outAr.Data().empty()) {
         return;
     }
 
-    serverState.Snapshot = std::move(outAr.Bytes());
+    serverState.Snapshot = std::vector(outAr.Data());
 
     WATO_DBG(
         aRegistry,

@@ -76,8 +76,8 @@ int GameServer::Run(tf::Executor& aExecutor)
     aExecutor.silent_async([&]() {
         while (mRunning) {
             mServer.ConsumeNetworkResponses([&](NetworkResponse* aEvent) {
-                ByteOutputArchive archive;
-                NetworkResponse::Serialize(archive, aEvent);
+                BitOutputArchive archive;
+                aEvent->Archive(archive);
 
                 if (!mServer.Send(aEvent->PlayerID, archive.Bytes())) {
                     mLogger->error("player {} is not connected", aEvent->PlayerID);

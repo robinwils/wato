@@ -22,7 +22,7 @@ class ENetClient : public ENetBase
     void Disconnect();
     void ForceDisconnect();
 
-    void Send(std::vector<uint8_t> aData) { ENetBase::Send(mPeer, aData); }
+    void Send(std::span<uint8_t> aData) { ENetBase::Send(mPeer, aData); }
 
     [[nodiscard]] bool Connected() const noexcept { return mConnected; }
 

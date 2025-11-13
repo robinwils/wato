@@ -47,7 +47,7 @@ class ENetBase
     void EnqueueRequest(NetworkRequest* aEvent) { mReqChannel.Send(aEvent); }
 
    protected:
-    bool Send(ENetPeer* aPeer, const std::vector<uint8_t> aData);
+    bool Send(ENetPeer* aPeer, const std::span<uint8_t> aData);
 
     virtual void OnConnect(ENetEvent& aEvent)           = 0;
     virtual void OnReceive(ENetEvent& aEvent)           = 0;

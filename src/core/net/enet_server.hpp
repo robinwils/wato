@@ -22,7 +22,7 @@ class ENetServer : public ENetBase
 
     void Init() override;
 
-    bool Send(PlayerID aID, const std::vector<uint8_t> aData)
+    bool Send(PlayerID aID, const std::span<uint8_t> aData)
     {
         if (!mConnectedPeers.contains(aID)) {
             return false;

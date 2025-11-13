@@ -145,9 +145,9 @@ void GameClient::networkThread()
 
         netClient.ConsumeNetworkRequests([&](NetworkRequest* aEvent) {
             // write header
-            ByteOutputArchive archive;
+            BitOutputArchive archive;
 
-            NetworkRequest::Serialize(archive, aEvent);
+            aEvent->Archive(archive);
 
             netClient.Send(archive.Bytes());
         });
@@ -271,9 +271,7 @@ void GameClient::consumeNetworkResponses()
                         return;
                     }
 
-                    ByteInputArchive      inAr(ByteInputArchive::byte_stream(
-                        aResp.State.Snapshot.data(),
-                        aResp.State.Snapshot.size()));
+                    BitInputArchive       inAr(aResp.State.Snapshot);
                     Registry              tmp;
                     entt::snapshot_loader loader{tmp};
 
