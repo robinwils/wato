@@ -17,9 +17,6 @@ struct fmt::formatter<rp3d::Vector3> : fmt::formatter<std::string> {
     }
 };
 
-// Enumeration for categories
-enum Category { Terrain = 0x0001, Entities = 0x0002, Count = (Entities << 1) - 1 };
-
 struct BoxShapeParams {
     glm::vec3 HalfExtents;
 
@@ -92,6 +89,9 @@ struct PhysicsParams {
 class Physics
 {
    public:
+    // Enumeration for categories
+    enum Category { Terrain = 0x0001, Entities = 0x0002, Count = (Entities << 1) - 1 };
+
     Physics(const Logger& aLogger) : mLogger(aLogger) {}
     ~Physics() { mLogger->trace("destroying physics"); }
 
@@ -125,6 +125,8 @@ class Physics
     rp3d::PhysicsWorld* mWorld = nullptr;
     Logger              mLogger;
 };
+
+using Category = Physics::Category;
 
 inline rp3d::Vector3 ToRP3D(const glm::vec3 aVector)
 {
