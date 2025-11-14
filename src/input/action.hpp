@@ -119,13 +119,15 @@ inline bool operator==(const SendCreepPayload& aLHS, const SendCreepPayload& aRH
 }
 
 struct BuildTowerPayload {
-    TowerType Tower;
-    glm::vec3 Position{0.0f};
+    TowerType                   Tower;
+    glm::vec3                   Position{0.0f};
+    std::optional<entt::entity> CliPredictedEntity{std::nullopt};
 
     bool Archive(auto& aArchive)
     {
         if (!ArchiveValue(aArchive, Tower, 0u, uint32_t(TowerType::Count))) return false;
         if (!ArchiveVector(aArchive, Position, 0.0f, 20.0f)) return false;
+        if (!ArchiveOptionalVal(aArchive, CliPredictedEntity, 0.0f, 20.0f)) return false;
         return true;
     }
 };

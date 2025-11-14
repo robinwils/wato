@@ -566,6 +566,14 @@ bool ArchiveVector(Archive& aR, std::vector<T>& aVec, MinMaxT aMin, MinMaxT aMax
     return true;
 }
 
+template <typename Archive, typename T, typename MinMaxT>
+bool ArchiveOptionalVal(Archive& aR, std::optional<T>& aOpt, MinMaxT aMin, MinMaxT aMax)
+{
+    if (!ArchiveBool(aR, aOpt.has_value())) return false;
+    if (aOpt && ArchiveValue(aR, aOpt.has_value(), aMin, aMax)) return false;
+    return true;
+}
+
 template <typename Archive, typename... Ts>
 bool ArchiveVariant(Archive& aR, std::variant<Ts...>& aVar)
 {

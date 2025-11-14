@@ -148,7 +148,7 @@ void DefaultContextHandler::ExitPlacement(Registry& aRegistry)
     }
 }
 
-void PlacementModeContextHandler::operator()(Registry& aRegistry, const BuildTowerPayload& aPayload)
+void PlacementModeContextHandler::operator()(Registry& aRegistry, BuildTowerPayload& aPayload)
 {
     auto& phy = aRegistry.ctx().get<Physics>();
 
@@ -205,7 +205,7 @@ void PlacementModeContextHandler::operator()(Registry& aRegistry, const Placemen
     ExitPlacement(aRegistry);
 }
 
-void ServerContextHandler::operator()(Registry& aRegistry, const BuildTowerPayload& aPayload)
+void ServerContextHandler::operator()(Registry& aRegistry, BuildTowerPayload& aPayload)
 {
     auto  tower = aRegistry.create();
     auto& phy   = aRegistry.ctx().get<Physics>();
@@ -255,9 +255,9 @@ void ServerContextHandler::operator()(Registry& aRegistry, const BuildTowerPaylo
 
 template <typename Derived>
 void ActionSystem<Derived>::handleAction(
-    Registry&     aRegistry,
-    const Action& aAction,
-    const float   aDeltaTime)
+    Registry&   aRegistry,
+    Action&     aAction,
+    const float aDeltaTime)
 {
     WATO_TRACE(aRegistry, "handling {}", aAction);
     auto&       contextStack = aRegistry.ctx().get<ActionContextStack&>();
@@ -295,7 +295,7 @@ void ActionSystem<Derived>::processActions(
         WATO_TRACE(aRegistry, "processing {} actions", latestActions.size());
     }
 
-    for (const Action& action : latestActions) {
+    for (Action& action : latestActions) {
         if (action.Tag != aFilterTag || action.IsProcessed) {
             continue;
         }
@@ -310,7 +310,7 @@ void ActionSystem<Derived>::processActions(
 template <typename Derived>
 void ActionSystem<Derived>::handleContext(
     Registry&             aRegistry,
-    const Action&         aAction,
+    Action&               aAction,
     ActionContextHandler& aCtxHandler,
     const float           aDeltaTime)
 {
@@ -318,7 +318,7 @@ void ActionSystem<Derived>::handleContext(
         VariantVisitor{
             [&](const PlacementModePayload& aPayload) { aCtxHandler(aRegistry, aPayload); },
             [&](const MovePayload& aPayload) { aCtxHandler(aRegistry, aPayload, aDeltaTime); },
-            [&](const BuildTowerPayload& aPayload) { aCtxHandler(aRegistry, aPayload); },
+            [&](BuildTowerPayload& aPayload) { aCtxHandler(aRegistry, aPayload); },
             [&](const SendCreepPayload& aPayload) { aCtxHandler(aRegistry, aPayload); },
         },
         aAction.Payload);
