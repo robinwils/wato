@@ -51,21 +51,6 @@ struct Transform3D {
         if (!ArchiveVector(aArchive, Scale, 0.0f, 20.0f)) return false;
         return true;
     }
-
-    constexpr static auto Serialize(auto& aArchive, const auto& aSelf)
-    {
-        ::Serialize(aArchive, aSelf.Position);
-        ::Serialize(aArchive, aSelf.Orientation);
-        ::Serialize(aArchive, aSelf.Scale);
-    }
-
-    constexpr static auto Deserialize(auto& aArchive, auto& aSelf)
-    {
-        ::Deserialize(aArchive, aSelf.Position);
-        ::Deserialize(aArchive, aSelf.Orientation);
-        ::Deserialize(aArchive, aSelf.Scale);
-        return true;
-    }
 };
 
 template <>

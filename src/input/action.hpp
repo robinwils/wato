@@ -186,68 +186,6 @@ struct Action {
         if (!ArchiveVariant(aArchive, Payload)) return false;
         return true;
     }
-
-    constexpr static auto Serialize(auto& aArchive, const auto& aSelf)
-    {
-        ::Serialize(aArchive, aSelf.Type);
-        ::Serialize(aArchive, aSelf.Tag);
-
-        // Then serialize the actual payload based on type
-        std::visit(
-            VariantVisitor{
-                [&](const MovePayload& aPayload) { ::Serialize(aArchive, aPayload.Direction); },
-                [&](const SendCreepPayload& aPayload) { ::Serialize(aArchive, aPayload.Type); },
-                [&](const BuildTowerPayload& aPayload) {
-                    ::Serialize(aArchive, aPayload.Tower);
-                    ::Serialize(aArchive, aPayload.Position);
-                },
-                [&](const PlacementModePayload& aPayload) {
-                    aArchive.Write(aPayload.CanBuild);
-                    ::Serialize(aArchive, aPayload.Tower);
-                },
-            },
-            aSelf.Payload);
-    }
-
-    constexpr static auto Deserialize(auto& aArchive, auto& aSelf)
-    {
-        ::Deserialize(aArchive, aSelf.Type);
-        ::Deserialize(aArchive, aSelf.Tag);
-
-        switch (aSelf.Type) {
-            case ActionType::Move: {
-                MovePayload payload{};
-                ::Deserialize(aArchive, payload.Direction);
-                aSelf.Payload = payload;
-                break;
-            }
-            case ActionType::SendCreep: {
-                SendCreepPayload payload{};
-                ::Deserialize(aArchive, payload.Type);
-                aSelf.Payload = payload;
-                break;
-            }
-            case ActionType::BuildTower: {
-                BuildTowerPayload payload{};
-                ::Deserialize(aArchive, payload.Tower);
-                ::Deserialize(aArchive, payload.Position);
-                aSelf.Payload = payload;
-                break;
-            }
-            case ActionType::EnterPlacementMode:
-            case ActionType::ExitPlacementMode: {
-                PlacementModePayload payload{};
-                aArchive.Read(payload.CanBuild);
-                ::Deserialize(aArchive, payload.Tower);
-                aSelf.Payload = payload;
-                break;
-            }
-            default:
-                return false;
-        }
-
-        return true;
-    }
 };
 
 inline bool operator==(const Action& aLHS, const Action& aRHS)

@@ -28,16 +28,6 @@ struct NewGameRequest {
         if (!ArchiveValue(aArchive, PlayerAID, 0u, 1000000000u)) return false;
         return true;
     }
-
-    constexpr static auto Serialize(auto& aArchive, const auto& aSelf)
-    {
-        ::Serialize(aArchive, aSelf.PlayerAID);
-    }
-    constexpr static auto Deserialize(auto& aArchive, auto& aSelf)
-    {
-        ::Deserialize(aArchive, aSelf.PlayerAID);
-        return true;
-    }
 };
 
 inline bool operator==(const NewGameRequest& aLHS, const NewGameRequest& aRHS)
@@ -56,19 +46,6 @@ struct SyncPayload {
         if (!State.Archive(aArchive)) return false;
         return true;
     }
-
-    constexpr static auto Serialize(auto& aArchive, const auto& aSelf)
-    {
-        ::Serialize(aArchive, aSelf.GameID);
-        GameState::Serialize(aArchive, aSelf.State);
-    }
-
-    constexpr static auto Deserialize(auto& aArchive, auto& aSelf)
-    {
-        ::Deserialize(aArchive, aSelf.GameID);
-        GameState::Deserialize(aArchive, aSelf.State);
-        return true;
-    }
 };
 
 inline bool operator==(const SyncPayload& aLHS, const SyncPayload& aRHS)
@@ -85,16 +62,6 @@ struct NewGameResponse {
             return false;
         return true;
     }
-
-    constexpr static auto Serialize(auto& aArchive, const auto& aSelf)
-    {
-        ::Serialize(aArchive, aSelf.GameID);
-    }
-    constexpr static auto Deserialize(auto& aArchive, auto& aSelf)
-    {
-        ::Deserialize(aArchive, aSelf.GameID);
-        return true;
-    }
 };
 
 inline bool operator==(const NewGameResponse& aLHS, const NewGameResponse& aRHS)
@@ -103,9 +70,7 @@ inline bool operator==(const NewGameResponse& aLHS, const NewGameResponse& aRHS)
 }
 
 struct ConnectedResponse {
-    bool                  Archive(auto& aArchive) { return true; }
-    constexpr static auto Serialize(auto&, const auto&) {}
-    constexpr static auto Deserialize(auto&, auto&) { return true; }
+    bool Archive(auto& aArchive) { return true; }
 };
 
 inline bool operator==(const ConnectedResponse&, const ConnectedResponse&) { return true; }
@@ -114,9 +79,7 @@ struct TowerValidationResponse {
     bool         Valid;
     entt::entity Entity;
 
-    bool                  Archive(auto& aArchive) { return true; }
-    constexpr static auto Serialize(auto&, const auto&) {}
-    constexpr static auto Deserialize(auto&, auto&) { return true; }
+    bool Archive(auto& aArchive) { return true; }
 };
 
 inline bool operator==(const TowerValidationResponse& aLHS, const TowerValidationResponse& aRHS)
@@ -137,76 +100,6 @@ using NetworkRequestPayload = std::variant<std::monostate, SyncPayload, NewGameR
 using NetworkResponsePayload =
     std::variant<std::monostate, NewGameResponse, ConnectedResponse, SyncPayload>;
 
-constexpr auto Serialize(auto& aArchive, const NetworkRequestPayload& aObj)
-{
-    std::visit(
-        VariantVisitor{
-            [&](const SyncPayload& aSync) { SyncPayload::Serialize(aArchive, aSync); },
-            [&](const NewGameRequest& aReq) { NewGameRequest::Serialize(aArchive, aReq); },
-            [&](const std::monostate) {},
-        },
-        aObj);
-}
-
-constexpr auto Deserialize(auto& aArchive, NetworkRequestPayload& aReqPl, PacketType aType)
-{
-    switch (aType) {
-        case PacketType::ClientSync:
-        case PacketType::ServerSync: {
-            SyncPayload req;
-            SyncPayload::Deserialize(aArchive, req);
-            aReqPl = req;
-            break;
-        }
-        case PacketType::NewGame: {
-            NewGameRequest req;
-            NewGameRequest::Deserialize(aArchive, req);
-            aReqPl = req;
-            break;
-        }
-        default:
-            return false;
-    }
-    return true;
-}
-
-constexpr auto Serialize(auto& aArchive, const NetworkResponsePayload& aObj)
-{
-    std::visit(
-        VariantVisitor{
-            [&](const SyncPayload& aSync) { SyncPayload::Serialize(aArchive, aSync); },
-            [&](const NewGameResponse& aReq) { NewGameResponse::Serialize(aArchive, aReq); },
-            [&](const ConnectedResponse& aReq) { ConnectedResponse::Serialize(aArchive, aReq); },
-            [&](const std::monostate) {},
-        },
-        aObj);
-}
-
-constexpr auto Deserialize(auto& aArchive, NetworkResponsePayload& aRespPl, PacketType aType)
-{
-    switch (aType) {
-        case PacketType::NewGame: {
-            NewGameResponse resp;
-            NewGameResponse::Deserialize(aArchive, resp);
-            aRespPl = resp;
-            break;
-        }
-        case PacketType::Connected: {
-            aRespPl = ConnectedResponse{};
-            break;
-        }
-        case PacketType::ServerSync: {
-            SyncPayload resp;
-            SyncPayload::Deserialize(aArchive, resp);
-            aRespPl = resp;
-            break;
-        }
-        default:
-            return false;
-    }
-    return true;
-}
-
 template <typename _Payload>
 struct NetworkEvent {
     PacketType Type;
@@ -219,19 +112,6 @@ struct NetworkEvent {
         if (!ArchiveValue(aArchive, PlayerID, 0u, 1000000000u)) return false;
         if (!ArchiveVariant(aArchive, Payload)) return false;
         return true;
-    }
-
-    constexpr static auto Serialize(auto& aArchive, NetworkEvent<_Payload>* aSelf)
-    {
-        ::Serialize(aArchive, aSelf->Type);
-        ::Serialize(aArchive, aSelf->PlayerID);
-        ::Serialize(aArchive, aSelf->Payload);
-    }
-    constexpr static auto Deserialize(auto& aArchive, NetworkEvent<_Payload>* aSelf)
-    {
-        ::Deserialize(aArchive, aSelf->Type);
-        ::Deserialize(aArchive, aSelf->PlayerID);
-        ::Deserialize(aArchive, aSelf->Payload, aSelf->Type);
     }
 };
 

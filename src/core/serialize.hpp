@@ -623,101 +623,6 @@ bool ArchiveVariant(Archive& aR, std::variant<Ts...>& aVar)
     return false;
 }
 
-template <class T>
-concept not_bool = !std::same_as<std::remove_cv_t<T>, bool>;
-
-template <class T>
-concept fixed_size_scalar =
-    (std::is_integral_v<T> || std::is_floating_point_v<T>)
-    && (sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4 || sizeof(T) == 8);
-
-template <class T>
-concept wire_scalar = fixed_size_scalar<T> && not_bool<T>;
-
-template <class E>
-concept fixed_enum =
-    std::is_enum_v<E>
-    && (sizeof(std::underlying_type_t<E>) == 1 || sizeof(std::underlying_type_t<E>) == 2
-        || sizeof(std::underlying_type_t<E>) == 4 || sizeof(std::underlying_type_t<E>) == 8);
-
-template <class T>
-concept wire_native = wire_scalar<T> || fixed_enum<T>;
-
-template <wire_native T>
-constexpr auto Serialize(auto& aArchive, const T& aObj, std::size_t aN = 1)
-{
-    aArchive.Write(&aObj, aN);
-}
-
-template <wire_native T>
-constexpr auto Deserialize(auto& aArchive, T& aObj, std::size_t aN = 1)
-{
-    aArchive.template Read<T>(&aObj, aN);
-}
-
-template <wire_native T>
-constexpr auto Serialize(auto& aArchive, const std::vector<T>& aObj)
-{
-    Serialize(aArchive, aObj.size());
-    if (!aObj.empty()) {
-        aArchive.Write(aObj.begin(), aObj.size());
-    }
-}
-
-template <typename T>
-    requires(!wire_native<T>)
-constexpr auto Serialize(auto& aArchive, const std::vector<T>& aObj)
-{
-    Serialize(aArchive, aObj.size());
-    for (const T& action : aObj) {
-        T::Serialize(aArchive, action);
-    }
-}
-
-template <wire_native T>
-constexpr auto Deserialize(auto& aArchive, std::vector<T>& aObj)
-{
-    using size_type = typename std::vector<T>::size_type;
-
-    size_type n = 0;
-
-    Deserialize(aArchive, n);
-    if (n > 0) {
-        aObj.resize(n);
-        aArchive.template Read<T>(aObj.begin(), n);
-    }
-}
-
-template <typename T>
-    requires(!wire_native<T>)
-constexpr auto Deserialize(auto& aArchive, std::vector<T>& aObj)
-{
-    using ST = typename std::vector<T>::size_type;
-
-    ST n = 0;
-
-    Deserialize(aArchive, n);
-    for (ST idx = 0; idx < n; idx++) {
-        T v;
-        if (!T::Deserialize(aArchive, v)) {
-            throw std::runtime_error("cannot deserialize action");
-        }
-        aObj.push_back(v);
-    }
-}
-
-template <glm::length_t L, typename T, glm::qualifier Q>
-constexpr auto Serialize(auto& aArchive, const glm::vec<L, T, Q>& aObj)
-{
-    aArchive.Write(glm::value_ptr(aObj), L);
-}
-
-template <glm::length_t L, typename T, glm::qualifier Q>
-constexpr auto Deserialize(auto& aArchive, glm::vec<L, T, Q>& aObj)
-{
-    aArchive.template Read<T>(glm::value_ptr(aObj), L);
-}
-
 template <glm::length_t L, typename T, glm::qualifier Q, typename MinMaxT>
 constexpr bool
 ArchiveVector(auto& aArchive, glm::vec<L, T, Q>& aObj, const MinMaxT aMin, const MinMaxT aMax)
@@ -751,18 +656,6 @@ constexpr bool ArchiveQuaternion(auto& aArchive, glm::qua<T, Q>& aObj)
         }
     }
     return true;
-}
-
-template <typename T, glm::qualifier Q>
-constexpr auto Serialize(auto& aArchive, const glm::qua<T, Q>& aObj)
-{
-    aArchive.Write(glm::value_ptr(aObj), 4);
-}
-
-template <typename T, glm::qualifier Q>
-constexpr auto Deserialize(auto& aArchive, glm::qua<T, Q>& aObj)
-{
-    aArchive.template Read<T>(glm::value_ptr(aObj), 4);
 }
 
 #ifndef DOCTEST_CONFIG_DISABLE
