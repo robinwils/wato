@@ -47,10 +47,12 @@ void ENetServer::OnConnect(ENetEvent&) {}
 
 void ENetServer::OnReceive(ENetEvent& aEvent)
 {
-    ByteInputArchive archive(std::span<uint8_t>(aEvent.packet->data, aEvent.packet->dataLength));
-    auto             ev = new NetworkRequest;
+    BitInputArchive archive(std::span<uint8_t>(aEvent.packet->data, aEvent.packet->dataLength));
+    auto            ev = new NetworkRequest;
 
-    NetworkRequest::Deserialize(archive, ev);
+    if (!ev->Archive(archive)) {
+        spdlog::critical("cannot decode packet");
+    }
 
     if (ev->Type == PacketType::NewGame) {
         auto payload = std::get<NewGameRequest>(ev->Payload);
