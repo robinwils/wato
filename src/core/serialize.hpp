@@ -647,9 +647,7 @@ constexpr bool
 ArchiveVector(auto& aArchive, glm::vec<L, T, Q>& aObj, const MinMaxT aMin, const MinMaxT aMax)
 {
     for (std::size_t idx = 0; idx < L; ++idx) {
-        if (!ArchiveValue(aArchive, aObj[idx], aMin, aMax)) {
-            return false;
-        }
+        if (!ArchiveValue(aArchive, aObj[idx], aMin, aMax)) return false;
     }
     return true;
 }
@@ -659,9 +657,7 @@ constexpr bool
 ArchiveVector(auto& aArchive, const glm::vec<L, T, Q>& aObj, const MinMaxT aMin, const MinMaxT aMax)
 {
     for (std::size_t idx = 0; idx < L; ++idx) {
-        if (!ArchiveValue(aArchive, aObj[idx], aMin, aMax)) {
-            return false;
-        }
+        if (!ArchiveValue(aArchive, aObj[idx], aMin, aMax)) return false;
     }
     return true;
 }
@@ -670,13 +666,10 @@ template <typename T, glm::qualifier Q>
 constexpr bool ArchiveQuaternion(auto& aArchive, glm::qua<T, Q>& aObj)
 {
     for (std::size_t idx = 0; idx < 4; ++idx) {
-        if (!ArchiveValue(aArchive, aObj[idx], -1.0f, 1.0f)) {
-            return false;
-        }
+        if (!ArchiveValue(aArchive, aObj[idx], -1.0f, 1.0f)) return false;
     }
     return true;
 }
-
 #ifndef DOCTEST_CONFIG_DISABLE
 #include "test.hpp"
 
