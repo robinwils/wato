@@ -567,10 +567,29 @@ bool ArchiveVector(Archive& aR, std::vector<T>& aVec, MinMaxT aMin, MinMaxT aMax
 }
 
 template <typename Archive, typename T, typename MinMaxT>
-bool ArchiveOptionalVal(Archive& aR, std::optional<T>& aOpt, MinMaxT aMin, MinMaxT aMax)
+    requires IsStreamEncoder<Archive> && IsTriviallyArchivable<T>
+bool ArchiveOptionalVal(Archive& aR, std::optional<T> const& aOpt, MinMaxT aMin, MinMaxT aMax)
 {
     if (!ArchiveBool(aR, aOpt.has_value())) return false;
-    if (aOpt && ArchiveValue(aR, aOpt.has_value(), aMin, aMax)) return false;
+    if (aOpt && ArchiveValue(aR, *aOpt, aMin, aMax)) return false;
+    return true;
+}
+
+template <typename Archive, typename T, typename MinMaxT>
+    requires IsStreamDecoder<Archive> && IsTriviallyArchivable<T>
+bool ArchiveOptionalVal(Archive& aR, std::optional<T>& aOpt, MinMaxT aMin, MinMaxT aMax)
+{
+    bool hasVal;
+    if (!ArchiveBool(aR, hasVal)) return false;
+
+    if (!hasVal) {
+        return true;
+    }
+
+    T v;
+
+    if (!ArchiveValue(aR, v, aMin, aMax)) return false;
+    aOpt = v;
     return true;
 }
 
