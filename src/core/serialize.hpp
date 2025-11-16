@@ -216,7 +216,7 @@ class StreamEncoder
    public:
     StreamEncoder() = default;
 
-    void EncodeBool(bool aVal) { mBits.Write(aVal ? 1u : 0u, 1); }
+    void EncodeBool(const bool& aVal) { mBits.Write(aVal ? 1u : 0u, 1); }
 
     template <typename IntT>
         requires(std::is_integral_v<IntT> && !std::is_unsigned_v<IntT>)
@@ -415,10 +415,11 @@ class StreamDecoder
 
 template <typename T>
 concept IsStreamEncoder = requires(T t) {
-    { t.EncodeInt(std::declval<int>(), std::declval<int>(), std::declval<int>()) };
-    { t.EncodeUInt(std::declval<uint8_t>(), std::declval<uint32_t>(), std::declval<uint32_t>()) };
-    { t.EncodeUInt(std::declval<uint16_t>(), std::declval<uint32_t>(), std::declval<uint32_t>()) };
-    { t.EncodeUInt(std::declval<uint32_t>(), std::declval<uint32_t>(), std::declval<uint32_t>()) };
+    { t.EncodeBool(std::declval<const bool&>()) };
+    { t.EncodeInt(std::declval<int>(), std::declval<int64_t>(), std::declval<int64_t>()) };
+    { t.EncodeUInt(std::declval<uint8_t>(), std::declval<uint64_t>(), std::declval<uint64_t>()) };
+    { t.EncodeUInt(std::declval<uint16_t>(), std::declval<uint64_t>(), std::declval<uint64_t>()) };
+    { t.EncodeUInt(std::declval<uint64_t>(), std::declval<uint64_t>(), std::declval<uint64_t>()) };
     { t.EncodeFloat16(std::declval<float>(), std::declval<float>(), std::declval<float>()) };
 };
 
@@ -459,8 +460,7 @@ template <typename Archive>
     requires IsStreamDecoder<Archive>
 bool ArchiveBool(Archive& aR, bool& aValue)
 {
-    if (!aR.DecodeBool(aValue)) return false;
-    return true;
+    return aR.DecodeBool(aValue);
 }
 
 template <typename Archive, typename T, typename MinMaxT>
