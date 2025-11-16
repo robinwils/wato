@@ -424,20 +424,23 @@ concept IsStreamEncoder = requires(T t) {
 };
 
 template <typename T>
-concept IsStreamDecoder =
-    requires(T t, int32_t& vi, uint8_t& vu8, uint16_t& vu16, uint32_t& vu, float& vf) {
-        { t.DecodeInt(vi, std::declval<int>(), std::declval<int>()) } -> std::same_as<bool>;
-        {
-            t.DecodeUInt(vu8, std::declval<uint32_t>(), std::declval<uint32_t>())
-        } -> std::same_as<bool>;
-        {
-            t.DecodeUInt(vu16, std::declval<uint32_t>(), std::declval<uint32_t>())
-        } -> std::same_as<bool>;
-        {
-            t.DecodeUInt(vu, std::declval<uint32_t>(), std::declval<uint32_t>())
-        } -> std::same_as<bool>;
-        { t.DecodeFloat16(vf, std::declval<float>(), std::declval<float>()) } -> std::same_as<bool>;
-    };
+concept IsStreamDecoder = requires(
+    T         t,
+    int32_t&  vi,
+    uint8_t&  vu8,
+    uint16_t& vu16,
+    uint32_t& vu,
+    uint32_t& vu64,
+    float&    vf) {
+    { t.DecodeInt(vi, std::declval<int64_t>(), std::declval<int64_t>()) } -> std::same_as<bool>;
+    { t.DecodeUInt(vu8, std::declval<uint64_t>(), std::declval<uint64_t>()) } -> std::same_as<bool>;
+    {
+        t.DecodeUInt(vu16, std::declval<uint64_t>(), std::declval<uint64_t>())
+    } -> std::same_as<bool>;
+    { t.DecodeUInt(vu, std::declval<uint64_t>(), std::declval<uint64_t>()) } -> std::same_as<bool>;
+    { t.DecodeUInt(vu, std::declval<uint64_t>(), std::declval<uint64_t>()) } -> std::same_as<bool>;
+    { t.DecodeFloat16(vf, std::declval<float>(), std::declval<float>()) } -> std::same_as<bool>;
+};
 
 template <typename T>
 concept IsTriviallyArchivable =
@@ -521,9 +524,9 @@ bool ArchiveValue(Archive& aR, T& aValue, MinMaxT aMin, MinMaxT aMax)
 }
 
 template <typename Archive, typename T>
-bool ArchiveVector(Archive& aR, const std::vector<T>& aVec, uint32_t aMaxSize)
+bool ArchiveVector(Archive& aR, const std::vector<T>& aVec, std::size_t aMaxSize)
 {
-    ArchiveValue(aR, aVec.size(), 0u, aMaxSize);
+    ArchiveValue(aR, aVec.size(), 0ul, aMaxSize);
     for (const T& elt : aVec) {
         elt.Archive(aR);
     }
@@ -531,11 +534,12 @@ bool ArchiveVector(Archive& aR, const std::vector<T>& aVec, uint32_t aMaxSize)
 }
 
 template <typename Archive, typename T>
-bool ArchiveVector(Archive& aR, std::vector<T>& aVec, uint32_t aMaxSize)
+bool ArchiveVector(Archive& aR, std::vector<T>& aVec, std::size_t aMaxSize)
 {
-    uint32_t s = 0;
-    ArchiveValue(aR, s, 0u, aMaxSize);
-    aVec.resize(s);
+    std::size_t s = 0;
+
+    ArchiveValue(aR, s, 0ul, aMaxSize);
+    aVec.reserve(s);
     for (std::size_t idx = 0; idx < s; ++idx) {
         T elt;
         if (!elt.Archive(aR)) return false;
@@ -551,9 +555,9 @@ bool ArchiveVector(
     const std::vector<T>& aVec,
     MinMaxT               aMin,
     MinMaxT               aMax,
-    uint32_t              aMaxSize)
+    std::size_t           aMaxSize)
 {
-    ArchiveValue(aR, aVec.size(), 0u, aMaxSize);
+    ArchiveValue(aR, aVec.size(), 0ul, aMaxSize);
     for (const T& elt : aVec) {
         ArchiveValue(aR, elt, aMin, aMax);
     }
@@ -569,9 +573,10 @@ bool ArchiveVector(
     MinMaxT         aMax,
     std::size_t     aMaxSize)
 {
-    uint32_t s = 0;
-    ArchiveValue(aR, s, 0u, aMaxSize);
-    aVec.resize(s);
+    std::size_t s = 0;
+
+    ArchiveValue(aR, s, 0ul, aMaxSize);
+    aVec.reserve(s);
     for (std::size_t idx = 0; idx < s; ++idx) {
         T elt{};
         if (!ArchiveValue(aR, elt, aMin, aMax)) return false;
