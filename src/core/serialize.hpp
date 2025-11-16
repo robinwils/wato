@@ -438,6 +438,15 @@ concept IsStreamDecoder =
         { t.DecodeFloat16(vf, std::declval<float>(), std::declval<float>()) } -> std::same_as<bool>;
     };
 
+template <typename T>
+concept IsTriviallyArchivable =
+    std::is_integral_v<T> || std::is_floating_point_v<T> || std::is_enum_v<T>;
+
+template <typename T, class Out>
+concept IsArchivable = requires(T aObj, Out& aOut) {
+    { aObj.Archive(aOut) } -> std::same_as<bool>;
+};
+
 template <typename Archive>
     requires IsStreamEncoder<Archive>
 bool ArchiveBool(Archive& aR, const bool& aValue)
@@ -455,7 +464,7 @@ bool ArchiveBool(Archive& aR, bool& aValue)
 }
 
 template <typename Archive, typename T, typename MinMaxT>
-    requires IsStreamEncoder<Archive>
+    requires IsStreamEncoder<Archive> && IsTriviallyArchivable<T>
 bool ArchiveValue(Archive& aR, const T& aValue, MinMaxT aMin, MinMaxT aMax)
 {
     using value_t = std::remove_cv_t<T>;
@@ -480,7 +489,7 @@ bool ArchiveValue(Archive& aR, const T& aValue, MinMaxT aMin, MinMaxT aMax)
 }
 
 template <typename Archive, typename T, typename MinMaxT>
-    requires IsStreamDecoder<Archive>
+    requires IsStreamDecoder<Archive> && IsTriviallyArchivable<T>
 bool ArchiveValue(Archive& aR, T& aValue, MinMaxT aMin, MinMaxT aMax)
 {
     using value_t = std::remove_cv_t<T>;
@@ -536,7 +545,7 @@ bool ArchiveVector(Archive& aR, std::vector<T>& aVec, uint32_t aMaxSize)
 }
 
 template <typename Archive, typename T, typename MinMaxT>
-    requires(std::is_integral_v<T> || std::is_floating_point_v<T> || std::is_enum_v<T>)
+    requires IsStreamEncoder<Archive> && IsTriviallyArchivable<T>
 bool ArchiveVector(
     Archive&              aR,
     const std::vector<T>& aVec,
@@ -552,8 +561,13 @@ bool ArchiveVector(
 }
 
 template <typename Archive, typename T, typename MinMaxT>
-    requires(std::is_integral_v<T> || std::is_floating_point_v<T> || std::is_enum_v<T>)
-bool ArchiveVector(Archive& aR, std::vector<T>& aVec, MinMaxT aMin, MinMaxT aMax, uint32_t aMaxSize)
+    requires IsStreamDecoder<Archive> && IsTriviallyArchivable<T>
+bool ArchiveVector(
+    Archive&        aR,
+    std::vector<T>& aVec,
+    MinMaxT         aMin,
+    MinMaxT         aMax,
+    std::size_t     aMaxSize)
 {
     uint32_t s = 0;
     ArchiveValue(aR, s, 0u, aMaxSize);
