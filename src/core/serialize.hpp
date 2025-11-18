@@ -211,6 +211,98 @@ class BitReader
     word*      mNext;
 };
 
+template <typename T, typename M>
+void AssertBounds(M aMin, M aMax)
+{
+    if constexpr (std::is_floating_point_v<M>) {
+        BX_ASSERT(std::isfinite(aMin), "%s", fmt::to_string(aMin).c_str());
+        BX_ASSERT(std::isfinite(aMax), "%s", fmt::to_string(aMax).c_str());
+    }
+
+    BX_ASSERT(aMin < aMax, "%s >= %s", fmt::to_string(aMin).c_str(), fmt::to_string(aMax).c_str());
+
+    if constexpr (sizeof(T) <= sizeof(int32_t)) {
+        BX_ASSERT(
+            aMax <= std::numeric_limits<T>::max(),
+            "%s > %s",
+            fmt::to_string(aMax).c_str(),
+            fmt::to_string(std::numeric_limits<T>::max()).c_str());
+        BX_ASSERT(
+            aMin >= std::numeric_limits<T>::min(),
+            "%s < %s",
+            fmt::to_string(aMin).c_str(),
+            fmt::to_string(std::numeric_limits<T>::min()).c_str());
+    }
+}
+
+template <typename T, typename M>
+void AssertBoundsAndVal(T aVal, M aMin, M aMax)
+{
+    AssertBounds<T, M>(aMin, aMax);
+
+    if constexpr (std::is_floating_point_v<M>) {
+        BX_ASSERT(std::isfinite(aVal), "%s", fmt::to_string(aVal).c_str());
+    }
+    BX_ASSERT(aVal >= aMin, "%s < %s", fmt::to_string(aVal).c_str(), fmt::to_string(aMin).c_str());
+    BX_ASSERT(aVal <= aMax, "%s > %s", fmt::to_string(aVal).c_str(), fmt::to_string(aMax).c_str());
+}
+
+template <typename T, typename M>
+bool CheckBounds(M aMin, M aMax)
+{
+    if constexpr (std::is_floating_point_v<M>) {
+        if (!std::isfinite(aMin)) {
+            spdlog::critical("min {} is not finite", aMin);
+            return false;
+        }
+        if (!std::isfinite(aMax)) {
+            spdlog::critical("max {} is not finite", aMax);
+            return false;
+        }
+    }
+    if (aMin >= aMax) {
+        spdlog::critical("min >= max: {} >= {}", aMin, aMax);
+        return false;
+    }
+
+    if constexpr (sizeof(T) <= sizeof(int32_t)) {
+        if (aMax > std::numeric_limits<T>::max()) {
+            spdlog::critical("max > lim: {} > {}", aMax, std::numeric_limits<T>::max());
+            return false;
+        }
+        if (aMin < std::numeric_limits<T>::min()) {
+            spdlog::critical("min < lim: {} < {}", aMin, std::numeric_limits<T>::min());
+            return false;
+        }
+    }
+    return true;
+}
+
+template <typename T, typename M>
+bool CheckBoundsAndVal(T aVal, M aMin, M aMax)
+{
+    if (!CheckBounds<T, M>(aMin, aMax)) return false;
+
+    if constexpr (std::is_floating_point_v<M>) {
+        if (!std::isfinite(aVal)) {
+            spdlog::critical("val {} is not finite", aVal);
+            return false;
+        }
+    }
+
+    if (aVal < aMin) {
+        spdlog::critical("val < min: {} < {}", aVal, aMin);
+        return false;
+    }
+
+    if (aVal > aMax) {
+        spdlog::critical("val > max: {} > {}", aVal, aMax);
+        return false;
+    }
+
+    return true;
+}
+
 class StreamEncoder
 {
    public:
@@ -222,25 +314,9 @@ class StreamEncoder
         requires(std::is_integral_v<IntT> && !std::is_unsigned_v<IntT>)
     void EncodeInt(IntT aVal, int64_t aMin, int64_t aMax)
     {
-        BX_ASSERT(aMin < aMax, "min is higher or equal than max");
+        AssertBoundsAndVal(aVal, aMin, aMax);
 
         uint32_t diff = uint32_t(aMax - aMin);
-
-        if constexpr (sizeof(IntT) <= sizeof(int32_t)) {
-            BX_ASSERT(
-                aMax <= std::numeric_limits<IntT>::max(),
-                "max %d is higher than %d",
-                aMax,
-                std::numeric_limits<IntT>::max());
-            BX_ASSERT(
-                aMin < std::numeric_limits<IntT>::max(),
-                "min %d is higher than %d",
-                aMin,
-                std::numeric_limits<IntT>::max() - 1);
-        }
-
-        BX_ASSERT(aVal >= aMin, "value is less than min");
-        BX_ASSERT(aVal <= aMax, "value is more than max");
 
         // uint32_t value = uint32_t(aVal - aMin);
         // auto     diff  = int64_t(aMax) - int64_t(aMin);
@@ -257,23 +333,7 @@ class StreamEncoder
         requires(std::is_integral_v<UIntT> && std::is_unsigned_v<UIntT>)
     void EncodeUInt(UIntT aVal, uint64_t aMin, uint64_t aMax)
     {
-        BX_ASSERT(aMin < aMax, "min is higher or equal than max");
-
-        if constexpr (sizeof(UIntT) <= sizeof(uint32_t)) {
-            BX_ASSERT(
-                aMax <= std::numeric_limits<UIntT>::max(),
-                "max %u is higher than %u",
-                aMax,
-                std::numeric_limits<UIntT>::max());
-            BX_ASSERT(
-                aMin < std::numeric_limits<UIntT>::max(),
-                "min %u is higher than %u",
-                aMin,
-                std::numeric_limits<UIntT>::max() - 1);
-        }
-
-        BX_ASSERT(aVal >= aMin, "value is less than min");
-        BX_ASSERT(aVal <= aMax, "value is more than max");
+        AssertBoundsAndVal(aVal, aMin, aMax);
 
         if constexpr (sizeof(UIntT) <= sizeof(uint32_t)) {
             mBits.Write(uint32_t(aVal - aMin), uint32_t(std::bit_width(aMax - aMin)));
@@ -323,20 +383,7 @@ class StreamDecoder
         requires(std::is_integral_v<IntT> && !std::is_unsigned_v<IntT>)
     bool DecodeInt(IntT& aVal, int64_t aMin, int64_t aMax)
     {
-        BX_ASSERT(aMin < aMax, "min is higher or equal than max");
-
-        if constexpr (sizeof(IntT) <= sizeof(int32_t)) {
-            BX_ASSERT(
-                aMax <= std::numeric_limits<IntT>::max(),
-                "max %d is higher than %d",
-                aMax,
-                std::numeric_limits<IntT>::max());
-            BX_ASSERT(
-                aMin < std::numeric_limits<IntT>::max(),
-                "min %d is higher than %d",
-                aMin,
-                std::numeric_limits<IntT>::max() - 1);
-        }
+        AssertBounds<IntT>(aMin, aMax);
 
         uint32_t bits = uint32_t(std::bit_width(uint32_t(aMax - aMin)));
 
@@ -360,20 +407,9 @@ class StreamDecoder
         requires(std::is_integral_v<UIntT> && std::is_unsigned_v<UIntT>)
     bool DecodeUInt(UIntT& aVal, uint64_t aMin, uint64_t aMax)
     {
-        BX_ASSERT(aMin < aMax, "min is higher or equal than max");
+        AssertBounds<UIntT>(aMin, aMax);
 
         if constexpr (sizeof(UIntT) <= sizeof(uint32_t)) {
-            BX_ASSERT(
-                aMax <= std::numeric_limits<UIntT>::max(),
-                "max %u is higher than %u",
-                aMax,
-                std::numeric_limits<UIntT>::max());
-            BX_ASSERT(
-                aMin < std::numeric_limits<UIntT>::max(),
-                "min %u is higher than %u",
-                aMin,
-                std::numeric_limits<UIntT>::max() - 1);
-
             uint32_t v;
             if (!mBits.Read(v, uint32_t(std::bit_width(aMax - aMin)))) {
                 return false;
@@ -391,7 +427,8 @@ class StreamDecoder
 
     bool DecodeFloat16(float& aVal, float aMin, float aMax)
     {
-        BX_ASSERT(aMin < aMax, "min is higher or equal than max");
+        AssertBounds<float>(aMin, aMax);
+
         uint32_t v = 0;
 
         if (!mBits.Read(v, 16u)) {
