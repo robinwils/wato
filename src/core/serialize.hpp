@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <bit>
+#include <cmath>
 #include <concepts>
 #include <cstdint>
 #include <glm/detail/qualifier.hpp>
@@ -342,21 +343,36 @@ class StreamEncoder
         }
     }
 
+    template <typename UIntT>
+        requires(std::is_unsigned_v<UIntT> && (sizeof(UIntT) == 2 || sizeof(UIntT) == 4))
+    void EncodeFloat(float aVal, float aMin, float aMax)
+    {
+        AssertBoundsAndVal(aVal, aMin, aMax);
+
+        auto bits = PackFloat<UIntT>(aVal, aMin, aMax);
+        mBits.Write(bits, 8 * sizeof(UIntT));
+    }
+
     void EncodeFloat16(float aVal, float aMin, float aMax)
     {
-        auto bits = PackFloat<uint16_t>(aVal, aMin, aMax);
-        mBits.Write(bits, 16u);
+        EncodeFloat<uint16_t>(aVal, aMin, aMax);
+    }
+
+    void EncodeFloat32(float aVal, float aMin, float aMax)
+    {
+        EncodeFloat<uint32_t>(aVal, aMin, aMax);
     }
 
     BitWriter::bit_buffer& Data() { return mBits.Data(); }
 
    protected:
-    template <typename IntT>
+    template <typename UIntT>
+        requires(std::is_unsigned_v<UIntT> && (sizeof(UIntT) == 2 || sizeof(UIntT) == 4))
     uint32_t PackFloat(float aVal, float aMin, float aMax)
     {
         aVal       = std::clamp(aVal, aMin, aMax);
         float norm = (aVal - aMin) / (aMax - aMin);
-        return uint32_t(norm * std::numeric_limits<IntT>::max() + 0.5f);
+        return uint32_t(norm * double(std::numeric_limits<UIntT>::max()) + 0.5f);
     }
     BitWriter mBits;
 };
@@ -425,25 +441,38 @@ class StreamDecoder
         return true;
     }
 
-    bool DecodeFloat16(float& aVal, float aMin, float aMax)
+    template <typename UIntT>
+        requires(std::is_unsigned_v<UIntT> && (sizeof(UIntT) == 2 || sizeof(UIntT) == 4))
+    bool DecodeFloat(float& aVal, float aMin, float aMax)
     {
         AssertBounds<float>(aMin, aMax);
 
         uint32_t v = 0;
 
-        if (!mBits.Read(v, 16u)) {
+        if (!mBits.Read(v, 8 * sizeof(UIntT))) {
             return false;
         }
 
-        aVal = UnpackFloat<uint16_t>(v, aMin, aMax);
+        aVal = UnpackFloat<UIntT>(v, aMin, aMax);
         return true;
     }
 
+    bool DecodeFloat16(float& aVal, float aMin, float aMax)
+    {
+        return DecodeFloat<uint16_t>(aVal, aMin, aMax);
+    }
+
+    bool DecodeFloat32(float& aVal, float aMin, float aMax)
+    {
+        return DecodeFloat<uint32_t>(aVal, aMin, aMax);
+    }
+
    protected:
-    template <typename IntT>
+    template <typename UIntT>
+        requires(std::is_unsigned_v<UIntT> && (sizeof(UIntT) == 2 || sizeof(UIntT) == 4))
     float UnpackFloat(uint32_t aPacked, float aMin, float aMax)
     {
-        float value = float(aPacked) / float(std::numeric_limits<IntT>::max());
+        float value = float(aPacked) / float(std::numeric_limits<UIntT>::max());
         return value * (aMax - aMin) + aMin;
     }
 
