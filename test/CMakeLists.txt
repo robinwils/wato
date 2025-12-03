@@ -3,7 +3,6 @@ add_executable(wato_tests)
 target_compile_options(wato_tests
   PUBLIC
   $<$<CONFIG:Debug>:-ggdb -fsanitize=address,undefined>
-  -fsanitize=fuzzer
   -fdiagnostics-color=always
   -ftime-trace
   -O$<IF:$<CONFIG:Debug>,0,3>
@@ -11,7 +10,6 @@ target_compile_options(wato_tests
 target_link_options(wato_tests
   PUBLIC
   $<$<CONFIG:Debug>:-fsanitize=address,undefined>
-  -fsanitize=fuzzer
   -rdynamic
 )
 
