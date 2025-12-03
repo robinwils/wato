@@ -53,6 +53,8 @@ void DefaultContextHandler::operator()(
                     transform.Position -= speed * camera.Up;
                 }
                 break;
+            case MoveDirection::Count:
+                break;
         }
     }
 }
