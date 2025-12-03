@@ -240,7 +240,7 @@ TEST_CASE("serialize.rigidbody")
 
     CHECK_EQ(rb2.Params.Type, rb.Params.Type);
     CHECK_EQ(rb2.Params.Velocity, doctest::Approx(rb.Params.Velocity));
-    CHECK_VEC3_APPROX_EPSILON(rb2.Params.Direction, rb.Params.Direction, 0.0001);
+    CHECK_VEC3_EPSILON(rb2.Params.Direction, rb.Params.Direction, 0.0001f);
     CHECK_EQ(rb2.Params.GravityEnabled, rb.Params.GravityEnabled);
 }
 
@@ -268,17 +268,14 @@ TEST_CASE("serialize.collider.box")
     CHECK_EQ(c2.Params.CollisionCategoryBits, c.Params.CollisionCategoryBits);
     CHECK_EQ(c2.Params.CollideWithMaskBits, c.Params.CollideWithMaskBits);
     CHECK_EQ(c2.Params.IsTrigger, c.Params.IsTrigger);
-    CHECK_VEC3_APPROX_EPSILON(c2.Params.Offset.Position, c.Params.Offset.Position, 0.0001);
+    CHECK_VEC3_EPSILON(c2.Params.Offset.Position, c.Params.Offset.Position, 0.0001f);
     // Rotation equality may need to use Approx or custom check
-    CHECK(glm::all(glm::epsilonEqual(
-        glm::quat(c2.Params.Offset.Orientation),
-        glm::quat(c.Params.Offset.Orientation),
-        0.0001f)));
+    CHECK_GLM_EPSILON(c2.Params.Offset.Orientation, c.Params.Offset.Orientation, 0.0001f);
     CHECK(std::holds_alternative<BoxShapeParams>(c2.Params.ShapeParams));
     if (std::holds_alternative<BoxShapeParams>(c2.Params.ShapeParams)) {
         auto& b1 = std::get<BoxShapeParams>(c.Params.ShapeParams);
         auto& b2 = std::get<BoxShapeParams>(c2.Params.ShapeParams);
-        CHECK_VEC3_APPROX_EPSILON(b2.HalfExtents, b1.HalfExtents, 0.0001);
+        CHECK_VEC3_EPSILON(b2.HalfExtents, b1.HalfExtents, 0.0001f);
     }
 }
 
@@ -308,7 +305,7 @@ TEST_CASE("snapshot.simple")
     CHECK(dest.valid(e2));
     auto& t1 = dest.get<Transform3D>(e1);
     auto& h2 = dest.get<Health>(e2);
-    CHECK_VEC3_APPROX_EPSILON_VALUES(t1.Position, 0.0, 2.0, 1.5, 0.0001);
+    CHECK_VEC3_EPSILON_VALUES(t1.Position, 0.0f, 2.0f, 1.5f, 0.0001f);
     CHECK_EQ(h2.Health, 100.0f);
 }
 
@@ -384,25 +381,22 @@ TEST_CASE("snapshot.full")
     CHECK_EQ(rb.Params.Type, rbParams.Type);
     CHECK_EQ(rb.Params.GravityEnabled, rbParams.GravityEnabled);
     CHECK_EQ(rb.Params.Velocity, doctest::Approx(rbParams.Velocity));
-    CHECK_VEC3_APPROX_EPSILON(rb.Params.Direction, rbParams.Direction, 0.0001);
+    CHECK_VEC3_EPSILON(rb.Params.Direction, rbParams.Direction, 0.0001f);
 
     const auto& colBox = dest.get<Collider>(e1);
     CHECK_EQ(colBox.Params.CollisionCategoryBits, boxParams.CollisionCategoryBits);
     CHECK_EQ(colBox.Params.CollideWithMaskBits, boxParams.CollideWithMaskBits);
     CHECK_EQ(colBox.Params.IsTrigger, boxParams.IsTrigger);
-    CHECK_VEC3_APPROX_EPSILON(colBox.Params.Offset.Position, boxParams.Offset.Position, 0.0001);
+    CHECK_VEC3_EPSILON(colBox.Params.Offset.Position, boxParams.Offset.Position, 0.0001f);
     CHECK(std::holds_alternative<BoxShapeParams>(colBox.Params.ShapeParams));
     const auto& box = std::get<BoxShapeParams>(colBox.Params.ShapeParams);
-    CHECK_VEC3_APPROX_EPSILON_VALUES(box.HalfExtents, 0.5, 0.5, 0.5, 0.0001);
+    CHECK_VEC3_EPSILON_VALUES(box.HalfExtents, 0.5f, 0.5f, 0.5f, 0.0001f);
 
     const auto& colCapsule = dest.get<Collider>(e2);
     CHECK_EQ(colCapsule.Params.CollisionCategoryBits, Category::Terrain);
     CHECK_EQ(colCapsule.Params.CollideWithMaskBits, Category::Entities);
     CHECK(colCapsule.Params.IsTrigger == true);
-    CHECK_VEC3_APPROX_EPSILON(
-        colCapsule.Params.Offset.Position,
-        capsuleParams.Offset.Position,
-        0.0001);
+    CHECK_VEC3_EPSILON(colCapsule.Params.Offset.Position, capsuleParams.Offset.Position, 0.0001f);
     CHECK(std::holds_alternative<CapsuleShapeParams>(colCapsule.Params.ShapeParams));
     const auto& capsule = std::get<CapsuleShapeParams>(colCapsule.Params.ShapeParams);
     CHECK(capsule.Radius == doctest::Approx(1.5).epsilon(0.0001));
@@ -412,7 +406,7 @@ TEST_CASE("snapshot.full")
     CHECK_EQ(colHeightfield.Params.CollisionCategoryBits, Category::Terrain);
     CHECK_EQ(colHeightfield.Params.CollideWithMaskBits, Category::Terrain | Category::Entities);
     CHECK(colHeightfield.Params.IsTrigger == false);
-    CHECK_VEC3_APPROX_EPSILON_VALUES(colHeightfield.Params.Offset.Position, 3.0, 4.0, 5.0, 0.0001);
+    CHECK_VEC3_EPSILON_VALUES(colHeightfield.Params.Offset.Position, 3.0f, 4.0f, 5.0f, 0.0001f);
     CHECK(std::holds_alternative<HeightFieldShapeParams>(colHeightfield.Params.ShapeParams));
     const auto& heightfield = std::get<HeightFieldShapeParams>(colHeightfield.Params.ShapeParams);
     // CHECK(heightfield.Data == std::vector<float>({1.0f, 2.0f, 3.0f, 4.0f}));
