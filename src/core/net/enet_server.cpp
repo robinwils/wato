@@ -29,9 +29,10 @@ void ENetServer::Init()
 
     if (host != "any") {
         if (-1 == enet_address_set_host(&address, host.c_str())) {
-            throw std::runtime_error(fmt::format(
-                "An error occurred while trying to set ENet server host on '{}'",
-                host.c_str()));
+            throw std::runtime_error(
+                fmt::format(
+                    "An error occurred while trying to set ENet server host on '{}'",
+                    host.c_str()));
         }
     }
 
@@ -47,7 +48,7 @@ void ENetServer::OnConnect(ENetEvent&) {}
 
 void ENetServer::OnReceive(ENetEvent& aEvent)
 {
-    BitInputArchive archive(std::span<uint8_t>(aEvent.packet->data, aEvent.packet->dataLength));
+    BitInputArchive archive(aEvent.packet->data, aEvent.packet->dataLength);
     auto            ev = new NetworkRequest;
 
     if (!ev->Archive(archive)) {

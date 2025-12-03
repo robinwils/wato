@@ -26,20 +26,33 @@ class BitInputArchive : public StreamDecoder
 {
    public:
     BitInputArchive(
-        BitReader::bit_stream&& aBits,
-        bool                    aEnableLogger = false,
-        const Logger&           aLogger       = spdlog::default_logger())
+        bit_stream&&  aBits,
+        bool          aEnableLogger = false,
+        const Logger& aLogger       = spdlog::default_logger())
         : StreamDecoder(std::move(aBits)), mLogger(aLogger)
     {
         if (!aEnableLogger) {
             mLogger->set_level(spdlog::level::off);
         }
     }
+
     BitInputArchive(
-        BitReader::bit_buffer& aBits,
-        bool                   aEnableLogger = false,
-        const Logger&          aLogger       = spdlog::default_logger())
+        bit_buffer&   aBits,
+        bool          aEnableLogger = false,
+        const Logger& aLogger       = spdlog::default_logger())
         : StreamDecoder(aBits), mLogger(aLogger)
+    {
+        if (!aEnableLogger) {
+            mLogger->set_level(spdlog::level::off);
+        }
+    }
+
+    BitInputArchive(
+        uint8_t*      aBytes,
+        std::size_t   aSize,
+        bool          aEnableLogger = false,
+        const Logger& aLogger       = spdlog::default_logger())
+        : StreamDecoder(aBytes, aSize), mLogger(aLogger)
     {
         if (!aEnableLogger) {
             mLogger->set_level(spdlog::level::off);

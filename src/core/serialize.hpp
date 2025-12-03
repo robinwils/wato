@@ -53,10 +53,13 @@ constexpr T bswap_any(T v)
     }
 }
 
+using word       = uint32_t;
+using bit_stream = std::span<word>;
+using bit_buffer = std::vector<word>;
+
 class BitWriter
 {
    public:
-    using word       = uint32_t;
     using bit_buffer = std::vector<word>;
     using bit_stream = std::span<word>;
 
@@ -143,10 +146,6 @@ class BitWriter
 class BitReader
 {
    public:
-    using word       = uint32_t;
-    using bit_stream = std::span<word>;
-    using bit_buffer = std::vector<word>;
-
     BitReader() : mScratch(0), mCurBit(0) {}
     BitReader(bit_stream&& aBits)
         : mBuf(std::move(aBits)), mScratch(0), mCurBit(0), mNext(mBuf.data())
@@ -381,8 +380,12 @@ class StreamDecoder
 {
    public:
     StreamDecoder() = default;
-    StreamDecoder(BitReader::bit_stream&& aBits) : mBits(std::move(aBits)) {}
-    StreamDecoder(BitReader::bit_buffer& aBits) : mBits(aBits) {}
+    StreamDecoder(bit_stream&& aBits) : mBits(std::move(aBits)) {}
+    StreamDecoder(bit_buffer& aBits) : mBits(aBits) {}
+    StreamDecoder(uint8_t* aBytes, std::size_t aSize)
+        : mBits(bit_stream(std::bit_cast<word*>(aBytes), aSize))
+    {
+    }
 
     bool DecodeBool(bool& aVal)
     {

@@ -69,7 +69,7 @@ void ENetClient::OnConnect(ENetEvent& aEvent)
 
 void ENetClient::OnReceive(ENetEvent& aEvent)
 {
-    BitInputArchive archive(std::span<uint8_t>(aEvent.packet->data, aEvent.packet->dataLength));
+    BitInputArchive archive(aEvent.packet->data, aEvent.packet->dataLength);
     auto*           ev = new NetworkResponse;
 
     ev->Archive(archive);
