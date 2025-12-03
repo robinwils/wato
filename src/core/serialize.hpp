@@ -8,7 +8,9 @@
 #include <concepts>
 #include <cstdint>
 #include <glm/detail/qualifier.hpp>
+#include <glm/ext/vector_relational.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/vector_relational.hpp>
 #include <limits>
 #include <optional>
 #include <span>
@@ -306,6 +308,16 @@ bool CheckBoundsAndVal(T aVal, M aMin, M aMax)
     }
 
     return true;
+}
+
+template <glm::length_t L, typename T, glm::qualifier Q, typename M>
+glm::vec<L, bool, Q> CheckBoundsAndVal(glm::vec<L, T, Q> aVal, M aMin, M aMax)
+{
+    glm::vec<L, bool, Q> res(true);
+    for (glm::length_t idx = 0; idx < L; ++idx) {
+        res[idx] = CheckBoundsAndVal(aVal[idx], aMin, aMax);
+    }
+    return res;
 }
 
 class StreamEncoder
