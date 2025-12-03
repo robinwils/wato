@@ -347,37 +347,15 @@ class StreamEncoder
         }
     }
 
-    template <typename UIntT>
-        requires(std::is_unsigned_v<UIntT> && (sizeof(UIntT) == 2 || sizeof(UIntT) == 4))
-    void EncodeFloat(float aVal, float aMin, float aMax)
+    void EncodeFloat(float aVal)
     {
-        AssertBoundsAndVal(aVal, aMin, aMax);
-
-        auto bits = PackFloat<UIntT>(aVal, aMin, aMax);
-        mBits.Write(bits, 8 * sizeof(UIntT));
-    }
-
-    void EncodeFloat16(float aVal, float aMin, float aMax)
-    {
-        EncodeFloat<uint16_t>(aVal, aMin, aMax);
-    }
-
-    void EncodeFloat32(float aVal, float aMin, float aMax)
-    {
-        EncodeFloat<uint32_t>(aVal, aMin, aMax);
+        uint32_t bits = std::bit_cast<uint32_t>(aVal);
+        mBits.Write(bits, 32);
     }
 
     BitWriter::bit_buffer& Data() { return mBits.Data(); }
 
    protected:
-    template <typename UIntT>
-        requires(std::is_unsigned_v<UIntT> && (sizeof(UIntT) == 2 || sizeof(UIntT) == 4))
-    uint32_t PackFloat(float aVal, float aMin, float aMax)
-    {
-        aVal       = std::clamp(aVal, aMin, aMax);
-        float norm = (aVal - aMin) / (aMax - aMin);
-        return uint32_t(norm * double(std::numeric_limits<UIntT>::max()) + 0.5f);
-    }
     BitWriter mBits;
 };
 
@@ -449,41 +427,15 @@ class StreamDecoder
         return true;
     }
 
-    template <typename UIntT>
-        requires(std::is_unsigned_v<UIntT> && (sizeof(UIntT) == 2 || sizeof(UIntT) == 4))
-    bool DecodeFloat(float& aVal, float aMin, float aMax)
+    bool DecodeFloat(float& aVal)
     {
-        AssertBounds<float>(aMin, aMax);
-
-        uint32_t v = 0;
-
-        if (!mBits.Read(v, 8 * sizeof(UIntT))) {
-            return false;
-        }
-
-        aVal = UnpackFloat<UIntT>(v, aMin, aMax);
+        uint32_t bits;
+        if (!mBits.Read(bits, 32)) return 0.0f;
+        aVal = std::bit_cast<float>(bits);
         return true;
     }
 
-    bool DecodeFloat16(float& aVal, float aMin, float aMax)
-    {
-        return DecodeFloat<uint16_t>(aVal, aMin, aMax);
-    }
-
-    bool DecodeFloat32(float& aVal, float aMin, float aMax)
-    {
-        return DecodeFloat<uint32_t>(aVal, aMin, aMax);
-    }
-
    protected:
-    template <typename UIntT>
-        requires(std::is_unsigned_v<UIntT> && (sizeof(UIntT) == 2 || sizeof(UIntT) == 4))
-    float UnpackFloat(uint32_t aPacked, float aMin, float aMax)
-    {
-        float value = float(aPacked) / float(std::numeric_limits<UIntT>::max());
-        return value * (aMax - aMin) + aMin;
-    }
-
     BitReader mBits;
 };
 
@@ -494,7 +446,6 @@ concept IsStreamEncoder = requires(T t) {
     { t.EncodeUInt(std::declval<uint8_t>(), std::declval<uint64_t>(), std::declval<uint64_t>()) };
     { t.EncodeUInt(std::declval<uint16_t>(), std::declval<uint64_t>(), std::declval<uint64_t>()) };
     { t.EncodeUInt(std::declval<uint64_t>(), std::declval<uint64_t>(), std::declval<uint64_t>()) };
-    { t.EncodeFloat16(std::declval<float>(), std::declval<float>(), std::declval<float>()) };
 };
 
 template <typename T>
@@ -513,7 +464,6 @@ concept IsStreamDecoder = requires(
     } -> std::same_as<bool>;
     { t.DecodeUInt(vu, std::declval<uint64_t>(), std::declval<uint64_t>()) } -> std::same_as<bool>;
     { t.DecodeUInt(vu, std::declval<uint64_t>(), std::declval<uint64_t>()) } -> std::same_as<bool>;
-    { t.DecodeFloat16(vf, std::declval<float>(), std::declval<float>()) } -> std::same_as<bool>;
 };
 
 template <typename T>
@@ -551,7 +501,7 @@ bool ArchiveValue(Archive& aR, const T& aValue, MinMaxT aMin, MinMaxT aMax)
         return ArchiveValue(aR, static_cast<U>(aValue), static_cast<U>(aMin), static_cast<U>(aMax));
     } else if constexpr (std::is_same_v<value_t, float>) {
         spdlog::info("encoding float {}", aValue);
-        aR.EncodeFloat16(aValue, aMin, aMax);
+        aR.EncodeFloat(aValue);
         return true;
     } else if constexpr (std::is_integral_v<value_t> && std::is_signed_v<value_t>) {
         spdlog::info("encoding int {}", aValue);
@@ -579,7 +529,7 @@ bool ArchiveValue(Archive& aR, T& aValue, MinMaxT aMin, MinMaxT aMax)
         spdlog::info("decoded enum {}", tmp);
         return true;
     } else if constexpr (std::is_floating_point_v<value_t>) {
-        if (!aR.DecodeFloat16(aValue, aMin, aMax)) return false;
+        if (!aR.DecodeFloat(aValue)) return false;
         if (aValue > aMax || aValue < aMin) return false;
         spdlog::info("decoded float {}", aValue);
         return true;
@@ -896,16 +846,16 @@ TEST_CASE("encode.float")
 {
     StreamEncoder enc;
 
-    enc.EncodeFloat16(3.14159f, 0.0f, 5.0f);
-    enc.EncodeFloat16(-3.14159f, -5.0f, 5.0f);
+    enc.EncodeFloat(3.14159f);
+    enc.EncodeFloat(-3.141590f);
 
     StreamDecoder dec(enc.Data());
     float         val;
 
-    CHECK_EQ(dec.DecodeFloat16(val, 0.0f, 5.0f), true);
+    CHECK_EQ(dec.DecodeFloat(val), true);
     CHECK_EQ(val, doctest::Approx(3.14159));
 
-    CHECK_EQ(dec.DecodeFloat16(val, -5.0f, 5.0f), true);
+    CHECK_EQ(dec.DecodeFloat(val), true);
     CHECK_EQ(val, doctest::Approx(-3.14159));
 }
 
