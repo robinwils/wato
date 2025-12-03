@@ -217,7 +217,7 @@ TEST_CASE("serialize.vector_of_enum")
 
     BitInputArchive       inAr(outAr.Data());
     std::vector<TestEnum> v2;
-    ArchiveVector(outAr, v2, 0u, uint32_t(TestEnum::Count), 32);
+    ArchiveVector(inAr, v2, 0u, uint32_t(TestEnum::Count), 32);
 
     CHECK_EQ(v2, v);
 }
