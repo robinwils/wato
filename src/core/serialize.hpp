@@ -394,7 +394,9 @@ class StreamDecoder
             if (!mBits.Read(v, bits)) {
                 return false;
             }
-            aVal = IntT(v) + IntT(aMin);
+            int64_t vv = v + aMin;
+
+            aVal = IntT(vv);
         } else {
             uint64_t v = 0;
             if (!mBits.Read(v, bits)) {
