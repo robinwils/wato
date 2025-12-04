@@ -9,6 +9,7 @@
 #include "components/imgui.hpp"
 #include "components/path.hpp"
 #include "components/placement_mode.hpp"
+#include "components/predicted.hpp"
 #include "components/rigid_body.hpp"
 #include "components/scene_object.hpp"
 #include "components/spawner.hpp"
@@ -188,6 +189,7 @@ void PlacementModeContextHandler::operator()(Registry& aRegistry, BuildTowerPayl
             return;
         }
 
+        aPayload.CliPredictedEntity = tower;
         aRegistry.emplace<Tower>(tower, aPayload.Tower);
         aRegistry.emplace<RigidBody>(tower, body);
         aRegistry.emplace<Collider>(tower, collider);
@@ -253,6 +255,7 @@ void ServerContextHandler::operator()(Registry& aRegistry, BuildTowerPayload& aP
     aRegistry.emplace<Tower>(tower, aPayload.Tower);
     aRegistry.emplace<RigidBody>(tower, body);
     aRegistry.emplace<Collider>(tower, collider);
+    aRegistry.emplace<Predicted>(tower, aPayload.CliPredictedEntity.value_or(entt::null));
 }
 
 template <typename Derived>
