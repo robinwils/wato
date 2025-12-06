@@ -4,6 +4,7 @@
 #include <spdlog/spdlog.h>
 
 #include <entt/core/hashed_string.hpp>
+#include <entt/entity/entity.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <list>
 #include <stdexcept>
@@ -119,22 +120,23 @@ inline bool operator==(const SendCreepPayload& aLHS, const SendCreepPayload& aRH
 }
 
 struct BuildTowerPayload {
-    TowerType                   Tower;
-    glm::vec3                   Position{0.0f};
-    std::optional<entt::entity> CliPredictedEntity{std::nullopt};
+    TowerType    Tower;
+    glm::vec3    Position{0.0f};
+    entt::entity CliPredictedEntity{entt::null};
 
     bool Archive(auto& aArchive)
     {
         if (!ArchiveValue(aArchive, Tower, 0u, uint32_t(TowerType::Count))) return false;
         if (!ArchiveVector(aArchive, Position, 0.0f, 20.0f)) return false;
-        if (!ArchiveOptionalVal(aArchive, CliPredictedEntity, 0, 1000000)) return false;
+        if (!ArchiveValue(aArchive, CliPredictedEntity, 0, 1000000)) return false;
         return true;
     }
 };
 
 inline bool operator==(const BuildTowerPayload& aLHS, const BuildTowerPayload& aRHS)
 {
-    return aLHS.Tower == aRHS.Tower && aLHS.Position == aRHS.Position;
+    return aLHS.Tower == aRHS.Tower && aLHS.Position == aRHS.Position
+           && aLHS.CliPredictedEntity == aRHS.CliPredictedEntity;
 }
 
 struct PlacementModePayload {

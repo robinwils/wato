@@ -16,6 +16,7 @@
 #include "components/transform3d.hpp"
 #include "components/velocity.hpp"
 #include "core/graph.hpp"
+#include "core/net/enet_server.hpp"
 #include "core/physics/physics.hpp"
 #include "core/state.hpp"
 #include "core/sys/log.hpp"
@@ -193,6 +194,7 @@ void PlacementModeContextHandler::operator()(Registry& aRegistry, BuildTowerPayl
         aRegistry.emplace<Tower>(tower, aPayload.Tower);
         aRegistry.emplace<RigidBody>(tower, body);
         aRegistry.emplace<Collider>(tower, collider);
+        aRegistry.emplace<Predicted>(tower);
         aRegistry.emplace<Health>(tower, 100.0f);
         aRegistry.remove<ImguiDrawable>(tower);
         // remove component so that ExitPlacement does not destroy the entity
@@ -255,7 +257,12 @@ void ServerContextHandler::operator()(Registry& aRegistry, BuildTowerPayload& aP
     aRegistry.emplace<Tower>(tower, aPayload.Tower);
     aRegistry.emplace<RigidBody>(tower, body);
     aRegistry.emplace<Collider>(tower, collider);
-    aRegistry.emplace<Predicted>(tower, aPayload.CliPredictedEntity.value_or(entt::null));
+
+    aRegistry.ctx().get<ENetServer&>().EnqueueResponse(new NetworkResponse{
+        .Type     = PacketType::ServerSync,
+        .PlayerID = 0,
+        .Payload  = AcknowledgementResponse{.Ack = true, .Entity = aPayload.CliPredictedEntity},
+    });
 }
 
 template <typename Derived>
