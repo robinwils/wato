@@ -167,6 +167,7 @@ target_compile_definitions(wato_common
     SPDLOG_ACTIVE_LEVEL=$<IF:$<CONFIG:Debug>,SPDLOG_LEVEL_TRACE,SPDLOG_LEVEL_INFO>
     WATO_DEBUG=$<IF:$<CONFIG:Debug>,1,0>
     GLM_FORCE_SIZE_T_LENGTH
+    GLM_ENABLE_EXPERIMENTAL
 )
 
 target_compile_definitions(watolib PUBLIC DOCTEST_CONFIG_DISABLE)
