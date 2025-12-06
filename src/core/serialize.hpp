@@ -254,28 +254,30 @@ void AssertBoundsAndVal(T aVal, M aMin, M aMax)
 template <typename T, typename M>
 bool CheckBounds(M aMin, M aMax)
 {
+    Logger logger = WATO_SER_LOGGER;
+
     if constexpr (std::is_floating_point_v<M>) {
         if (!std::isfinite(aMin)) {
-            spdlog::critical("min {} is not finite", aMin);
+            logger->critical("min {} is not finite", aMin);
             return false;
         }
         if (!std::isfinite(aMax)) {
-            spdlog::critical("max {} is not finite", aMax);
+            logger->critical("max {} is not finite", aMax);
             return false;
         }
     }
     if (aMin >= aMax) {
-        spdlog::critical("min >= max: {} >= {}", aMin, aMax);
+        logger->critical("min >= max: {} >= {}", aMin, aMax);
         return false;
     }
 
     if constexpr (sizeof(T) <= sizeof(int32_t)) {
         if (aMax > std::numeric_limits<T>::max()) {
-            spdlog::critical("max > lim: {} > {}", aMax, std::numeric_limits<T>::max());
+            logger->critical("max > lim: {} > {}", aMax, std::numeric_limits<T>::max());
             return false;
         }
         if (aMin < std::numeric_limits<T>::min()) {
-            spdlog::critical("min < lim: {} < {}", aMin, std::numeric_limits<T>::min());
+            logger->critical("min < lim: {} < {}", aMin, std::numeric_limits<T>::min());
             return false;
         }
     }
@@ -285,22 +287,24 @@ bool CheckBounds(M aMin, M aMax)
 template <typename T, typename M>
 bool CheckBoundsAndVal(T aVal, M aMin, M aMax)
 {
+    Logger logger = WATO_SER_LOGGER;
+
     if (!CheckBounds<T, M>(aMin, aMax)) return false;
 
     if constexpr (std::is_floating_point_v<M>) {
         if (!std::isfinite(aVal)) {
-            spdlog::critical("val {} is not finite", aVal);
+            logger->critical("val {} is not finite", aVal);
             return false;
         }
     }
 
     if (aVal < aMin) {
-        spdlog::critical("val < min: {} < {}", aVal, aMin);
+        logger->critical("val < min: {} < {}", aVal, aMin);
         return false;
     }
 
     if (aVal > aMax) {
-        spdlog::critical("val > max: {} > {}", aVal, aMax);
+        logger->critical("val > max: {} > {}", aVal, aMax);
         return false;
     }
 
@@ -508,18 +512,18 @@ bool ArchiveValue(Archive& aR, const T& aValue, MinMaxT aMin, MinMaxT aMax)
     using value_t = std::remove_cv_t<T>;
     if constexpr (std::is_enum_v<value_t>) {
         using U = std::underlying_type_t<value_t>;
-        spdlog::info("encoding enum {}", static_cast<U>(aValue));
+        WATO_SER_LOGGER->info("encoding enum {}", static_cast<U>(aValue));
         return ArchiveValue(aR, static_cast<U>(aValue), static_cast<U>(aMin), static_cast<U>(aMax));
     } else if constexpr (std::is_same_v<value_t, float>) {
-        spdlog::info("encoding float {}", aValue);
+        WATO_SER_LOGGER->info("encoding float {}", aValue);
         aR.EncodeFloat(aValue);
         return true;
     } else if constexpr (std::is_integral_v<value_t> && std::is_signed_v<value_t>) {
-        spdlog::info("encoding int {}", aValue);
+        WATO_SER_LOGGER->info("encoding int {}", aValue);
         aR.EncodeInt(aValue, aMin, aMax);
         return true;
     } else if constexpr (std::is_integral_v<value_t> && std::is_unsigned_v<value_t>) {
-        spdlog::info("encoding uint{}_t {}", sizeof(value_t), aValue);
+        WATO_SER_LOGGER->info("encoding uint{}_t {}", sizeof(value_t), aValue);
         aR.EncodeUInt(aValue, aMin, aMax);
         return true;
     }
@@ -537,22 +541,22 @@ bool ArchiveValue(Archive& aR, T& aValue, MinMaxT aMin, MinMaxT aMax)
         U tmp;
         if (!ArchiveValue(aR, tmp, static_cast<U>(aMin), static_cast<U>(aMax))) return false;
         aValue = static_cast<value_t>(tmp);
-        spdlog::info("decoded enum {}", tmp);
+        WATO_SER_LOGGER->info("decoded enum {}", tmp);
         return true;
     } else if constexpr (std::is_floating_point_v<value_t>) {
         if (!aR.DecodeFloat(aValue)) return false;
         if (aValue > aMax || aValue < aMin) return false;
-        spdlog::info("decoded float {}", aValue);
+        WATO_SER_LOGGER->info("decoded float {}", aValue);
         return true;
     } else if constexpr (std::is_integral_v<value_t> && std::is_signed_v<value_t>) {
         if (!aR.DecodeInt(aValue, aMin, aMax)) return false;
         if (aValue > aMax || aValue < aMin) return false;
-        spdlog::info("decoded int {}", aValue);
+        WATO_SER_LOGGER->info("decoded int {}", aValue);
         return true;
     } else if constexpr (std::is_integral_v<value_t> && std::is_unsigned_v<value_t>) {
         if (!aR.DecodeUInt(aValue, aMin, aMax)) return false;
         if (aValue > aMax || aValue < aMin) return false;
-        spdlog::info("decoded uint{}_t {}", sizeof(value_t), aValue);
+        WATO_SER_LOGGER->info("decoded uint{}_t {}", sizeof(value_t), aValue);
         return true;
     }
     return false;

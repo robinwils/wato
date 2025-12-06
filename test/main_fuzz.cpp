@@ -1,5 +1,3 @@
-#include <spdlog/spdlog.h>
-
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
@@ -9,6 +7,7 @@
 
 #include "core/serialize.hpp"
 #include "core/snapshot.hpp"
+#include "core/sys/log.hpp"
 
 template <typename T, typename MinMaxT>
 struct ValueWithBounds {
@@ -224,6 +223,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* aData, size_t aSize)
         return 0;
     }
 
+    Logger logger = WATO_SER_LOGGER;
+    logger->set_level(spdlog::level::off);
+
     FuzzDataReader fr(aData, aSize);
 
     TestData original;
@@ -231,13 +233,13 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* aData, size_t aSize)
         original.I32V = *v;
     else
         return 0;
-    spdlog::info("got i32: {}", original.I32V);
+    logger->info("got i32: {}", original.I32V);
 
     if (auto v = fr.ReadWithBounds<uint32_t, uint64_t>(); v)
         original.UI32V = *v;
     else
         return 0;
-    spdlog::info("got ui32: {}", original.UI32V);
+    logger->info("got ui32: {}", original.UI32V);
 
     if (auto v = fr.ReadWithBounds<float, float>(); v) {
         float range = v->Max - v->Min;
@@ -247,8 +249,8 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* aData, size_t aSize)
         original.F32V = *v;
     } else
         return 0;
-    spdlog::info("got f32: {}", original.F32V);
-    spdlog::info("got test data:\n {}", original);
+    logger->info("got f32: {}", original.F32V);
+    logger->info("got test data:\n {}", original);
 
     if (auto v = fr.ReadBool(); v)
         original.BV = *v;

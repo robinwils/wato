@@ -91,3 +91,7 @@ inline Logger CreateLogger(const std::string& aName, const std::string& aLevel)
 #define WATO_INFO(reg, ...)  WATO_REG_LOGGER(reg)->info(__VA_ARGS__)
 #define WATO_WARN(reg, ...)  WATO_REG_LOGGER(reg)->warn(__VA_ARGS__)
 #define WATO_ERR(reg, ...)   WATO_REG_LOGGER(reg)->error(__VA_ARGS__)
+
+#define WATO_NAMED_LOGGER(name) \
+    (spdlog::get(name) ? spdlog::get(name) : spdlog::stdout_color_mt(name))
+#define WATO_SER_LOGGER WATO_NAMED_LOGGER("serialize")

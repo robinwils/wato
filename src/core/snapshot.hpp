@@ -25,34 +25,24 @@
 class BitInputArchive : public StreamDecoder
 {
    public:
-    BitInputArchive(
-        bit_stream&&  aBits,
-        bool          aEnableLogger = false,
-        const Logger& aLogger       = spdlog::default_logger())
-        : StreamDecoder(std::move(aBits)), mLogger(aLogger)
+    BitInputArchive(bit_stream&& aBits, bool aEnableLogger = false)
+        : StreamDecoder(std::move(aBits)), mLogger(WATO_SER_LOGGER)
     {
         if (!aEnableLogger) {
             mLogger->set_level(spdlog::level::off);
         }
     }
 
-    BitInputArchive(
-        bit_buffer&   aBits,
-        bool          aEnableLogger = false,
-        const Logger& aLogger       = spdlog::default_logger())
-        : StreamDecoder(aBits), mLogger(aLogger)
+    BitInputArchive(bit_buffer& aBits, bool aEnableLogger = false)
+        : StreamDecoder(aBits), mLogger(WATO_SER_LOGGER)
     {
         if (!aEnableLogger) {
             mLogger->set_level(spdlog::level::off);
         }
     }
 
-    BitInputArchive(
-        uint8_t*      aBytes,
-        std::size_t   aSize,
-        bool          aEnableLogger = false,
-        const Logger& aLogger       = spdlog::default_logger())
-        : StreamDecoder(aBytes, aSize), mLogger(aLogger)
+    BitInputArchive(uint8_t* aBytes, std::size_t aSize, bool aEnableLogger = false)
+        : StreamDecoder(aBytes, aSize), mLogger(WATO_SER_LOGGER)
     {
         if (!aEnableLogger) {
             mLogger->set_level(spdlog::level::off);
@@ -95,8 +85,7 @@ class BitInputArchive : public StreamDecoder
 class BitOutputArchive : public StreamEncoder
 {
    public:
-    BitOutputArchive(bool aEnableLogger = false, const Logger& aLogger = spdlog::default_logger())
-        : mLogger(aLogger)
+    BitOutputArchive(bool aEnableLogger = false) : mLogger(WATO_SER_LOGGER)
     {
         if (!aEnableLogger) {
             mLogger->set_level(spdlog::level::off);
