@@ -9,6 +9,7 @@
 
 #include "components/game.hpp"
 #include "components/imgui.hpp"
+#include "components/predicted.hpp"
 #include "core/net/enet_client.hpp"
 #include "core/net/net.hpp"
 #include "core/snapshot.hpp"
@@ -253,12 +254,14 @@ void GameClient::consumeNetworkResponses()
     netClient.ConsumeNetworkResponses([&](NetworkResponse* aEvent) {
         std::visit(
             VariantVisitor{
-                [&](const ConnectedResponse& aResp) {
-                    BX_UNUSED(aResp);
+                [&](const ConnectedResponse&) {
                     WATO_INFO(mRegistry, "got connected response");
+
+                    // TODO: should be triggered by player input (menu, matchmaking,...)
                     netClient.EnqueueRequest(new NetworkRequest{
                         .Type     = PacketType::NewGame,
                         .PlayerID = 0,
+                        .Tick     = 0,
                         .Payload  = NewGameRequest{.PlayerAID = 0},
                     });
                 },
@@ -285,7 +288,13 @@ void GameClient::consumeNetworkResponses()
                         .get<RigidBody>(inAr)
                         .get<Collider>(inAr);
                 },
-                [&](const AcknowledgementResponse) {},
+                [&](const AcknowledgementResponse aAck) {
+                    if (aAck.Ack) {
+                        mRegistry.remove<Predicted>(aAck.Entity);
+                    } else {
+                        mRegistry.destroy(aAck.Entity);
+                    }
+                },
                 [&](const std::monostate) {},
             },
             aEvent->Payload);

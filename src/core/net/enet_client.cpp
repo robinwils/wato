@@ -62,6 +62,7 @@ void ENetClient::OnConnect(ENetEvent& aEvent)
     mRespChannel.Send(new NetworkResponse{
         .Type     = PacketType::Connected,
         .PlayerID = 0,
+        .Tick     = 0,
         .Payload  = ConnectedResponse{},
     });
     mConnected = true;

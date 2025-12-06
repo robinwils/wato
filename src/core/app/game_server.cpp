@@ -60,6 +60,7 @@ void GameServer::ConsumeNetworkRequests()
                     mServer.EnqueueResponse(new NetworkResponse{
                         .Type     = PacketType::NewGame,
                         .PlayerID = 0,
+                        .Tick     = 0,
                         .Payload  = NewGameResponse{.GameID = gameID}});
                 },
                 [&](const std::monostate&) {}},

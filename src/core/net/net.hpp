@@ -70,7 +70,7 @@ inline bool operator==(const NewGameResponse& aLHS, const NewGameResponse& aRHS)
 }
 
 struct ConnectedResponse {
-    bool Archive(auto& aArchive) { return true; }
+    bool Archive(auto&) { return true; }
 };
 
 inline bool operator==(const ConnectedResponse&, const ConnectedResponse&) { return true; }
@@ -112,12 +112,14 @@ template <typename _Payload>
 struct NetworkEvent {
     PacketType Type;
     ::PlayerID PlayerID;
+    uint32_t   Tick;
     _Payload   Payload;
 
     bool Archive(auto& aArchive)
     {
         if (!ArchiveValue(aArchive, Type, 0u, uint32_t(PacketType::Count))) return false;
         if (!ArchiveValue(aArchive, PlayerID, 0u, 1000000000u)) return false;
+        if (!ArchiveValue(aArchive, Tick, 0u, 30000000u)) return false;
         if (!ArchiveVariant(aArchive, Payload)) return false;
         return true;
     }

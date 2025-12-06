@@ -10,7 +10,7 @@ struct GameState {
 
     bool Archive(auto& aArchive)
     {
-        if (!ArchiveValue(aArchive, Tick, 0u, 86400u)) return false;
+        if (!ArchiveValue(aArchive, Tick, 0u, 30000000u)) return false;
         if (!ArchiveVector(aArchive, Actions, 32u)) return false;
         if (!ArchiveVector(
                 aArchive,

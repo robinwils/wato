@@ -5,6 +5,7 @@
 #include "components/animator.hpp"
 #include "components/camera.hpp"
 #include "components/creep.hpp"
+#include "components/game.hpp"
 #include "components/health.hpp"
 #include "components/imgui.hpp"
 #include "components/path.hpp"
@@ -261,6 +262,7 @@ void ServerContextHandler::operator()(Registry& aRegistry, BuildTowerPayload& aP
     aRegistry.ctx().get<ENetServer&>().EnqueueResponse(new NetworkResponse{
         .Type     = PacketType::ServerSync,
         .PlayerID = 0,
+        .Tick     = aRegistry.ctx().get<GameInstance&>().Tick,
         .Payload  = AcknowledgementResponse{.Ack = true, .Entity = aPayload.CliPredictedEntity},
     });
 }

@@ -32,6 +32,7 @@ void NetworkSyncSystem<ENetClient>::operator()(Registry& aRegistry)
         net.EnqueueRequest(new NetworkRequest{
             .Type     = PacketType::ClientSync,
             .PlayerID = 0,
+            .Tick     = instance.Tick,
             .Payload  = SyncPayload{.GameID = instance.GameID, .State = filteredState},
         });
     }
@@ -69,6 +70,7 @@ void NetworkSyncSystem<ENetServer>::operator()(Registry& aRegistry)
     net.EnqueueResponse(new NetworkResponse{
         .Type     = PacketType::ServerSync,
         .PlayerID = 0,
+        .Tick     = instance.Tick,
         .Payload  = SyncPayload{.GameID = instance.GameID, .State = serverState},
     });
 }
