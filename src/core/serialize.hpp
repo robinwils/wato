@@ -62,9 +62,6 @@ using bit_buffer = std::vector<word>;
 class BitWriter
 {
    public:
-    using bit_buffer = std::vector<word>;
-    using bit_stream = std::span<word>;
-
     BitWriter() : mScratch(0), mCurBit(0) {}
     BitWriter(const BitWriter& aBuf) : mBuf(aBuf.mBuf), mScratch(0), mCurBit(0) {}
 
@@ -365,7 +362,7 @@ class StreamEncoder
         mBits.Write(bits, 32);
     }
 
-    BitWriter::bit_buffer& Data() { return mBits.Data(); }
+    bit_buffer& Data() { return mBits.Data(); }
 
    protected:
     BitWriter mBits;

@@ -59,7 +59,7 @@ void NetworkSyncSystem<ENetServer>::operator()(Registry& aRegistry)
         return;
     }
 
-    serverState.Snapshot = std::vector(outAr.Data());
+    serverState.Snapshot = std::move(outAr.Data());
 
     WATO_DBG(
         aRegistry,

@@ -126,7 +126,7 @@ class BitOutputArchive : public StreamEncoder
         const_cast<T&>(aObj).Archive(*this);
     }
 
-    BitWriter::bit_buffer&     Data() { return mBits.Data(); }
+    bit_buffer&                Data() { return mBits.Data(); }
     const std::span<uint8_t>   Bytes() { return mBits.Bytes(); }
     const std::vector<uint8_t> ByteVector() { return mBits.ByteVector(); }
 
