@@ -285,6 +285,7 @@ void GameClient::consumeNetworkResponses()
                         .get<RigidBody>(inAr)
                         .get<Collider>(inAr);
                 },
+                [&](const AcknowledgementResponse) {},
                 [&](const std::monostate) {},
             },
             aEvent->Payload);

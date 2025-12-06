@@ -75,30 +75,38 @@ struct ConnectedResponse {
 
 inline bool operator==(const ConnectedResponse&, const ConnectedResponse&) { return true; }
 
-struct TowerValidationResponse {
-    bool         Valid;
+struct AcknowledgementResponse {
+    bool         Ack;
     entt::entity Entity;
 
-    bool Archive(auto& aArchive) { return true; }
+    bool Archive(auto& aArchive)
+    {
+        if (!ArchiveBool(aArchive, Ack)) return false;
+        return ArchiveValue(aArchive, Entity, 0u, 1000000u);
+    }
 };
 
-inline bool operator==(const TowerValidationResponse& aLHS, const TowerValidationResponse& aRHS)
+inline bool operator==(const AcknowledgementResponse& aLHS, const AcknowledgementResponse& aRHS)
 {
-    return aLHS.Valid == aRHS.Valid && aLHS.Entity == aRHS.Entity;
+    return aLHS.Ack == aRHS.Ack && aLHS.Entity == aRHS.Entity;
 }
 
 enum class PacketType : std::uint16_t {
     ClientSync,
     ServerSync,
-    TowerValidation,
+    Ack,
     NewGame,
     Connected,
     Count,
 };
 
-using NetworkRequestPayload = std::variant<std::monostate, SyncPayload, NewGameRequest>;
-using NetworkResponsePayload =
-    std::variant<std::monostate, NewGameResponse, ConnectedResponse, SyncPayload>;
+using NetworkRequestPayload  = std::variant<std::monostate, SyncPayload, NewGameRequest>;
+using NetworkResponsePayload = std::variant<
+    std::monostate,
+    NewGameResponse,
+    ConnectedResponse,
+    SyncPayload,
+    AcknowledgementResponse>;
 
 template <typename _Payload>
 struct NetworkEvent {
