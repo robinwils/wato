@@ -4,3 +4,7 @@
 
 struct Predicted {
 };
+
+struct Synced {
+    entt::entity ServerEntity;
+};

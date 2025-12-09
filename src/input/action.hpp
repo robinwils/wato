@@ -128,8 +128,7 @@ struct BuildTowerPayload {
     {
         if (!ArchiveValue(aArchive, Tower, 0u, uint32_t(TowerType::Count))) return false;
         if (!ArchiveVector(aArchive, Position, 0.0f, 20.0f)) return false;
-        if (!ArchiveEntity(aArchive, CliPredictedEntity)) return false;
-        return true;
+        return ArchiveEntity(aArchive, CliPredictedEntity);
     }
 };
 

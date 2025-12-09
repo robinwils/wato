@@ -77,12 +77,13 @@ inline bool operator==(const ConnectedResponse&, const ConnectedResponse&) { ret
 
 struct AcknowledgementResponse {
     bool         Ack;
-    entt::entity Entity;
+    entt::entity Entity, ServerEntity;
 
     bool Archive(auto& aArchive)
     {
         if (!ArchiveBool(aArchive, Ack)) return false;
-        return ArchiveEntity(aArchive, Entity);
+        if (!ArchiveEntity(aArchive, Entity)) return false;
+        return ArchiveEntity(aArchive, ServerEntity);
     }
 };
 

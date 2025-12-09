@@ -9,7 +9,7 @@
 
 #include "components/game.hpp"
 #include "components/imgui.hpp"
-#include "components/predicted.hpp"
+#include "components/net.hpp"
 #include "core/net/enet_client.hpp"
 #include "core/net/net.hpp"
 #include "core/snapshot.hpp"
@@ -290,9 +290,13 @@ void GameClient::consumeNetworkResponses()
                         .get<Collider>(inAr);
                 },
                 [&](const AcknowledgementResponse aAck) {
-                    WATO_INFO(mRegistry, "got ack {} for entity {}", aAck.Ack, aAck.Entity);
+                    WATO_INFO(mRegistry, "got ack {} for {}", aAck.Ack, aAck.Entity);
                     if (aAck.Ack) {
                         mRegistry.remove<Predicted>(aAck.Entity);
+                        mRegistry.emplace<Synced>(aAck.Entity, aAck.ServerEntity);
+                        mRegistry.ctx().get<EntitySyncMap>().insert_or_assign(
+                            aAck.ServerEntity,
+                            aAck.Entity);
                     } else {
                         mRegistry.destroy(aAck.Entity);
                     }

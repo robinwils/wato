@@ -290,7 +290,7 @@ target_sources(watolib
     src/components/imgui.hpp
     src/components/path.hpp
     src/components/placement_mode.hpp
-    src/components/predicted.hpp
+    src/components/net.hpp
     src/components/rigid_body.hpp
     src/components/scene_object.hpp
     src/components/tile.hpp

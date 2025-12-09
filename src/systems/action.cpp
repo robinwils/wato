@@ -8,9 +8,9 @@
 #include "components/game.hpp"
 #include "components/health.hpp"
 #include "components/imgui.hpp"
+#include "components/net.hpp"
 #include "components/path.hpp"
 #include "components/placement_mode.hpp"
-#include "components/predicted.hpp"
 #include "components/rigid_body.hpp"
 #include "components/scene_object.hpp"
 #include "components/spawner.hpp"
@@ -261,10 +261,14 @@ void ServerContextHandler::operator()(Registry& aRegistry, BuildTowerPayload& aP
     aRegistry.emplace<Collider>(tower, collider);
 
     aRegistry.ctx().get<ENetServer&>().EnqueueResponse(new NetworkResponse{
-        .Type     = PacketType::ServerSync,
+        .Type     = PacketType::Ack,
         .PlayerID = 0,
         .Tick     = aRegistry.ctx().get<GameInstance&>().Tick,
-        .Payload  = AcknowledgementResponse{.Ack = true, .Entity = aPayload.CliPredictedEntity},
+        .Payload =
+            AcknowledgementResponse{
+                .Ack          = true,
+                .Entity       = aPayload.CliPredictedEntity,
+                .ServerEntity = tower},
     });
 }
 

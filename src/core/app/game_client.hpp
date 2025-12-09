@@ -10,6 +10,7 @@
 #include "core/net/enet_client.hpp"
 #include "core/physics/event_handler.hpp"
 #include "input/action.hpp"
+#include "registry/registry.hpp"
 #include "renderer/renderer.hpp"
 #include "resource/cache.hpp"
 #include "systems/action.hpp"
@@ -101,6 +102,7 @@ class GameClient : public Application
         mRegistry.ctx().emplace<TextureCache>();
         mRegistry.ctx().emplace<ShaderCache>();
         mRegistry.ctx().emplace<ModelCache>();
+        mRegistry.ctx().emplace<EntitySyncMap>();
     }
     void networkThread();
     void consumeNetworkResponses();
