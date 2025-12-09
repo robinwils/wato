@@ -41,36 +41,46 @@ void NetworkSyncSystem<ENetClient>::operator()(Registry& aRegistry)
 template <>
 void NetworkSyncSystem<ENetServer>::operator()(Registry& aRegistry)
 {
-    auto& buf          = aRegistry.ctx().get<GameStateBuffer&>();
-    auto& net          = aRegistry.ctx().get<ENetServer&>();
-    auto& instance     = aRegistry.ctx().get<GameInstance&>();
-    auto& rbStorage    = aRegistry.storage<entt::reactive>("rigid_bodies_observer"_hs);
-    auto  snapshotView = entt::basic_view{rbStorage};
+    auto& net       = aRegistry.ctx().get<ENetServer&>();
+    auto& instance  = aRegistry.ctx().get<GameInstance&>();
+    auto& rbStorage = aRegistry.storage<entt::reactive>("rigid_bodies_observer"_hs);
 
-    GameState        serverState = GameState{.Tick = buf.Latest().Tick};
-    BitOutputArchive outAr;
+    // TODO: snapshot every other frame
+    // auto& buf = aRegistry.ctx().get<GameStateBuffer&>();
+    // auto  snapshotView = entt::basic_view{rbStorage};
+    // GameState        serverState = GameState{.Tick = buf.Latest().Tick};
+    // BitOutputArchive outAr;
+    //
+    // entt::snapshot{aRegistry}
+    //     .get<entt::entity>(outAr)
+    //     .get<Transform3D>(outAr, rbStorage.begin(), rbStorage.end())
+    //     .get<RigidBody>(outAr, rbStorage.begin(), rbStorage.end())
+    //     .get<Collider>(outAr, rbStorage.begin(), rbStorage.end());
+    //
+    // if (outAr.Data().empty()) {
+    //     return;
+    // }
+    //
+    // serverState.Snapshot = std::move(outAr.Data());
+    //
+    // WATO_DBG(
+    //     aRegistry,
+    //     "sending server sync response with state of size {}",
+    //     serverState.Snapshot.size());
+    //
+    // net.EnqueueResponse(new NetworkResponse{
+    //     .Type     = PacketType::ServerSync,
+    //     .PlayerID = 0,
+    //     .Tick     = instance.Tick,
+    //     .Payload  = SyncPayload{.GameID = instance.GameID, .State = serverState},
+    // });
 
-    entt::snapshot{aRegistry}
-        .get<entt::entity>(outAr)
-        .get<Transform3D>(outAr, rbStorage.begin(), rbStorage.end())
-        .get<RigidBody>(outAr, rbStorage.begin(), rbStorage.end())
-        .get<Collider>(outAr, rbStorage.begin(), rbStorage.end());
-
-    if (outAr.Data().empty()) {
-        return;
+    for (auto&& [entity, rigidBody] : rbStorage.view<RigidBody>().each()) {
+        net.EnqueueResponse(new NetworkResponse{
+            .Type     = PacketType::Ack,
+            .PlayerID = 0,
+            .Tick     = instance.Tick,
+            .Payload  = RigidBodyUpdateResponse{.Params = rigidBody.Params, .Entity = entity},
+        });
     }
-
-    serverState.Snapshot = std::move(outAr.Data());
-
-    WATO_DBG(
-        aRegistry,
-        "sending server sync response with state of size {}",
-        serverState.Snapshot.size());
-
-    net.EnqueueResponse(new NetworkResponse{
-        .Type     = PacketType::ServerSync,
-        .PlayerID = 0,
-        .Tick     = instance.Tick,
-        .Payload  = SyncPayload{.GameID = instance.GameID, .State = serverState},
-    });
 }
