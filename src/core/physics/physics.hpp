@@ -61,7 +61,21 @@ struct RigidBodyParams {
     glm::vec3      Direction;
     bool           GravityEnabled{true};
     void*          Data{nullptr};
+
+    bool Archive(auto& aArchive)
+    {
+        if (!ArchiveValue(aArchive, Type, 0, 3)) return false;
+        if (!ArchiveValue(aArchive, Velocity, 0.0f, 100.0f)) return false;
+        if (!ArchiveVector(aArchive, Direction, 0.0f, 1.0f)) return false;
+        return ArchiveBool(aArchive, GravityEnabled);
+    }
 };
+
+inline bool operator==(const RigidBodyParams& aLHS, const RigidBodyParams& aRHS)
+{
+    return aLHS.Type == aRHS.Type && aLHS.Velocity == aRHS.Velocity
+           && aLHS.Direction == aRHS.Direction && aLHS.GravityEnabled == aRHS.GravityEnabled;
+}
 
 struct ColliderParams {
     unsigned short      CollisionCategoryBits;

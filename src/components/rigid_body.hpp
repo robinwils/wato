@@ -20,14 +20,7 @@ struct RigidBody {
         }
     }
 
-    bool Archive(auto& aArchive)
-    {
-        if (!ArchiveValue(aArchive, Params.Type, 0, 3)) return false;
-        if (!ArchiveValue(aArchive, Params.Velocity, 0.0f, 100.0f)) return false;
-        if (!ArchiveVector(aArchive, Params.Direction, 0.0f, 1.0f)) return false;
-        if (!ArchiveBool(aArchive, Params.GravityEnabled)) return false;
-        return true;
-    }
+    bool Archive(auto& aArchive) { return Params.Archive(aArchive); }
 };
 
 struct Collider {

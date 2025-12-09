@@ -301,6 +301,19 @@ void GameClient::consumeNetworkResponses()
                         mRegistry.destroy(aAck.Entity);
                     }
                 },
+                [&](const RigidBodyUpdateResponse aUpdate) {
+                    auto& syncMap = mRegistry.ctx().get<EntitySyncMap>();
+
+                    if (syncMap.contains(aUpdate.Entity)) {
+                        mRegistry.patch<RigidBody>(
+                            syncMap[aUpdate.Entity],
+                            [&aUpdate](RigidBody& aBody) { aBody.Params = aUpdate.Params; });
+                        if (mRegistry.get<RigidBody>(syncMap[aUpdate.Entity]).Params.Velocity
+                            == 0.0f) {
+                            WATO_INFO(mRegistry, "stopping rigid body for {}", aUpdate.Entity);
+                        }
+                    }
+                },
                 [&](const std::monostate) {},
             },
             aEvent->Payload);

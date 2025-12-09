@@ -6,6 +6,7 @@
 #include <variant>
 
 #include "components/player.hpp"
+#include "core/physics/physics.hpp"
 #include "core/state.hpp"
 #include "core/types.hpp"
 #include "input/action.hpp"
@@ -89,7 +90,24 @@ struct AcknowledgementResponse {
 
 inline bool operator==(const AcknowledgementResponse& aLHS, const AcknowledgementResponse& aRHS)
 {
-    return aLHS.Ack == aRHS.Ack && aLHS.Entity == aRHS.Entity;
+    return aLHS.Ack == aRHS.Ack && aLHS.Entity == aRHS.Entity
+           && aLHS.ServerEntity == aRHS.ServerEntity;
+}
+
+struct RigidBodyUpdateResponse {
+    RigidBodyParams Params;
+    entt::entity    Entity;
+
+    bool Archive(auto& aArchive)
+    {
+        if (!Params.Archive(aArchive)) return false;
+        return ArchiveEntity(aArchive, Entity);
+    }
+};
+
+inline bool operator==(const RigidBodyUpdateResponse& aLHS, const RigidBodyUpdateResponse& aRHS)
+{
+    return aLHS.Params == aRHS.Params && aLHS.Entity == aRHS.Entity;
 }
 
 enum class PacketType : std::uint16_t {
@@ -107,7 +125,8 @@ using NetworkResponsePayload = std::variant<
     NewGameResponse,
     ConnectedResponse,
     SyncPayload,
-    AcknowledgementResponse>;
+    AcknowledgementResponse,
+    RigidBodyUpdateResponse>;
 
 template <typename _Payload>
 struct NetworkEvent {
