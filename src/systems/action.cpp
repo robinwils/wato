@@ -62,7 +62,7 @@ void DefaultContextHandler::operator()(
     }
 }
 
-void DefaultContextHandler::operator()(Registry& aRegistry, const SendCreepPayload& aPayload)
+void DefaultContextHandler::operator()(Registry& aRegistry, SendCreepPayload& aPayload)
 {
     auto& graph = aRegistry.ctx().get<Graph&>();
 
@@ -111,6 +111,12 @@ void DefaultContextHandler::operator()(Registry& aRegistry, const SendCreepPaylo
                             },
                     },
             });
+        aRegistry.emplace<Predicted>(creep);
+
+        aPayload.CliPredictedEntity = creep;
+        // only one iteration, we could think of putting multiple spawns but we have only 1 action
+        // for x creep spawned
+        break;
     }
 }
 
@@ -198,6 +204,7 @@ void PlacementModeContextHandler::operator()(Registry& aRegistry, BuildTowerPayl
         aRegistry.emplace<Predicted>(tower);
         aRegistry.emplace<Health>(tower, 100.0f);
         aRegistry.remove<ImguiDrawable>(tower);
+
         // remove component so that ExitPlacement does not destroy the entity
         aRegistry.remove<PlacementMode>(tower);
         SPDLOG_INFO("tower {} created", tower);
@@ -272,6 +279,67 @@ void ServerContextHandler::operator()(Registry& aRegistry, BuildTowerPayload& aP
     });
 }
 
+void ServerContextHandler::operator()(Registry& aRegistry, SendCreepPayload& aPayload)
+{
+    auto& graph = aRegistry.ctx().get<Graph&>();
+
+    for (auto&& [entity, spawnTransform] : aRegistry.view<Spawner, Transform3D>().each()) {
+        auto creep = aRegistry.create();
+        aRegistry.emplace<Transform3D>(
+            creep,
+            spawnTransform.Position,
+            glm::identity<glm::quat>(),
+            glm::vec3(0.5f));
+        aRegistry.emplace<Health>(creep, 100.0f);
+        aRegistry.emplace<Creep>(creep, aPayload.Type);
+        aRegistry.emplace<Path>(
+            creep,
+            GraphCell::FromWorldPoint(spawnTransform.Position),
+            graph.GetNextCell(GraphCell::FromWorldPoint(spawnTransform.Position)));
+
+        aRegistry.emplace<RigidBody>(
+            creep,
+            RigidBody{
+                .Params =
+                    RigidBodyParams{
+                        .Type           = rp3d::BodyType::KINEMATIC,
+                        .Velocity       = 0.4f,
+                        .Direction      = glm::vec3(0.0f),
+                        .GravityEnabled = false,
+                    },
+            });
+        aRegistry.emplace<Collider>(
+            creep,
+            Collider{
+                .Params =
+                    ColliderParams{
+                        .CollisionCategoryBits = Category::Entities,
+                        .CollideWithMaskBits   = 0,
+                        .IsTrigger             = false,
+                        .Offset                = Transform3D{},
+                        .ShapeParams =
+                            CapsuleShapeParams{
+                                .Radius = 0.1f,
+                                .Height = 0.05f,
+                            },
+                    },
+            });
+
+        aRegistry.ctx().get<ENetServer&>().EnqueueResponse(new NetworkResponse{
+            .Type     = PacketType::Ack,
+            .PlayerID = 0,
+            .Tick     = aRegistry.ctx().get<GameInstance&>().Tick,
+            .Payload =
+                AcknowledgementResponse{
+                    .Ack          = true,
+                    .Entity       = aPayload.CliPredictedEntity,
+                    .ServerEntity = creep},
+        });
+
+        break;
+    }
+}
+
 template <typename Derived>
 void ActionSystem<Derived>::handleAction(
     Registry&   aRegistry,
@@ -334,7 +402,7 @@ void ActionSystem<Derived>::handleContext(
             [&](const PlacementModePayload& aPayload) { aCtxHandler(aRegistry, aPayload); },
             [&](const MovePayload& aPayload) { aCtxHandler(aRegistry, aPayload, aDeltaTime); },
             [&](BuildTowerPayload& aPayload) { aCtxHandler(aRegistry, aPayload); },
-            [&](const SendCreepPayload& aPayload) { aCtxHandler(aRegistry, aPayload); },
+            [&](SendCreepPayload& aPayload) { aCtxHandler(aRegistry, aPayload); },
         },
         aAction.Payload);
 }

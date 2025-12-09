@@ -10,7 +10,7 @@ class ActionContextHandler
 
     virtual void
     operator()(Registry& aRegistry, const MovePayload& aPayload, const float aDeltaTime) = 0;
-    virtual void operator()(Registry& aRegistry, const SendCreepPayload& aPayload)       = 0;
+    virtual void operator()(Registry& aRegistry, SendCreepPayload& aPayload)             = 0;
     virtual void operator()(Registry& aRegistry, BuildTowerPayload& aPayload)            = 0;
     virtual void operator()(Registry& aRegistry, const PlacementModePayload& aPayload)   = 0;
 };
@@ -20,7 +20,7 @@ class DefaultContextHandler : public ActionContextHandler
    public:
     virtual void
     operator()(Registry& aRegistry, const MovePayload& aPayload, const float aDeltaTime) override;
-    void operator()(Registry& aRegistry, const SendCreepPayload& aPayload) override;
+    void operator()(Registry& aRegistry, SendCreepPayload& aPayload) override;
     void operator()(Registry&, BuildTowerPayload&) override {};
     void operator()(Registry& aRegistry, const PlacementModePayload& aPayload) override;
     void ExitPlacement(Registry& aRegistry);
@@ -29,7 +29,7 @@ class DefaultContextHandler : public ActionContextHandler
 class PlacementModeContextHandler : public DefaultContextHandler
 {
    public:
-    void operator()(Registry&, const SendCreepPayload&) override {};
+    void operator()(Registry&, SendCreepPayload&) override {};
     void operator()(Registry& aRegistry, BuildTowerPayload& aPayload) override;
     void operator()(Registry& aRegistry, const PlacementModePayload& aPayload) override;
 };
@@ -37,6 +37,7 @@ class PlacementModeContextHandler : public DefaultContextHandler
 class ServerContextHandler : public DefaultContextHandler
 {
    public:
+    void operator()(Registry& aRegistry, SendCreepPayload& aPayload) override;
     void operator()(Registry& aRegistry, BuildTowerPayload& aPayload) override;
     void operator()(Registry&, const PlacementModePayload&) override {}
     void operator()(Registry&, const MovePayload&, const float) override {}

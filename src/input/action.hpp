@@ -105,12 +105,13 @@ inline bool operator==(const MovePayload& aLHS, const MovePayload& aRHS)
 }
 
 struct SendCreepPayload {
-    CreepType Type;
+    CreepType    Type;
+    entt::entity CliPredictedEntity{entt::null};
 
     bool Archive(auto& aArchive)
     {
         if (!ArchiveValue(aArchive, Type, 0u, uint32_t(CreepType::Count))) return false;
-        return true;
+        return ArchiveEntity(aArchive, CliPredictedEntity);
     }
 };
 
