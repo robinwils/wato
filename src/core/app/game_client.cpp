@@ -13,6 +13,7 @@
 #include "core/net/enet_client.hpp"
 #include "core/net/net.hpp"
 #include "core/snapshot.hpp"
+#include "core/sys/log.hpp"
 #include "core/types.hpp"
 #include "core/window.hpp"
 #include "registry/game_registry.hpp"
@@ -289,6 +290,7 @@ void GameClient::consumeNetworkResponses()
                         .get<Collider>(inAr);
                 },
                 [&](const AcknowledgementResponse aAck) {
+                    WATO_INFO(mRegistry, "got ack {} for entity {}", aAck.Ack, aAck.Entity);
                     if (aAck.Ack) {
                         mRegistry.remove<Predicted>(aAck.Entity);
                     } else {

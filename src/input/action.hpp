@@ -162,7 +162,6 @@ struct Action {
     ActionType   Type;
     ActionTag    Tag;
     payload_type Payload;
-    bool         IsProcessed = false;
 
     void AddExtraInputInfo(const Input& aInput)
     {
@@ -192,8 +191,7 @@ struct Action {
 
 inline bool operator==(const Action& aLHS, const Action& aRHS)
 {
-    return aLHS.Type == aRHS.Type && aLHS.Tag == aRHS.Tag && aLHS.Payload == aRHS.Payload
-           && aLHS.IsProcessed == aRHS.IsProcessed;
+    return aLHS.Type == aRHS.Type && aLHS.Tag == aRHS.Tag && aLHS.Payload == aRHS.Payload;
 }
 
 using ActionsType = std::vector<Action>;

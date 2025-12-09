@@ -200,6 +200,7 @@ void PlacementModeContextHandler::operator()(Registry& aRegistry, BuildTowerPayl
         aRegistry.remove<ImguiDrawable>(tower);
         // remove component so that ExitPlacement does not destroy the entity
         aRegistry.remove<PlacementMode>(tower);
+        SPDLOG_INFO("tower {} created", tower);
     }
 
     SPDLOG_DEBUG("exiting placement mode");
@@ -251,10 +252,10 @@ void ServerContextHandler::operator()(Registry& aRegistry, BuildTowerPayload& aP
     if (!handler.CanBuildTower) {
         phy.World()->destroyRigidBody(body.Body);
         aRegistry.destroy(tower);
-        WATO_ERR(aRegistry, "tower at {} invalidated", t.Position);
+        WATO_ERR(aRegistry, "tower {} at {} invalidated", tower, t.Position);
         return;
     }
-    WATO_INFO(aRegistry, "tower at {} validated", t.Position);
+    WATO_INFO(aRegistry, "tower {} at {} validated", aPayload.CliPredictedEntity, t.Position);
     aRegistry.emplace<Tower>(tower, aPayload.Tower);
     aRegistry.emplace<RigidBody>(tower, body);
     aRegistry.emplace<Collider>(tower, collider);
@@ -302,22 +303,18 @@ void ActionSystem<Derived>::processActions(
     ActionTag   aFilterTag,
     const float aDeltaTime)
 {
-    auto&       buf           = aRegistry.ctx().get<GameStateBuffer&>();
-    ActionsType latestActions = buf.Latest().Actions;
+    auto&        buf           = aRegistry.ctx().get<GameStateBuffer&>();
+    ActionsType& latestActions = buf.Latest().Actions;
 
     if (!latestActions.empty()) {
         WATO_TRACE(aRegistry, "processing {} actions", latestActions.size());
     }
 
     for (Action& action : latestActions) {
-        if (action.Tag != aFilterTag || action.IsProcessed) {
+        if (action.Tag != aFilterTag) {
             continue;
         }
         handleAction(aRegistry, action, aDeltaTime);
-    }
-
-    for (Action& action : latestActions) {
-        action.IsProcessed = true;
     }
 }
 
