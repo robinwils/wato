@@ -82,7 +82,7 @@ struct AcknowledgementResponse {
     bool Archive(auto& aArchive)
     {
         if (!ArchiveBool(aArchive, Ack)) return false;
-        return ArchiveValue(aArchive, Entity, 0u, 1000000u);
+        return ArchiveEntity(aArchive, Entity);
     }
 };
 
@@ -166,6 +166,7 @@ TEST_CASE("net.serialize")
 
     ev->PlayerID = 42;
     ev->Type     = PacketType::ClientSync;
+    ev->Tick     = 0;
     ev->Payload  = SyncPayload{.GameID = gameID, .State = GameState{.Tick = 12}};
 
     ev->Archive(outAr);

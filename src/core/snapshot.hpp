@@ -108,10 +108,10 @@ class BitOutputArchive : public StreamEncoder
     template <typename T>
     void operator()(const T& aObj)
     {
-        // const casting here because we are calling generic Archive methods that will
-        // either call Encode or Decode depending on the archive.
-        // EnTT uses a const registry for snapshot so we can't bypass const otherwise,
-        // and this avoids duplicating Archive calls on every component type
+        // const_cast is needed because component Archive methods are not const-qualified,
+        // but EnTT's snapshot passes const references. This is safe because:
+        // 1. BitOutputArchive is detected as IsStreamEncoder at compile-time
+        // 2. The Archive helper functions only read from (never modify) the object when encoding
         const_cast<T&>(aObj).Archive(*this);
     }
 

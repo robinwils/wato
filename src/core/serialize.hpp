@@ -7,6 +7,7 @@
 #include <cmath>
 #include <concepts>
 #include <cstdint>
+#include <entt/entity/entity.hpp>
 #include <glm/detail/qualifier.hpp>
 #include <glm/ext/vector_relational.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -482,8 +483,9 @@ concept IsStreamDecoder = requires(
 };
 
 template <typename T>
-concept IsTriviallyArchivable =
-    std::is_integral_v<T> || std::is_floating_point_v<T> || std::is_enum_v<T>;
+concept IsTriviallyArchivable = std::is_integral_v<std::remove_reference_t<T>>
+                                || std::is_floating_point_v<std::remove_reference_t<T>>
+                                || std::is_enum_v<std::remove_reference_t<T>>;
 
 template <typename T, class Out>
 concept IsArchivable = requires(T aObj, Out& aOut) {
@@ -491,120 +493,107 @@ concept IsArchivable = requires(T aObj, Out& aOut) {
 };
 
 template <typename Archive>
-    requires IsStreamEncoder<Archive>
-bool ArchiveBool(Archive& aR, const bool& aValue)
+    requires(IsStreamEncoder<Archive> || IsStreamDecoder<Archive>)
+bool ArchiveBool(Archive& aR, bool& aValue)
 {
-    aR.EncodeBool(aValue);
-    return true;
+    if constexpr (IsStreamEncoder<Archive>) {
+        aR.EncodeBool(aValue);
+        return true;
+    } else if constexpr (IsStreamDecoder<Archive>) {
+        return aR.DecodeBool(aValue);
+    }
+    return false;
+}
+
+template <typename Archive, typename T, typename MinMaxT>
+    requires(IsStreamEncoder<Archive> || IsStreamDecoder<Archive>) && IsTriviallyArchivable<T>
+bool ArchiveValue(Archive& aR, T&& aValue, MinMaxT aMin, MinMaxT aMax)
+{
+    using value_t = std::remove_cvref_t<T>;
+
+    if constexpr (std::is_enum_v<value_t>) {
+        using U = std::underlying_type_t<value_t>;
+        if constexpr (IsStreamEncoder<Archive>) {
+            U val = static_cast<U>(aValue);
+            WATO_SER_LOGGER->info("encoding enum {}", val);
+            return ArchiveValue(aR, val, static_cast<U>(aMin), static_cast<U>(aMax));
+        } else {
+            U tmp;
+            if (!ArchiveValue(aR, tmp, static_cast<U>(aMin), static_cast<U>(aMax))) return false;
+            aValue = static_cast<value_t>(tmp);
+            WATO_SER_LOGGER->info("decoded enum {}", tmp);
+            return true;
+        }
+    } else if constexpr (std::is_same_v<value_t, float>) {
+        if constexpr (IsStreamEncoder<Archive>) {
+            WATO_SER_LOGGER->info("encoding float {}", aValue);
+            aR.EncodeFloat(aValue);
+            return true;
+        } else {
+            if (!aR.DecodeFloat(aValue)) return false;
+            if (aValue > aMax || aValue < aMin) return false;
+            WATO_SER_LOGGER->info("decoded float {}", aValue);
+            return true;
+        }
+    } else if constexpr (std::is_integral_v<value_t> && std::is_signed_v<value_t>) {
+        if constexpr (IsStreamEncoder<Archive>) {
+            WATO_SER_LOGGER->info("encoding int {}", aValue);
+            aR.EncodeInt(aValue, aMin, aMax);
+            return true;
+        } else {
+            if (!aR.DecodeInt(aValue, aMin, aMax)) return false;
+            if (aValue > aMax || aValue < aMin) return false;
+            WATO_SER_LOGGER->info("decoded int {}", aValue);
+            return true;
+        }
+    } else if constexpr (std::is_integral_v<value_t> && std::is_unsigned_v<value_t>) {
+        if constexpr (IsStreamEncoder<Archive>) {
+            WATO_SER_LOGGER->info("encoding uint{}_t {}", sizeof(value_t), aValue);
+            aR.EncodeUInt(aValue, aMin, aMax);
+            return true;
+        } else {
+            if (!aR.DecodeUInt(aValue, aMin, aMax)) return false;
+            if (aValue > aMax || aValue < aMin) return false;
+            WATO_SER_LOGGER->info("decoded uint{}_t {}", sizeof(value_t), aValue);
+            return true;
+        }
+    }
+    return false;
 }
 
 template <typename Archive>
-    requires IsStreamDecoder<Archive>
-bool ArchiveBool(Archive& aR, bool& aValue)
+    requires(IsStreamEncoder<Archive> || IsStreamDecoder<Archive>)
+bool ArchiveEntity(Archive& aR, entt::entity& aValue)
 {
-    return aR.DecodeBool(aValue);
-}
-
-template <typename Archive, typename T, typename MinMaxT>
-    requires IsStreamEncoder<Archive> && IsTriviallyArchivable<T>
-bool ArchiveValue(Archive& aR, const T& aValue, MinMaxT aMin, MinMaxT aMax)
-{
-    using value_t = std::remove_cv_t<T>;
-    if constexpr (std::is_enum_v<value_t>) {
-        using U = std::underlying_type_t<value_t>;
-        WATO_SER_LOGGER->info("encoding enum {}", static_cast<U>(aValue));
-        return ArchiveValue(aR, static_cast<U>(aValue), static_cast<U>(aMin), static_cast<U>(aMax));
-    } else if constexpr (std::is_same_v<value_t, float>) {
-        WATO_SER_LOGGER->info("encoding float {}", aValue);
-        aR.EncodeFloat(aValue);
-        return true;
-    } else if constexpr (std::is_integral_v<value_t> && std::is_signed_v<value_t>) {
-        WATO_SER_LOGGER->info("encoding int {}", aValue);
-        aR.EncodeInt(aValue, aMin, aMax);
-        return true;
-    } else if constexpr (std::is_integral_v<value_t> && std::is_unsigned_v<value_t>) {
-        WATO_SER_LOGGER->info("encoding uint{}_t {}", sizeof(value_t), aValue);
-        aR.EncodeUInt(aValue, aMin, aMax);
-        return true;
-    }
-    return false;
-}
-
-template <typename Archive, typename T, typename MinMaxT>
-    requires IsStreamDecoder<Archive> && IsTriviallyArchivable<T>
-bool ArchiveValue(Archive& aR, T& aValue, MinMaxT aMin, MinMaxT aMax)
-{
-    using value_t = std::remove_cv_t<T>;
-
-    if constexpr (std::is_enum_v<value_t>) {
-        using U = std::underlying_type_t<value_t>;
-        U tmp;
-        if (!ArchiveValue(aR, tmp, static_cast<U>(aMin), static_cast<U>(aMax))) return false;
-        aValue = static_cast<value_t>(tmp);
-        WATO_SER_LOGGER->info("decoded enum {}", tmp);
-        return true;
-    } else if constexpr (std::is_floating_point_v<value_t>) {
-        if (!aR.DecodeFloat(aValue)) return false;
-        if (aValue > aMax || aValue < aMin) return false;
-        WATO_SER_LOGGER->info("decoded float {}", aValue);
-        return true;
-    } else if constexpr (std::is_integral_v<value_t> && std::is_signed_v<value_t>) {
-        if (!aR.DecodeInt(aValue, aMin, aMax)) return false;
-        if (aValue > aMax || aValue < aMin) return false;
-        WATO_SER_LOGGER->info("decoded int {}", aValue);
-        return true;
-    } else if constexpr (std::is_integral_v<value_t> && std::is_unsigned_v<value_t>) {
-        if (!aR.DecodeUInt(aValue, aMin, aMax)) return false;
-        if (aValue > aMax || aValue < aMin) return false;
-        WATO_SER_LOGGER->info("decoded uint{}_t {}", sizeof(value_t), aValue);
-        return true;
-    }
-    return false;
+    return ArchiveValue(aR, aValue, entt::entity{0}, entt::entity{entt::null});
 }
 
 template <typename Archive, typename T>
-bool ArchiveVector(Archive& aR, const std::vector<T>& aVec, std::size_t aMaxSize)
-{
-    ArchiveValue(aR, aVec.size(), 0ul, aMaxSize);
-    for (const T& elt : aVec) {
-        elt.Archive(aR);
-    }
-    return true;
-}
-
-template <typename Archive, typename T>
+    requires(IsStreamEncoder<Archive> || IsStreamDecoder<Archive>)
 bool ArchiveVector(Archive& aR, std::vector<T>& aVec, std::size_t aMaxSize)
 {
-    std::size_t s = 0;
-
-    ArchiveValue(aR, s, 0ul, aMaxSize);
-    aVec.reserve(s);
-    for (std::size_t idx = 0; idx < s; ++idx) {
-        T elt;
-        if (!elt.Archive(aR)) return false;
-        aVec.push_back(std::move(elt));
+    if constexpr (IsStreamEncoder<Archive>) {
+        ArchiveValue(aR, aVec.size(), 0ul, aMaxSize);
+        for (auto& elt : aVec) {
+            elt.Archive(aR);
+        }
+        return true;
+    } else if constexpr (IsStreamDecoder<Archive>) {
+        std::size_t s = 0;
+        ArchiveValue(aR, s, 0ul, aMaxSize);
+        aVec.reserve(s);
+        for (std::size_t idx = 0; idx < s; ++idx) {
+            T elt;
+            if (!elt.Archive(aR)) return false;
+            aVec.push_back(std::move(elt));
+        }
+        return true;
     }
-    return true;
+    return false;
 }
 
 template <typename Archive, typename T, typename MinMaxT>
-    requires IsStreamEncoder<Archive> && IsTriviallyArchivable<T>
-bool ArchiveVector(
-    Archive&              aR,
-    const std::vector<T>& aVec,
-    MinMaxT               aMin,
-    MinMaxT               aMax,
-    std::size_t           aMaxSize)
-{
-    ArchiveValue(aR, aVec.size(), 0ul, aMaxSize);
-    for (const T& elt : aVec) {
-        ArchiveValue(aR, elt, aMin, aMax);
-    }
-    return true;
-}
-
-template <typename Archive, typename T, typename MinMaxT>
-    requires IsStreamDecoder<Archive> && IsTriviallyArchivable<T>
+    requires(IsStreamEncoder<Archive> || IsStreamDecoder<Archive>) && IsTriviallyArchivable<T>
 bool ArchiveVector(
     Archive&        aR,
     std::vector<T>& aVec,
@@ -612,43 +601,50 @@ bool ArchiveVector(
     MinMaxT         aMax,
     std::size_t     aMaxSize)
 {
-    std::size_t s = 0;
-
-    ArchiveValue(aR, s, 0ul, aMaxSize);
-    aVec.reserve(s);
-    for (std::size_t idx = 0; idx < s; ++idx) {
-        T elt{};
-        if (!ArchiveValue(aR, elt, aMin, aMax)) return false;
-        aVec.push_back(std::move(elt));
-    }
-    return true;
-}
-
-template <typename Archive, typename T, typename MinMaxT>
-    requires IsStreamEncoder<Archive> && IsTriviallyArchivable<T>
-bool ArchiveOptionalVal(Archive& aR, std::optional<T> const& aOpt, MinMaxT aMin, MinMaxT aMax)
-{
-    if (!ArchiveBool(aR, aOpt.has_value())) return false;
-    if (aOpt && ArchiveValue(aR, *aOpt, aMin, aMax)) return false;
-    return true;
-}
-
-template <typename Archive, typename T, typename MinMaxT>
-    requires IsStreamDecoder<Archive> && IsTriviallyArchivable<T>
-bool ArchiveOptionalVal(Archive& aR, std::optional<T>& aOpt, MinMaxT aMin, MinMaxT aMax)
-{
-    bool hasVal;
-    if (!ArchiveBool(aR, hasVal)) return false;
-
-    if (!hasVal) {
+    if constexpr (IsStreamEncoder<Archive>) {
+        ArchiveValue(aR, aVec.size(), 0ul, aMaxSize);
+        for (auto& elt : aVec) {
+            ArchiveValue(aR, elt, aMin, aMax);
+        }
+        return true;
+    } else if constexpr (IsStreamDecoder<Archive>) {
+        std::size_t s = 0;
+        ArchiveValue(aR, s, 0ul, aMaxSize);
+        aVec.reserve(s);
+        for (std::size_t idx = 0; idx < s; ++idx) {
+            T elt{};
+            if (!ArchiveValue(aR, elt, aMin, aMax)) return false;
+            aVec.push_back(std::move(elt));
+        }
         return true;
     }
+    return false;
+}
 
-    T v;
-
-    if (!ArchiveValue(aR, v, aMin, aMax)) return false;
-    aOpt = v;
-    return true;
+template <typename Archive, typename T, typename MinMaxT>
+    requires(IsStreamEncoder<Archive> || IsStreamDecoder<Archive>) && IsTriviallyArchivable<T>
+bool ArchiveOptionalVal(Archive& aR, std::optional<T>& aOpt, MinMaxT aMin, MinMaxT aMax)
+{
+    if constexpr (IsStreamEncoder<Archive>) {
+        bool hasVal = aOpt.has_value();
+        if (!ArchiveBool(aR, hasVal)) return false;
+        if (aOpt) {
+            auto val = *aOpt;
+            if (!ArchiveValue(aR, val, aMin, aMax)) return false;
+        }
+        return true;
+    } else if constexpr (IsStreamDecoder<Archive>) {
+        bool hasVal;
+        if (!ArchiveBool(aR, hasVal)) return false;
+        if (!hasVal) {
+            return true;
+        }
+        T v;
+        if (!ArchiveValue(aR, v, aMin, aMax)) return false;
+        aOpt = v;
+        return true;
+    }
+    return false;
 }
 
 template <typename Archive, typename... Ts>
@@ -703,16 +699,6 @@ bool ArchiveVariant(Archive& aR, std::variant<Ts...>& aVar)
 template <glm::length_t L, typename T, glm::qualifier Q, typename MinMaxT>
 constexpr bool
 ArchiveVector(auto& aArchive, glm::vec<L, T, Q>& aObj, const MinMaxT aMin, const MinMaxT aMax)
-{
-    for (std::size_t idx = 0; idx < L; ++idx) {
-        if (!ArchiveValue(aArchive, aObj[idx], aMin, aMax)) return false;
-    }
-    return true;
-}
-
-template <glm::length_t L, typename T, glm::qualifier Q, typename MinMaxT>
-constexpr bool
-ArchiveVector(auto& aArchive, const glm::vec<L, T, Q>& aObj, const MinMaxT aMin, const MinMaxT aMax)
 {
     for (std::size_t idx = 0; idx < L; ++idx) {
         if (!ArchiveValue(aArchive, aObj[idx], aMin, aMax)) return false;
