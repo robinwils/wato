@@ -110,7 +110,7 @@ class Graph
      */
     void ComputePaths(const GraphCell& aDest);
 
-    std::optional<GraphCell> GetNextCell(const GraphCell& aFrom)
+    std::optional<GraphCell> GetNextCell(const GraphCell& aFrom) const
     {
         if (!mPaths.contains(aFrom) || aFrom == mDest) {
             return std::nullopt;

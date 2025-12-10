@@ -18,7 +18,7 @@
 
 void AiSystem::operator()(Registry& aRegistry)
 {
-    auto& graph = aRegistry.ctx().get<Graph>();
+    const auto& graph = aRegistry.ctx().get<Graph>();
 
     for (auto&& [e, creep, t, rb, p] :
          aRegistry.view<Creep, Transform3D, RigidBody, Path>().each()) {
