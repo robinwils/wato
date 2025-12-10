@@ -42,7 +42,7 @@ struct SyncPayload {
 
     bool Archive(auto& aArchive)
     {
-        if (!ArchiveValue(aArchive, GameID, 0ul, std::numeric_limits<uint64_t>::max()))
+        if (!ArchiveValue(aArchive, GameID, uint64_t(0), std::numeric_limits<uint64_t>::max()))
             return false;
         if (!State.Archive(aArchive)) return false;
         return true;
@@ -59,7 +59,7 @@ struct NewGameResponse {
 
     bool Archive(auto& aArchive)
     {
-        if (!ArchiveValue(aArchive, GameID, 0ul, std::numeric_limits<uint64_t>::max()))
+        if (!ArchiveValue(aArchive, GameID, uint64_t(0), std::numeric_limits<uint64_t>::max()))
             return false;
         return true;
     }
