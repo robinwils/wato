@@ -24,12 +24,10 @@
 
 #if defined(_MSC_VER)
 #include <intrin.h>
-#endif
 
-#if defined(_MSC_VER)
-constexpr inline std::uint16_t byteswap(std::uint16_t aX) { return _byteswap_ushort(aX); }
-constexpr inline std::uint32_t byteswap(std::uint32_t aX) { return _byteswap_ulong(aX); }
-constexpr inline std::uint64_t byteswap(std::uint64_t aX) { return _byteswap_uint64(aX); }
+inline std::uint16_t byteswap(std::uint16_t aX) { return _byteswap_ushort(aX); }
+inline std::uint32_t byteswap(std::uint32_t aX) { return _byteswap_ulong(aX); }
+inline std::uint64_t byteswap(std::uint64_t aX) { return _byteswap_uint64(aX); }
 #elif defined(__clang__) || defined(__GNUC__)
 constexpr inline std::uint16_t byteswap(std::uint16_t aX) { return __builtin_bswap16(aX); }
 constexpr inline std::uint32_t byteswap(std::uint32_t aX) { return __builtin_bswap32(aX); }
