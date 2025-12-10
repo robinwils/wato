@@ -62,7 +62,7 @@ jobs:
         uses: jakoch/install-vulkan-sdk-action@v1
         with:
           # debian testing version for now
-          vulkan_version: 1.3.243.0
+          vulkan_version: 1.4.328.1
           cache: true
           install_runtime: true
 
