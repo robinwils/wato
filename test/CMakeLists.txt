@@ -4,7 +4,6 @@ target_compile_options(wato_tests
   PUBLIC
   $<$<CONFIG:Debug>:-ggdb -fsanitize=address,undefined>
   -fdiagnostics-color=always
-  -ftime-trace
   -O$<IF:$<CONFIG:Debug>,0,3>
 )
 target_link_options(wato_tests
@@ -52,76 +51,68 @@ target_link_libraries(wato_tests
     doctest
 )
 
-# add_subdirectory(fuzztest)
-#
-# include(GoogleTest)
-
-# enable_testing()
-# fuzztest_setup_fuzzing_flags()
-
 if(ENABLE_FUZZING)
-add_library(wato_common_fuzz INTERFACE)
+  add_library(wato_common_fuzz INTERFACE)
 
-target_include_directories(wato_common_fuzz INTERFACE
-  $<TARGET_PROPERTY:wato_common,INTERFACE_INCLUDE_DIRECTORIES>
-)
-target_compile_definitions(wato_common_fuzz INTERFACE
-  $<TARGET_PROPERTY:wato_common,INTERFACE_COMPILE_DEFINITIONS>
-)
-target_compile_features(wato_common_fuzz INTERFACE
-  $<TARGET_PROPERTY:wato_common,INTERFACE_COMPILE_FEATURES>
-)
+  target_include_directories(wato_common_fuzz INTERFACE
+    $<TARGET_PROPERTY:wato_common,INTERFACE_INCLUDE_DIRECTORIES>
+  )
+  target_compile_definitions(wato_common_fuzz INTERFACE
+    $<TARGET_PROPERTY:wato_common,INTERFACE_COMPILE_DEFINITIONS>
+  )
+  target_compile_features(wato_common_fuzz INTERFACE
+    $<TARGET_PROPERTY:wato_common,INTERFACE_COMPILE_FEATURES>
+  )
 
-get_target_property(COMMON_LIBS wato_common INTERFACE_LINK_LIBRARIES)
-if(COMMON_LIBS)
-  target_link_libraries(wato_common_fuzz INTERFACE ${COMMON_LIBS})
-endif()
+  get_target_property(COMMON_LIBS wato_common INTERFACE_LINK_LIBRARIES)
+  if(COMMON_LIBS)
+    target_link_libraries(wato_common_fuzz INTERFACE ${COMMON_LIBS})
+  endif()
 
-add_executable(wato_fuzz)
+  add_executable(wato_fuzz)
 
-target_compile_definitions(wato_fuzz PUBLIC DOCTEST_CONFIG_DISABLE)
-target_compile_definitions(wato_fuzz PUBLIC FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION)
-target_compile_definitions(wato_fuzz PUBLIC BX_CONFIG_DEBUG)
+  target_compile_definitions(wato_fuzz PUBLIC DOCTEST_CONFIG_DISABLE)
+  target_compile_definitions(wato_fuzz PUBLIC FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION)
+  target_compile_definitions(wato_fuzz PUBLIC BX_CONFIG_DEBUG)
 
-target_sources(wato_fuzz
-  PUBLIC FILE_SET HEADERS
-  BASE_DIRS
+  target_sources(wato_fuzz
+    PUBLIC FILE_SET HEADERS
+    BASE_DIRS
     .
     ${CMAKE_SOURCE_DIR}/src
-  FILES
+    FILES
     ${CMAKE_SOURCE_DIR}/src/core/snapshot.hpp
     test.hpp
-  PRIVATE
+    PRIVATE
     main_fuzz.cpp
-)
+  )
 
-target_link_libraries(wato_fuzz
-  PUBLIC
+  target_link_libraries(wato_fuzz
+    PUBLIC
     wato_common_fuzz
     bgfx::bx
     spdlog::spdlog
     ReactPhysics3D::ReactPhysics3D
-)
+  )
 
-target_compile_options(wato_fuzz
-  PUBLIC
-  -g -UNDEBUG
-  -fsanitize-coverage=inline-8bit-counters -fsanitize-coverage=trace-cmp
-  -fsanitize=undefined,address -DADDRESS_SANITIZER
-  -fdiagnostics-color=always
-  -fsanitize=fuzzer
-  -ftime-trace
-  -O1
-)
-target_link_options(wato_fuzz
-  PUBLIC
-  -fsanitize-coverage=inline-8bit-counters -fsanitize-coverage=trace-cmp
-  -fsanitize=undefined,address
-  -fsanitize=fuzzer
-  -rdynamic
-)
+  target_compile_options(wato_fuzz
+    PUBLIC
+    -g -UNDEBUG
+    -fsanitize-coverage=inline-8bit-counters -fsanitize-coverage=trace-cmp
+    -fsanitize=undefined,address -DADDRESS_SANITIZER
+    -fdiagnostics-color=always
+    -fsanitize=fuzzer
+    -O1
+  )
+  target_link_options(wato_fuzz
+    PUBLIC
+    -fsanitize-coverage=inline-8bit-counters -fsanitize-coverage=trace-cmp
+    -fsanitize=undefined,address
+    -fsanitize=fuzzer
+    -rdynamic
+  )
+
+  if(CMAKE_CXX_COMPILER_ID MATCHES ".*Clang" AND ENABLE_TRACING)
+    target_compile_options(wato_fuzz PUBLIC -ftime-trace)
+  endif()
 endif()
-
-# link_fuzztest(wato_fuzz)
-# gtest_discover_tests(wato_fuzz)
-  # doctest_discover_tests(wato_fuzz TEST_PREFIX "wato.")

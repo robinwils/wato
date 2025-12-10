@@ -24,6 +24,8 @@ option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 
 option(ENABLE_FUZZING "Build with libfuzzer support" OFF)
 
+option(ENABLE_TRACING "Enable clang time trace" OFF)
+
 set(TF_BUILD_TESTS OFF CACHE BOOL "Disable taskflow test builds" FORCE)
 set(TF_BUILD_EXAMPLES OFF CACHE BOOL "Disable taskflow example builds" FORCE)
 
@@ -180,7 +182,6 @@ if(UNIX)
     INTERFACE
       $<$<CONFIG:Debug>:-ggdb -fsanitize=address,undefined>
       -fdiagnostics-color=always
-      -ftime-trace
       -O$<IF:$<CONFIG:Debug>,0,3>
   )
   target_link_options(wato_common
@@ -197,6 +198,8 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     INTERFACE
       $<$<CONFIG:Debug>:-static-libasan -static-libubsan>
   )
+elseif(CMAKE_CXX_COMPILER_ID MATCHES ".*Clang" AND ENABLE_TRACING)
+  target_compile_options(wato_common INTERFACE -ftime-trace)
 endif()
 
 
