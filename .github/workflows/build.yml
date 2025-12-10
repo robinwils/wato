@@ -101,3 +101,7 @@ jobs:
       - name: Build
         run: |
           cmake --build --preset ${{ env.CMAKE_PRESET }} -v
+
+      - name: Test
+        run: |
+          ./out/build/${{ env.CMAKE_PRESET }}/test/wato_tests
