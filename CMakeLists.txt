@@ -22,6 +22,8 @@ option(wato_WARNINGS_AS_ERRORS "Treat Warnings As Errors" OFF)
 
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 
+option(ENABLE_FUZZING "Build with libfuzzer support" OFF)
+
 set(TF_BUILD_TESTS OFF CACHE BOOL "Disable taskflow test builds" FORCE)
 set(TF_BUILD_EXAMPLES OFF CACHE BOOL "Disable taskflow example builds" FORCE)
 

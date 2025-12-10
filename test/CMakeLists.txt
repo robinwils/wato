@@ -59,6 +59,7 @@ target_link_libraries(wato_tests
 # enable_testing()
 # fuzztest_setup_fuzzing_flags()
 
+if(ENABLE_FUZZING)
 add_library(wato_common_fuzz INTERFACE)
 
 target_include_directories(wato_common_fuzz INTERFACE
@@ -119,6 +120,7 @@ target_link_options(wato_fuzz
   -fsanitize=fuzzer
   -rdynamic
 )
+endif()
 
 # link_fuzztest(wato_fuzz)
 # gtest_discover_tests(wato_fuzz)
