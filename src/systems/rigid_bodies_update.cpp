@@ -38,7 +38,11 @@ void RigidBodiesUpdateSystem::operator()(Registry& aRegistry)
         }
 
         if (rb.Params.Type == reactphysics3d::BodyType::KINEMATIC) {
-            WATO_TRACE(aRegistry, "  linear velocity: {} * {}", rb.Params.Direction, rb.Params.Velocity);
+            WATO_TRACE(
+                aRegistry,
+                "  linear velocity: {} * {}",
+                rb.Params.Direction,
+                rb.Params.Velocity);
             rb.Body->setLinearVelocity(ToRP3D(rb.Params.Direction * rb.Params.Velocity));
         }
 

@@ -35,10 +35,11 @@ void Application::StartGameInstance(
 
     physics.Init();
 
-    stack.push_back(ActionContext{
-        .State    = aIsServer ? ActionContext::State::Server : ActionContext::State::Default,
-        .Bindings = ActionBindings::Defaults(),
-        .Payload  = NormalPayload{}});
+    stack.push_back(
+        ActionContext{
+            .State    = aIsServer ? ActionContext::State::Server : ActionContext::State::Default,
+            .Bindings = ActionBindings::Defaults(),
+            .Payload  = NormalPayload{}});
 
     SetupObservers(aRegistry);
     SpawnMap(aRegistry, 20, 20);
@@ -193,4 +194,5 @@ void Application::SetupObservers(Registry& aRegistry)
     mObserverNames.push_back("placement_mode_observer");
     auto& pmo = aRegistry.storage<entt::reactive>("placement_mode_observer"_hs);
     pmo.on_update<Transform3D>();
+    mLogger->info("observers created");
 }
