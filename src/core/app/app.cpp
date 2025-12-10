@@ -73,6 +73,7 @@ void Application::AdvanceSimulation(Registry& aRegistry, const float aDeltaTime)
         state.Latest().Tick = ++instance.Tick;
         ClearAllObservers(aRegistry);
     }
+    mUpdateTransformsSystem(aRegistry, instance.Accumulator / kTimeStep);
 }
 
 void Application::SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeight)
