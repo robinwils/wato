@@ -571,14 +571,14 @@ template <typename Archive, typename T>
 bool ArchiveVector(Archive& aR, std::vector<T>& aVec, std::size_t aMaxSize)
 {
     if constexpr (IsStreamEncoder<Archive>) {
-        ArchiveValue(aR, aVec.size(), 0ul, aMaxSize);
+        ArchiveValue(aR, aVec.size(), std::size_t(0), aMaxSize);
         for (auto& elt : aVec) {
             elt.Archive(aR);
         }
         return true;
     } else if constexpr (IsStreamDecoder<Archive>) {
         std::size_t s = 0;
-        ArchiveValue(aR, s, 0ul, aMaxSize);
+        ArchiveValue(aR, s, std::size_t(0), aMaxSize);
         aVec.reserve(s);
         for (std::size_t idx = 0; idx < s; ++idx) {
             T elt;
@@ -600,14 +600,14 @@ bool ArchiveVector(
     std::size_t     aMaxSize)
 {
     if constexpr (IsStreamEncoder<Archive>) {
-        ArchiveValue(aR, aVec.size(), 0ul, aMaxSize);
+        ArchiveValue(aR, aVec.size(), std::size_t(0), aMaxSize);
         for (auto& elt : aVec) {
             ArchiveValue(aR, elt, aMin, aMax);
         }
         return true;
     } else if constexpr (IsStreamDecoder<Archive>) {
         std::size_t s = 0;
-        ArchiveValue(aR, s, 0ul, aMaxSize);
+        ArchiveValue(aR, s, std::size_t(0), aMaxSize);
         aVec.reserve(s);
         for (std::size_t idx = 0; idx < s; ++idx) {
             T elt{};
