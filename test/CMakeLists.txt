@@ -1,17 +1,5 @@
 add_executable(wato_tests)
 
-target_compile_options(wato_tests
-  PUBLIC
-  $<$<CONFIG:Debug>:-ggdb -fsanitize=address,undefined>
-  -fdiagnostics-color=always
-  -O$<IF:$<CONFIG:Debug>,0,3>
-)
-target_link_options(wato_tests
-  PUBLIC
-  $<$<CONFIG:Debug>:-fsanitize=address,undefined>
-  -rdynamic
-)
-
 if(DEFINED doctest_SOURCE_DIR)
   target_include_directories(wato_tests
 

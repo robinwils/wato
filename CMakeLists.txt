@@ -178,19 +178,31 @@ target_compile_definitions(watolib PUBLIC DOCTEST_CONFIG_DISABLE)
 target_compile_definitions(wato PUBLIC DOCTEST_CONFIG_DISABLE)
 
 if(UNIX)
+  target_link_options(wato_common INTERFACE -rdynamic)
+elseif(WIN32)
+  target_compile_definitions(wato_common INTERFACE NOMINMAX)
+endif()
+
+if (MSVC)
   target_compile_options(wato_common
     INTERFACE
-      $<$<CONFIG:Debug>:-ggdb -fsanitize=address,undefined>
+      $<$<CONFIG:Debug>:/fsanitize=address>
+  )
+  target_link_options(wato_common
+    INTERFACE
+      $<$<CONFIG:Debug>:/fsanitize=address>
+  )
+else()
+  target_compile_options(wato_common
+    INTERFACE
+      $<$<CONFIG:Debug>:-O0 -ggdb -fsanitize=address,undefined>
       -fdiagnostics-color=always
-      -O$<IF:$<CONFIG:Debug>,0,3>
   )
   target_link_options(wato_common
     INTERFACE
       $<$<CONFIG:Debug>:-fsanitize=address,undefined>
       -rdynamic
   )
-elseif(WIN32)
-  target_compile_definitions(wato_common INTERFACE NOMINMAX)
 endif()
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
