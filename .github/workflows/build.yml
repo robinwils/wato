@@ -81,7 +81,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ env.GITHUB_WORKSPACE }}/vcpkg_cache
-          key: vcpkg-${{ env.CMAKE_PRESET }}-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', 'vcpkg_overlay/**', 'CMakeLists.txt', '**/CMakeLists.txt', 'CMakePresets.json') }}
+          key: vcpkg-${{ env.CMAKE_PRESET }}-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', 'vcpkg_overlay/**') }}
 
       - name: Setup vcpkg
         uses: lukka/run-vcpkg@v11
