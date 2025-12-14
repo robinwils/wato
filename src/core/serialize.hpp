@@ -195,7 +195,7 @@ class BitReader
             mCurBit += 32;
         }
 
-        aData      = SafeU32(mScratch & (1lu << aN) - 1);
+        aData      = SafeU32(mScratch & ((1lu << aN) - 1));
         mScratch >>= aN;
         mCurBit   -= aN;
 
