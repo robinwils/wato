@@ -82,9 +82,9 @@ jobs:
         id: cache-vcpkg-restore
         with:
           path: ${{ env.GITHUB_WORKSPACE }}/vcpkg_cache
-          key: vcpkg-${{ env.CMAKE_PRESET }}-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', 'vcpkg_overlay/**') }}
+          key: vcpkg-${{ matrix.preset }}-${{ matrix.compiler }}-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', 'vcpkg_overlay/**') }}
           restore-keys: |
-           vcpkg-${{ env.CMAKE_PRESET }}-
+           vcpkg-${{ matrix.preset }}-${{ matrix.compiler }}-
 
       - name: Setup vcpkg
         uses: lukka/run-vcpkg@v11
