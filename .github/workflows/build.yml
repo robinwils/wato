@@ -77,8 +77,9 @@ jobs:
           # debian testing version as of 28/06/2025
           cmakeVersion: 3.31.6
 
-      - name: Cache vcpkg
-        uses: actions/cache@v4
+      - name: Restore vcpkg cache
+        uses: actions/cache/restore@v4
+        id: cache-vcpkg-restore
         with:
           path: ${{ env.GITHUB_WORKSPACE }}/vcpkg_cache
           key: vcpkg-${{ env.CMAKE_PRESET }}-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', 'vcpkg_overlay/**') }}
@@ -99,6 +100,14 @@ jobs:
       - name: Configure CMake + vcpkg
         run: |
           cmake --preset ${{ env.CMAKE_PRESET }} .
+
+      - name: Save vcpkg Cache
+        id: cache-vcpkg-save
+        if: steps.cache-vcpkg-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          key: ${{ steps.cache-vcpkg-restore.outputs.cache-primary-key }}
+          path: ${{ env.GITHUB_WORKSPACE }}/vcpkg_cache
 
       - name: Build
         run: |
