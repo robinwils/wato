@@ -82,7 +82,7 @@ class BitWriter
         BX_ASSERT(aN <= 32, "cannot write more than 32 bits");
 
         // mask input data to be exactly aN bits
-        aData    &= (1lu << aN) - 1lu;
+        aData    &= (uint64_t(1) << aN) - 1lu;
         mScratch |= (SafeU64(aData) << mCurBit);
 
         mCurBit += aN;
@@ -195,7 +195,7 @@ class BitReader
             mCurBit += 32;
         }
 
-        aData      = SafeU32(mScratch & ((1lu << aN) - 1));
+        aData      = SafeU32(mScratch & ((uint64_t(1) << aN) - 1));
         mScratch >>= aN;
         mCurBit   -= aN;
 
