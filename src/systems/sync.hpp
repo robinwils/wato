@@ -2,7 +2,8 @@
 
 #include "systems/system.hpp"
 
-class NetworkSyncSystem : public System<NetworkSyncSystem>
+template <typename _ENetT>
+class NetworkSyncSystem : public System<NetworkSyncSystem<_ENetT>>
 {
    public:
     void operator()(Registry& aRegistry);

@@ -10,6 +10,7 @@
 #include <glm/gtx/string_cast.hpp>
 #include <glm/trigonometric.hpp>
 
+#include "core/serialize.hpp"
 #include "core/sys/log.hpp"
 
 struct Transform3D {
@@ -43,18 +44,11 @@ struct Transform3D {
                * glm::scale(glm::identity<glm::mat4>(), Scale);
     }
 
-    constexpr static auto Serialize(auto& aArchive, const auto& aSelf)
+    bool Archive(auto& aArchive)
     {
-        aArchive.template Write<float>(glm::value_ptr(aSelf.Position), 3);
-        aArchive.template Write<float>(glm::value_ptr(aSelf.Orientation), 4);
-        aArchive.template Write<float>(glm::value_ptr(aSelf.Scale), 3);
-    }
-
-    constexpr static auto Deserialize(auto& aArchive, auto& aSelf)
-    {
-        aArchive.template Read<float>(glm::value_ptr(aSelf.Position), 3);
-        aArchive.template Read<float>(glm::value_ptr(aSelf.Orientation), 4);
-        aArchive.template Read<float>(glm::value_ptr(aSelf.Scale), 3);
+        if (!ArchiveVector(aArchive, Position, 0.0f, 20.0f)) return false;
+        if (!ArchiveQuaternion(aArchive, Orientation)) return false;
+        if (!ArchiveVector(aArchive, Scale, 0.0f, 20.0f)) return false;
         return true;
     }
 };

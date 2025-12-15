@@ -6,7 +6,7 @@
 
 std::string FindAsset(const char* aFileName)
 {
-    WATO_TRACE("finding asset {}", aFileName);
+    spdlog::trace("finding asset {}", aFileName);
     if (std::filesystem::exists(aFileName)) {
         return aFileName;
     }

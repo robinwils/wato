@@ -10,12 +10,22 @@
 #include "core/net/enet_server.hpp"
 #include "core/types.hpp"
 #include "systems/action.hpp"
+#include "systems/rigid_bodies_update.hpp"
+#include "systems/sync.hpp"
+#include "systems/tower_built.hpp"
 
 class GameServer : public Application
 {
    public:
-    explicit GameServer(char** aArgv) : Application(aArgv) {}
-    virtual ~GameServer() = default;
+    explicit GameServer(char** aArgv)
+        : Application("server", aArgv), mServer(mOptions.ServerAddr, mLogger)
+    {
+    }
+    explicit GameServer(const Options& aOptions)
+        : Application("server", aOptions), mServer(mOptions.ServerAddr, mLogger)
+    {
+    }
+    virtual ~GameServer();
 
     GameServer(const GameServer&)            = delete;
     GameServer(GameServer&&)                 = delete;
@@ -23,8 +33,9 @@ class GameServer : public Application
     GameServer& operator=(GameServer&&)      = delete;
 
     void Init() override;
-    int  Run() override;
+    int  Run(tf::Executor& aExecutor) override;
     void ConsumeNetworkRequests();
+    void Stop();
 
     static GameInstanceID GenerateGameInstanceID()
     {
@@ -40,11 +51,14 @@ class GameServer : public Application
    private:
     GameInstanceID createGameInstance(const NewGameRequest& aNewGame);
     tf::Taskflow   mNetTaskflow;
-    tf::Executor   mNetExecutor;
 
     ENetServer                                   mServer;
     std::unordered_map<GameInstanceID, Registry> mGameInstances;
 
     // systems
-    ServerActionSystem mActionSystem;
+    ServerActionSystem            mActionSystem;
+    NetworkSyncSystem<ENetServer> mSyncSystem;
+    AiSystem                      mAiSystem;
+    RigidBodiesUpdateSystem       mRBUpdatesSystem;
+    TowerBuiltSystem              mTowerBuiltSystem;
 };

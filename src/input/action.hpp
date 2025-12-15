@@ -1,8 +1,10 @@
 #pragma once
 
+#include <bx/bx.h>
 #include <spdlog/spdlog.h>
 
 #include <entt/core/hashed_string.hpp>
+#include <entt/entity/entity.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <list>
 #include <stdexcept>
@@ -14,6 +16,7 @@
 #include "components/player.hpp"
 #include "components/tower.hpp"
 #include "core/queue/ring_buffer.hpp"
+#include "core/serialize.hpp"
 #include "core/types.hpp"
 #include "input/input.hpp"
 
@@ -25,6 +28,7 @@ enum class ActionType {
     BuildTower,
     EnterPlacementMode,
     ExitPlacementMode,
+    Count,
 };
 
 template <>
@@ -51,6 +55,7 @@ struct fmt::formatter<ActionType> : fmt::formatter<std::string> {
 enum class ActionTag {
     FixedTime,
     FrameTime,
+    Count,
 };
 
 template <>
@@ -82,25 +87,74 @@ struct KeyState {
     uint8_t     Modifiers;
 };
 
-enum class MoveDirection { Left, Right, Front, Back, Up, Down };
+enum class MoveDirection { Left, Right, Front, Back, Up, Down, Count };
 
 struct MovePayload {
     MoveDirection Direction;
+
+    bool Archive(auto& aArchive)
+    {
+        if (!ArchiveValue(aArchive, Direction, 0u, uint32_t(MoveDirection::Count))) return false;
+        return true;
+    }
 };
+
+inline bool operator==(const MovePayload& aLHS, const MovePayload& aRHS)
+{
+    return aLHS.Direction == aRHS.Direction;
+}
 
 struct SendCreepPayload {
-    CreepType Type;
+    CreepType    Type;
+    entt::entity CliPredictedEntity{entt::null};
+
+    bool Archive(auto& aArchive)
+    {
+        if (!ArchiveValue(aArchive, Type, 0u, uint32_t(CreepType::Count))) return false;
+        return ArchiveEntity(aArchive, CliPredictedEntity);
+    }
 };
 
+inline bool operator==(const SendCreepPayload& aLHS, const SendCreepPayload& aRHS)
+{
+    return aLHS.Type == aRHS.Type;
+}
+
 struct BuildTowerPayload {
-    TowerType Tower;
-    glm::vec3 Position{0.0f};
+    TowerType    Tower;
+    glm::vec3    Position{0.0f};
+    entt::entity CliPredictedEntity{entt::null};
+
+    bool Archive(auto& aArchive)
+    {
+        if (!ArchiveValue(aArchive, Tower, 0u, uint32_t(TowerType::Count))) return false;
+        if (!ArchiveVector(aArchive, Position, 0.0f, 20.0f)) return false;
+        return ArchiveEntity(aArchive, CliPredictedEntity);
+    }
 };
+
+inline bool operator==(const BuildTowerPayload& aLHS, const BuildTowerPayload& aRHS)
+{
+    return aLHS.Tower == aRHS.Tower && aLHS.Position == aRHS.Position
+           && aLHS.CliPredictedEntity == aRHS.CliPredictedEntity;
+}
 
 struct PlacementModePayload {
     bool      CanBuild;
     TowerType Tower;
+
+    bool Archive(auto& aArchive)
+    {
+        if (!ArchiveBool(aArchive, CanBuild)) return false;
+        if (!ArchiveValue(aArchive, Tower, 0u, uint32_t(TowerType::Count))) return false;
+        return true;
+    }
 };
+
+inline bool operator==(const PlacementModePayload& aLHS, const PlacementModePayload& aRHS)
+{
+    return aLHS.CanBuild == aRHS.CanBuild && aLHS.Tower == aRHS.Tower;
+}
 
 struct Action {
     using payload_type =
@@ -108,74 +162,39 @@ struct Action {
     ActionType   Type;
     ActionTag    Tag;
     payload_type Payload;
-    bool         IsProcessed = false;
 
-    constexpr static auto Serialize(auto& aArchive, const auto& aSelf)
+    void AddExtraInputInfo(const Input& aInput)
     {
-        aArchive.template Write<ActionType>(&aSelf.Type, 1);
-        aArchive.template Write<ActionTag>(&aSelf.Tag, 1);
-
-        // Then serialize the actual payload based on type
         std::visit(
             VariantVisitor{
-                [&](const MovePayload& aPayload) {
-                    aArchive.template Write<MoveDirection>(&aPayload.Direction, 1);
+                [&](MovePayload&) {},
+                [&](SendCreepPayload&) {},
+                [&](BuildTowerPayload& aPayload) {
+                    BX_ASSERT(
+                        aInput.MouseWorldIntersect().has_value(),
+                        "input has no mouse intersection");
+                    aPayload.Position = *aInput.MouseWorldIntersect();
                 },
-                [&](const SendCreepPayload& aPayload) {
-                    aArchive.template Write<CreepType>(&aPayload.Type, 1);
-                },
-                [&](const BuildTowerPayload& aPayload) {
-                    aArchive.template Write<TowerType>(&aPayload.Tower, 1);
-                    aArchive.template Write<float>(&aPayload.Position, 3);
-                },
-                [&](const PlacementModePayload& aPayload) {
-                    aArchive.template Write<bool>(&aPayload.CanBuild, 1);
-                    aArchive.template Write<TowerType>(&aPayload.Tower, 1);
-                },
+                [&](PlacementModePayload&) {},
             },
-            aSelf.Payload);
+            Payload);
     }
 
-    constexpr static auto Deserialize(auto& aArchive, auto& aSelf)
+    bool Archive(auto& aArchive)
     {
-        aArchive.template Read<ActionType>(&aSelf.Type, 1);
-        aArchive.template Read<ActionTag>(&aSelf.Tag, 1);
-
-        switch (aSelf.Type) {
-            case ActionType::Move: {
-                MovePayload payload{};
-                aArchive.template Read<MoveDirection>(&payload.Direction, 1);
-                aSelf.Payload = payload;
-                break;
-            }
-            case ActionType::SendCreep: {
-                SendCreepPayload payload{};
-                aArchive.template Read<CreepType>(&payload.Type, 1);
-                aSelf.Payload = payload;
-                break;
-            }
-            case ActionType::BuildTower: {
-                BuildTowerPayload payload{};
-                aArchive.template Read<TowerType>(&payload.Tower, 1);
-                aArchive.template Read<float>(glm::value_ptr(payload.Position), 3);
-                aSelf.Payload = payload;
-                break;
-            }
-            case ActionType::EnterPlacementMode:
-            case ActionType::ExitPlacementMode: {
-                PlacementModePayload payload{};
-                aArchive.template Read<bool>(&payload.CanBuild, 1);
-                aArchive.template Read<TowerType>(&payload.Tower, 1);
-                aSelf.Payload = payload;
-                break;
-            }
-            default:
-                return false;
-        }
-
+        if (!ArchiveValue(aArchive, Type, 0u, uint32_t(ActionType::Count))) return false;
+        if (!ArchiveValue(aArchive, Tag, 0u, uint32_t(ActionTag::Count))) return false;
+        if (!ArchiveVariant(aArchive, Payload)) return false;
         return true;
     }
 };
+
+inline bool operator==(const Action& aLHS, const Action& aRHS)
+{
+    return aLHS.Type == aRHS.Type && aLHS.Tag == aRHS.Tag && aLHS.Payload == aRHS.Payload;
+}
+
+using ActionsType = std::vector<Action>;
 
 template <>
 struct fmt::formatter<Action::payload_type> : fmt::formatter<std::string> {
@@ -198,6 +217,8 @@ struct fmt::formatter<Action::payload_type> : fmt::formatter<std::string> {
                             return fmt::format_to(aCtx.out(), "Up");
                         case MoveDirection::Down:
                             return fmt::format_to(aCtx.out(), "Down");
+                        case MoveDirection::Count:
+                            return fmt::format_to(aCtx.out(), "Count");
                     }
                 } else if constexpr (std::is_same_v<T, SendCreepPayload>) {
                     return fmt::format_to(
@@ -232,53 +253,62 @@ struct fmt::formatter<Action> : fmt::formatter<std::string> {
 constexpr Action kMoveLeftAction = Action{
     .Type    = ActionType::Move,
     .Tag     = ActionTag::FrameTime,
-    .Payload = MovePayload{.Direction = MoveDirection::Left}};
+    .Payload = MovePayload{.Direction = MoveDirection::Left},
+};
 
 constexpr Action kMoveRightAction = Action{
     .Type    = ActionType::Move,
     .Tag     = ActionTag::FrameTime,
-    .Payload = MovePayload{.Direction = MoveDirection::Right}};
+    .Payload = MovePayload{.Direction = MoveDirection::Right},
+};
 
 constexpr Action kMoveFrontAction = Action{
     .Type    = ActionType::Move,
     .Tag     = ActionTag::FrameTime,
-    .Payload = MovePayload{.Direction = MoveDirection::Front}};
+    .Payload = MovePayload{.Direction = MoveDirection::Front},
+};
 
 constexpr Action kMoveBackAction = Action{
     .Type    = ActionType::Move,
     .Tag     = ActionTag::FrameTime,
-    .Payload = MovePayload{.Direction = MoveDirection::Back}};
+    .Payload = MovePayload{.Direction = MoveDirection::Back},
+};
 
 constexpr Action kMoveUpAction = Action{
     .Type    = ActionType::Move,
     .Tag     = ActionTag::FrameTime,
-    .Payload = MovePayload{.Direction = MoveDirection::Up}};
+    .Payload = MovePayload{.Direction = MoveDirection::Up},
+};
 
 constexpr Action kMoveDownAction = Action{
     .Type    = ActionType::Move,
     .Tag     = ActionTag::FrameTime,
-    .Payload = MovePayload{.Direction = MoveDirection::Down}};
+    .Payload = MovePayload{.Direction = MoveDirection::Down},
+};
 
 constexpr Action kEnterPlacementModeAction = Action{
     .Type    = ActionType::EnterPlacementMode,
     .Tag     = ActionTag::FrameTime,
-    .Payload = PlacementModePayload{.CanBuild = true, .Tower = TowerType::Arrow}
+    .Payload = PlacementModePayload{.CanBuild = true, .Tower = TowerType::Arrow},
 };
 
 constexpr Action kBuildTowerAction = Action{
     .Type    = ActionType::BuildTower,
     .Tag     = ActionTag::FixedTime,
-    .Payload = BuildTowerPayload{.Tower = TowerType::Arrow}};
+    .Payload = BuildTowerPayload{.Tower = TowerType::Arrow},
+};
 
 constexpr Action kExitPlacementModeAction = Action{
     .Type    = ActionType::ExitPlacementMode,
     .Tag     = ActionTag::FrameTime,
-    .Payload = PlacementModePayload{}};
+    .Payload = PlacementModePayload{},
+};
 
 constexpr Action kSendCreepAction = Action{
     .Type    = ActionType::SendCreep,
     .Tag     = ActionTag::FixedTime,
-    .Payload = SendCreepPayload{.Type = CreepType::Simple}};
+    .Payload = SendCreepPayload{.Type = CreepType::Simple},
+};
 
 struct ActionBinding {
     ActionBinding() = delete;
@@ -294,10 +324,9 @@ class ActionBindings
 {
    public:
     using bindings_type = std::unordered_map<std::string, ActionBinding>;
-    using actions_type  = std::vector<Action>;
 
     void AddBinding(const std::string& aActionStr, const KeyState& aState, const Action& aAction);
-    actions_type          ActionsFromInput(const Input& aInput);
+    ActionsType           ActionsFromInput(const Input& aInput);
     static ActionBindings Defaults();
     static ActionBindings PlacementDefaults();
 
@@ -320,42 +349,27 @@ struct ActionContext {
     payload_type   Payload;
 };
 
-struct PlayerActions {
-    using actions_type = std::vector<Action>;
-
-    constexpr static auto Serialize(auto& aArchive, const auto& aSelf)
-    {
-        actions_type::size_type nActions = aSelf.Actions.size();
-
-        aArchive.template Write<PlayerID>(&aSelf.Player, 1);
-        aArchive.template Write<GameInstanceID>(&aSelf.GameID, 1);
-        aArchive.template Write<uint32_t>(&aSelf.Tick, 1);
-        aArchive.template Write<actions_type::size_type>(&nActions, 1);
-        for (const Action& action : aSelf.Actions) {
-            Action::Serialize(aArchive, action);
-        }
-    }
-    constexpr static auto Deserialize(auto& aArchive, auto& aSelf)
-    {
-        actions_type::size_type nActions = 0;
-        aArchive.template Read<PlayerID>(&aSelf.Player, 1);
-        aArchive.template Read<GameInstanceID>(&aSelf.GameID, 1);
-        aArchive.template Read<uint32_t>(&aSelf.Tick, 1);
-        aArchive.template Read<actions_type::size_type>(&nActions, 1);
-        for (actions_type::size_type idx = 0; idx < nActions; idx++) {
-            Action action;
-            if (!Action::Deserialize(aArchive, action)) {
-                throw std::runtime_error("cannot deserialize action");
-            }
-            aSelf.Actions.push_back(action);
-        }
-        return true;
-    }
-    PlayerID       Player;
-    GameInstanceID GameID;
-    uint32_t       Tick;
-    actions_type   Actions;
-};
-
 using ActionContextStack = std::list<ActionContext>;
-using ActionBuffer       = RingBuffer<PlayerActions, 128>;
+
+#ifndef DOCTEST_CONFIG_DISABLE
+#include "test.hpp"
+TEST_CASE("encode.action")
+{
+    StreamEncoder enc;
+    Action        ae1 = kBuildTowerAction;
+    Action        ae2 = kSendCreepAction;
+
+    ae1.Archive(enc);
+    ae2.Archive(enc);
+
+    StreamDecoder dec(enc.Data());
+    Action        ad1;
+    Action        ad2;
+
+    CHECK_EQ(ad1.Archive(dec), true);
+    CHECK_EQ(ad1, ae1);
+
+    CHECK_EQ(ad2.Archive(dec), true);
+    CHECK_EQ(ad2, ae2);
+}
+#endif

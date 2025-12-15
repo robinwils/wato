@@ -2,8 +2,6 @@
 
 #include <spdlog/spdlog.h>
 
-#include "components/tower.hpp"
-
 ActionBindings ActionBindings::Defaults()
 {
     ActionBindings bindings;
@@ -48,11 +46,11 @@ ActionBindings ActionBindings::PlacementDefaults()
     return bindings;
 }
 
-ActionBindings::actions_type ActionBindings::ActionsFromInput(const Input& aInput)
+ActionsType ActionBindings::ActionsFromInput(const Input& aInput)
 {
-    ActionBindings::actions_type actions;
+    ActionsType actions;
 
-    for (const auto& [_, binding] : mBindings) {
+    for (auto& [_, binding] : mBindings) {
         std::visit(
             VariantVisitor{// handle keyboard binding
                            [&](const Keyboard::Key& aKey) {
@@ -74,12 +72,14 @@ ActionBindings::actions_type ActionBindings::ActionsFromInput(const Input& aInpu
                                    && ((aInput.MouseState.IsKeyPressed(aButton)
                                         && aInput.PrevMouseState.IsKeyPressed(aButton))
                                        || aInput.MouseState.IsKeyRepeat(aButton))) {
+                                   binding.Action.AddExtraInputInfo(aInput);
                                    actions.push_back(binding.Action);
                                } else if (
                                    binding.KeyState.State == KeyState::State::PressOnce
                                    && aInput.MouseState.IsKeyPressed(aButton)
                                    && (aInput.PrevMouseState.IsKeyReleased(aButton)
                                        || aInput.PrevMouseState.IsKeyUnknown(aButton))) {
+                                   binding.Action.AddExtraInputInfo(aInput);
                                    actions.push_back(binding.Action);
                                }
                            }},

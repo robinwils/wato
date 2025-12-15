@@ -62,7 +62,7 @@ jobs:
         uses: jakoch/install-vulkan-sdk-action@v1
         with:
           # debian testing version for now
-          vulkan_version: 1.3.243.0
+          vulkan_version: 1.4.328.1
           cache: true
           install_runtime: true
 
@@ -77,11 +77,14 @@ jobs:
           # debian testing version as of 28/06/2025
           cmakeVersion: 3.31.6
 
-      - name: Cache vcpkg
-        uses: actions/cache@v4
+      - name: Restore vcpkg cache
+        uses: actions/cache/restore@v4
+        id: cache-vcpkg-restore
         with:
           path: ${{ env.GITHUB_WORKSPACE }}/vcpkg_cache
-          key: vcpkg-${{ env.CMAKE_PRESET }}-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', 'vcpkg_overlay/**', 'CMakeLists.txt', '**/CMakeLists.txt', 'CMakePresets.json') }}
+          key: vcpkg-${{ matrix.preset }}-${{ matrix.compiler }}-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', 'vcpkg_overlay/**') }}
+          restore-keys: |
+           vcpkg-${{ matrix.preset }}-${{ matrix.compiler }}-
 
       - name: Setup vcpkg
         uses: lukka/run-vcpkg@v11
@@ -98,6 +101,18 @@ jobs:
         run: |
           cmake --preset ${{ env.CMAKE_PRESET }} .
 
+      - name: Save vcpkg Cache
+        id: cache-vcpkg-save
+        if: steps.cache-vcpkg-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          key: ${{ steps.cache-vcpkg-restore.outputs.cache-primary-key }}
+          path: ${{ env.GITHUB_WORKSPACE }}/vcpkg_cache
+
       - name: Build
         run: |
           cmake --build --preset ${{ env.CMAKE_PRESET }} -v
+
+      - name: Test
+        run: |
+          ./out/build/${{ env.CMAKE_PRESET }}/test/wato_tests

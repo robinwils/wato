@@ -1,6 +1,7 @@
 #include "core/app/game_client.hpp"
 
 #include <bx/bx.h>
+#include <spdlog/spdlog.h>
 
 #include <chrono>
 #include <entt/core/fwd.hpp>
@@ -8,10 +9,11 @@
 
 #include "components/game.hpp"
 #include "components/imgui.hpp"
-#include "components/rigid_body.hpp"
-#include "components/tower.hpp"
+#include "components/net.hpp"
 #include "core/net/enet_client.hpp"
 #include "core/net/net.hpp"
+#include "core/snapshot.hpp"
+#include "core/sys/log.hpp"
 #include "core/types.hpp"
 #include "core/window.hpp"
 #include "registry/game_registry.hpp"
@@ -28,6 +30,9 @@ using namespace entt::literals;
 void GameClient::Init()
 {
     Application::Init();
+
+    spdlog::set_default_logger(mLogger);
+
     auto& window    = mRegistry.ctx().get<WatoWindow>();
     auto& renderer  = mRegistry.ctx().get<Renderer>();
     auto& netClient = mRegistry.ctx().get<ENetClient>();
@@ -49,17 +54,14 @@ void GameClient::Init()
 #endif
 
     mSystemsFT.push_back(DeterministicActionSystem::MakeDelegate(mFTActionSystem));
-    mSystemsFT.push_back(AiSystem::MakeDelegate(mAiSystem));
     mSystemsFT.push_back(TowerBuiltSystem::MakeDelegate(mTowerBuiltSystem));
     mSystemsFT.push_back(RigidBodiesUpdateSystem::MakeDelegate(mRBUpdatesSystem));
     mSystemsFT.push_back(AnimationSystem::MakeDelegate(mAnimationSystem));
     mSystemsFT.push_back(PhysicsSystem::MakeDelegate(mPhysicsSystem));
-    mSystemsFT.push_back(NetworkSyncSystem::MakeDelegate(mNetworkSyncSystem));
-
-    setupObservers();
+    mSystemsFT.push_back(NetworkSyncSystem<ENetClient>::MakeDelegate(mNetworkSyncSystem));
 
     auto graph = organizerFixedTime.graph();
-    spdlog::info("graph size: {}", graph.size());
+    WATO_INFO(mRegistry, "graph size: {}", graph.size());
     // TODO: use these tasks
     std::unordered_map<std::string, tf::Task> tasks;
 
@@ -80,28 +82,19 @@ void GameClient::Init()
     }
 }
 
-int GameClient::Run()
+int GameClient::Run(tf::Executor& aExecutor)
 {
-    tf::Executor executor;
-
     auto& window    = mRegistry.ctx().get<WatoWindow&>();
     auto& renderer  = mRegistry.ctx().get<Renderer&>();
     auto& netClient = mRegistry.ctx().get<ENetClient&>();
     auto  prevTime  = clock_type::now();
-    // std::optional<std::jthread>     netPollThread;
 
-    if (mOptions.Multiplayer()) {
-        mNetTaskflow.emplace([&]() { networkThread(); });
-        mNetExecutor.run(mNetTaskflow);
+    aExecutor.silent_async([&]() { networkThread(); });
 
-        // netPollThread.emplace(&GameClient::networkThread, this);
-        //
-        if (!netClient.Connect()) {
-            throw std::runtime_error("No available peers for initiating an ENet connection.");
-        }
-    } else {
-        StartGameInstance(mRegistry, 0, false);
+    if (!netClient.Connect()) {
+        throw std::runtime_error("No available peers for initiating an ENet connection.");
     }
+    WATO_DBG(mRegistry, "connected to server");
 
     while (!window.ShouldClose()) {
         window.PollEvents();
@@ -116,9 +109,7 @@ int GameClient::Run()
 
         prevTime = now;
 
-        if (mOptions.Multiplayer()) {
-            consumeNetworkResponses();
-        }
+        consumeNetworkResponses();
 
         if (mRegistry.ctx().contains<GameInstance>()) {
             auto& instance = mRegistry.ctx().get<GameInstance&>();
@@ -137,10 +128,10 @@ int GameClient::Run()
         input.MouseState.Scroll.y = 0;
     }
 
-    if (mOptions.Multiplayer()) {
-        netClient.Disconnect();
-        mDiscTimerStart.emplace(clock_type::now());
-    }
+    StopGameInstance(mRegistry);
+    netClient.Disconnect();
+    mDiscTimerStart.emplace(clock_type::now());
+
     return 0;
 }
 
@@ -154,7 +145,14 @@ void GameClient::networkThread()
             }
         }
 
-        netClient.ConsumeNetworkRequests();
+        netClient.ConsumeNetworkRequests([&](NetworkRequest* aEvent) {
+            // write header
+            BitOutputArchive archive;
+
+            aEvent->Archive(archive);
+
+            netClient.Send(archive.Bytes());
+        });
         netClient.Poll();
     }
 }
@@ -254,39 +252,70 @@ void GameClient::OnGameInstanceCreated()
 void GameClient::consumeNetworkResponses()
 {
     auto& netClient = mRegistry.ctx().get<ENetClient>();
-    while (const NetworkEvent<NetworkResponsePayload>* ev = netClient.ResponseQueue().pop()) {
+    netClient.ConsumeNetworkResponses([&](NetworkResponse* aEvent) {
         std::visit(
             VariantVisitor{
-                [&](const ConnectedResponse& aResp) {
-                    BX_UNUSED(aResp);
-                    netClient.EnqueueSend(new NetworkEvent<NetworkRequestPayload>{
+                [&](const ConnectedResponse&) {
+                    WATO_INFO(mRegistry, "got connected response");
+
+                    // TODO: should be triggered by player input (menu, matchmaking,...)
+                    netClient.EnqueueRequest(new NetworkRequest{
                         .Type     = PacketType::NewGame,
                         .PlayerID = 0,
+                        .Tick     = 0,
                         .Payload  = NewGameRequest{.PlayerAID = 0},
                     });
                 },
                 [&](const NewGameResponse& aResp) {
                     StartGameInstance(mRegistry, aResp.GameID, false);
-                    spdlog::info("game {} created", aResp.GameID);
+                    WATO_INFO(mRegistry, "game {} created", aResp.GameID);
                 },
+                [&](SyncPayload& aResp) {
+                    if (aResp.State.Snapshot.empty()) {
+                        return;
+                    }
+
+                    BitInputArchive       inAr(aResp.State.Snapshot);
+                    Registry              tmp;
+                    entt::snapshot_loader loader{tmp};
+
+                    WATO_DBG(
+                        mRegistry,
+                        "loading state snapshot {} of size {}",
+                        aResp.State.Tick,
+                        aResp.State.Snapshot.size());
+                    loader.get<entt::entity>(inAr)
+                        .get<Transform3D>(inAr)
+                        .get<RigidBody>(inAr)
+                        .get<Collider>(inAr);
+                },
+                [&](const AcknowledgementResponse aAck) {
+                    WATO_INFO(mRegistry, "got ack {} for {}", aAck.Ack, aAck.Entity);
+                    if (aAck.Ack) {
+                        mRegistry.remove<Predicted>(aAck.Entity);
+                        mRegistry.emplace<Synced>(aAck.Entity, aAck.ServerEntity);
+                        mRegistry.ctx().get<EntitySyncMap>().insert_or_assign(
+                            aAck.ServerEntity,
+                            aAck.Entity);
+                    } else {
+                        mRegistry.destroy(aAck.Entity);
+                    }
+                },
+                [&](const RigidBodyUpdateResponse aUpdate) {
+                    auto& syncMap = mRegistry.ctx().get<EntitySyncMap>();
+
+                    if (syncMap.contains(aUpdate.Entity)) {
+                        mRegistry.patch<RigidBody>(
+                            syncMap[aUpdate.Entity],
+                            [&aUpdate](RigidBody& aBody) { aBody.Params = aUpdate.Params; });
+                        if (mRegistry.get<RigidBody>(syncMap[aUpdate.Entity]).Params.Velocity
+                            == 0.0f) {
+                            WATO_INFO(mRegistry, "stopping rigid body for {}", aUpdate.Entity);
+                        }
+                    }
+                },
+                [&](const std::monostate) {},
             },
-            ev->Payload);
-        delete ev;
-    }
-}
-
-void GameClient::setupObservers()
-{
-    mObserverNames.push_back("tower_built_observer");
-    auto& tbo = mRegistry.storage<entt::reactive>("tower_built_observer"_hs);
-    tbo.on_construct<Tower>();
-
-    mObserverNames.push_back("rigid_bodies_observer");
-    auto& rbo = mRegistry.storage<entt::reactive>("rigid_bodies_observer"_hs);
-    rbo.on_construct<RigidBody>();
-    rbo.on_update<RigidBody>();
-
-    mObserverNames.push_back("placement_mode_observer");
-    auto& pmo = mRegistry.storage<entt::reactive>("placement_mode_observer"_hs);
-    pmo.on_update<Transform3D>();
+            aEvent->Payload);
+    });
 }

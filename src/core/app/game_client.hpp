@@ -7,9 +7,10 @@
 #include <taskflow/taskflow.hpp>
 
 #include "core/app/app.hpp"
-#include "core/physics/event_handler.hpp"
 #include "core/net/enet_client.hpp"
+#include "core/physics/event_handler.hpp"
 #include "input/action.hpp"
+#include "registry/registry.hpp"
 #include "renderer/renderer.hpp"
 #include "resource/cache.hpp"
 #include "systems/action.hpp"
@@ -24,16 +25,17 @@ class GameClient : public Application
 {
    public:
     explicit GameClient(int aWidth, int aHeight, char** aArgv)
-        : Application(aArgv), mPhysicsEventHandler(&mRegistry)
+        : Application("client", aArgv), mPhysicsEventHandler(&mRegistry)
     {
-        mRegistry.ctx().emplace<ActionContextStack>();
-        mRegistry.ctx().emplace<WatoWindow>(aWidth, aHeight);
-        mRegistry.ctx().emplace<Renderer>(mOptions.Renderer());
-        mRegistry.ctx().emplace<ENetClient>();
-        mRegistry.ctx().emplace<TextureCache>();
-        mRegistry.ctx().emplace<ShaderCache>();
-        mRegistry.ctx().emplace<ModelCache>();
+        initContext(aWidth, aHeight);
     }
+
+    explicit GameClient(int aWidth, int aHeight, const Options& aOptions)
+        : Application("client", aOptions), mPhysicsEventHandler(&mRegistry)
+    {
+        initContext(aWidth, aHeight);
+    }
+
     GameClient(const GameClient&)            = delete;
     GameClient(GameClient&&)                 = delete;
     GameClient& operator=(const GameClient&) = delete;
@@ -41,13 +43,14 @@ class GameClient : public Application
 
     virtual ~GameClient()
     {
+        WATO_TRACE(mRegistry, "Destroying GameClient");
+
         std::vector<entt::id_type> ids;
-        WATO_TRACE("Destroying GameClient");
 
         for (auto [id, res] : mRegistry.ctx().get<ModelCache>()) {
             ids.push_back(id);
         }
-        WATO_TRACE("Destroying {} models", ids.size());
+        WATO_TRACE(mRegistry, "Destroying {} models", ids.size());
         for (auto id : ids) {
             mRegistry.ctx().get<ModelCache>().erase(id);
         }
@@ -56,7 +59,7 @@ class GameClient : public Application
         for (auto [id, res] : mRegistry.ctx().get<ShaderCache>()) {
             ids.push_back(id);
         }
-        WATO_TRACE("Destroying {} shaders", ids.size());
+        WATO_TRACE(mRegistry, "Destroying {} shaders", ids.size());
         for (auto id : ids) {
             mRegistry.ctx().get<ShaderCache>().erase(id);
         }
@@ -67,7 +70,7 @@ class GameClient : public Application
             bgfx::destroy(res);
             ids.push_back(id);
         }
-        WATO_TRACE("Destroying {} textures", ids.size());
+        WATO_TRACE(mRegistry, "Destroying {} textures", ids.size());
         for (auto id : ids) {
             mRegistry.ctx().get<TextureCache>().erase(id);
         }
@@ -83,35 +86,44 @@ class GameClient : public Application
     }
 
     void Init() override;
-    int  Run() override;
+    int  Run(tf::Executor& aExecutor) override;
 
    protected:
     virtual void OnGameInstanceCreated() override;
 
    private:
+    inline void initContext(int aWidth, int aHeight)
+    {
+        mRegistry.ctx().emplace<Logger&>(mLogger);
+        mRegistry.ctx().emplace<ActionContextStack>();
+        mRegistry.ctx().emplace<WatoWindow>(aWidth, aHeight);
+        mRegistry.ctx().emplace<Renderer>(mOptions.Renderer());
+        mRegistry.ctx().emplace<ENetClient>(mLogger);
+        mRegistry.ctx().emplace<TextureCache>();
+        mRegistry.ctx().emplace<ShaderCache>();
+        mRegistry.ctx().emplace<ModelCache>();
+        mRegistry.ctx().emplace<EntitySyncMap>();
+    }
     void networkThread();
     void consumeNetworkResponses();
     void spawnPlayerAndCamera();
     void prepareGridPreview();
-    void setupObservers();
 
     Registry        mRegistry;
     entt::organizer mFrameTimeOrganizer;
     tf::Taskflow    mTaskflow;
-    tf::Taskflow    mNetTaskflow;
-    tf::Executor    mNetExecutor;
 
     // systems
-    InputSystem               mInputSystem;
-    RealTimeActionSystem      mRTActionSystem;
-    DeterministicActionSystem mFTActionSystem;
-    AnimationSystem           mAnimationSystem;
-    RenderSystem              mRenderSystem;
-    RenderImguiSystem         mRenderImguiSystem;
-    CameraSystem              mCameraSystem;
-    NetworkSyncSystem         mNetworkSyncSystem;
-    TowerBuiltSystem          mTowerBuiltSystem;
-    RigidBodiesUpdateSystem   mRBUpdatesSystem;
+    InputSystem                   mInputSystem;
+    RealTimeActionSystem          mRTActionSystem;
+    DeterministicActionSystem     mFTActionSystem;
+    AnimationSystem               mAnimationSystem;
+    RenderSystem                  mRenderSystem;
+    RenderImguiSystem             mRenderImguiSystem;
+    CameraSystem                  mCameraSystem;
+    NetworkSyncSystem<ENetClient> mNetworkSyncSystem;
+    TowerBuiltSystem              mTowerBuiltSystem;
+    RigidBodiesUpdateSystem       mRBUpdatesSystem;
 #if WATO_DEBUG
     PhysicsDebugSystem mPhysicsDbgSystem;
 #endif

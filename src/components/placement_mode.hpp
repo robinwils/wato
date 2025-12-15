@@ -17,7 +17,7 @@ struct PlacementMode {
 
     static void on_destroy(entt::registry& aRegistry, const entt::entity aEntity)
     {
-        spdlog::trace("destroying placement mode component");
+        WATO_TRACE(aRegistry, "destroying placement mode component");
         auto& placementMode = aRegistry.get<PlacementMode>(aEntity);
         if (placementMode.Data) {
             delete placementMode.Data;

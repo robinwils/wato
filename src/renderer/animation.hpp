@@ -1,6 +1,6 @@
 #pragma once
 
-#include <fmt/format.h>
+#include <fmt/core.h>
 
 #include <glm/ext/quaternion_common.hpp>
 #include <glm/ext/vector_float3.hpp>

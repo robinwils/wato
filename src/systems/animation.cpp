@@ -16,13 +16,13 @@ void AnimationSystem::operator()(Registry& aRegistry, const float aDeltaTime)
         if (auto model = aRegistry.ctx().get<ModelCache>()[obj.ModelHash]; model) {
             if (!animator.Animation
                 && !(animator.Animation = model->GetAnimation(animator.AnimationName))) {
-                spdlog::warn("could not get animation {}, ignoring", animator.AnimationName);
+                WATO_WARN(aRegistry, "could not get animation {}, ignoring", animator.AnimationName);
                 continue;
             }
             const Skeleton& skeleton = model->Skeleton();
 
             if (skeleton.Bones.empty()) {
-                spdlog::warn("got empty skeleton for {}", obj.ModelHash.data());
+                WATO_WARN(aRegistry, "got empty skeleton for {}", obj.ModelHash.data());
                 continue;
             }
 
@@ -32,7 +32,7 @@ void AnimationSystem::operator()(Registry& aRegistry, const float aDeltaTime)
             double animationTime     = std::fmod(animatonTimeTicks, animator.Animation->Duration());
 
             if (animator.FinalBonesMatrices.empty()) {
-                spdlog::debug("empty final bone vertices, reserving {}", skeleton.Bones.size());
+                WATO_DBG(aRegistry, "empty final bone vertices, reserving {}", skeleton.Bones.size());
                 animator.FinalBonesMatrices.resize(skeleton.Bones.size());
             }
 

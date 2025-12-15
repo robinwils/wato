@@ -3,6 +3,7 @@
 #include <string_view>
 enum class CreepType {
     Simple,
+    Count,
 };
 
 [[nodiscard]] constexpr std::string_view CreepTypeToString(CreepType aType)

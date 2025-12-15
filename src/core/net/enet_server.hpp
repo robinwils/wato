@@ -3,13 +3,17 @@
 #include <unordered_map>
 
 #include "core/net/enet_base.hpp"
+#include "core/sys/log.hpp"
 
 class ENetServer : public ENetBase
 {
     using peer_map = std::unordered_map<PlayerID, ENetPeer*>;
 
    public:
-    ENetServer() {}
+    ENetServer(const std::string& aSrvAddr, Logger aLogger)
+        : ENetBase(aLogger, false), mServerAddr(aSrvAddr)
+    {
+    }
     ENetServer(ENetServer&&)                 = delete;
     ENetServer(const ENetServer&)            = delete;
     ENetServer& operator=(ENetServer&&)      = delete;
@@ -17,8 +21,15 @@ class ENetServer : public ENetBase
     ~ENetServer()                            = default;
 
     void Init() override;
-    void EnqueueResponse(NetworkEvent<NetworkResponsePayload>* aPkt) { mRespQueue.push(aPkt); }
-    void ConsumeNetworkResponses();
+
+    bool Send(PlayerID aID, const std::span<uint8_t> aData)
+    {
+        if (!mConnectedPeers.contains(aID)) {
+            return false;
+        } else {
+            return ENetBase::Send(mConnectedPeers[aID], aData);
+        }
+    }
 
    protected:
     virtual void OnConnect(ENetEvent& aEvent) override;
@@ -28,5 +39,6 @@ class ENetServer : public ENetBase
     virtual void OnNone(ENetEvent& aEvent) override;
 
    private:
-    peer_map mConnectedPeers;
+    peer_map    mConnectedPeers;
+    std::string mServerAddr;
 };

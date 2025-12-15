@@ -17,22 +17,39 @@ struct fmt::formatter<rp3d::Vector3> : fmt::formatter<std::string> {
     }
 };
 
-// Enumeration for categories
-enum Category { PlacementGhostTower = 0x0001, Terrain = 0x0002, Entities = 0x0004 };
-
 struct BoxShapeParams {
     glm::vec3 HalfExtents;
+
+    bool Archive(auto& aArchive)
+    {
+        if (!ArchiveVector(aArchive, HalfExtents, 0.0f, 10.0f)) return false;
+        return true;
+    }
 };
 
 struct CapsuleShapeParams {
     float Radius;
     float Height;
+
+    bool Archive(auto& aArchive)
+    {
+        if (!ArchiveValue(aArchive, Radius, 0.0f, 10.0f)) return false;
+        if (!ArchiveValue(aArchive, Height, 0.0f, 10.0f)) return false;
+        return true;
+    }
 };
 
 struct HeightFieldShapeParams {
-    std::vector<float> Data;
+    std::vector<float> Data{};
     int                Rows;
     int                Columns;
+
+    bool Archive(auto& aArchive)
+    {
+        if (!ArchiveValue(aArchive, Rows, 0, 1000)) return false;
+        if (!ArchiveValue(aArchive, Columns, 0, 1000)) return false;
+        return true;
+    }
 };
 
 using ColliderShapeParams =
@@ -44,7 +61,21 @@ struct RigidBodyParams {
     glm::vec3      Direction;
     bool           GravityEnabled{true};
     void*          Data{nullptr};
+
+    bool Archive(auto& aArchive)
+    {
+        if (!ArchiveValue(aArchive, Type, 0, 3)) return false;
+        if (!ArchiveValue(aArchive, Velocity, 0.0f, 100.0f)) return false;
+        if (!ArchiveVector(aArchive, Direction, 0.0f, 1.0f)) return false;
+        return ArchiveBool(aArchive, GravityEnabled);
+    }
 };
+
+inline bool operator==(const RigidBodyParams& aLHS, const RigidBodyParams& aRHS)
+{
+    return aLHS.Type == aRHS.Type && aLHS.Velocity == aRHS.Velocity
+           && aLHS.Direction == aRHS.Direction && aLHS.GravityEnabled == aRHS.GravityEnabled;
+}
 
 struct ColliderParams {
     unsigned short      CollisionCategoryBits;
@@ -72,8 +103,11 @@ struct PhysicsParams {
 class Physics
 {
    public:
-    Physics() {}
-    Physics(Physics&& aPhy) : mWorld(aPhy.mWorld) {}
+    // Enumeration for categories
+    enum Category { Terrain = 0x0001, Entities = 0x0002, Count = (Entities << 1) - 1 };
+
+    Physics(const Logger& aLogger) : mLogger(aLogger) {}
+    ~Physics() { mLogger->trace("destroying physics"); }
 
     Physics(const Physics&)            = delete;
     Physics& operator=(const Physics&) = delete;
@@ -94,19 +128,24 @@ class Physics
     rp3d::Collider*       AddCollider(rp3d::RigidBody* aBody, const ColliderParams& aParams);
     rp3d::RigidBody* CreateRigidBody(const RigidBodyParams& aParams, const Transform3D& aTransform);
 
+    std::optional<glm::vec3> RayTerrainIntersection(glm::vec3 aOrigin, glm::vec3 aEnd);
+
+    void ToggleObstacle(const rp3d::Collider* aCollider, Graph& aGraph, bool aAdd);
+
     PhysicsParams Params;
 
    private:
     rp3d::PhysicsCommon mCommon;
     rp3d::PhysicsWorld* mWorld = nullptr;
+    Logger              mLogger;
 };
+
+using Category = Physics::Category;
 
 inline rp3d::Vector3 ToRP3D(const glm::vec3 aVector)
 {
     return rp3d::Vector3(aVector.x, aVector.y, aVector.z);
 }
-
-void ToggleObstacle(const rp3d::Collider* aCollider, Graph& aGraph, bool aAdd);
 
 struct WorldRaycastCallback : public rp3d::RaycastCallback {
     virtual rp3d::decimal notifyRaycastHit(const rp3d::RaycastInfo& aInfo) override

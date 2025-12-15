@@ -1,6 +1,6 @@
 #pragma once
 
-#include <fmt/format.h>
+#include <fmt/core.h>
 #include <fmt/ranges.h>
 #include <spdlog/spdlog.h>
 
@@ -110,7 +110,7 @@ class Graph
      */
     void ComputePaths(const GraphCell& aDest);
 
-    std::optional<GraphCell> GetNextCell(const GraphCell& aFrom)
+    std::optional<GraphCell> GetNextCell(const GraphCell& aFrom) const
     {
         if (!mPaths.contains(aFrom) || aFrom == mDest) {
             return std::nullopt;
@@ -120,6 +120,8 @@ class Graph
 
     void AddObstacle(const GraphCell& aCell) { mObstacles.emplace(aCell); }
     void RemoveObstacle(const GraphCell& aCell) { mObstacles.erase(aCell); }
+
+    bool GridDirty = false;
 
    private:
     size_type mWidth;

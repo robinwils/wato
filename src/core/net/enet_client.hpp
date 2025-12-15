@@ -3,8 +3,6 @@
 #include <enet.h>
 
 #include <atomic>
-#include <chrono>
-#include <optional>
 
 #include "core/net/enet_base.hpp"
 #include "core/serialize.hpp"
@@ -12,7 +10,7 @@
 class ENetClient : public ENetBase
 {
    public:
-    ENetClient() : ENetBase(), mConnected(false), mPeer(nullptr) {}
+    ENetClient(Logger& aLogger) : ENetBase(aLogger), mConnected(false), mPeer(nullptr) {}
     ENetClient(ENetClient&&)                 = delete;
     ENetClient(const ENetClient&)            = delete;
     ENetClient& operator=(ENetClient&&)      = delete;
@@ -20,11 +18,11 @@ class ENetClient : public ENetBase
     ~ENetClient()                            = default;
 
     void Init() override;
-    void EnqueueSend(NetworkEvent<NetworkRequestPayload>* aPkt) { mQueue.push(aPkt); }
     bool Connect();
     void Disconnect();
     void ForceDisconnect();
-    void ConsumeNetworkRequests();
+
+    void Send(std::span<uint8_t> aData) { ENetBase::Send(mPeer, aData); }
 
     [[nodiscard]] bool Connected() const noexcept { return mConnected; }
 
@@ -43,7 +41,5 @@ class ENetClient : public ENetBase
     std::atomic_bool mConnected;
 
    private:
-    void send(const std::vector<uint8_t> aData);
-
     ENetPeer* mPeer;
 };

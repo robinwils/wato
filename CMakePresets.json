@@ -2,7 +2,7 @@
   "version": 3,
   "cmakeMinimumRequired": {
     "major": 3,
-    "minor": 31,
+    "minor": 29,
     "patch": 0
   },
   "configurePresets": [
@@ -172,8 +172,7 @@
       "inherits": [ "conf-windows-sccache-common", "release-common" ],
       "cacheVariables": {
         "CMAKE_C_COMPILER": "cl",
-        "CMAKE_CXX_COMPILER": "cl",
-        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+        "CMAKE_CXX_COMPILER": "cl"
       }
     },
     {
@@ -194,8 +193,7 @@
       "inherits": ["conf-sccache-common", "conf-unixlike-common", "release-common" ],
       "cacheVariables": {
         "CMAKE_C_COMPILER": "gcc",
-        "CMAKE_CXX_COMPILER": "g++",
-        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+        "CMAKE_CXX_COMPILER": "g++"
       }
     },
     {

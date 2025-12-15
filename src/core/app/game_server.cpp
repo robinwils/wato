@@ -2,10 +2,12 @@
 
 #include <bx/bx.h>
 #include <fmt/ranges.h>
+#include <spdlog/spdlog.h>
 
 #include <thread>
 
 #include "core/net/net.hpp"
+#include "core/snapshot.hpp"
 #include "core/types.hpp"
 #include "input/action.hpp"
 #include "registry/registry.hpp"
@@ -14,53 +16,78 @@
 void GameServer::Init()
 {
     Application::Init();
+
     mServer.Init();
-    mSystemsFT.push_back(PhysicsSystem::MakeDelegate(mPhysicsSystem));
-    mSystemsFT.push_back(AiSystem::MakeDelegate(mAiSystem));
     mSystemsFT.push_back(ServerActionSystem::MakeDelegate(mActionSystem));
+    mSystemsFT.push_back(AiSystem::MakeDelegate(mAiSystem));
+    mSystemsFT.push_back(TowerBuiltSystem::MakeDelegate(mTowerBuiltSystem));
+    mSystemsFT.push_back(RigidBodiesUpdateSystem::MakeDelegate(mRBUpdatesSystem));
+    mSystemsFT.push_back(PhysicsSystem::MakeDelegate(mPhysicsSystem));
+    mSystemsFT.push_back(NetworkSyncSystem<ENetServer>::MakeDelegate(mSyncSystem));
+}
+
+GameServer::~GameServer()
+{
+    mLogger->trace("destroying game server");
+    mLogger->trace("deleting {} worlds", mGameInstances.size());
+    for (auto& i : mGameInstances) {
+        auto& p = i.second.ctx().get<Physics>();
+        mLogger->trace("got world {}", fmt::ptr(p.World()));
+    }
 }
 
 void GameServer::ConsumeNetworkRequests()
 {
-    while (const NetworkEvent<NetworkRequestPayload>* ev = mServer.Queue().pop()) {
+    mServer.ConsumeNetworkRequests([&](NetworkRequest* aEvent) {
         std::visit(
             VariantVisitor{
-                [&](const PlayerActions& aActions) {
-                    if (!mGameInstances.contains(aActions.GameID)) {
-                        spdlog::warn("got event for non existing game {}", aActions.GameID);
+                [&](const SyncPayload& aReq) {
+                    if (!mGameInstances.contains(aReq.GameID)) {
+                        mLogger->warn("got event for non existing game {}", aReq.GameID);
                         return;
                     }
-                    Registry& registry = mGameInstances[aActions.GameID];
-                    auto&     actions  = registry.ctx().get<ActionBuffer&>().Latest().Actions;
-                    spdlog::debug("got {} actions: {}", aActions.Actions.size(), aActions.Actions);
-                    actions.insert(actions.end(), aActions.Actions.begin(), aActions.Actions.end());
+
+                    const ActionsType& incoming = aReq.State.Actions;
+                    Registry&          registry = mGameInstances[aReq.GameID];
+                    auto& actions = registry.ctx().get<GameStateBuffer&>().Latest().Actions;
+
+                    mLogger->debug("got {} actions: {}", incoming.size(), incoming);
+                    actions.insert(actions.end(), incoming.begin(), incoming.end());
                 },
                 [&](const NewGameRequest& aNewGame) {
                     GameInstanceID gameID = createGameInstance(aNewGame);
-                    spdlog::info("Created game {}", gameID);
-                    mServer.EnqueueResponse(new NetworkEvent<NetworkResponsePayload>{
+                    mLogger->info("Created game {}", gameID);
+                    mServer.EnqueueResponse(new NetworkResponse{
                         .Type     = PacketType::NewGame,
                         .PlayerID = 0,
+                        .Tick     = 0,
                         .Payload  = NewGameResponse{.GameID = gameID}});
                 },
-            },
-            ev->Payload);
-        delete ev;
-    }
+                [&](const std::monostate&) {}},
+            aEvent->Payload);
+    });
 }
 
-int GameServer::Run()
+int GameServer::Run(tf::Executor& aExecutor)
 {
+    mLogger->debug("running game server");
     auto prevTime = clock_type::now();
     mRunning      = true;
 
-    mNetTaskflow.emplace([&]() {
+    aExecutor.silent_async([&]() {
         while (mRunning) {
-            mServer.ConsumeNetworkResponses();
+            mServer.ConsumeNetworkResponses([&](NetworkResponse* aEvent) {
+                BitOutputArchive archive;
+                aEvent->Archive(archive);
+
+                if (!mServer.Send(aEvent->PlayerID, archive.Bytes())) {
+                    mLogger->error("player {} is not connected", aEvent->PlayerID);
+                    mRunning = false;
+                }
+            });
             mServer.Poll();
         }
     });
-    mNetExecutor.run(mNetTaskflow);
 
     while (mRunning) {
         auto                         t  = clock_type::now();
@@ -74,10 +101,16 @@ int GameServer::Run()
         }
     }
 
+    for (auto& [gameId, registry] : mGameInstances) {
+        StopGameInstance(registry);
+    }
+
     return 0;
 }
 
-GameInstanceID GameServer::createGameInstance(const NewGameRequest& aNewGame)
+void GameServer::Stop() { mRunning = false; }
+
+GameInstanceID GameServer::createGameInstance(const NewGameRequest&)
 {
     GameInstanceID gameID;
     do {
@@ -86,6 +119,10 @@ GameInstanceID GameServer::createGameInstance(const NewGameRequest& aNewGame)
 
     Registry& registry = mGameInstances[gameID];
 
+    registry.ctx().emplace<Logger>(mLogger);
+    registry.ctx().emplace<ENetServer&>(mServer);
+
     StartGameInstance(registry, gameID, true);
+
     return gameID;
 }

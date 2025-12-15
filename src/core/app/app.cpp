@@ -14,56 +14,49 @@
 #include "core/graph.hpp"
 #include "core/physics/event_handler.hpp"
 #include "core/physics/physics.hpp"
+#include "core/state.hpp"
 #include "input/action.hpp"
 
 using namespace entt::literals;
 
-void Application::Init()
-{
-    auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-    auto fileSink    = std::make_shared<spdlog::sinks::basic_file_sink_mt>("wato_logs.txt", true);
-    spdlog::level::level_enum level = spdlog::level::from_str(mOptions.LogLevel());
-
-    consoleSink->set_level(level);
-    fileSink->set_level(level);
-    // FIXME: weird segfault when using %s and %# instead of %@
-    // or puting the thread info in separate []
-    consoleSink->set_pattern("[%H:%M:%S %z thread %t] [%^%L%$] %v %@");
-    fileSink->set_pattern("[%H:%M:%S %z thread %t] [%^%L%$] %v %@");
-
-    std::vector<spdlog::sink_ptr> sinks{consoleSink, fileSink};
-    auto logger = std::make_shared<spdlog::logger>("multi_sink", sinks.begin(), sinks.end());
-    spdlog::set_default_logger(logger);
-    logger->set_level(level);
-    logger->warn("this should appear in both console and file");
-    logger->info("this message should not appear in the console, only in the file");
-}
+void Application::Init() {}
 
 void Application::StartGameInstance(
     Registry&            aRegistry,
     const GameInstanceID aGameID,
     const bool           aIsServer)
 {
-    spdlog::info("spawning game instance");
-    auto& physics = aRegistry.ctx().emplace<Physics>();
+    WATO_INFO(aRegistry, "spawning game instance");
+    auto& physics = aRegistry.ctx().emplace<Physics>(mLogger);
     auto& stack   = aRegistry.ctx().emplace<ActionContextStack>();
 
-    aRegistry.ctx().emplace<ActionBuffer>();
+    aRegistry.ctx().emplace<GameStateBuffer>();
     aRegistry.ctx().emplace<GameInstance>(aGameID, 0.0f, 0u);
 
     physics.Init();
 
-    stack.push_back(ActionContext{
-        .State    = aIsServer ? ActionContext::State::Server : ActionContext::State::Default,
-        .Bindings = ActionBindings::Defaults(),
-        .Payload  = NormalPayload{}});
+    stack.push_back(
+        ActionContext{
+            .State    = aIsServer ? ActionContext::State::Server : ActionContext::State::Default,
+            .Bindings = ActionBindings::Defaults(),
+            .Payload  = NormalPayload{}});
+
+    SetupObservers(aRegistry);
     SpawnMap(aRegistry, 20, 20);
     OnGameInstanceCreated();
 }
 
+void Application::StopGameInstance(Registry& aRegistry)
+{
+    aRegistry.ctx().erase<Physics>();
+    aRegistry.ctx().erase<ActionContextStack>();
+    aRegistry.ctx().erase<GameStateBuffer>();
+    aRegistry.ctx().erase<GameInstance>();
+}
+
 void Application::AdvanceSimulation(Registry& aRegistry, const float aDeltaTime)
 {
-    auto& actions  = aRegistry.ctx().get<ActionBuffer&>();
+    auto& state    = aRegistry.ctx().get<GameStateBuffer&>();
     auto& instance = aRegistry.ctx().get<GameInstance&>();
 
     instance.Accumulator += aDeltaTime;
@@ -77,11 +70,11 @@ void Application::AdvanceSimulation(Registry& aRegistry, const float aDeltaTime)
         for (const auto& system : mSystemsFT) {
             system(aRegistry, kTimeStep);
         }
-        actions.Push();
-        actions.Latest().GameID = instance.GameID;
-        actions.Latest().Tick   = ++instance.Tick;
+        state.Push();
+        state.Latest().Tick = ++instance.Tick;
         ClearAllObservers(aRegistry);
     }
+    mUpdateTransformsSystem(aRegistry, instance.Accumulator / kTimeStep);
 }
 
 void Application::SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeight)
@@ -129,9 +122,8 @@ void Application::SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeigh
             .Params =
                 ColliderParams{
                     .CollisionCategoryBits = Category::Entities,
-                    .CollideWithMaskBits =
-                        Category::Terrain | Category::Entities | Category::PlacementGhostTower,
-                    .IsTrigger = true,
+                    .CollideWithMaskBits   = Category::Terrain | Category::Entities,
+                    .IsTrigger             = true,
                     .ShapeParams =
                         BoxShapeParams{
                             .HalfExtents = GraphCell(1, 1).ToWorld() * 0.5f,
@@ -140,7 +132,7 @@ void Application::SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeigh
         });
 
     graph.ComputePaths(GraphCell::FromWorldPoint(baseTransform.Position));
-    spdlog::debug("{}", graph);
+    WATO_DBG(aRegistry, "{}", graph);
 
     aRegistry.emplace<RigidBody>(
         first,
@@ -186,4 +178,21 @@ void Application::ClearAllObservers(Registry& aRegistry)
 
         storage->clear();
     }
+}
+
+void Application::SetupObservers(Registry& aRegistry)
+{
+    mObserverNames.push_back("tower_built_observer");
+    auto& tbo = aRegistry.storage<entt::reactive>("tower_built_observer"_hs);
+    tbo.on_construct<Tower>();
+
+    mObserverNames.push_back("rigid_bodies_observer");
+    auto& rbo = aRegistry.storage<entt::reactive>("rigid_bodies_observer"_hs);
+    rbo.on_construct<RigidBody>();
+    rbo.on_update<RigidBody>();
+
+    mObserverNames.push_back("placement_mode_observer");
+    auto& pmo = aRegistry.storage<entt::reactive>("placement_mode_observer"_hs);
+    pmo.on_update<Transform3D>();
+    mLogger->info("observers created");
 }

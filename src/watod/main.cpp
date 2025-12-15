@@ -1,6 +1,8 @@
-#include <signal.h>
 
 #define ENET_IMPLEMENTATION
+#define ENET_FEATURE_ADDRESS_MAPPING
+#include <signal.h>
+
 #include "core/app/game_server.hpp"
 #include "core/sys/backtrace.hpp"
 
@@ -10,7 +12,14 @@ int main(int, char** argv)
     signal(SIGSEGV, signalHandler);
 #endif
 
-    GameServer s(argv);
+    tf::Executor exec;
+    Options      opts(argv);
+
+    if (opts.ServerAddr == "") {
+        opts.ServerAddr = "127.0.0.1:7777";
+    }
+
+    GameServer s(opts);
     s.Init();
-    return s.Run();
+    return s.Run(exec);
 }

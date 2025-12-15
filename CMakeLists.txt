@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.31)
+cmake_minimum_required(VERSION 3.29)
 
 project(
   WaTo
@@ -22,6 +22,10 @@ option(wato_WARNINGS_AS_ERRORS "Treat Warnings As Errors" OFF)
 
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 
+option(ENABLE_FUZZING "Build with libfuzzer support" OFF)
+
+option(ENABLE_TRACING "Enable clang time trace" OFF)
+
 set(TF_BUILD_TESTS OFF CACHE BOOL "Disable taskflow test builds" FORCE)
 set(TF_BUILD_EXAMPLES OFF CACHE BOOL "Disable taskflow example builds" FORCE)
 
@@ -32,7 +36,7 @@ include(FetchContent)
 FetchContent_Declare(
   entt
   GIT_REPOSITORY https://github.com/skypjack/entt
-  GIT_TAG v3.14.0
+  GIT_TAG v3.15.0
   FIND_PACKAGE_ARGS NAMES entt
 )
 FetchContent_Declare(
@@ -167,25 +171,42 @@ target_compile_definitions(wato_common
     SPDLOG_ACTIVE_LEVEL=$<IF:$<CONFIG:Debug>,SPDLOG_LEVEL_TRACE,SPDLOG_LEVEL_INFO>
     WATO_DEBUG=$<IF:$<CONFIG:Debug>,1,0>
     GLM_FORCE_SIZE_T_LENGTH
+    GLM_ENABLE_EXPERIMENTAL
 )
 
 target_compile_definitions(watolib PUBLIC DOCTEST_CONFIG_DISABLE)
 target_compile_definitions(wato PUBLIC DOCTEST_CONFIG_DISABLE)
 
 if(UNIX)
+  target_link_options(wato_common INTERFACE -rdynamic)
+elseif(WIN32)
+  target_compile_definitions(wato_common INTERFACE NOMINMAX)
+endif()
+
+if (MSVC)
   target_compile_options(wato_common
     INTERFACE
-      $<$<CONFIG:Debug>:-ggdb -fsanitize=address,undefined>
+      $<$<CONFIG:Debug>:/fsanitize=address>
+  )
+  target_compile_definitions(wato_common
+    INTERFACE
+      $<$<CONFIG:Debug>:_DISABLE_STRING_ANNOTATION _DISABLE_VECTOR_ANNOTATION>)
+
+  target_link_options(wato_common
+    INTERFACE
+      $<$<CONFIG:Debug>:/fsanitize=address>
+  )
+else()
+  target_compile_options(wato_common
+    INTERFACE
+      $<$<CONFIG:Debug>:-O0 -ggdb -fsanitize=address,undefined>
       -fdiagnostics-color=always
-      -O$<IF:$<CONFIG:Debug>,0,3>
   )
   target_link_options(wato_common
     INTERFACE
       $<$<CONFIG:Debug>:-fsanitize=address,undefined>
       -rdynamic
   )
-elseif(WIN32)
-  target_compile_definitions(wato_common INTERFACE NOMINMAX)
 endif()
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
@@ -193,6 +214,8 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     INTERFACE
       $<$<CONFIG:Debug>:-static-libasan -static-libubsan>
   )
+elseif(CMAKE_CXX_COMPILER_ID MATCHES ".*Clang" AND ENABLE_TRACING)
+  target_compile_options(wato_common INTERFACE -ftime-trace)
 endif()
 
 
@@ -288,35 +311,49 @@ target_sources(watolib
     src/components/imgui.hpp
     src/components/path.hpp
     src/components/placement_mode.hpp
+    src/components/net.hpp
     src/components/rigid_body.hpp
     src/components/scene_object.hpp
     src/components/tile.hpp
     src/components/transform3d.hpp
     src/components/velocity.hpp
     src/core/app/app.hpp
-    src/core/physics/event_handler.hpp
+    src/core/app/game_server.hpp
     src/core/graph.hpp
+    src/core/net/enet_base.hpp
+    src/core/net/enet_client.hpp
+    src/core/net/enet_server.hpp
+    src/core/physics/event_handler.hpp
     src/core/physics/physics.hpp
+    src/core/queue/channel.hpp
     src/core/queue/ring_buffer.hpp
     src/core/snapshot.hpp
+    src/core/state.hpp
     src/core/sys/backtrace.hpp
     src/core/sys/log.hpp
     src/core/tower_building_handler.hpp
     src/registry/registry.hpp
     src/systems/ai.hpp
     src/systems/physics.hpp
+    src/systems/rigid_bodies_update.hpp
     src/systems/system.hpp
+    src/systems/tower_built.hpp
 
   PRIVATE
     src/core/app/app.cpp
-    src/core/physics/event_handler.cpp
+    src/core/app/game_server.cpp
     src/core/graph.cpp
+    src/core/net/enet_base.cpp
+    src/core/net/enet_client.cpp
+    src/core/net/enet_server.cpp
+    src/core/physics/event_handler.cpp
     src/core/physics/physics.cpp
-    src/core/snapshot.cpp
     src/core/sys/backtrace.cpp
     src/core/tower_building_handler.cpp
     src/systems/ai.cpp
     src/systems/physics.cpp
+    src/systems/rigid_bodies_update.cpp
+    src/systems/tower_built.cpp
 )
 
 target_sources(wato
@@ -324,8 +361,6 @@ target_sources(wato
   BASE_DIRS src
   FILES
     src/core/app/game_client.hpp
-    src/core/net/enet_base.hpp
-    src/core/net/enet_client.hpp
     src/core/tile.hpp
     src/core/window.hpp
     src/imgui/wato_imgui_config.h
@@ -353,15 +388,11 @@ target_sources(wato
     src/systems/animation.hpp
     src/systems/input.hpp
     src/systems/render.hpp
-    src/systems/rigid_bodies_update.hpp
     src/systems/sync.hpp
-    src/systems/tower_built.hpp
 
   PRIVATE
     src/core/app/game_client.cpp
     src/core/physics/event_handler.cpp
-    src/core/net/enet_base.cpp
-    src/core/net/enet_client.cpp
     src/core/sys/mem.cpp
     src/core/window.cpp
     src/imgui/imgui_helper.cpp
@@ -381,9 +412,7 @@ target_sources(wato
     src/systems/animation.cpp
     src/systems/input.cpp
     src/systems/render.cpp
-    src/systems/rigid_bodies_update.cpp
     src/systems/sync.cpp
-    src/systems/tower_built.cpp
 
     shaders/fs_blinnphong.sc
     shaders/fs_grid.sc

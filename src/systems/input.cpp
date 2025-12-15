@@ -4,11 +4,14 @@
 #include <reactphysics3d/collision/RaycastInfo.h>
 #include <reactphysics3d/mathematics/Ray.h>
 
+#include <optional>
+
 #include "components/placement_mode.hpp"
 #include "components/rigid_body.hpp"
 #include "components/tile.hpp"
 #include "components/transform3d.hpp"
 #include "core/physics/physics.hpp"
+#include "core/state.hpp"
 #include "core/window.hpp"
 #include "input/action.hpp"
 #include "registry/registry.hpp"
@@ -16,20 +19,19 @@
 
 void InputSystem::operator()(Registry& aRegistry)
 {
-    const Input&   input         = aRegistry.ctx().get<WatoWindow&>().GetInput();
-    auto&          actionCtx     = aRegistry.ctx().get<ActionContextStack&>().front();
-    auto&          abuf          = aRegistry.ctx().get<ActionBuffer&>();
-    PlayerActions& latestActions = abuf.Latest();
-    const ActionBindings::actions_type& curActions = actionCtx.Bindings.ActionsFromInput(input);
+    const Input& input       = aRegistry.ctx().get<WatoWindow&>().GetInput();
+    auto&        actionCtx   = aRegistry.ctx().get<ActionContextStack&>().front();
+    auto&        buf         = aRegistry.ctx().get<GameStateBuffer&>();
+    GameState&   latestState = buf.Latest();
+
+    handleMouseMovement(aRegistry);
+
+    const ActionsType& curActions = actionCtx.Bindings.ActionsFromInput(input);
 
     if (!curActions.empty()) {
-        spdlog::trace("inserting latest {} actions: {}", curActions.size(), curActions);
-        latestActions.Actions.insert(
-            latestActions.Actions.end(),
-            curActions.begin(),
-            curActions.end());
+        WATO_TRACE(aRegistry, "inserting latest {} actions: {}", curActions.size(), curActions);
+        latestState.Actions.insert(latestState.Actions.end(), curActions.begin(), curActions.end());
     }
-    handleMouseMovement(aRegistry);
 }
 
 void InputSystem::handleMouseMovement(Registry& aRegistry)
@@ -46,24 +48,21 @@ void InputSystem::handleMouseMovement(Registry& aRegistry)
 
     switch (currentCtx.State) {
         case ActionContext::State::Placement: {
-            WorldRaycastCallback raycastCb;
-
-            // rp3d wants a start and end vector3, multiply normalized dir by 1000 (arbitrary)
-            // to get a point far enough for the ray to intersect.
-            rp3d::Ray ray(ToRP3D(origin), ToRP3D(end));
-            phy.World()->raycast(ray, &raycastCb, Category::Terrain);
-            if (!raycastCb.Hits.empty()) {
+            if (std::optional<glm::vec3> intersect = phy.RayTerrainIntersection(origin, end);
+                intersect) {
+                window.SetMouseIntersect(*intersect);
                 auto placementModeView = aRegistry.view<PlacementMode>();
                 for (auto ghostTower : placementModeView) {
-                    aRegistry.patch<Transform3D>(ghostTower, [raycastCb](Transform3D& aT) {
-                        aT.Position.x = raycastCb.Hits[0].x;
-                        aT.Position.z = raycastCb.Hits[0].z;
+                    aRegistry.patch<Transform3D>(ghostTower, [&](Transform3D& aT) {
+                        aT.Position.x = intersect->x;
+                        aT.Position.z = intersect->z;
                     });
                 }
             }
             break;
         }
         default:
+            window.ResetMouseIntersect();
             break;
     }
 }

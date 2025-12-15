@@ -3,6 +3,7 @@
 #include <array>
 #include <cstring>
 #include <glm/glm.hpp>
+#include <optional>
 #include <string>
 
 struct Keyboard {
@@ -134,12 +135,7 @@ struct Keyboard {
 };
 
 struct Mouse {
-    enum Button {
-        Unknown,
-        Left,
-        Right,
-        Middle,
-    };
+    enum Button { Unknown, Left, Right, Middle, Count };
 };
 
 struct Button {
@@ -227,8 +223,7 @@ struct KeyboardState : public InputState<Keyboard::Count> {
     std::string String() const;
 };
 
-static constexpr uint32_t kNumButtons = 3;
-struct MouseState : public InputState<kNumButtons> {
+struct MouseState : public InputState<Mouse::Count> {
     MouseState() : InputState(), Pos(), Scroll() {}
     ~MouseState() = default;
 
@@ -242,21 +237,17 @@ std::string mouse_button_string(const Mouse::Button& aButton);
 class Input
 {
    public:
-    using mouse_state    = InputState<3>;
-    using keyboard_state = InputState<Keyboard::Count>;
-    Input() : MouseState(), mTowerPlacementMode(false), mCanBuild(true) {}
+    Input() : MouseState() {}
 
     void Init();
 
-    void ExitTowerPlacementMode() { mTowerPlacementMode = false; }
-    void EnterTowerPlacementMode() { mTowerPlacementMode = true; }
-
-    [[nodiscard]] bool IsPlacementMode() const noexcept { return mTowerPlacementMode; }
-    [[nodiscard]] bool IsAbleToBuild() const noexcept { return mCanBuild; }
+    const std::optional<glm::vec3>& MouseWorldIntersect() const { return mMouseWorldIntersect; }
 
     struct MouseState    MouseState, PrevMouseState;
     struct KeyboardState KeyboardState, PrevKeyboardState;
 
    private:
-    bool mTowerPlacementMode, mCanBuild;
+    std::optional<glm::vec3> mMouseWorldIntersect;
+
+    friend class WatoWindow;
 };
