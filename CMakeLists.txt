@@ -188,6 +188,10 @@ if (MSVC)
     INTERFACE
       $<$<CONFIG:Debug>:/fsanitize=address>
   )
+  target_compile_definitions(wato_common
+    INTERFACE
+      $<$<CONFIG:Debug>:_DISABLE_STRING_ANNOTATION _DISABLE_VECTOR_ANNOTATION>)
+
   target_link_options(wato_common
     INTERFACE
       $<$<CONFIG:Debug>:/fsanitize=address>
