@@ -26,6 +26,10 @@ option(ENABLE_FUZZING "Build with libfuzzer support" OFF)
 
 option(ENABLE_TRACING "Enable clang time trace" OFF)
 
+set(LIB_FUZZING_ENGINE "-fsanitize=fuzzer,undefined,address" CACHE STRING
+  "optional fuzzing engine library"
+)
+
 set(TF_BUILD_TESTS OFF CACHE BOOL "Disable taskflow test builds" FORCE)
 set(TF_BUILD_EXAMPLES OFF CACHE BOOL "Disable taskflow example builds" FORCE)
 

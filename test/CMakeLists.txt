@@ -87,16 +87,15 @@ if(ENABLE_FUZZING)
     PUBLIC
     -g -UNDEBUG
     -fsanitize-coverage=inline-8bit-counters -fsanitize-coverage=trace-cmp
-    -fsanitize=undefined,address -DADDRESS_SANITIZER
+    -DADDRESS_SANITIZER
     -fdiagnostics-color=always
-    -fsanitize=fuzzer
+    ${LIB_FUZZING_ENGINE}
     -O1
   )
   target_link_options(wato_fuzz
     PUBLIC
     -fsanitize-coverage=inline-8bit-counters -fsanitize-coverage=trace-cmp
-    -fsanitize=undefined,address
-    -fsanitize=fuzzer
+    ${LIB_FUZZING_ENGINE}
     -rdynamic
   )
 
