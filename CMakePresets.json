@@ -15,7 +15,9 @@
       "toolchainFile": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
       "cacheVariables": {
         "ASSIMP_BUILD_USE_CCACHE": "OFF",
-        "BUILD_SHARED_LIBS": "OFF"
+        "BUILD_SHARED_LIBS": "OFF",
+        "VCPKG_MANIFEST_FEATURES": "client",
+        "VCPKG_INSTALL_OPTIONS": "--x-abi-tools-use-exact-versions"
       }
     },
     {
@@ -24,8 +26,7 @@
       "hidden": true,
       "inherits": "conf-common",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
-        "VCPKG_INSTALL_OPTIONS": "--x-abi-tools-use-exact-versions"
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
       }
     },
     {
@@ -36,6 +37,17 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "VCPKG_INSTALL_OPTIONS": "--x-abi-tools-use-exact-versions;--debug"
+      }
+    },
+    {
+      "name": "tests-common",
+      "description": "General settings that apply to all Test configurations",
+      "hidden": true,
+      "inherits": "conf-common",
+      "cacheVariables": {
+        "VCPKG_MANIFEST_FEATURES": "tests",
+        "ENABLE_CLIENT": "OFF",
+        "ENABLE_SERVER": "OFF"
       }
     },
     {
@@ -208,6 +220,17 @@
       }
     },
     {
+      "name": "tests-unixlike-clang-debug-sccache",
+      "displayName": "clang Debug sccache",
+      "description": "Target Unix-like OS with the clang compiler + sccache, debug build type",
+      "inherits": [ "tests-common", "conf-sccache-common", "conf-unixlike-common", "debug-common" ],
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
       "name": "unixlike-clang-release-sccache",
       "displayName": "clang Release sccache",
       "description": "Target Unix-like OS with the clang compiler + sccache, release build type",
@@ -287,6 +310,12 @@
       "configurePreset": "unixlike-clang-debug-sccache"
     },
     {
+      "name": "tests-unixlike-clang-debug-sccache",
+      "displayName": "clang Debug sccache",
+      "description": "Target Unix-like OS with the clang compiler + sccache, debug build type",
+      "configurePreset": "tests-unixlike-clang-debug-sccache"
+    },
+    {
       "name": "unixlike-clang-release-sccache",
       "displayName": "clang Release sccache",
       "description": "Target Unix-like OS with the clang compiler + sccache, release build type",
@@ -308,43 +337,37 @@
     },
     {
       "name": "test-windows-msvc-debug",
-      "displayName": "Strict",
-      "description": "Enable output and stop on failure",
+      "displayName": "MSVC test binaries (debug)",
       "inherits": "test-common",
       "configurePreset": "windows-msvc-debug"
     },
     {
       "name": "test-windows-msvc-release",
-      "displayName": "Strict",
-      "description": "Enable output and stop on failure",
+      "displayName": "MSVC test binaries (rel)",
       "inherits": "test-common",
       "configurePreset": "windows-msvc-release"
     },
     {
       "name": "test-unixlike-gcc-debug",
-      "displayName": "Strict",
-      "description": "Enable output and stop on failure",
+      "displayName": "GCC test binaries (debug)",
       "inherits": "test-common",
       "configurePreset": "unixlike-gcc-debug"
     },
     {
       "name": "test-unixlike-gcc-release",
-      "displayName": "Strict",
-      "description": "Enable output and stop on failure",
+      "displayName": "GCC test binaries (rel)",
       "inherits": "test-common",
       "configurePreset": "unixlike-gcc-release"
     },
     {
       "name": "test-unixlike-clang-debug",
-      "displayName": "Strict",
-      "description": "Enable output and stop on failure",
+      "displayName": "Clang test binaries (debug)",
       "inherits": "test-common",
       "configurePreset": "unixlike-clang-debug"
     },
     {
       "name": "test-unixlike-clang-release",
-      "displayName": "Strict",
-      "description": "Enable output and stop on failure",
+      "displayName": "Clang test binaries (rel)",
       "inherits": "test-common",
       "configurePreset": "unixlike-clang-release"
     }
