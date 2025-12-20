@@ -2,10 +2,9 @@
 
 # see example on https://github.com/google/oss-fuzz/blob/master/projects/boringssl/build.sh
 # build project
-cmake --preset unixlike-clang-debug -G "Ninja" -B tmp\
+cmake --preset tests-unixlike-clang-debug -G "Ninja" -B tmp\
     -DCMAKE_CXX_COMPILER=$CXX \
     -DCMAKE_CXX_FLAGS="$CXXFLAGS" \
-    -DENABLE_FUZZING=ON \
     -DLIB_FUZZING_ENGINE=$LIB_FUZZING_ENGINE
 cmake --build tmp --parallel --target wato_fuzz
 

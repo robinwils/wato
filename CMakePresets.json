@@ -47,7 +47,8 @@
       "cacheVariables": {
         "VCPKG_MANIFEST_FEATURES": "tests",
         "ENABLE_CLIENT": "OFF",
-        "ENABLE_SERVER": "OFF"
+        "ENABLE_SERVER": "OFF",
+        "ENABLE_FUZZING": "ON"
       }
     },
     {
@@ -155,6 +156,17 @@
       "cacheVariables": {
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++"
+      }
+    },
+    {
+      "name": "tests-unixlike-clang-debug",
+      "displayName": "clang Debug tests only",
+      "description": "Target Unix-like OS with the clang compiler, debug build type",
+      "inherits": [ "tests-common", "conf-unixlike-common", "debug-common" ],
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_BUILD_TYPE": "Debug"
       }
     },
     {
