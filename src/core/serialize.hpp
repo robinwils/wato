@@ -328,22 +328,16 @@ class StreamEncoder
     void EncodeBool(const bool& aVal) { mBits.Write(aVal ? 1u : 0u, 1); }
 
     template <typename IntT>
-        requires(std::is_integral_v<IntT> && !std::is_unsigned_v<IntT>)
+        requires(
+            std::is_integral_v<IntT> && !std::is_unsigned_v<IntT>
+            && sizeof(IntT) <= sizeof(int32_t))
     void EncodeInt(IntT aVal, int64_t aMin, int64_t aMax)
     {
         AssertBoundsAndVal(aVal, aMin, aMax);
 
-        uint32_t diff = uint32_t(aMax - aMin);
+        uint64_t diff = aMax - aMin;
 
-        // uint32_t value = uint32_t(aVal - aMin);
-        // auto     diff  = int64_t(aMax) - int64_t(aMin);
-        // mBits.Write(value, uint32_t(std::bit_width(uint32_t(diff))));
-
-        if constexpr (sizeof(IntT) <= sizeof(int32_t)) {
-            mBits.Write(uint32_t(aVal - aMin), uint32_t(std::bit_width(diff)));
-        } else {
-            mBits.Write(uint64_t(aVal - aMin), uint32_t(std::bit_width(diff)));
-        }
+        mBits.Write(uint32_t(aVal - aMin), uint32_t(std::bit_width(diff)));
     }
 
     template <typename UIntT>
@@ -399,11 +393,9 @@ class StreamDecoder
     {
         AssertBounds<IntT>(aMin, aMax);
 
-        uint32_t bits = uint32_t(std::bit_width(uint32_t(aMax - aMin)));
-
         if constexpr (sizeof(IntT) <= sizeof(int32_t)) {
             uint32_t v = 0;
-            if (!mBits.Read(v, bits)) {
+            if (!mBits.Read(v, std::bit_width(uint64_t(aMax - aMin)))) {
                 return false;
             }
             int64_t vv = v + aMin;
@@ -411,7 +403,7 @@ class StreamDecoder
             aVal = IntT(vv);
         } else {
             uint64_t v = 0;
-            if (!mBits.Read(v, bits)) {
+            if (!mBits.Read(v, std::bit_width(uint64_t(aMax - aMin)))) {
                 return false;
             }
             aVal = IntT(v) + aMin;
