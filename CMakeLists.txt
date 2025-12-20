@@ -267,15 +267,15 @@ if (ENABLE_CLIENT)
     )
   elseif(APPLE)
     target_link_libraries(wato
-      OpenGL::GL
-      OpenGL::GLU
+      # OpenGL::GL
+      # OpenGL::GLU
       ${METAL}
     )
   elseif(WIN32)
     target_link_libraries(wato
       Vulkan::Vulkan
-      OpenGL::GL
-      OpenGL::GLU
+      # OpenGL::GL
+      # OpenGL::GLU
     )
   endif()
 
