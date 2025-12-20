@@ -5,7 +5,7 @@ import sys
 import os
 from pathlib import Path
 
-CORPUS_DIR = "new_corpus2"
+CORPUS_DIR = "new_corpus"
 
 
 def write_test_data(
@@ -20,9 +20,12 @@ def write_test_data(
     f32_min,
     f32_max,
     bool_val,
+    ui64_val,
+    ui64_min,
+    ui64_max,
 ):
     """
-    format (53 bytes total):
+    format (177 bytes total):
     - int32_t value + int64_t min + max (20 bytes)
     - uint32_t value + uint64_t min + max (20 bytes)
     - float value + min + max (12 bytes)
@@ -30,9 +33,11 @@ def write_test_data(
     - glm::vec3 float + min + max (20 bytes)
     - glm::vec2 uint32_t + uint64_t min + max (24 bytes)
     - glm::vec4 int32_t + int64_t min + max (32 bytes)
+    - uint64_t value + uint64_t min + max (24 bytes)
+    - std::vector 3 floats value + float min + max + size (24 bytes)
     """
     data = struct.pack(
-        "<i q q I Q Q f f f B f f f f f I I Q Q i i i i q q",
+        "<i q q I Q Q f f f B f f f f f I I Q Q i i i i q q Q Q Q I f f f f f",
         i32_val,
         i32_min,
         i32_max,  # ValueWithBounds<int32_t, int64_t>
@@ -58,6 +63,15 @@ def write_test_data(
         int(i32_max / 2),
         i32_min,
         i32_max,  # GLMVecWithBounds<4, int32_t, int64_t>
+        ui64_val,
+        ui64_min,
+        ui64_max,  # ValueWithBounds<uint64_t, uint64_t>
+        3,  # vector size
+        f32_val,
+        f32_min,
+        f32_max,
+        f32_min,
+        f32_max,  # VectorWithBounds<float, float>
     )
 
     Path(filename).parent.mkdir(parents=True, exist_ok=True)
@@ -79,10 +93,26 @@ def main():
         0.0,
         10.0,  # float
         True,
+        42,
+        0,
+        42000,
     )
 
     write_test_data(
-        f"{CORPUS_DIR}/negative", -42, -100, 100, 50, 0, 100, -3.14, -10.0, 10.0, False
+        f"{CORPUS_DIR}/negative",
+        -42,
+        -100,
+        100,
+        50,
+        0,
+        100,
+        -3.14,
+        -10.0,
+        10.0,
+        False,
+        42,
+        0,
+        42000,
     )
 
     write_test_data(
@@ -97,9 +127,14 @@ def main():
         -3.40282e38,
         3.40282e38,
         True,
+        18446744073709551615,
+        0,
+        18446744073709551615,
     )
 
-    write_test_data(f"{CORPUS_DIR}/zero", 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, False)
+    write_test_data(
+        f"{CORPUS_DIR}/zero", 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, False, 0, 0, 0
+    )
 
     write_test_data(
         f"{CORPUS_DIR}/at_min_max",
@@ -113,6 +148,9 @@ def main():
         -30.0,
         10.0,
         False,
+        0,
+        0,
+        1,
     )
 
     write_test_data(
@@ -127,6 +165,9 @@ def main():
         -100.0,
         100.0,
         True,
+        0,
+        0,
+        1,
     )
 
 
