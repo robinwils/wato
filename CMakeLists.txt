@@ -22,9 +22,19 @@ option(wato_WARNINGS_AS_ERRORS "Treat Warnings As Errors" OFF)
 
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 
-option(ENABLE_FUZZING "Build with libfuzzer support" OFF)
+option(ENABLE_FUZZING "Build with libfuzzer support (wato_fuzz)" OFF)
 
 option(ENABLE_TRACING "Enable clang time trace" OFF)
+
+option(ENABLE_CLIENT "Enable client (wato)" ON)
+
+option(ENABLE_SERVER "Enable server (watod)" ON)
+
+option(ENABLE_TESTS "Enable tests (wato_tests)" ON)
+
+set(LIB_FUZZING_ENGINE "-fsanitize=fuzzer,undefined,address" CACHE STRING
+  "optional fuzzing engine library"
+)
 
 set(TF_BUILD_TESTS OFF CACHE BOOL "Disable taskflow test builds" FORCE)
 set(TF_BUILD_EXAMPLES OFF CACHE BOOL "Disable taskflow example builds" FORCE)
@@ -66,12 +76,14 @@ FetchContent_Declare(
   FIND_PACKAGE_ARGS NAMES taskflow
 )
 
-FetchContent_Declare(
-  doctest
-  GIT_REPOSITORY https://github.com/doctest/doctest
-  GIT_TAG v2.4.11
-  FIND_PACKAGE_ARGS NAMES doctest
-)
+if (ENABLE_TESTS)
+  FetchContent_Declare(
+    doctest
+    GIT_REPOSITORY https://github.com/doctest/doctest
+    GIT_TAG v2.4.11
+    FIND_PACKAGE_ARGS NAMES doctest
+  )
+endif()
 
 set(FETCHED_DEPS_NAMES
   entt
@@ -84,25 +96,25 @@ set(FETCHED_DEPS_NAMES
 
 FetchContent_MakeAvailable(${FETCHED_DEPS_NAMES})
 set(OTHER_DEPS
-  OpenGL
-  glfw3
-  assimp
   ReactPhysics3D
   spdlog
   Sodium
   bgfx
-  imgui
 )
 
-if(APPLE)
-  find_library(METAL Metal REQUIRED)
-  if (NOT METAL)
-    message(FATAL_ERROR "Metal not found")
+if (ENABLE_CLIENT)
+  list(APPEND OTHER_DEPS glfw3 imgui assimp)
+
+  if(APPLE)
+    find_library(METAL Metal REQUIRED)
+    if (NOT METAL)
+      message(FATAL_ERROR "Metal not found")
+    endif()
+  elseif(LINUX)
+    list(APPEND OTHER_DEPS X11 Vulkan)
+  elseif(WIN32)
+    list(APPEND OTHER_DEPS Vulkan)
   endif()
-elseif(LINUX)
-  list(APPEND OTHER_DEPS X11 Vulkan)
-elseif(WIN32)
-  list(APPEND OTHER_DEPS Vulkan)
 endif()
 
 foreach(dep ${OTHER_DEPS})
@@ -161,9 +173,121 @@ if(NOT MSVC)
   set_property(TARGET watolib PROPERTY OUTPUT_NAME wato)
 endif()
 
-add_executable(wato)
-add_subdirectory(src/watod)
-add_subdirectory(test)
+if (ENABLE_CLIENT)
+  add_executable(wato)
+  target_compile_definitions(wato PUBLIC DOCTEST_CONFIG_DISABLE)
+  target_include_directories(wato
+    PRIVATE
+      src
+      include
+    SYSTEM PRIVATE
+      src/imgui
+  )
+  target_sources(wato
+    PUBLIC FILE_SET HEADERS
+    BASE_DIRS src
+    FILES
+    src/core/app/game_client.hpp
+    src/core/tile.hpp
+    src/core/window.hpp
+    src/imgui/wato_imgui_config.h
+    src/imgui/imgui_helper.h
+    src/input/action.hpp
+    src/input/input.hpp
+    src/registry/game_registry.hpp
+    src/renderer/animation.hpp
+    src/renderer/bgfx_utils.hpp
+    src/renderer/blinn_phong_material.hpp
+    src/renderer/grid_preview_material.hpp
+    src/renderer/material.hpp
+    src/renderer/model.hpp
+    src/renderer/plane_primitive.hpp
+    src/renderer/primitive.hpp
+    src/renderer/renderer.hpp
+    src/renderer/skeleton.hpp
+    src/renderer/vertex_layout.hpp
+    src/resource/asset.hpp
+    src/resource/cache.hpp
+    src/resource/model_loader.hpp
+    src/resource/shader_loader.hpp
+    src/resource/texture_loader.hpp
+    src/systems/action.hpp
+    src/systems/animation.hpp
+    src/systems/input.hpp
+    src/systems/render.hpp
+    src/systems/sync.hpp
+
+    PRIVATE
+    src/core/app/game_client.cpp
+    src/core/physics/event_handler.cpp
+    src/core/sys/mem.cpp
+    src/core/window.cpp
+    src/imgui/imgui_helper.cpp
+    src/input/action.cpp
+    src/input/input.cpp
+    src/main.cpp
+    src/registry/game_registry.cpp
+    src/renderer/bgfx_utils.cpp
+    src/renderer/model.cpp
+    src/renderer/renderer.cpp
+    src/renderer/skeleton.cpp
+    src/resource/asset.cpp
+    src/resource/model_loader.cpp
+    src/resource/shader_loader.cpp
+    src/resource/texture_loader.cpp
+    src/systems/action.cpp
+    src/systems/animation.cpp
+    src/systems/input.cpp
+    src/systems/render.cpp
+    src/systems/sync.cpp
+
+    shaders/fs_blinnphong.sc
+    shaders/fs_grid.sc
+    shaders/fs_simple.sc
+    shaders/vs_blinnphong.sc
+    shaders/vs_blinnphong_skinned.sc
+    shaders/vs_grid.sc
+    shaders/vs_simple.sc
+  )
+  target_include_directories(wato PRIVATE ${CMAKE_BINARY_DIR}/include/generated/shaders)
+  target_link_libraries(wato
+    watolib
+    glfw
+    assimp::assimp
+    bgfx::bgfx
+    bgfx::bimg_decode
+    bgfx::bimg
+    imgui::imgui
+  )
+
+  if(LINUX)
+    target_link_libraries(wato
+      X11
+      Vulkan::Vulkan
+    )
+  elseif(APPLE)
+    target_link_libraries(wato
+      # OpenGL::GL
+      # OpenGL::GLU
+      ${METAL}
+    )
+  elseif(WIN32)
+    target_link_libraries(wato
+      Vulkan::Vulkan
+      # OpenGL::GL
+      # OpenGL::GLU
+    )
+  endif()
+
+endif()
+
+if (ENABLE_SERVER)
+  add_subdirectory(src/watod)
+endif()
+
+if (ENABLE_TESTS)
+  add_subdirectory(test)
+endif()
 
 # Preprocessor
 target_compile_definitions(wato_common
@@ -172,10 +296,10 @@ target_compile_definitions(wato_common
     WATO_DEBUG=$<IF:$<CONFIG:Debug>,1,0>
     GLM_FORCE_SIZE_T_LENGTH
     GLM_ENABLE_EXPERIMENTAL
+    $<$<CONFIG:Debug>:SAFEINT_ASSERT_ON_EXCEPTION>
 )
 
 target_compile_definitions(watolib PUBLIC DOCTEST_CONFIG_DISABLE)
-target_compile_definitions(wato PUBLIC DOCTEST_CONFIG_DISABLE)
 
 if(UNIX)
   target_link_options(wato_common INTERFACE -rdynamic)
@@ -227,17 +351,6 @@ wato_set_project_warnings(wato_common
 target_compile_features(wato_common INTERFACE cxx_std_${CMAKE_CXX_STANDARD})
 
 target_include_directories(wato_common INTERFACE ${SAFEINT_INCLUDE_DIRS})
-target_include_directories(wato
-  PRIVATE
-    src
-    src/imgui
-    include
-)
-
-target_include_directories(wato
-  SYSTEM PRIVATE
-    src/imgui
-)
 
 if(DEFINED glm_SOURCE_DIR)
   target_include_directories(wato_common
@@ -356,76 +469,7 @@ target_sources(watolib
     src/systems/tower_built.cpp
 )
 
-target_sources(wato
-  PUBLIC FILE_SET HEADERS
-  BASE_DIRS src
-  FILES
-    src/core/app/game_client.hpp
-    src/core/tile.hpp
-    src/core/window.hpp
-    src/imgui/wato_imgui_config.h
-    src/imgui/imgui_helper.h
-    src/input/action.hpp
-    src/input/input.hpp
-    src/registry/game_registry.hpp
-    src/renderer/animation.hpp
-    src/renderer/bgfx_utils.hpp
-    src/renderer/blinn_phong_material.hpp
-    src/renderer/grid_preview_material.hpp
-    src/renderer/material.hpp
-    src/renderer/model.hpp
-    src/renderer/plane_primitive.hpp
-    src/renderer/primitive.hpp
-    src/renderer/renderer.hpp
-    src/renderer/skeleton.hpp
-    src/renderer/vertex_layout.hpp
-    src/resource/asset.hpp
-    src/resource/cache.hpp
-    src/resource/model_loader.hpp
-    src/resource/shader_loader.hpp
-    src/resource/texture_loader.hpp
-    src/systems/action.hpp
-    src/systems/animation.hpp
-    src/systems/input.hpp
-    src/systems/render.hpp
-    src/systems/sync.hpp
-
-  PRIVATE
-    src/core/app/game_client.cpp
-    src/core/physics/event_handler.cpp
-    src/core/sys/mem.cpp
-    src/core/window.cpp
-    src/imgui/imgui_helper.cpp
-    src/input/action.cpp
-    src/input/input.cpp
-    src/main.cpp
-    src/registry/game_registry.cpp
-    src/renderer/bgfx_utils.cpp
-    src/renderer/model.cpp
-    src/renderer/renderer.cpp
-    src/renderer/skeleton.cpp
-    src/resource/asset.cpp
-    src/resource/model_loader.cpp
-    src/resource/shader_loader.cpp
-    src/resource/texture_loader.cpp
-    src/systems/action.cpp
-    src/systems/animation.cpp
-    src/systems/input.cpp
-    src/systems/render.cpp
-    src/systems/sync.cpp
-
-    shaders/fs_blinnphong.sc
-    shaders/fs_grid.sc
-    shaders/fs_simple.sc
-    shaders/vs_blinnphong.sc
-    shaders/vs_blinnphong_skinned.sc
-    shaders/vs_grid.sc
-    shaders/vs_simple.sc
-)
-
 target_include_directories(wato_common INTERFACE "${CMAKE_CURRENT_BINARY_DIR}")
-target_include_directories(wato PRIVATE ${CMAKE_BINARY_DIR}/include/generated/shaders)
-
 
 # Link libraries
 target_link_libraries(watolib
@@ -435,64 +479,4 @@ target_link_libraries(watolib
     sodium
     spdlog::spdlog
     ReactPhysics3D::ReactPhysics3D
-)
-
-target_link_libraries(wato
-  watolib
-  glfw
-  assimp::assimp
-  bgfx::bgfx
-  bgfx::bimg_decode
-  bgfx::bimg
-  imgui::imgui
-)
-
-if(LINUX)
-  target_link_libraries(wato
-    X11
-    Vulkan::Vulkan
-    OpenGL::GL
-    OpenGL::GLU
-  )
-elseif(APPLE)
-  target_link_libraries(wato
-    OpenGL::GL
-    OpenGL::GLU
-    ${METAL}
-  )
-elseif(WIN32)
-  target_link_libraries(wato
-    Vulkan::Vulkan
-    OpenGL::GL
-    OpenGL::GLU
-  )
-endif()
-
-
-
-set(wato_includes "$<TARGET_PROPERTY:wato,INCLUDE_DIRECTORIES>")
-set(wato_sources "$<FILTER:$<TARGET_PROPERTY:wato,SOURCES>,INCLUDE,src/*>")
-set(wato_headers "$<FILTER:$<TARGET_PROPERTY:wato,HEADER_SET>,INCLUDE,src/*>")
-set(wato_opts "$<TARGET_PROPERTY:wato,COMPILE_OPTIONS>")
-
-add_custom_target(format-sources
-  COMMAND clang-format -style=file -i ${wato_sources} ${wato_headers}
-  # COMMAND_EXPAND_LISTS option means that paths with spaces will be handled correctly.
-  # see https://cmake.org/cmake/help/latest/manual/cmake-generator-expressions.7.html
-  COMMAND_EXPAND_LISTS
-  WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-)
-
-add_custom_target(tidy-sources
-  COMMAND ${CLANG_TIDY_BIN} --fix --format-style=file
-    -p ${CMAKE_BINARY_DIR}
-    ${wato_sources}
-    ${wato_headers}
-    --
-    ${compile_opts}
-    "$<$<BOOL:${wato_includes}>:-I$<JOIN:${wato_includes},;-I>>"
-  COMMAND_EXPAND_LISTS
-  VERBATIM
-  COMMENT "Running clang-tidy with auto-fix on all sources..."
-  WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
 )

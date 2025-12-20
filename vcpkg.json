@@ -1,13 +1,11 @@
 {
   "name": "wato",
-  "default-features": [ "client" ],
   "dependencies": [
     "zlib",
     "libsodium",
     "spdlog",
     "reactphysics3d",
-    "safeint",
-    "imgui"
+    "safeint"
   ],
   "features": {
     "client": {
@@ -37,8 +35,13 @@
           "name": "bgfx",
           "features": [ "multithreaded" ]
         },
-        "assimp"
+        "assimp",
+        "imgui"
       ]
+    },
+    "tests" : {
+      "description": "Build tests",
+      "dependencies": [ "bgfx" ]
     }
   }
 }
