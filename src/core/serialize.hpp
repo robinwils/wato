@@ -335,7 +335,7 @@ class StreamEncoder
     {
         AssertBoundsAndVal(aVal, aMin, aMax);
 
-        uint64_t diff = aMax - aMin;
+        uint64_t diff = uint64_t(aMax - aMin);
 
         mBits.Write(uint32_t(aVal - aMin), uint32_t(std::bit_width(diff)));
     }
@@ -393,9 +393,11 @@ class StreamDecoder
     {
         AssertBounds<IntT>(aMin, aMax);
 
+        auto bits = uint32_t(std::bit_width(uint64_t(aMax - aMin)));
+
         if constexpr (sizeof(IntT) <= sizeof(int32_t)) {
             uint32_t v = 0;
-            if (!mBits.Read(v, std::bit_width(uint64_t(aMax - aMin)))) {
+            if (!mBits.Read(v, bits)) {
                 return false;
             }
             int64_t vv = v + aMin;
@@ -403,7 +405,7 @@ class StreamDecoder
             aVal = IntT(vv);
         } else {
             uint64_t v = 0;
-            if (!mBits.Read(v, std::bit_width(uint64_t(aMax - aMin)))) {
+            if (!mBits.Read(v, bits)) {
                 return false;
             }
             aVal = IntT(v) + aMin;
