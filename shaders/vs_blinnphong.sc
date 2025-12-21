@@ -29,7 +29,7 @@ void main()
     vec4 normal = mul(boneMat, a_normal);
 #else
     vec4 pos = vec4(a_position, 1.0);
-    vec4 normal = a_normal;
+    vec4 normal = vec4(a_normal.xyz, 0.0);
 #endif
     // lighting calculations are done in world space, so we send the
     // fragment position in world coords to the fragment shader
