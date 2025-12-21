@@ -8,6 +8,7 @@
 #include <essl/fs_simple.sc.bin.h>
 #include <essl/vs_blinnphong.sc.bin.h>
 #include <essl/vs_blinnphong_skinned.sc.bin.h>
+#include <essl/vs_blinnphong_instanced.sc.bin.h>
 #include <essl/vs_grid.sc.bin.h>
 #include <essl/vs_simple.sc.bin.h>
 #include <glsl/fs_blinnphong.sc.bin.h>
@@ -15,6 +16,7 @@
 #include <glsl/fs_simple.sc.bin.h>
 #include <glsl/vs_blinnphong.sc.bin.h>
 #include <glsl/vs_blinnphong_skinned.sc.bin.h>
+#include <glsl/vs_blinnphong_instanced.sc.bin.h>
 #include <glsl/vs_grid.sc.bin.h>
 #include <glsl/vs_simple.sc.bin.h>
 #include <spirv/fs_blinnphong.sc.bin.h>
@@ -22,6 +24,7 @@
 #include <spirv/fs_simple.sc.bin.h>
 #include <spirv/vs_blinnphong.sc.bin.h>
 #include <spirv/vs_blinnphong_skinned.sc.bin.h>
+#include <spirv/vs_blinnphong_instanced.sc.bin.h>
 #include <spirv/vs_grid.sc.bin.h>
 #include <spirv/vs_simple.sc.bin.h>
 
@@ -35,6 +38,7 @@
 #include <dx11/fs_simple.sc.bin.h>
 #include <dx11/vs_blinnphong.sc.bin.h>
 #include <dx11/vs_blinnphong_skinned.sc.bin.h>
+#include <dx11/vs_blinnphong_instanced.sc.bin.h>
 #include <dx11/vs_grid.sc.bin.h>
 #include <dx11/vs_simple.sc.bin.h>
 #else
@@ -49,6 +53,7 @@
 #include <metal/fs_simple.sc.bin.h>
 #include <metal/vs_blinnphong.sc.bin.h>
 #include <metal/vs_blinnphong_skinned.sc.bin.h>
+#include <metal/vs_blinnphong_instanced.sc.bin.h>
 #include <metal/vs_grid.sc.bin.h>
 #include <metal/vs_simple.sc.bin.h>
 #endif  // __APPLE__
@@ -61,6 +66,7 @@ static const bgfx::EmbeddedShader kEmbeddedShaders[] = {
     BGFX_EMBEDDED_SHADER(fs_grid),
     BGFX_EMBEDDED_SHADER(vs_blinnphong),
     BGFX_EMBEDDED_SHADER(vs_blinnphong_skinned),
+    BGFX_EMBEDDED_SHADER(vs_blinnphong_instanced),
     BGFX_EMBEDDED_SHADER(fs_blinnphong),
     BGFX_EMBEDDED_SHADER_END()};
 

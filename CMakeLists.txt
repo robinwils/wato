@@ -246,6 +246,7 @@ if (ENABLE_CLIENT)
     shaders/fs_simple.sc
     shaders/vs_blinnphong.sc
     shaders/vs_blinnphong_skinned.sc
+    shaders/vs_blinnphong_instanced.sc
     shaders/vs_grid.sc
     shaders/vs_simple.sc
   )
@@ -395,6 +396,7 @@ bgfx_compile_shaders(
     shaders/vs_grid.sc
     shaders/vs_blinnphong.sc
     shaders/vs_blinnphong_skinned.sc
+    shaders/vs_blinnphong_instanced.sc
   VARYING_DEF ${CMAKE_SOURCE_DIR}/shaders/varying.def.sc
   OUTPUT_DIR ${CMAKE_BINARY_DIR}/include/generated/shaders
   AS_HEADERS

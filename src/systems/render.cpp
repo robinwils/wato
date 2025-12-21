@@ -11,6 +11,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <memory>
 #include <span>
+#include <unordered_map>
 #include <variant>
 
 #include "components/animator.hpp"
@@ -18,10 +19,12 @@
 #include "components/imgui.hpp"
 #include "components/scene_object.hpp"
 #include "core/physics/physics.hpp"
+#include "core/tile.hpp"
 #include "core/types.hpp"
 #include "core/window.hpp"
 #include "imgui_helper.h"
 #include "input/action.hpp"
+#include "renderer/instance_buffer.hpp"
 #include "renderer/renderer.hpp"
 #include "resource/cache.hpp"
 
@@ -34,21 +37,22 @@ void RenderSystem::operator()(Registry& aRegistry)
 
     uint64_t state = BGFX_STATE_DEFAULT;
 
-    auto bpShader        = aRegistry.ctx().get<ShaderCache>()["blinnphong"_hs];
-    auto bpSkinnedShader = aRegistry.ctx().get<ShaderCache>()["blinnphong_skinned"_hs];
+    auto  bpSkinnedShader   = aRegistry.ctx().get<ShaderCache>()["blinnphong_skinned"_hs];
+    auto  bpInstancedShader = aRegistry.ctx().get<ShaderCache>()["blinnphong_instanced"_hs];
+    auto& modelCache        = aRegistry.ctx().get<ModelCache>();
 
     // light
     for (auto&& [light, source] : aRegistry.view<const LightSource>().each()) {
-        // bgfx::setUniform(
-        //     bpShader->Uniform("u_lightDir"),
-        //     glm::value_ptr(glm::vec4(source.direction, 0.0f)));
-        // bgfx::setUniform(
-        //     bpShader->Uniform("u_lightCol"),
-        //     glm::value_ptr(glm::vec4(source.color, 0.0f)));
         renderer.SetUniform(
             bpSkinnedShader->Uniform("u_lightDir"),
             glm::vec4(source.direction, 0.0f));
         renderer.SetUniform(bpSkinnedShader->Uniform("u_lightCol"), glm::vec4(source.color, 0.0f));
+        renderer.SetUniform(
+            bpInstancedShader->Uniform("u_lightDir"),
+            glm::vec4(source.direction, 0.0f));
+        renderer.SetUniform(
+            bpInstancedShader->Uniform("u_lightCol"),
+            glm::vec4(source.color, 0.0f));
     }
 
     if (aRegistry.ctx().get<Graph>().GridDirty) {
@@ -59,21 +63,45 @@ void RenderSystem::operator()(Registry& aRegistry)
         renderGrid(aRegistry);
     }
 
+    // Collect static meshes for instancing (group by model)
+    // Key: model pointer, Value: instance buffer with transforms
+    std::unordered_map<Model*, InstanceBuffer> instanceBuffers;
+
     for (auto&& [entity, obj, t] : aRegistry.view<SceneObject, Transform3D>().each()) {
-        if (auto model = aRegistry.ctx().get<ModelCache>()[obj.ModelHash]; model) {
-            if (const Animator* animator = aRegistry.try_get<Animator>(entity);
-                animator && !animator->FinalBonesMatrices.empty()) {
-                uint16_t numBones = static_cast<uint16_t>(animator->FinalBonesMatrices.size());
-                if (numBones > 128) {
-                    numBones = 128;
-                }
-                renderer.SetUniform(
-                    bpSkinnedShader->Uniform("u_bones"),
-                    animator->FinalBonesMatrices[0],
-                    numBones);
-            }
-            model->Submit(t.ModelMat(), state);
+        auto model = modelCache[obj.ModelHash];
+        if (!model) {
+            continue;
         }
+
+        // Animated entities are rendered individually
+        if (const Animator* animator = aRegistry.try_get<Animator>(entity);
+            animator && !animator->FinalBonesMatrices.empty()) {
+            uint16_t numBones = static_cast<uint16_t>(animator->FinalBonesMatrices.size());
+            if (numBones > 128) {
+                numBones = 128;
+            }
+            renderer.SetUniform(
+                bpSkinnedShader->Uniform("u_bones"),
+                animator->FinalBonesMatrices[0],
+                numBones);
+            model->Submit(t.ModelMat(), state);
+            continue;
+        }
+
+        // Static entities are batched for instancing
+        instanceBuffers[model.operator->()].Add(t.ModelMat());
+    }
+
+    // Submit instanced batches
+    for (auto& [modelPtr, buffer] : instanceBuffers) {
+        if (buffer.Empty()) {
+            continue;
+        }
+
+        if (!buffer.Allocate()) {
+            continue;
+        }
+        modelPtr->Submit(buffer, state);
     }
 }
 

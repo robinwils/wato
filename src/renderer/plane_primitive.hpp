@@ -16,12 +16,10 @@ class PlanePrimitive : public Primitive<PositionNormalUvVertex>
    public:
     explicit PlanePrimitive(std::unique_ptr<Material> aMaterial)
         : Primitive<PositionNormalUvVertex>(
-              {
-                  {{+1.0F, +0.0F, -0.0F}, {0.0F, +1.0F, 0.0F}, {0.0F, 1.0F}},
-                  {{-0.0F, +0.0F, -0.0F}, {0.0F, +1.0F, 0.0F}, {0.0F, 0.0F}},
-                  {{-0.0F, +0.0F, +1.0F}, {0.0F, +1.0F, 0.0F}, {1.0F, 0.0F}},
-                  {{+1.0F, +0.0F, +1.0F}, {0.0F, +1.0F, 0.0F}, {1.0F, 1.0F}}
-    },
+              {{{+1.0F, +0.0F, -0.0F}, {0.0F, +1.0F, 0.0F}, {0.0F, 1.0F}},
+               {{-0.0F, +0.0F, -0.0F}, {0.0F, +1.0F, 0.0F}, {0.0F, 0.0F}},
+               {{-0.0F, +0.0F, +1.0F}, {0.0F, +1.0F, 0.0F}, {1.0F, 0.0F}},
+               {{+1.0F, +0.0F, +1.0F}, {0.0F, +1.0F, 0.0F}, {1.0F, 1.0F}}},
               {
                   0,
                   1,

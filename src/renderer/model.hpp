@@ -5,6 +5,7 @@
 
 #include "core/sys/log.hpp"
 #include "renderer/animation.hpp"
+#include "renderer/instance_buffer.hpp"
 #include "renderer/primitive.hpp"
 #include "renderer/skeleton.hpp"
 
@@ -37,6 +38,8 @@ class Model final
     void Submit(
         glm::mat4 aModelMatrix = glm::identity<glm::mat4>(),
         uint64_t  aState       = BGFX_STATE_DEFAULT);
+
+    void Submit(const InstanceBuffer& aBuffer, uint64_t aState = BGFX_STATE_DEFAULT);
 
     const ::Skeleton&              Skeleton() const { return mSkeleton; }
     const std::optional<Animation> GetAnimation(const std::string& aName) const
