@@ -10,6 +10,7 @@
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <memory>
+#include <span>
 #include <variant>
 
 #include "components/animator.hpp"
@@ -21,13 +22,15 @@
 #include "core/window.hpp"
 #include "imgui_helper.h"
 #include "input/action.hpp"
+#include "renderer/renderer.hpp"
 #include "resource/cache.hpp"
 
 void RenderSystem::operator()(Registry& aRegistry)
 {
+    auto& renderer = aRegistry.ctx().get<Renderer&>();
     // This dummy draw call is here to make sure that view 0 is cleared
     // if no other draw calls are submitted to view 0.
-    bgfx::touch(0);
+    renderer.Touch(0);
 
     uint64_t state = BGFX_STATE_DEFAULT;
 
@@ -42,12 +45,10 @@ void RenderSystem::operator()(Registry& aRegistry)
         // bgfx::setUniform(
         //     bpShader->Uniform("u_lightCol"),
         //     glm::value_ptr(glm::vec4(source.color, 0.0f)));
-        bgfx::setUniform(
+        renderer.SetUniform(
             bpSkinnedShader->Uniform("u_lightDir"),
-            glm::value_ptr(glm::vec4(source.direction, 0.0f)));
-        bgfx::setUniform(
-            bpSkinnedShader->Uniform("u_lightCol"),
-            glm::value_ptr(glm::vec4(source.color, 0.0f)));
+            glm::vec4(source.direction, 0.0f));
+        renderer.SetUniform(bpSkinnedShader->Uniform("u_lightCol"), glm::vec4(source.color, 0.0f));
     }
 
     if (aRegistry.ctx().get<Graph>().GridDirty) {
@@ -66,9 +67,9 @@ void RenderSystem::operator()(Registry& aRegistry)
                 if (numBones > 128) {
                     numBones = 128;
                 }
-                bgfx::setUniform(
+                renderer.SetUniform(
                     bpSkinnedShader->Uniform("u_bones"),
-                    glm::value_ptr(animator->FinalBonesMatrices[0]),
+                    animator->FinalBonesMatrices[0],
                     numBones);
             }
             model->Submit(t.ModelMat(), state);
@@ -78,14 +79,15 @@ void RenderSystem::operator()(Registry& aRegistry)
 
 void RenderSystem::updateGridTexture(Registry& aRegistry)
 {
-    auto& graph = aRegistry.ctx().get<Graph>();
+    auto& graph    = aRegistry.ctx().get<Graph>();
+    auto& renderer = aRegistry.ctx().get<Renderer&>();
 
     BX_ASSERT(
         graph.GridLayout().size() == graph.Width() * graph.Height(),
         "incorrect graph data length");
 
     entt::resource<bgfx::TextureHandle> handle = aRegistry.ctx().get<TextureCache>()["grid_tex"_hs];
-    bgfx::updateTexture2D(
+    renderer.UpdateTexture2D(
         handle,
         0,
         0,
@@ -93,7 +95,7 @@ void RenderSystem::updateGridTexture(Registry& aRegistry)
         0,
         graph.Width(),
         graph.Height(),
-        bgfx::copy(graph.GridLayout().data(), graph.Width() * graph.Height()));
+        std::span<const uint8_t>(graph.GridLayout().data(), graph.Width() * graph.Height()));
     graph.GridDirty = false;
 }
 
@@ -220,12 +222,13 @@ void RenderImguiSystem::operator()(Registry& aRegistry)
 
 void CameraSystem::operator()(Registry& aRegistry)
 {
-    auto& window = aRegistry.ctx().get<WatoWindow&>();
+    auto& window   = aRegistry.ctx().get<WatoWindow&>();
+    auto& renderer = aRegistry.ctx().get<Renderer&>();
     for (auto&& [entity, camera, transform] : aRegistry.view<Camera, Transform3D>().each()) {
         const auto& viewMat = camera.View(transform.Position);
         const auto& proj    = camera.Projection(window.Width<float>(), window.Height<float>());
-        bgfx::setViewTransform(0, glm::value_ptr(viewMat), glm::value_ptr(proj));
-        bgfx::setViewRect(0, 0, 0, window.Width<uint16_t>(), window.Height<uint16_t>());
+        renderer.SetViewTransform(0, viewMat, proj);
+        renderer.SetViewRect(0, 0, 0, window.Width<uint16_t>(), window.Height<uint16_t>());
 
         // just because I know there is only 1 camera (for now)
         // TODO: put in registry context var as singleton ?
@@ -260,6 +263,7 @@ bgfx::VertexLayout PosColor::msLayout;
 void PhysicsDebugSystem::operator()(Registry& aRegistry)
 {
     const auto&                phy           = aRegistry.ctx().get<Physics&>();
+    auto&                      renderer      = aRegistry.ctx().get<Renderer&>();
     rp3d::DebugRenderer const& debugRenderer = phy.World()->getDebugRenderer();
 
     PosColor::Init();
@@ -269,31 +273,24 @@ void PhysicsDebugSystem::operator()(Registry& aRegistry)
 
     auto debugShader = aRegistry.ctx().get<ShaderCache>()["simple"_hs];
     auto debugMat    = std::make_unique<Material>(debugShader);
+
     if (nTri > 0) {
         auto state = BGFX_STATE_WRITE_RGB | BGFX_STATE_DEPTH_TEST_ALWAYS;
-        if (3 * nTri == bgfx::getAvailTransientVertexBuffer(3 * nTri, PosColor::msLayout)) {
-            bgfx::TransientVertexBuffer vb{};
-            bgfx::allocTransientVertexBuffer(&vb, 3 * nTri, PosColor::msLayout);
-
-            bx::memCopy(vb.data, debugRenderer.getTrianglesArray(), 3 * nTri * sizeof(PosColor));
-
-            bgfx::setState(state);
-            bgfx::setVertexBuffer(0, &vb);
-            bgfx::submit(0, debugMat->Program(), bgfx::ViewMode::Default);
-        }
+        renderer.SubmitDebugGeometry(
+            debugRenderer.getTrianglesArray(),
+            3 * nTri,
+            state,
+            debugMat->Program(),
+            PosColor::msLayout);
     }
     if (nLines > 0) {
         auto state = BGFX_STATE_DEFAULT | BGFX_STATE_PT_LINES;
-        if (2 * nLines == bgfx::getAvailTransientVertexBuffer(2 * nLines, PosColor::msLayout)) {
-            bgfx::TransientVertexBuffer vb{};
-            bgfx::allocTransientVertexBuffer(&vb, 2 * nLines, PosColor::msLayout);
-
-            bx::memCopy(vb.data, debugRenderer.getLinesArray(), 2 * nLines * sizeof(PosColor));
-
-            bgfx::setState(state);
-            bgfx::setVertexBuffer(0, &vb);
-            bgfx::submit(0, debugMat->Program(), bgfx::ViewMode::Default);
-        }
+        renderer.SubmitDebugGeometry(
+            debugRenderer.getLinesArray(),
+            2 * nLines,
+            state,
+            debugMat->Program(),
+            PosColor::msLayout);
     }
 }
 #endif
