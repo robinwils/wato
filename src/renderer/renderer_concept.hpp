@@ -5,7 +5,7 @@
 class WatoWindow;
 
 template <typename T>
-concept RendererConcept = requires(T r, WatoWindow& win) {
+concept Renderer = requires(T r, WatoWindow& win) {
     r.Init(win);
     r.Resize(win);
     r.Clear();

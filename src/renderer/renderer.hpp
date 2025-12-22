@@ -78,6 +78,3 @@ class BgfxRenderer
     bool                     mIsInit;
     bgfx::RendererType::Enum mRenderer;
 };
-
-// Type alias for backwards compatibility
-using Renderer = BgfxRenderer;

@@ -35,7 +35,7 @@ void GameClient::Init()
     spdlog::set_default_logger(mLogger);
 
     auto& window    = mRegistry.ctx().get<WatoWindow>();
-    auto& renderer  = mRegistry.ctx().get<Renderer>();
+    auto& renderer  = mRegistry.ctx().get<BgfxRenderer&>();
     auto& netClient = mRegistry.ctx().get<ENetClient>();
 
     window.Init();
@@ -86,7 +86,7 @@ void GameClient::Init()
 int GameClient::Run(tf::Executor& aExecutor)
 {
     auto& window    = mRegistry.ctx().get<WatoWindow&>();
-    auto& renderer  = mRegistry.ctx().get<Renderer&>();
+    auto& renderer  = mRegistry.ctx().get<BgfxRenderer&>();
     auto& netClient = mRegistry.ctx().get<ENetClient&>();
     auto  prevTime  = clock_type::now();
 
@@ -232,7 +232,7 @@ void GameClient::prepareGridPreview()
     // Put texture in context variables because I am not sure entt:resource_cache can be updated
     // easily
     LoadResource(mRegistry.ctx().get<ModelCache>(), "grid", std::move(primitive));
-    auto& renderer = mRegistry.ctx().get<Renderer&>();
+    auto& renderer = mRegistry.ctx().get<BgfxRenderer&>();
     renderer.UpdateTexture2D(
         texture,
         0,

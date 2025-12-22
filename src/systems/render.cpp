@@ -27,7 +27,7 @@
 
 void RenderSystem::operator()(Registry& aRegistry)
 {
-    auto& renderer = aRegistry.ctx().get<Renderer&>();
+    auto& renderer = aRegistry.ctx().get<BgfxRenderer&>();
     // This dummy draw call is here to make sure that view 0 is cleared
     // if no other draw calls are submitted to view 0.
     renderer.Touch(0);
@@ -80,7 +80,7 @@ void RenderSystem::operator()(Registry& aRegistry)
 void RenderSystem::updateGridTexture(Registry& aRegistry)
 {
     auto& graph    = aRegistry.ctx().get<Graph>();
-    auto& renderer = aRegistry.ctx().get<Renderer&>();
+    auto& renderer = aRegistry.ctx().get<BgfxRenderer&>();
 
     BX_ASSERT(
         graph.GridLayout().size() == graph.Width() * graph.Height(),
@@ -223,7 +223,7 @@ void RenderImguiSystem::operator()(Registry& aRegistry)
 void CameraSystem::operator()(Registry& aRegistry)
 {
     auto& window   = aRegistry.ctx().get<WatoWindow&>();
-    auto& renderer = aRegistry.ctx().get<Renderer&>();
+    auto& renderer = aRegistry.ctx().get<BgfxRenderer&>();
     for (auto&& [entity, camera, transform] : aRegistry.view<Camera, Transform3D>().each()) {
         const auto& viewMat = camera.View(transform.Position);
         const auto& proj    = camera.Projection(window.Width<float>(), window.Height<float>());
@@ -263,7 +263,7 @@ bgfx::VertexLayout PosColor::msLayout;
 void PhysicsDebugSystem::operator()(Registry& aRegistry)
 {
     const auto&                phy           = aRegistry.ctx().get<Physics&>();
-    auto&                      renderer      = aRegistry.ctx().get<Renderer&>();
+    auto&                      renderer      = aRegistry.ctx().get<BgfxRenderer&>();
     rp3d::DebugRenderer const& debugRenderer = phy.World()->getDebugRenderer();
 
     PosColor::Init();
