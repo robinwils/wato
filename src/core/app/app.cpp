@@ -32,6 +32,7 @@ void Application::StartGameInstance(
 
     aRegistry.ctx().emplace<GameStateBuffer>();
     aRegistry.ctx().emplace<GameInstance>(aGameID, 0.0f, 0u);
+    aRegistry.ctx().emplace<ColliderEntityMap>();
 
     physics.Init();
 

@@ -11,7 +11,8 @@ using namespace entt::literals;
 
 void RigidBodiesUpdateSystem::operator()(Registry& aRegistry)
 {
-    auto& physics = aRegistry.ctx().get<Physics>();
+    auto& physics          = aRegistry.ctx().get<Physics>();
+    auto& colliderToEntity = aRegistry.ctx().get<ColliderEntityMap>();
 
     auto& rbStorage = aRegistry.storage<entt::reactive>("rigid_bodies_observer"_hs);
     for (auto& e : rbStorage) {
@@ -23,6 +24,8 @@ void RigidBodiesUpdateSystem::operator()(Registry& aRegistry)
             WATO_DBG(aRegistry, "rigid body creation for {}", e);
             rb.Body  = physics.CreateRigidBody(rb.Params, t);
             c.Handle = physics.AddCollider(rb.Body, c.Params);
+
+            colliderToEntity[c.Handle] = e;
         } else {
             WATO_TRACE(aRegistry, "rigid body update for {}:", e);
         }
@@ -56,8 +59,11 @@ void RigidBodiesUpdateSystem::operator()(Registry& aRegistry)
 
         if (c.Params.CollisionCategoryBits != c.Handle->getCollisionCategoryBits()
             || c.Params.CollideWithMaskBits != c.Handle->getCollideWithMaskBits()) {
+            colliderToEntity.erase(c.Handle);
             rb.Body->removeCollider(c.Handle);
-            c.Handle = physics.AddCollider(rb.Body, c.Params);
+
+            c.Handle                   = physics.AddCollider(rb.Body, c.Params);
+            colliderToEntity[c.Handle] = e;
         }
     }
 }

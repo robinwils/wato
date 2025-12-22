@@ -85,6 +85,8 @@ struct ColliderParams {
     ColliderShapeParams ShapeParams;
 };
 
+using ColliderEntityMap = std::unordered_map<reactphysics3d::Collider*, entt::entity>;
+
 struct PhysicsParams {
     bool InfoLogs    = false;
     bool WarningLogs = false;
