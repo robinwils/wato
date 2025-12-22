@@ -14,6 +14,7 @@
 #include "components/rigid_body.hpp"
 #include "components/scene_object.hpp"
 #include "components/spawner.hpp"
+#include "components/tower_attack.hpp"
 #include "components/transform3d.hpp"
 #include "components/velocity.hpp"
 #include "core/graph.hpp"
@@ -266,6 +267,12 @@ void ServerContextHandler::operator()(Registry& aRegistry, BuildTowerPayload& aP
     aRegistry.emplace<Tower>(tower, aPayload.Tower);
     aRegistry.emplace<RigidBody>(tower, body);
     aRegistry.emplace<Collider>(tower, collider);
+    aRegistry.emplace<TowerAttack>(
+        tower,
+        TowerAttack{
+            .Range    = 30.0f,
+            .FireRate = 1.0f,
+        });
 
     aRegistry.ctx().get<ENetServer&>().EnqueueResponse(new NetworkResponse{
         .Type     = PacketType::Ack,
@@ -314,7 +321,7 @@ void ServerContextHandler::operator()(Registry& aRegistry, SendCreepPayload& aPa
                 .Params =
                     ColliderParams{
                         .CollisionCategoryBits = Category::Entities,
-                        .CollideWithMaskBits   = 0,
+                        .CollideWithMaskBits   = Category::Projectiles,
                         .IsTrigger             = false,
                         .Offset                = Transform3D{},
                         .ShapeParams =
