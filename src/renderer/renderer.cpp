@@ -6,7 +6,7 @@
 #include "core/window.hpp"
 #include "imgui_helper.h"
 
-void Renderer::Init(WatoWindow& aWin)
+void BgfxRenderer::Init(WatoWindow& aWin)
 {
     if (!aWin.IsInitialized()) {
         throw std::runtime_error("window not initialized");
@@ -55,7 +55,7 @@ void Renderer::Init(WatoWindow& aWin)
     mIsInit = true;
 }
 
-bgfx::RendererType::Enum Renderer::detectRenderer(const std::string& aRenderer) const
+bgfx::RendererType::Enum BgfxRenderer::detectRenderer(const std::string& aRenderer) const
 {
     if (aRenderer == "vulkan" || aRenderer == "vk") {
         return bgfx::RendererType::Vulkan;
@@ -76,20 +76,44 @@ bgfx::RendererType::Enum Renderer::detectRenderer(const std::string& aRenderer) 
     }
 }
 
-void Renderer::Resize(WatoWindow& aWin)
+void BgfxRenderer::Resize(WatoWindow& aWin)
 {
     bgfx::reset(aWin.Width<uint32_t>(), aWin.Height<uint32_t>(), BGFX_RESET_VSYNC);
     bgfx::setViewRect(kClearView, 0, 0, bgfx::BackbufferRatio::Equal);
 }
 
-void Renderer::Clear()
+void BgfxRenderer::Clear()
 {
     bgfx::touch(kClearView);
     bgfx::dbgTextClear();
 }
 
-void Renderer::Render()
+void BgfxRenderer::Render()
 {
     // Advance to next frame. Process submitted rendering primitives.
     bgfx::frame();
+}
+
+void BgfxRenderer::SubmitDebugGeometry(
+    const void*               aData,
+    uint32_t                  aNumVerts,
+    uint64_t                  aState,
+    bgfx::ProgramHandle       aProgram,
+    const bgfx::VertexLayout& aLayout)
+{
+    if (aNumVerts == 0) {
+        return;
+    }
+
+    if (aNumVerts != bgfx::getAvailTransientVertexBuffer(aNumVerts, aLayout)) {
+        return;
+    }
+
+    bgfx::TransientVertexBuffer vb{};
+    bgfx::allocTransientVertexBuffer(&vb, aNumVerts, aLayout);
+    bx::memCopy(vb.data, aData, aNumVerts * aLayout.getStride());
+
+    bgfx::setState(aState);
+    bgfx::setVertexBuffer(0, &vb);
+    bgfx::submit(0, aProgram, bgfx::ViewMode::Default);
 }

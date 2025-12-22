@@ -6,6 +6,7 @@
 #include <chrono>
 #include <entt/core/fwd.hpp>
 #include <memory>
+#include <span>
 
 #include "components/game.hpp"
 #include "components/imgui.hpp"
@@ -34,7 +35,7 @@ void GameClient::Init()
     spdlog::set_default_logger(mLogger);
 
     auto& window    = mRegistry.ctx().get<WatoWindow>();
-    auto& renderer  = mRegistry.ctx().get<Renderer>();
+    auto& renderer  = mRegistry.ctx().get<BgfxRenderer&>();
     auto& netClient = mRegistry.ctx().get<ENetClient>();
 
     window.Init();
@@ -85,7 +86,7 @@ void GameClient::Init()
 int GameClient::Run(tf::Executor& aExecutor)
 {
     auto& window    = mRegistry.ctx().get<WatoWindow&>();
-    auto& renderer  = mRegistry.ctx().get<Renderer&>();
+    auto& renderer  = mRegistry.ctx().get<BgfxRenderer&>();
     auto& netClient = mRegistry.ctx().get<ENetClient&>();
     auto  prevTime  = clock_type::now();
 
@@ -231,7 +232,8 @@ void GameClient::prepareGridPreview()
     // Put texture in context variables because I am not sure entt:resource_cache can be updated
     // easily
     LoadResource(mRegistry.ctx().get<ModelCache>(), "grid", std::move(primitive));
-    bgfx::updateTexture2D(
+    auto& renderer = mRegistry.ctx().get<BgfxRenderer&>();
+    renderer.UpdateTexture2D(
         texture,
         0,
         0,
@@ -239,7 +241,7 @@ void GameClient::prepareGridPreview()
         0,
         graph.Width(),
         graph.Height(),
-        bgfx::copy(graph.GridLayout().data(), graph.Width() * graph.Height()));
+        std::span<const uint8_t>(graph.GridLayout().data(), graph.Width() * graph.Height()));
 }
 
 void GameClient::OnGameInstanceCreated()
@@ -279,7 +281,7 @@ void GameClient::consumeNetworkResponses()
                     Registry              tmp;
                     entt::snapshot_loader loader{tmp};
 
-                    WATO_DBG(
+                    WATO_TRACE(
                         mRegistry,
                         "loading state snapshot {} of size {}",
                         aResp.State.Tick,

@@ -79,7 +79,7 @@ class GameClient : public Application
         mRegistry.ctx().erase<ShaderCache>();
         mRegistry.ctx().erase<TextureCache>();
         mRegistry.ctx().erase<ENetClient>();
-        mRegistry.ctx().erase<Renderer>();
+        mRegistry.ctx().erase<BgfxRenderer>();
         mRegistry.ctx().erase<WatoWindow>();
         mRegistry.ctx().erase<ActionContextStack>();
         mRegistry.clear();
@@ -97,7 +97,7 @@ class GameClient : public Application
         mRegistry.ctx().emplace<Logger&>(mLogger);
         mRegistry.ctx().emplace<ActionContextStack>();
         mRegistry.ctx().emplace<WatoWindow>(aWidth, aHeight);
-        mRegistry.ctx().emplace<Renderer>(mOptions.Renderer());
+        mRegistry.ctx().emplace<BgfxRenderer>(mOptions.Renderer());
         mRegistry.ctx().emplace<ENetClient>(mLogger);
         mRegistry.ctx().emplace<TextureCache>();
         mRegistry.ctx().emplace<ShaderCache>();
