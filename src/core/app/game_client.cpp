@@ -120,8 +120,6 @@ int GameClient::Run(tf::Executor& aExecutor)
             }
 
             AdvanceSimulation(mRegistry, frameTime.count());
-
-            mUpdateTransformsSystem(mRegistry, instance.Accumulator / kTimeStep);
         }
         renderer.Render();
         input.PrevKeyboardState   = input.KeyboardState;
