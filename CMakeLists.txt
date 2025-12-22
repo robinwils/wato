@@ -450,8 +450,10 @@ target_sources(watolib
     src/registry/registry.hpp
     src/systems/ai.hpp
     src/systems/physics.hpp
+    src/systems/projectile.hpp
     src/systems/rigid_bodies_update.hpp
     src/systems/system.hpp
+    src/systems/tower_attack.hpp
     src/systems/tower_built.hpp
 
   PRIVATE
@@ -467,7 +469,9 @@ target_sources(watolib
     src/core/tower_building_handler.cpp
     src/systems/ai.cpp
     src/systems/physics.cpp
+    src/systems/projectile.cpp
     src/systems/rigid_bodies_update.cpp
+    src/systems/tower_attack.cpp
     src/systems/tower_built.cpp
 )
 

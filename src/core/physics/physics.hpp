@@ -106,7 +106,12 @@ class Physics
 {
    public:
     // Enumeration for categories
-    enum Category { Terrain = 0x0001, Entities = 0x0002, Count = (Entities << 1) - 1 };
+    enum Category {
+        Terrain     = 0x0001,
+        Entities    = 0x0002,
+        Projectiles = 0x0004,
+        Count       = (Projectiles << 1) - 1
+    };
 
     Physics(const Logger& aLogger) : mLogger(aLogger) {}
     ~Physics() { mLogger->trace("destroying physics"); }

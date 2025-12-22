@@ -21,8 +21,10 @@ void GameServer::Init()
     mSystemsFT.push_back(ServerActionSystem::MakeDelegate(mActionSystem));
     mSystemsFT.push_back(AiSystem::MakeDelegate(mAiSystem));
     mSystemsFT.push_back(TowerBuiltSystem::MakeDelegate(mTowerBuiltSystem));
+    mSystemsFT.push_back(TowerAttackSystem::MakeDelegate(mTowerAttackSystem));
     mSystemsFT.push_back(RigidBodiesUpdateSystem::MakeDelegate(mRBUpdatesSystem));
     mSystemsFT.push_back(PhysicsSystem::MakeDelegate(mPhysicsSystem));
+    mSystemsFT.push_back(TowerBuiltSystem::MakeDelegate(mTowerBuiltSystem));
     mSystemsFT.push_back(NetworkSyncSystem<ENetServer>::MakeDelegate(mSyncSystem));
 }
 
