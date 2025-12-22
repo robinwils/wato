@@ -126,6 +126,13 @@ void LoadModels(Registry& aRegistry)
             | aiProcess_GlobalScale);
     LoadResource(
         aRegistry.ctx().get<ModelCache>(),
+        "arrow",
+        aRegistry,
+        "assets/models/arrow.fbx",
+        aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_PreTransformVertices
+            | aiProcess_GlobalScale);
+    LoadResource(
+        aRegistry.ctx().get<ModelCache>(),
         "phoenix",
         aRegistry,
         "assets/models/phoenix.fbx",
