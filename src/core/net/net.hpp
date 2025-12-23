@@ -110,6 +110,33 @@ inline bool operator==(const RigidBodyUpdateResponse& aLHS, const RigidBodyUpdat
     return aLHS.Params == aRHS.Params && aLHS.Entity == aRHS.Entity;
 }
 
+struct ProjectileSpawnResponse {
+    entt::entity ServerEntity;
+    entt::entity SourceTower;
+    float        Damage;
+    float        Speed;
+    entt::entity Target;
+    glm::vec3    Direction;
+
+    bool Archive(auto& aArchive)
+    {
+        if (!ArchiveEntity(aArchive, ServerEntity)) return false;
+        if (!ArchiveEntity(aArchive, SourceTower)) return false;
+        if (!ArchiveValue(aArchive, Damage, 0.0f, 100.0f)) return false;
+        if (!ArchiveValue(aArchive, Speed, 0.0f, 10.0f)) return false;
+        if (!ArchiveEntity(aArchive, Target)) return false;
+        if (!ArchiveVector(aArchive, Direction, -1.0f, 1.0f)) return false;
+        return true;
+    }
+};
+
+inline bool operator==(const ProjectileSpawnResponse& aLHS, const ProjectileSpawnResponse& aRHS)
+{
+    return aLHS.ServerEntity == aRHS.ServerEntity && aLHS.SourceTower == aRHS.SourceTower
+           && aLHS.Damage == aRHS.Damage && aLHS.Speed == aRHS.Speed
+           && aLHS.Target == aRHS.Target && aLHS.Direction == aRHS.Direction;
+}
+
 enum class PacketType : std::uint16_t {
     ClientSync,
     ServerSync,
@@ -126,7 +153,8 @@ using NetworkResponsePayload = std::variant<
     ConnectedResponse,
     SyncPayload,
     AcknowledgementResponse,
-    RigidBodyUpdateResponse>;
+    RigidBodyUpdateResponse,
+    ProjectileSpawnResponse>;
 
 template <typename _Payload>
 struct NetworkEvent {

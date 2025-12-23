@@ -167,6 +167,23 @@ void TowerAttackSystem::operator()(Registry& aRegistry, float aDeltaTime)
                         },
                 });
 
+            if (auto* server = aRegistry.ctx().find<ENetServer>()) {
+                server->EnqueueResponse(new NetworkResponse{
+                    .Type     = PacketType::Ack,
+                    .PlayerID = 0,
+                    .Tick     = aRegistry.ctx().get<GameInstance&>().Tick,
+                    .Payload =
+                        ProjectileSpawnResponse{
+                            .ServerEntity = projectile,
+                            .SourceTower  = towerEntity,
+                            .Damage       = 10.0f,
+                            .Speed        = 5.0f,
+                            .Target       = attack.CurrentTarget,
+                            .Direction    = direction,
+                        },
+                });
+            }
+
             WATO_DBG(
                 aRegistry,
                 "tower {} fired projectile {} at target {}",
