@@ -102,6 +102,9 @@ struct PhysicsParams {
 #endif
 };
 
+struct RigidBodyUserData {
+};
+
 class Physics
 {
    public:
