@@ -211,7 +211,7 @@ ModelLoader::mesh_type ModelLoader::processMesh(
             shader  = aRegistry.ctx().get<ShaderCache>()["blinnphong_skinned"_hs];
             skinned = true;
         } else {
-            shader = aRegistry.ctx().get<ShaderCache>()["blinnphong"_hs];
+            shader = aRegistry.ctx().get<ShaderCache>()["blinnphong_instanced"_hs];
         }
 
         if (!bgfx::isValid(shader->Program())) {

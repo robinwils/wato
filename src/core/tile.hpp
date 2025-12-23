@@ -11,8 +11,6 @@ struct Tile {
         COUNT,
     };
 
-    std::shared_ptr<PlanePrimitive> Primitive;
-    std::shared_ptr<Material>       Material;
-    Type                            Type;
-    bool                            Constructable;
+    Type Type;
+    bool Constructable;
 };

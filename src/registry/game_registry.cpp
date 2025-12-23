@@ -56,6 +56,21 @@ void LoadShaders(Registry& aRegistry)
         });
     LoadResource(
         aRegistry.ctx().get<ShaderCache>(),
+        "blinnphong_instanced",
+        "vs_blinnphong_instanced",
+        "fs_blinnphong",
+        ShaderLoader::uniform_desc_map{
+            // clang-format off
+            {"s_diffuseTex",  {bgfx::UniformType::Sampler}},
+            {"s_specularTex", {bgfx::UniformType::Sampler}},
+            {"u_diffuse",     {bgfx::UniformType::Vec4}   },
+            {"u_specular",    {bgfx::UniformType::Vec4}   },
+            {"u_lightDir",    {bgfx::UniformType::Vec4}   },
+            {"u_lightCol",    {bgfx::UniformType::Vec4}   },
+            // clang-format on
+        });
+    LoadResource(
+        aRegistry.ctx().get<ShaderCache>(),
         "simple",
         "vs_simple",
         "fs_simple",
@@ -84,7 +99,7 @@ void LoadTextures(Registry& aRegistry)
         "grass/specular",
         "assets/textures/TreeTop_SPEC.png");
 
-    auto shader = aRegistry.ctx().get<ShaderCache>()["blinnphong"_hs];
+    auto shader = aRegistry.ctx().get<ShaderCache>()["blinnphong_instanced"_hs];
 
     LoadResource(
         aRegistry.ctx().get<ModelCache>(),
