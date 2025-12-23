@@ -4,7 +4,12 @@
 
 #include <cstring>
 #include <entt/core/hashed_string.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtx/quaternion.hpp>
 
+#include "components/creep.hpp"
+#include "components/model_rotation_offset.hpp"
+#include "components/projectile.hpp"
 #include "components/rigid_body.hpp"
 #include "components/tile.hpp"
 #include "components/transform3d.hpp"
@@ -33,7 +38,31 @@ void UpdateTransformsSytem::operator()(Registry& aRegistry, const float aFactor)
 
         aRegistry.patch<Transform3D>(entity, [&](Transform3D& aT) {
             aT.FromRP3D(interpolatedTransform);
+
+            // Orient entities with movement direction (creeps, projectiles, etc.)
+            glm::vec3 direction = rb.Params.Direction;
+            if (glm::length(direction) > 0.001f) {
+                // Calculate rotation to align entity with movement direction
+                glm::vec3 forward = glm::normalize(direction);
+                glm::vec3 up      = glm::vec3(0.0f, 1.0f, 0.0f);
+
+                // Avoid gimbal lock when direction is parallel to up vector
+                if (glm::abs(glm::dot(forward, up)) > 0.99f) {
+                    up = glm::vec3(1.0f, 0.0f, 0.0f);
+                }
+
+                glm::vec3 right = glm::normalize(glm::cross(up, forward));
+                glm::vec3 newUp = glm::cross(forward, right);
+
+                glm::quat baseOrientation = glm::quatLookAt(forward, newUp);
+
+                // Apply model-specific rotation offset if present
+                if (auto* offset = aRegistry.try_get<ModelRotationOffset>(entity)) {
+                    aT.Orientation = baseOrientation * offset->Offset;
+                } else {
+                    aT.Orientation = baseOrientation;
+                }
+            }
         });
-        // t.FromRP3D(interpolatedTransform);
     }
 }
