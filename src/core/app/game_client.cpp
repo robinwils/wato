@@ -10,6 +10,7 @@
 
 #include "components/game.hpp"
 #include "components/imgui.hpp"
+#include "components/model_rotation_offset.hpp"
 #include "components/net.hpp"
 #include "components/projectile.hpp"
 #include "core/net/enet_client.hpp"
@@ -345,6 +346,10 @@ void GameClient::consumeNetworkResponses()
                         position,
                         glm::identity<glm::quat>(),
                         glm::vec3(0.05f));
+
+                    mRegistry.emplace<ModelRotationOffset>(
+                        projectile,
+                        glm::angleAxis(glm::radians(180.0f), glm::vec3(0, 1, 0)));
 
                     // Map target if it exists
                     entt::entity clientTarget = entt::null;

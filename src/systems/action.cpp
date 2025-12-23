@@ -8,6 +8,7 @@
 #include "components/game.hpp"
 #include "components/health.hpp"
 #include "components/imgui.hpp"
+#include "components/model_rotation_offset.hpp"
 #include "components/net.hpp"
 #include "components/path.hpp"
 #include "components/placement_mode.hpp"
@@ -74,6 +75,11 @@ void DefaultContextHandler::operator()(Registry& aRegistry, SendCreepPayload& aP
             spawnTransform.Position,
             glm::identity<glm::quat>(),
             glm::vec3(0.5f));
+
+        // Phoenix model points 90° off, store rotation offset
+        aRegistry.emplace<ModelRotationOffset>(
+            creep,
+            glm::angleAxis(glm::radians(90.0f), glm::vec3(0, 1, 0)));
 
         aRegistry.emplace<Health>(creep, 100.0f);
         aRegistry.emplace<Creep>(creep, aPayload.Type);
