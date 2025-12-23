@@ -11,6 +11,7 @@
 #include "components/game.hpp"
 #include "components/imgui.hpp"
 #include "components/net.hpp"
+#include "components/projectile.hpp"
 #include "core/net/enet_client.hpp"
 #include "core/net/net.hpp"
 #include "core/snapshot.hpp"
@@ -310,9 +311,90 @@ void GameClient::consumeNetworkResponses()
                             [&aUpdate](RigidBody& aBody) { aBody.Params = aUpdate.Params; });
                         if (mRegistry.get<RigidBody>(syncMap[aUpdate.Entity]).Params.Velocity
                             == 0.0f) {
-                            WATO_INFO(mRegistry, "stopping rigid body for {}", aUpdate.Entity);
                         }
                     }
+                },
+                [&](const ProjectileSpawnResponse& aSpawn) {
+                    auto& syncMap = mRegistry.ctx().get<EntitySyncMap>();
+
+                    // Map server tower entity to client entity
+                    auto sourceTowerIt = syncMap.find(aSpawn.SourceTower);
+                    if (sourceTowerIt == syncMap.end()) {
+                        WATO_WARN(
+                            mRegistry,
+                            "source tower {} not found in sync map",
+                            aSpawn.SourceTower);
+                        return;
+                    }
+
+                    entt::entity clientTower    = sourceTowerIt->second;
+                    auto*        towerTransform = mRegistry.try_get<Transform3D>(clientTower);
+                    if (!towerTransform) {
+                        WATO_WARN(mRegistry, "source tower {} has no transform", clientTower);
+                        return;
+                    }
+
+                    // Create projectile
+                    auto projectile = mRegistry.create();
+
+                    // Calculate initial position from tower
+                    glm::vec3 position = towerTransform->Position + glm::vec3(0.0f, 0.5f, 0.0f);
+
+                    mRegistry.emplace<Transform3D>(
+                        projectile,
+                        position,
+                        glm::identity<glm::quat>(),
+                        glm::vec3(0.05f));
+
+                    // Map target if it exists
+                    entt::entity clientTarget = entt::null;
+                    auto         targetIt     = syncMap.find(aSpawn.Target);
+                    if (targetIt != syncMap.end()) {
+                        clientTarget = targetIt->second;
+                    }
+
+                    mRegistry
+                        .emplace<Projectile>(projectile, aSpawn.Damage, aSpawn.Speed, clientTarget);
+
+                    mRegistry.emplace<RigidBody>(
+                        projectile,
+                        RigidBody{
+                            .Params =
+                                RigidBodyParams{
+                                    .Type           = rp3d::BodyType::KINEMATIC,
+                                    .Velocity       = aSpawn.Speed,
+                                    .Direction      = aSpawn.Direction,
+                                    .GravityEnabled = false,
+                                },
+                        });
+
+                    mRegistry.emplace<Collider>(
+                        projectile,
+                        Collider{
+                            .Params =
+                                ColliderParams{
+                                    .CollisionCategoryBits = Category::Projectiles,
+                                    .CollideWithMaskBits   = Category::Entities,
+                                    .IsTrigger             = true,
+                                    .Offset                = Transform3D{},
+                                    .ShapeParams =
+                                        CapsuleShapeParams{
+                                            .Radius = 0.05f,
+                                            .Height = 0.1f,
+                                        },
+                                },
+                        });
+
+                    mRegistry.emplace<SceneObject>(projectile, "arrow"_hs);
+
+                    // Add to sync map for future RigidBodyUpdateResponse
+                    syncMap.insert_or_assign(aSpawn.ServerEntity, projectile);
+
+                    WATO_INFO(
+                        mRegistry,
+                        "spawned projectile {} from server entity {}",
+                        projectile,
+                        aSpawn.ServerEntity);
                 },
                 [&](const std::monostate) {},
             },
