@@ -12,6 +12,17 @@ struct Collider {
     ColliderParams  Params;
     rp3d::Collider* Handle{nullptr};
 
+    static void on_destroy(entt::registry& aRegistry, const entt::entity aEntity)
+    {
+        auto& collider = aRegistry.get<Collider>(aEntity);
+
+        // Remove from collider map
+        if (collider.Handle) {
+            aRegistry.ctx().get<ColliderEntityMap>().erase(collider.Handle);
+        }
+        collider.Handle = nullptr;
+    }
+
     bool Archive(auto& aArchive)
     {
         uint32_t maxCategoryValue = SafeI32(Category::Count);
@@ -31,18 +42,13 @@ struct RigidBody {
 
     static void on_destroy(entt::registry& aRegistry, const entt::entity aEntity)
     {
-        const auto& body     = aRegistry.get<RigidBody>(aEntity);
-        const auto& collider = aRegistry.get<Collider>(aEntity);
-
-        // Remove from collider map
-        if (collider.Handle) {
-            aRegistry.ctx().get<ColliderEntityMap>().erase(collider.Handle);
-        }
+        auto& body = aRegistry.get<RigidBody>(aEntity);
 
         // Destroy physics body
         if (body.Body) {
             aRegistry.ctx().get<Physics>().World()->destroyRigidBody(body.Body);
         }
+        body.Body = nullptr;
     }
 
     bool Archive(auto& aArchive) { return Params.Archive(aArchive); }
