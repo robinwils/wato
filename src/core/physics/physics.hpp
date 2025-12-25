@@ -157,6 +157,27 @@ inline rp3d::Vector3 ToRP3D(const glm::vec3 aVector)
     return rp3d::Vector3(aVector.x, aVector.y, aVector.z);
 }
 
+/// Matches a collision pair against expected categories.
+/// Returns colliders ordered as {aFirstCategory, aSecondCategory}.
+/// Returns {nullptr, nullptr} if categories don't match.
+inline std::pair<rp3d::Collider*, rp3d::Collider*> MatchColliderPair(
+    rp3d::Collider* aCollider1,
+    rp3d::Collider* aCollider2,
+    unsigned short  aFirstCategory,
+    unsigned short  aSecondCategory)
+{
+    auto cat1 = aCollider1->getCollisionCategoryBits();
+    auto cat2 = aCollider2->getCollisionCategoryBits();
+
+    if ((cat1 & aFirstCategory) && (cat2 & aSecondCategory)) {
+        return {aCollider1, aCollider2};
+    }
+    if ((cat2 & aFirstCategory) && (cat1 & aSecondCategory)) {
+        return {aCollider2, aCollider1};
+    }
+    return {nullptr, nullptr};
+}
+
 struct WorldRaycastCallback : public rp3d::RaycastCallback {
     virtual rp3d::decimal notifyRaycastHit(const rp3d::RaycastInfo& aInfo) override
     {
