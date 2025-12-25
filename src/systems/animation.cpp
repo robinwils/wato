@@ -10,7 +10,7 @@
 #include "registry/registry.hpp"
 #include "resource/cache.hpp"
 
-void AnimationSystem::operator()(Registry& aRegistry, const float aDeltaTime)
+void AnimationSystem::Execute(Registry& aRegistry, const float aDelta)
 {
     for (auto&& [entity, obj, animator] : aRegistry.view<SceneObject, Animator>().each()) {
         if (auto model = aRegistry.ctx().get<ModelCache>()[obj.ModelHash]; model) {
@@ -26,7 +26,7 @@ void AnimationSystem::operator()(Registry& aRegistry, const float aDeltaTime)
                 continue;
             }
 
-            animator.Time += static_cast<double>(aDeltaTime);
+            animator.Time += static_cast<double>(aDelta);
 
             double animatonTimeTicks = animator.Time * animator.Animation->TicksPerSecond();
             double animationTime     = std::fmod(animatonTimeTicks, animator.Animation->Duration());

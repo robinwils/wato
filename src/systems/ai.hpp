@@ -1,25 +1,18 @@
 #pragma once
 
-#include <entt/entity/organizer.hpp>
-
-#include "components/light_source.hpp"
-#include "components/placement_mode.hpp"
-#include "components/scene_object.hpp"
-#include "components/transform3d.hpp"
-#include "core/physics/physics.hpp"
-#include "registry/registry.hpp"
 #include "systems/system.hpp"
 
-class AiSystem : public System<AiSystem>
+/**
+ * @brief AI pathfinding system (fixed timestep)
+ *
+ * Updates creep pathfinding and movement direction based on graph paths.
+ * Runs at deterministic 60 FPS.
+ */
+class AiSystem : public FixedSystem
 {
    public:
-    using view_type = entt::view<entt::get_t<const SceneObject, const Transform3D>>;
+    using FixedSystem::FixedSystem;
 
-    void Register(entt::organizer& aOrganizer)
-    {
-        aOrganizer.emplace<&AiSystem::operator()>(*this, StaticName());
-    }
-    void operator()(Registry& aRegistry);
-
-    static constexpr const char* StaticName() { return "AiSystem"; }
+   protected:
+    void Execute(Registry& aRegistry, std::uint32_t aTick) override;
 };

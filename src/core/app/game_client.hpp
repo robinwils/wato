@@ -3,8 +3,6 @@
 #include <bgfx/bgfx.h>
 
 #include <entt/entity/fwd.hpp>
-#include <entt/entity/organizer.hpp>
-#include <taskflow/taskflow.hpp>
 
 #include "core/app/app.hpp"
 #include "core/net/enet_client.hpp"
@@ -13,13 +11,6 @@
 #include "registry/registry.hpp"
 #include "renderer/renderer.hpp"
 #include "resource/cache.hpp"
-#include "systems/action.hpp"
-#include "systems/animation.hpp"
-#include "systems/input.hpp"
-#include "systems/render.hpp"
-#include "systems/rigid_bodies_update.hpp"
-#include "systems/sync.hpp"
-#include "systems/tower_built.hpp"
 
 class GameClient : public Application
 {
@@ -89,7 +80,7 @@ class GameClient : public Application
     int  Run(tf::Executor& aExecutor) override;
 
    protected:
-    virtual void OnGameInstanceCreated() override;
+    virtual void OnGameInstanceCreated(Registry& aRegistry) override;
 
    private:
     inline void initContext(int aWidth, int aHeight)
@@ -109,24 +100,7 @@ class GameClient : public Application
     void spawnPlayerAndCamera();
     void prepareGridPreview();
 
-    Registry        mRegistry;
-    entt::organizer mFrameTimeOrganizer;
-    tf::Taskflow    mTaskflow;
-
-    // systems
-    InputSystem                   mInputSystem;
-    RealTimeActionSystem          mRTActionSystem;
-    DeterministicActionSystem     mFTActionSystem;
-    AnimationSystem               mAnimationSystem;
-    RenderSystem                  mRenderSystem;
-    RenderImguiSystem             mRenderImguiSystem;
-    CameraSystem                  mCameraSystem;
-    NetworkSyncSystem<ENetClient> mNetworkSyncSystem;
-    TowerBuiltSystem              mTowerBuiltSystem;
-    RigidBodiesUpdateSystem       mRBUpdatesSystem;
-#if WATO_DEBUG
-    PhysicsDebugSystem mPhysicsDbgSystem;
-#endif
+    Registry     mRegistry;
     EventHandler mPhysicsEventHandler;
 
     std::optional<clock_type::time_point> mDiscTimerStart;

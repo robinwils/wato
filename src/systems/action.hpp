@@ -43,54 +43,72 @@ class ServerContextHandler : public DefaultContextHandler
     void operator()(Registry&, const MovePayload&, const float) override {}
 };
 
-template <typename Derived>
-class ActionSystem : public System<Derived>
+class ActionSystem
 {
-   private:
-    void handleAction(Registry& aRegistry, Action& aAction, const float aDeltaTime);
-    void processActions(Registry& aRegistry, ActionTag aFilterTag, const float aDeltaTime);
-    void handleContext(
+   protected:
+    void HandleAction(Registry& aRegistry, Action& aAction, const float aDeltaTime);
+    void ProcessActions(Registry& aRegistry, ActionTag aFilterTag, const float aDeltaTime);
+    void HandleContext(
         Registry&             aRegistry,
         Action&               aAction,
         ActionContextHandler& aCtxHandler,
         const float           aDeltaTime);
 
-    void exitPlacement(Registry& aRegistry);
-
-    friend Derived;
+    void ExitPlacement(Registry& aRegistry);
 };
 
-class RealTimeActionSystem : public ActionSystem<RealTimeActionSystem>
+/**
+ * @brief Real-time action system (frame time)
+ *
+ * Processes frame-time actions (camera movement, UI interactions).
+ * Runs at variable frame rate.
+ */
+class RealTimeActionSystem : public FrameSystem, public ActionSystem
 {
    public:
-    // Small operator kept inline
-    void operator()(Registry& aRegistry, const float aDeltaTime)
-    {
-        processActions(aRegistry, ActionTag::FrameTime, aDeltaTime);
-    }
+    using FrameSystem::FrameSystem;
 
-    static constexpr const char* StaticName() { return "RealTimeActionSystem"; }
+   protected:
+    void Execute(Registry& aRegistry, float aDelta) override
+    {
+        ProcessActions(aRegistry, ActionTag::FrameTime, aDelta);
+    }
 };
 
-class DeterministicActionSystem : public ActionSystem<DeterministicActionSystem>
+/**
+ * @brief Deterministic action system (fixed timestep)
+ *
+ * Processes fixed-time actions (gameplay inputs, builds, spawns).
+ * Runs at deterministic 60 FPS.
+ */
+class DeterministicActionSystem : public FixedSystem, public ActionSystem
 {
    public:
-    // Small operator kept inline
-    void operator()(Registry& aRegistry, const float aDeltaTime)
-    {
-        processActions(aRegistry, ActionTag::FixedTime, aDeltaTime);
-    }
+    using FixedSystem::FixedSystem;
 
-    static constexpr const char* StaticName() { return "DeterministicActionSystem"; }
+   protected:
+    void Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t aTick) override
+    {
+        constexpr float kTimeStep = 1.0f / 60.0f;
+        ProcessActions(aRegistry, ActionTag::FixedTime, kTimeStep);
+    }
 };
 
-class ServerActionSystem : public ActionSystem<ServerActionSystem>
+/**
+ * @brief Server action system (fixed timestep)
+ *
+ * Processes server-side actions with authority.
+ * Runs at deterministic 60 FPS.
+ */
+class ServerActionSystem : public FixedSystem, public ActionSystem
 {
    public:
-    void operator()(Registry& aRegistry, const float aDeltaTime)
-    {
-        processActions(aRegistry, ActionTag::FixedTime, aDeltaTime);
-    }
+    using FixedSystem::FixedSystem;
 
-    static constexpr const char* StaticName() { return "ServerActionSystem"; }
+   protected:
+    void Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t aTick) override
+    {
+        constexpr float kTimeStep = 1.0f / 60.0f;
+        ProcessActions(aRegistry, ActionTag::FixedTime, kTimeStep);
+    }
 };

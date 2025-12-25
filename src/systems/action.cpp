@@ -353,11 +353,7 @@ void ServerContextHandler::operator()(Registry& aRegistry, SendCreepPayload& aPa
     }
 }
 
-template <typename Derived>
-void ActionSystem<Derived>::handleAction(
-    Registry&   aRegistry,
-    Action&     aAction,
-    const float aDeltaTime)
+void ActionSystem::HandleAction(Registry& aRegistry, Action& aAction, const float aDeltaTime)
 {
     WATO_TRACE(aRegistry, "handling {}", aAction);
     auto&       contextStack = aRegistry.ctx().get<ActionContextStack&>();
@@ -366,27 +362,23 @@ void ActionSystem<Derived>::handleAction(
     switch (currentCtx.State) {
         case ActionContext::State::Default: {
             DefaultContextHandler handler;
-            handleContext(aRegistry, aAction, handler, aDeltaTime);
+            HandleContext(aRegistry, aAction, handler, aDeltaTime);
             break;
         }
         case ActionContext::State::Placement: {
             PlacementModeContextHandler handler;
-            handleContext(aRegistry, aAction, handler, aDeltaTime);
+            HandleContext(aRegistry, aAction, handler, aDeltaTime);
             break;
         }
         case ActionContext::State::Server: {
             ServerContextHandler handler;
-            handleContext(aRegistry, aAction, handler, aDeltaTime);
+            HandleContext(aRegistry, aAction, handler, aDeltaTime);
             break;
         }
     }
 }
 
-template <typename Derived>
-void ActionSystem<Derived>::processActions(
-    Registry&   aRegistry,
-    ActionTag   aFilterTag,
-    const float aDeltaTime)
+void ActionSystem::ProcessActions(Registry& aRegistry, ActionTag aFilterTag, const float aDeltaTime)
 {
     auto&        buf           = aRegistry.ctx().get<GameStateBuffer&>();
     ActionsType& latestActions = buf.Latest().Actions;
@@ -399,12 +391,11 @@ void ActionSystem<Derived>::processActions(
         if (action.Tag != aFilterTag) {
             continue;
         }
-        handleAction(aRegistry, action, aDeltaTime);
+        HandleAction(aRegistry, action, aDeltaTime);
     }
 }
 
-template <typename Derived>
-void ActionSystem<Derived>::handleContext(
+void ActionSystem::HandleContext(
     Registry&             aRegistry,
     Action&               aAction,
     ActionContextHandler& aCtxHandler,
@@ -419,8 +410,3 @@ void ActionSystem<Derived>::handleContext(
         },
         aAction.Payload);
 }
-
-// Explicit template instantiations
-template class ActionSystem<RealTimeActionSystem>;
-template class ActionSystem<DeterministicActionSystem>;
-template class ActionSystem<ServerActionSystem>;

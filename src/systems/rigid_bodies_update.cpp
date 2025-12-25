@@ -9,7 +9,7 @@
 
 using namespace entt::literals;
 
-void RigidBodiesUpdateSystem::operator()(Registry& aRegistry)
+void RigidBodiesUpdateSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t aTick)
 {
     auto& physics          = aRegistry.ctx().get<Physics>();
     auto& colliderToEntity = aRegistry.ctx().get<ColliderEntityMap>();

@@ -1,10 +1,18 @@
 #pragma once
 
-#include "registry/registry.hpp"
 #include "systems/system.hpp"
 
-class ProjectileSystem : public System<ProjectileSystem>
+/**
+ * @brief Projectile tracking system (fixed timestep)
+ *
+ * Updates projectile direction to track targets and destroys projectiles when target is invalid.
+ * Runs at deterministic 60 FPS.
+ */
+class ProjectileSystem : public FixedSystem
 {
    public:
-    void operator()(Registry& aRegistry, float aDeltaTime);
+    using FixedSystem::FixedSystem;
+
+   protected:
+    void Execute(Registry& aRegistry, std::uint32_t aTick) override;
 };

@@ -2,11 +2,20 @@
 
 #include "systems/system.hpp"
 
+/**
+ * @brief Network synchronization system (fixed timestep)
+ *
+ * Syncs game state between client and server.
+ * Runs at deterministic 60 FPS.
+ *
+ * Template parameter _ENetT is either ENetClient or ENetServer.
+ */
 template <typename _ENetT>
-class NetworkSyncSystem : public System<NetworkSyncSystem<_ENetT>>
+class NetworkSyncSystem : public FixedSystem
 {
    public:
-    void operator()(Registry& aRegistry);
+    using FixedSystem::FixedSystem;
 
-    static constexpr const char* StaticName() { return "NetworkSyncSystem"; }
+   protected:
+    void Execute(Registry& aRegistry, std::uint32_t aTick) override;
 };
