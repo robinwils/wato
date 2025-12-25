@@ -133,7 +133,7 @@ void Application::SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeigh
             .Params =
                 ColliderParams{
                     .CollisionCategoryBits = Category::Terrain,
-                    .CollideWithMaskBits   = Category::Entities,
+                    .CollideWithMaskBits   = Category::Entities | Category::Projectiles,
                     .IsTrigger             = false,
                     .Offset =
                         Transform3D{
