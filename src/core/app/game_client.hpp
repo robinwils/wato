@@ -6,7 +6,7 @@
 
 #include "core/app/app.hpp"
 #include "core/net/enet_client.hpp"
-#include "core/physics/event_handler.hpp"
+#include "core/physics/physics_event_listener.hpp"
 #include "input/action.hpp"
 #include "registry/registry.hpp"
 #include "renderer/renderer.hpp"
@@ -15,14 +15,13 @@
 class GameClient : public Application
 {
    public:
-    explicit GameClient(int aWidth, int aHeight, char** aArgv)
-        : Application("client", aArgv), mPhysicsEventHandler(&mRegistry)
+    explicit GameClient(int aWidth, int aHeight, char** aArgv) : Application("client", aArgv)
     {
         initContext(aWidth, aHeight);
     }
 
     explicit GameClient(int aWidth, int aHeight, const Options& aOptions)
-        : Application("client", aOptions), mPhysicsEventHandler(&mRegistry)
+        : Application("client", aOptions)
     {
         initContext(aWidth, aHeight);
     }
@@ -100,8 +99,7 @@ class GameClient : public Application
     void spawnPlayerAndCamera();
     void prepareGridPreview();
 
-    Registry     mRegistry;
-    EventHandler mPhysicsEventHandler;
+    Registry mRegistry;
 
     std::optional<clock_type::time_point> mDiscTimerStart;
 };
