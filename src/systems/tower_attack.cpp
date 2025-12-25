@@ -1,5 +1,6 @@
 #include "systems/tower_attack.hpp"
 
+#include <entt/process/process.hpp>
 #include <glm/geometric.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/norm.hpp>
@@ -43,13 +44,14 @@ class ColliderCollectorCallback : public rp3d::OverlapCallback
     std::vector<rp3d::Collider*> mColliders;
 };
 
-void TowerAttackSystem::operator()(Registry& aRegistry, float aDeltaTime)
+void TowerAttackSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t aTick)
 {
+    constexpr float kTimeStep = 1.0f / 60.0f;
     auto& phy = aRegistry.ctx().get<Physics>();
 
     for (auto&& [towerEntity, tower, towerTransform, attack] :
          aRegistry.view<Tower, Transform3D, TowerAttack>().each()) {
-        attack.TimeSinceLastShot += aDeltaTime;
+        attack.TimeSinceLastShot += kTimeStep;
 
         bool needNewTarget = true;
         if (aRegistry.valid(attack.CurrentTarget)) {

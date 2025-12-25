@@ -1,23 +1,18 @@
 #pragma once
 
-#include <entt/entity/organizer.hpp>
-
-#include "components/scene_object.hpp"
-#include "components/transform3d.hpp"
-#include "core/physics/physics.hpp"
-#include "registry/registry.hpp"
 #include "systems/system.hpp"
 
-class RigidBodiesUpdateSystem : public System<RigidBodiesUpdateSystem>
+/**
+ * @brief Rigid body synchronization system (fixed timestep)
+ *
+ * Syncs ECS components to ReactPhysics3D bodies and colliders.
+ * Runs at deterministic 60 FPS.
+ */
+class RigidBodiesUpdateSystem : public FixedSystem
 {
    public:
-    using view_type = entt::view<entt::get_t<const SceneObject, const Transform3D>>;
+    using FixedSystem::FixedSystem;
 
-    void Register(entt::organizer& aOrganizer)
-    {
-        aOrganizer.emplace<&RigidBodiesUpdateSystem::operator()>(*this, StaticName());
-    }
-    void operator()(Registry& aRegistry);
-
-    static constexpr const char* StaticName() { return "RigidBodiesUpdateSystem"; }
+   protected:
+    void Execute(Registry& aRegistry, std::uint32_t aTick) override;
 };

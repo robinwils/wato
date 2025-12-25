@@ -16,7 +16,7 @@
 #include "core/graph.hpp"
 #include "core/sys/log.hpp"
 
-void AiSystem::operator()(Registry& aRegistry)
+void AiSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t aTick)
 {
     const auto& graph = aRegistry.ctx().get<Graph>();
 

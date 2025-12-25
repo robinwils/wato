@@ -2,18 +2,49 @@
 
 #include "systems/system.hpp"
 
-class PhysicsSystem : public System<PhysicsSystem>
+/**
+ * @brief Physics simulation system (fixed timestep)
+ *
+ * Updates ReactPhysics3D world at deterministic 60 FPS.
+ * Must run before UpdateTransformsSytem.
+ */
+class PhysicsSystem : public FixedSystem
 {
    public:
-    void operator()(Registry& aRegistry, const float aDeltaTime);
+    using FixedSystem::FixedSystem;
 
-    static constexpr const char* StaticName() { return "PhysicsSystem"; }
+   protected:
+    void Execute(Registry& aRegistry, std::uint32_t aTick) override;
 };
 
-class UpdateTransformsSytem : public System<UpdateTransformsSytem>
+/**
+ * @brief Transform interpolation system (frame time)
+ *
+ * Interpolates transforms between physics ticks for smooth rendering.
+ * Receives interpolation factor (0.0 to 1.0).
+ * Must run after PhysicsSystem.
+ */
+class UpdateTransformsSytem : public FrameSystem
 {
    public:
-    void operator()(Registry& aRegistry, const float aFactor);
+    using FrameSystem::FrameSystem;
 
-    static constexpr const char* StaticName() { return "UpdateTransformsSystem"; }
+   protected:
+    void Execute(Registry& aRegistry, float aFactor) override;
+};
+
+/**
+ * @brief Simulation simulation system (fixed timestep)
+ *
+ * Updates ReactSimulation3D world at deterministic 60 FPS.
+ * Must run before UpdateTransformsSytem.
+ */
+class SimulationSystem : public FrameSystem
+{
+   public:
+    using FrameSystem::FrameSystem;
+
+   protected:
+    void Execute(Registry& aRegistry, float aTick) override;
+    void UpdateTransforms(Registry& aRegistry, float aFactor);
 };

@@ -11,21 +11,23 @@
 #include "core/types.hpp"
 #include "input/action.hpp"
 #include "registry/registry.hpp"
+#include "systems/action.hpp"
+#include "systems/ai.hpp"
+#include "systems/physics.hpp"
+#include "systems/projectile.hpp"
+#include "systems/rigid_bodies_update.hpp"
+#include "systems/sync.hpp"
 #include "systems/system.hpp"
+#include "systems/tower_attack.hpp"
+#include "systems/tower_built.hpp"
 
 void GameServer::Init()
 {
     Application::Init();
 
     mServer.Init();
-    mSystemsFT.push_back(ServerActionSystem::MakeDelegate(mActionSystem));
-    mSystemsFT.push_back(AiSystem::MakeDelegate(mAiSystem));
-    mSystemsFT.push_back(TowerBuiltSystem::MakeDelegate(mTowerBuiltSystem));
-    mSystemsFT.push_back(TowerAttackSystem::MakeDelegate(mTowerAttackSystem));
-    mSystemsFT.push_back(RigidBodiesUpdateSystem::MakeDelegate(mRBUpdatesSystem));
-    mSystemsFT.push_back(PhysicsSystem::MakeDelegate(mPhysicsSystem));
-    mSystemsFT.push_back(TowerBuiltSystem::MakeDelegate(mTowerBuiltSystem));
-    mSystemsFT.push_back(NetworkSyncSystem<ENetServer>::MakeDelegate(mSyncSystem));
+
+    mFrameExecutor.Register<SimulationSystem>();
 }
 
 GameServer::~GameServer()
@@ -36,6 +38,20 @@ GameServer::~GameServer()
         auto& p = i.second.ctx().get<Physics>();
         mLogger->trace("got world {}", fmt::ptr(p.World()));
     }
+}
+
+void GameServer::OnGameInstanceCreated(Registry& aRegistry)
+{
+    auto& fixedExec = aRegistry.ctx().get<FixedSystemExecutor>();
+
+    fixedExec.Register<NetworkSyncSystem<ENetServer>>();
+    fixedExec.Register<PhysicsSystem>();
+    fixedExec.Register<RigidBodiesUpdateSystem>();
+    fixedExec.Register<ProjectileSystem>();
+    fixedExec.Register<TowerAttackSystem>();
+    fixedExec.Register<TowerBuiltSystem>();
+    fixedExec.Register<AiSystem>();
+    fixedExec.Register<ServerActionSystem>();
 }
 
 void GameServer::ConsumeNetworkRequests()
@@ -99,7 +115,7 @@ int GameServer::Run(tf::Executor& aExecutor)
         ConsumeNetworkRequests();
         // Update each game instance independently
         for (auto& [gameId, registry] : mGameInstances) {
-            AdvanceSimulation(registry, dt.count());
+            mFrameExecutor.Update(dt.count(), &registry);
         }
     }
 

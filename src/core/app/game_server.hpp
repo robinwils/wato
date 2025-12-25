@@ -9,12 +9,6 @@
 #include "core/app/app.hpp"
 #include "core/net/enet_server.hpp"
 #include "core/types.hpp"
-#include "systems/action.hpp"
-#include "systems/projectile.hpp"
-#include "systems/rigid_bodies_update.hpp"
-#include "systems/sync.hpp"
-#include "systems/tower_attack.hpp"
-#include "systems/tower_built.hpp"
 
 class GameServer : public Application
 {
@@ -48,7 +42,7 @@ class GameServer : public Application
     }
 
    protected:
-    virtual void OnGameInstanceCreated() override {}
+    virtual void OnGameInstanceCreated(Registry& aRegistry) override;
 
    private:
     GameInstanceID createGameInstance(const NewGameRequest& aNewGame);
@@ -56,13 +50,4 @@ class GameServer : public Application
 
     ENetServer                                   mServer;
     std::unordered_map<GameInstanceID, Registry> mGameInstances;
-
-    // systems
-    ServerActionSystem            mActionSystem;
-    NetworkSyncSystem<ENetServer> mSyncSystem;
-    AiSystem                      mAiSystem;
-    RigidBodiesUpdateSystem       mRBUpdatesSystem;
-    TowerBuiltSystem              mTowerBuiltSystem;
-    TowerAttackSystem             mTowerAttackSystem;
-    ProjectileSystem              mProjectileSystem;
 };

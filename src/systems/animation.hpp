@@ -5,12 +5,19 @@
 #include "renderer/skeleton.hpp"
 #include "systems/system.hpp"
 
-class AnimationSystem : public System<AnimationSystem>
+/**
+ * @brief Skeletal animation system (frame time)
+ *
+ * Interpolates skeletal animations for smooth rendering.
+ * Runs at variable frame rate for smooth visual output.
+ */
+class AnimationSystem : public FrameSystem
 {
    public:
-    void operator()(Registry& aRegistry, const float aDeltaTime);
+    using FrameSystem::FrameSystem;
 
-    static constexpr const char* StaticName() { return "AnimationSystem"; }
+   protected:
+    void Execute(Registry& aRegistry, float aDelta) override;
 
    private:
     struct AnimationContext {

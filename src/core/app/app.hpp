@@ -11,16 +11,11 @@
 #include "core/sys/log.hpp"
 #include "core/types.hpp"
 #include "registry/registry.hpp"
-#include "systems/ai.hpp"
-#include "systems/creep.hpp"
-#include "systems/physics.hpp"
-#include "systems/system.hpp"
+#include "systems/system_executor.hpp"
 
 class Application
 {
    public:
-    static constexpr float kTimeStep = 1.0f / 60.0f;
-
     explicit Application(const std::string& aName)
         : mRunning(false), mLogger(CreateLogger(aName, "info"))
     {
@@ -49,27 +44,19 @@ class Application
     using clock_type = std::chrono::steady_clock;
 
     void StartGameInstance(Registry& aRegistry, const GameInstanceID aGameID, const bool aIsServer);
-    void AdvanceSimulation(Registry& aRegistry, const float aDeltaTime);
     void StopGameInstance(Registry& aRegistry);
 
     void SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeight);
 
     void SetupObservers(Registry& aRegistry);
-    void ClearAllObservers(Registry& aRegistry);
 
-    virtual void OnGameInstanceCreated() = 0;
+    virtual void OnGameInstanceCreated(Registry& aRegistry) = 0;
 
     Options mOptions;
 
-    PhysicsSystem         mPhysicsSystem;
-    UpdateTransformsSytem mUpdateTransformsSystem;
-
-    SystemRegistry mSystems;
-    SystemRegistry mSystemsFT;
+    FrameSystemExecutor mFrameExecutor;  // Time-based (variable frame rate)
 
     std::atomic_bool mRunning;
-
-    std::vector<entt::hashed_string> mObserverNames;
 
     Logger mLogger;
 };

@@ -24,8 +24,15 @@
 #include "renderer/grid_preview_material.hpp"
 #include "renderer/primitive.hpp"
 #include "renderer/renderer.hpp"
+#include "systems/action.hpp"
+#include "systems/animation.hpp"
+#include "systems/input.hpp"
+#include "systems/physics.hpp"
 #include "systems/render.hpp"
+#include "systems/rigid_bodies_update.hpp"
+#include "systems/sync.hpp"
 #include "systems/system.hpp"
+#include "systems/tower_built.hpp"
 
 using namespace std::literals::chrono_literals;
 using namespace entt::literals;
@@ -44,45 +51,20 @@ void GameClient::Init()
     renderer.Init(window);
     netClient.Init();
 
-    entt::organizer organizerFixedTime;
     LoadResources(mRegistry);
-    mSystems.push_back(RenderImguiSystem::MakeDelegate(mRenderImguiSystem));
-    mSystems.push_back(InputSystem::MakeDelegate(mInputSystem));
-    mSystems.push_back(RealTimeActionSystem::MakeDelegate(mRTActionSystem));
-    mSystems.push_back(CameraSystem::MakeDelegate(mCameraSystem));
-    mSystems.push_back(RenderSystem::MakeDelegate(mRenderSystem));
 
+    // Register frame-time systems (variable delta)
+    // in reversed order, entt::scheduler executes processes starting from the end
 #if WATO_DEBUG
-    mSystems.push_back(PhysicsDebugSystem::MakeDelegate(mPhysicsDbgSystem));
+    mFrameExecutor.Register<PhysicsDebugSystem>();
 #endif
-
-    mSystemsFT.push_back(DeterministicActionSystem::MakeDelegate(mFTActionSystem));
-    mSystemsFT.push_back(TowerBuiltSystem::MakeDelegate(mTowerBuiltSystem));
-    mSystemsFT.push_back(RigidBodiesUpdateSystem::MakeDelegate(mRBUpdatesSystem));
-    mSystemsFT.push_back(AnimationSystem::MakeDelegate(mAnimationSystem));
-    mSystemsFT.push_back(PhysicsSystem::MakeDelegate(mPhysicsSystem));
-    mSystemsFT.push_back(NetworkSyncSystem<ENetClient>::MakeDelegate(mNetworkSyncSystem));
-
-    auto graph = organizerFixedTime.graph();
-    WATO_INFO(mRegistry, "graph size: {}", graph.size());
-    // TODO: use these tasks
-    std::unordered_map<std::string, tf::Task> tasks;
-
-    for (auto&& v : graph) {
-        v.prepare(mRegistry);
-        tasks[v.name()] = mTaskflow.emplace([&]() {
-            typename entt::organizer::function_type* cb = v.callback();
-            cb(v.data(), mRegistry);
-        });
-    }
-
-    for (auto&& v : graph) {
-        auto& in = v.in_edges();
-
-        for (auto& iv : in) {
-            tasks[graph[iv].name()].precede(tasks[v.name()]);
-        }
-    }
+    mFrameExecutor.Register<RenderSystem>();
+    mFrameExecutor.Register<RenderImguiSystem>();
+    mFrameExecutor.Register<SimulationSystem>();
+    mFrameExecutor.Register<CameraSystem>();
+    mFrameExecutor.Register<AnimationSystem>();
+    mFrameExecutor.Register<RealTimeActionSystem>();
+    mFrameExecutor.Register<InputSystem>();
 }
 
 int GameClient::Run(tf::Executor& aExecutor)
@@ -92,7 +74,8 @@ int GameClient::Run(tf::Executor& aExecutor)
     auto& netClient = mRegistry.ctx().get<ENetClient&>();
     auto  prevTime  = clock_type::now();
 
-    aExecutor.silent_async([&]() { networkThread(); });
+    std::thread networkThreadHandle([this]() { networkThread(); });
+    networkThreadHandle.detach();
 
     if (!netClient.Connect()) {
         throw std::runtime_error("No available peers for initiating an ENet connection.");
@@ -115,14 +98,9 @@ int GameClient::Run(tf::Executor& aExecutor)
         consumeNetworkResponses();
 
         if (mRegistry.ctx().contains<GameInstance>()) {
-            auto& instance = mRegistry.ctx().get<GameInstance&>();
-
-            for (const auto& system : mSystems) {
-                system(mRegistry, frameTime.count());
-            }
-
-            AdvanceSimulation(mRegistry, frameTime.count());
+            mFrameExecutor.Update(frameTime.count(), &mRegistry);
         }
+
         renderer.Render();
         input.PrevKeyboardState   = input.KeyboardState;
         input.PrevMouseState      = input.MouseState;
@@ -244,11 +222,19 @@ void GameClient::prepareGridPreview()
         std::span<const uint8_t>(graph.GridLayout().data(), graph.Width() * graph.Height()));
 }
 
-void GameClient::OnGameInstanceCreated()
+void GameClient::OnGameInstanceCreated(Registry& aRegistry)
 {
+    auto& fixedExec = aRegistry.ctx().get<FixedSystemExecutor>();
+
     spawnPlayerAndCamera();
     prepareGridPreview();
-    mRegistry.ctx().get<Physics>().World()->setEventListener(&mPhysicsEventHandler);
+    aRegistry.ctx().get<Physics>().World()->setEventListener(&mPhysicsEventHandler);
+
+    fixedExec.Register<NetworkSyncSystem<ENetClient>>();
+    fixedExec.Register<PhysicsSystem>();
+    fixedExec.Register<RigidBodiesUpdateSystem>();
+    fixedExec.Register<TowerBuiltSystem>();
+    fixedExec.Register<DeterministicActionSystem>();
 }
 
 void GameClient::consumeNetworkResponses()

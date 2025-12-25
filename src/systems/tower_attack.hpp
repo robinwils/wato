@@ -1,10 +1,18 @@
 #pragma once
 
-#include "registry/registry.hpp"
 #include "systems/system.hpp"
 
-class TowerAttackSystem : public System<TowerAttackSystem>
+/**
+ * @brief Tower attack system (fixed timestep)
+ *
+ * Handles tower target acquisition and projectile spawning.
+ * Runs at deterministic 60 FPS.
+ */
+class TowerAttackSystem : public FixedSystem
 {
    public:
-    void operator()(Registry& aRegistry, float aDeltaTime);
+    using FixedSystem::FixedSystem;
+
+   protected:
+    void Execute(Registry& aRegistry, std::uint32_t aTick) override;
 };

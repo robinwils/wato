@@ -28,7 +28,7 @@
 #include "renderer/renderer.hpp"
 #include "resource/cache.hpp"
 
-void RenderSystem::operator()(Registry& aRegistry)
+void RenderSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDelta)
 {
     auto& renderer = aRegistry.ctx().get<BgfxRenderer&>();
     // This dummy draw call is here to make sure that view 0 is cleared
@@ -136,7 +136,7 @@ void RenderSystem::renderGrid(Registry& aRegistry)
     }
 }
 
-void RenderImguiSystem::operator()(Registry& aRegistry)
+void RenderImguiSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDelta)
 {
     auto& window = aRegistry.ctx().get<WatoWindow&>();
     imguiBeginFrame(window.GetInput(), window.Width<int>(), window.Height<int>());
@@ -248,7 +248,7 @@ void RenderImguiSystem::operator()(Registry& aRegistry)
     imguiEndFrame();
 }
 
-void CameraSystem::operator()(Registry& aRegistry)
+void CameraSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDelta)
 {
     auto& window   = aRegistry.ctx().get<WatoWindow&>();
     auto& renderer = aRegistry.ctx().get<BgfxRenderer&>();
@@ -288,7 +288,7 @@ struct PosColor {
 };
 bgfx::VertexLayout PosColor::msLayout;
 
-void PhysicsDebugSystem::operator()(Registry& aRegistry)
+void PhysicsDebugSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDelta)
 {
     const auto&                phy           = aRegistry.ctx().get<Physics&>();
     auto&                      renderer      = aRegistry.ctx().get<BgfxRenderer&>();

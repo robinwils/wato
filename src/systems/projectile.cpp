@@ -8,7 +8,7 @@
 #include "components/transform3d.hpp"
 #include "core/sys/log.hpp"
 
-void ProjectileSystem::operator()(Registry& aRegistry, float aDeltaTime)
+void ProjectileSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t aTick)
 {
     for (auto&& [projectileEntity, projectile, transform, rb] :
          aRegistry.view<Projectile, Transform3D, RigidBody>().each()) {

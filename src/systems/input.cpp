@@ -17,7 +17,7 @@
 #include "registry/registry.hpp"
 #include "systems/input.hpp"
 
-void InputSystem::operator()(Registry& aRegistry)
+void InputSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDelta)
 {
     const Input& input       = aRegistry.ctx().get<WatoWindow&>().GetInput();
     auto&        actionCtx   = aRegistry.ctx().get<ActionContextStack&>().front();

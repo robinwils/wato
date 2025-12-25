@@ -9,7 +9,7 @@
 #include "registry/registry.hpp"
 
 template <>
-void NetworkSyncSystem<ENetClient>::operator()(Registry& aRegistry)
+void NetworkSyncSystem<ENetClient>::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t aTick)
 {
     auto& buf      = aRegistry.ctx().get<GameStateBuffer&>();
     auto& net      = aRegistry.ctx().get<ENetClient&>();
@@ -39,7 +39,7 @@ void NetworkSyncSystem<ENetClient>::operator()(Registry& aRegistry)
 }
 
 template <>
-void NetworkSyncSystem<ENetServer>::operator()(Registry& aRegistry)
+void NetworkSyncSystem<ENetServer>::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t aTick)
 {
     auto& net       = aRegistry.ctx().get<ENetServer&>();
     auto& instance  = aRegistry.ctx().get<GameInstance&>();
