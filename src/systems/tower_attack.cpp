@@ -47,7 +47,7 @@ class ColliderCollectorCallback : public rp3d::OverlapCallback
 void TowerAttackSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t aTick)
 {
     constexpr float kTimeStep = 1.0f / 60.0f;
-    auto& phy = aRegistry.ctx().get<Physics>();
+    auto&           phy       = aRegistry.ctx().get<Physics>();
 
     for (auto&& [towerEntity, tower, towerTransform, attack] :
          aRegistry.view<Tower, Transform3D, TowerAttack>().each()) {
@@ -158,7 +158,7 @@ void TowerAttackSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint3
                     .Params =
                         ColliderParams{
                             .CollisionCategoryBits = Category::Projectiles,
-                            .CollideWithMaskBits   = Category::Entities,
+                            .CollideWithMaskBits   = Category::Entities | Category::Terrain,
                             .IsTrigger             = true,
                             .Offset                = Transform3D{},
                             .ShapeParams =
