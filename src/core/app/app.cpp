@@ -12,7 +12,7 @@
 #include "components/tile.hpp"
 #include "components/transform3d.hpp"
 #include "core/graph.hpp"
-#include "core/physics/event_handler.hpp"
+#include "core/physics/physics_event_listener.hpp"
 #include "core/physics/physics.hpp"
 #include "core/state.hpp"
 #include "input/action.hpp"
@@ -37,10 +37,14 @@ void Application::StartGameInstance(
 
     physics.Init();
 
-    stack.push_back(ActionContext{
-        .State    = aIsServer ? ActionContext::State::Server : ActionContext::State::Default,
-        .Bindings = ActionBindings::Defaults(),
-        .Payload  = NormalPayload{}});
+    stack.push_back(
+        ActionContext{
+            .State    = aIsServer ? ActionContext::State::Server : ActionContext::State::Default,
+            .Bindings = ActionBindings::Defaults(),
+            .Payload  = NormalPayload{}});
+
+    auto& l = aRegistry.ctx().emplace<PhysicsEventListener>(mLogger);
+    aRegistry.ctx().get<Physics>().World()->setEventListener(&l);
 
     SetupObservers(aRegistry);
     SpawnMap(aRegistry, 20, 20);

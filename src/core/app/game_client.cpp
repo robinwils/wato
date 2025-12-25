@@ -228,7 +228,6 @@ void GameClient::OnGameInstanceCreated(Registry& aRegistry)
 
     spawnPlayerAndCamera();
     prepareGridPreview();
-    aRegistry.ctx().get<Physics>().World()->setEventListener(&mPhysicsEventHandler);
 
     fixedExec.Register<NetworkSyncSystem<ENetClient>>();
     fixedExec.Register<PhysicsSystem>();

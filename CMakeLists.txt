@@ -219,7 +219,7 @@ if (ENABLE_CLIENT)
 
     PRIVATE
     src/core/app/game_client.cpp
-    src/core/physics/event_handler.cpp
+    src/core/physics/physics_event_listener.cpp
     src/core/sys/mem.cpp
     src/core/window.cpp
     src/imgui/imgui_helper.cpp
@@ -424,9 +424,9 @@ target_sources(watolib
     src/components/direction.hpp
     src/components/health.hpp
     src/components/imgui.hpp
+    src/components/net.hpp
     src/components/path.hpp
     src/components/placement_mode.hpp
-    src/components/net.hpp
     src/components/rigid_body.hpp
     src/components/scene_object.hpp
     src/components/tile.hpp
@@ -438,8 +438,8 @@ target_sources(watolib
     src/core/net/enet_base.hpp
     src/core/net/enet_client.hpp
     src/core/net/enet_server.hpp
-    src/core/physics/event_handler.hpp
     src/core/physics/physics.hpp
+    src/core/physics/physics_event_listener.hpp
     src/core/queue/channel.hpp
     src/core/queue/ring_buffer.hpp
     src/core/snapshot.hpp
@@ -453,6 +453,7 @@ target_sources(watolib
     src/systems/projectile.hpp
     src/systems/rigid_bodies_update.hpp
     src/systems/system.hpp
+    src/systems/system_executor.hpp
     src/systems/tower_attack.hpp
     src/systems/tower_built.hpp
 
@@ -463,8 +464,8 @@ target_sources(watolib
     src/core/net/enet_base.cpp
     src/core/net/enet_client.cpp
     src/core/net/enet_server.cpp
-    src/core/physics/event_handler.cpp
     src/core/physics/physics.cpp
+    src/core/physics/physics_event_listener.cpp
     src/core/sys/backtrace.cpp
     src/core/tower_building_handler.cpp
     src/systems/ai.cpp
