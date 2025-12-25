@@ -16,6 +16,7 @@
 
 #include "components/animator.hpp"
 #include "components/camera.hpp"
+#include "components/health.hpp"
 #include "components/imgui.hpp"
 #include "components/scene_object.hpp"
 #include "core/physics/physics.hpp"
@@ -223,13 +224,21 @@ void RenderImguiSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDel
     auto& graph = aRegistry.ctx().get<Graph>();
     for (auto&& [entity, imgui, t] : aRegistry.view<ImguiDrawable, Transform3D>().each()) {
         if (imgui.PosOnUnit) {
-            GraphCell c      = GraphCell::FromWorldPoint(t.Position);
-            glm::vec3 screen = window.ProjectPosition(t.Position, cam, camT.Position);
+            GraphCell   c      = GraphCell::FromWorldPoint(t.Position);
+            glm::vec3   screen = window.ProjectPosition(t.Position, cam, camT.Position);
+            std::string s      = "";
+
+            if (auto* health = aRegistry.try_get<Health>(entity); health) {
+                s = fmt::format("{} {}, {} health", c.Location.x, c.Location.y, health->Health);
+            } else {
+                s = fmt::format("{} {}", c.Location.x, c.Location.y);
+            }
+
             text(
                 screen.x,
                 window.Height<float>() - screen.y,
                 fmt::format("graph_pos_{}", entt::id_type(entity)),
-                fmt::format("{} {}", c.Location.x, c.Location.y));
+                s);
 
             if (auto next = graph.GetNextCell(GraphCell::FromWorldPoint(t.Position))) {
                 screen = window.ProjectPosition(next->ToWorld(), cam, camT.Position);
