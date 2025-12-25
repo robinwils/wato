@@ -449,6 +449,7 @@ target_sources(watolib
     src/core/tower_building_handler.hpp
     src/registry/registry.hpp
     src/systems/ai.hpp
+    src/systems/collision.hpp
     src/systems/physics.hpp
     src/systems/projectile.hpp
     src/systems/rigid_bodies_update.hpp
@@ -469,6 +470,7 @@ target_sources(watolib
     src/core/sys/backtrace.cpp
     src/core/tower_building_handler.cpp
     src/systems/ai.cpp
+    src/systems/collision.cpp
     src/systems/physics.cpp
     src/systems/projectile.cpp
     src/systems/rigid_bodies_update.cpp
