@@ -20,8 +20,7 @@ void ProjectileSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32
 
         auto* targetTransform = aRegistry.try_get<Transform3D>(projectile.Target);
         if (!targetTransform) {
-            aRegistry.destroy(projectileEntity);
-            WATO_TRACE(aRegistry, "destroyed projectile {} (dead target)", projectileEntity);
+            WATO_TRACE(aRegistry, "projectile has dead target", projectileEntity);
             continue;
         }
 
