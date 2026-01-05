@@ -98,6 +98,27 @@ void CollisionSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_
                     }
                 }
             }
+            WATO_INFO(
+                aRegistry,
+                "marking projectile {} for destruction (target hit)",
+                projectileEntity);
+            projectilesToDestroy.insert(projectileEntity);
+        } else if (terrainCollider) {
+            // Projectile hit terrain - only destroy if target is invalid or else projectile
+            // can get destroy without damaging creep
+            auto* projectile = aRegistry.try_get<Projectile>(projectileEntity);
+            if (projectile && !aRegistry.valid(projectile->Target)) {
+                WATO_INFO(
+                    aRegistry,
+                    "marking projectile {} for destruction (terrain, target invalid)",
+                    projectileEntity);
+                projectilesToDestroy.insert(projectileEntity);
+            } else {
+                WATO_DBG(
+                    aRegistry,
+                    "projectile {} hit terrain but target still valid, ignoring",
+                    projectileEntity);
+            }
         }
     }
 
