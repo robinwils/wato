@@ -12,8 +12,8 @@
 #include "components/tile.hpp"
 #include "components/transform3d.hpp"
 #include "core/graph.hpp"
-#include "core/physics/physics_event_listener.hpp"
 #include "core/physics/physics.hpp"
+#include "core/physics/physics_event_listener.hpp"
 #include "core/state.hpp"
 #include "input/action.hpp"
 
@@ -37,11 +37,10 @@ void Application::StartGameInstance(
 
     physics.Init();
 
-    stack.push_back(
-        ActionContext{
-            .State    = aIsServer ? ActionContext::State::Server : ActionContext::State::Default,
-            .Bindings = ActionBindings::Defaults(),
-            .Payload  = NormalPayload{}});
+    stack.push_back(ActionContext{
+        .State    = aIsServer ? ActionContext::State::Server : ActionContext::State::Default,
+        .Bindings = ActionBindings::Defaults(),
+        .Payload  = NormalPayload{}});
 
     auto& l = aRegistry.ctx().emplace<PhysicsEventListener>(mLogger);
     aRegistry.ctx().get<Physics>().World()->setEventListener(&l);
@@ -158,9 +157,12 @@ void Application::SetupObservers(Registry& aRegistry)
     tbo.on_construct<Tower>();
 
     observers.push_back("rigid_bodies_observer");
-    auto& rbo = aRegistry.storage<entt::reactive>("rigid_bodies_observer"_hs);
-    rbo.on_construct<RigidBody>();
-    rbo.on_update<RigidBody>();
+    aRegistry.storage<entt::reactive>("rigid_bodies_observer"_hs)
+        .on_construct<RigidBody>()
+        .on_update<RigidBody>();
+
+    observers.push_back("rigid_bodies_destroy_observer");
+    aRegistry.storage<entt::reactive>("rigid_bodies_destroy_observer"_hs).on_destroy<RigidBody>();
 
     observers.push_back("placement_mode_observer");
     auto& pmo = aRegistry.storage<entt::reactive>("placement_mode_observer"_hs);

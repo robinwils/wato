@@ -48,6 +48,8 @@ void NetworkSyncSystem<ENetServer>::Execute(
     auto& net       = aRegistry.ctx().get<ENetServer&>();
     auto& instance  = aRegistry.ctx().get<GameInstance&>();
     auto& rbStorage = aRegistry.storage<entt::reactive>("rigid_bodies_observer"_hs);
+    auto& rbDestroyedStorage =
+        aRegistry.storage<entt::reactive>("rigid_bodies_destroy_observer"_hs);
 
     // TODO: snapshot every other frame
     // auto& buf = aRegistry.ctx().get<GameStateBuffer&>();
@@ -93,6 +95,21 @@ void NetworkSyncSystem<ENetServer>::Execute(
                 },
         });
     }
+
+    for (auto& e : rbDestroyedStorage) {
+        WATO_DBG(aRegistry, "rigid body destroyed for {}", e);
+
+        net.EnqueueResponse(new NetworkResponse{
+            .Type     = PacketType::Ack,
+            .PlayerID = 0,
+            .Tick     = aTick,
+            .Payload =
+                RigidBodyUpdateResponse{
+                    .Params   = RigidBodyParams{},
+                    .Entity   = e,
+                    .Event    = RigidBodyEvent::Destroy,
+                    .InitData = std::monostate{},
+                },
         });
     }
 }

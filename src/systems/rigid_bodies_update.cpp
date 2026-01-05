@@ -13,8 +13,8 @@ void RigidBodiesUpdateSystem::Execute(Registry& aRegistry, [[maybe_unused]] std:
 {
     auto& physics          = aRegistry.ctx().get<Physics>();
     auto& colliderToEntity = aRegistry.ctx().get<ColliderEntityMap>();
+    auto& rbStorage        = aRegistry.storage<entt::reactive>("rigid_bodies_observer"_hs);
 
-    auto& rbStorage = aRegistry.storage<entt::reactive>("rigid_bodies_observer"_hs);
     for (auto& e : rbStorage) {
         auto& rb = aRegistry.get<RigidBody>(e);
         auto& c  = aRegistry.get<Collider>(e);
