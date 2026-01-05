@@ -66,7 +66,7 @@ struct RigidBodyParams {
     {
         if (!ArchiveValue(aArchive, Type, 0, 3)) return false;
         if (!ArchiveValue(aArchive, Velocity, 0.0f, 100.0f)) return false;
-        if (!ArchiveVector(aArchive, Direction, 0.0f, 1.0f)) return false;
+        if (!ArchiveVector(aArchive, Direction, -1.0f, 1.0f)) return false;
         return ArchiveBool(aArchive, GravityEnabled);
     }
 };
