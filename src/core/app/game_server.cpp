@@ -48,10 +48,10 @@ void GameServer::OnGameInstanceCreated(Registry& aRegistry)
     fixedExec.Register<NetworkSyncSystem<ENetServer>>();
     fixedExec.Register<PhysicsSystem>();
     fixedExec.Register<CollisionSystem>();
+    fixedExec.Register<TowerBuiltSystem>();
     fixedExec.Register<RigidBodiesUpdateSystem>();
     fixedExec.Register<ProjectileSystem>();
     fixedExec.Register<TowerAttackSystem>();
-    fixedExec.Register<TowerBuiltSystem>();
     fixedExec.Register<AiSystem>();
     fixedExec.Register<ServerActionSystem>();
 }
@@ -98,8 +98,11 @@ int GameServer::Run(tf::Executor& aExecutor)
         while (mRunning) {
             mServer.ConsumeNetworkResponses([&](NetworkResponse* aEvent) {
                 BitOutputArchive archive;
-                aEvent->Archive(archive);
+                if (!aEvent->Archive(archive)) {
+                    mLogger->error("could not archive response {}", *aEvent);
+                }
 
+                mLogger->trace("sending {}", *aEvent);
                 if (!mServer.Send(aEvent->PlayerID, archive.Bytes())) {
                     mLogger->error("player {} is not connected", aEvent->PlayerID);
                     mRunning = false;

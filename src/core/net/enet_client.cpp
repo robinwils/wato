@@ -70,11 +70,18 @@ void ENetClient::OnConnect(ENetEvent& aEvent)
 
 void ENetClient::OnReceive(ENetEvent& aEvent)
 {
-    BitInputArchive archive(aEvent.packet->data, aEvent.packet->dataLength);
+    BitInputArchive archive(aEvent.packet->data, aEvent.packet->dataLength, true);
     auto*           ev = new NetworkResponse;
 
-    ev->Archive(archive);
+    if (!ev->Archive(archive)) {
+        mLogger->error(
+            "failed to deserialize NetworkResponse (packet size: {} bytes)",
+            aEvent.packet->dataLength);
+        delete ev;
+        return;
+    }
 
+    mLogger->trace("received {}", *ev);
     EnqueueResponse(ev);
 }
 
