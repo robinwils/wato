@@ -9,7 +9,9 @@
 #include "registry/registry.hpp"
 
 template <>
-void NetworkSyncSystem<ENetClient>::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t aTick)
+void NetworkSyncSystem<ENetClient>::Execute(
+    Registry&                      aRegistry,
+    [[maybe_unused]] std::uint32_t aTick)
 {
     auto& buf      = aRegistry.ctx().get<GameStateBuffer&>();
     auto& net      = aRegistry.ctx().get<ENetClient&>();
@@ -39,7 +41,9 @@ void NetworkSyncSystem<ENetClient>::Execute(Registry& aRegistry, [[maybe_unused]
 }
 
 template <>
-void NetworkSyncSystem<ENetServer>::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t aTick)
+void NetworkSyncSystem<ENetServer>::Execute(
+    Registry&                      aRegistry,
+    [[maybe_unused]] std::uint32_t aTick)
 {
     auto& net       = aRegistry.ctx().get<ENetServer&>();
     auto& instance  = aRegistry.ctx().get<GameInstance&>();
@@ -80,7 +84,15 @@ void NetworkSyncSystem<ENetServer>::Execute(Registry& aRegistry, [[maybe_unused]
             .Type     = PacketType::Ack,
             .PlayerID = 0,
             .Tick     = instance.Tick,
-            .Payload  = RigidBodyUpdateResponse{.Params = rigidBody.Params, .Entity = entity},
+            .Payload =
+                RigidBodyUpdateResponse{
+                    .Params   = rigidBody.Params,
+                    .Entity   = entity,
+                    .Event    = RigidBodyEvent::Update,
+                    .InitData = std::monostate{},
+                },
+        });
+    }
         });
     }
 }

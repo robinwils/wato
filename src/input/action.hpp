@@ -105,13 +105,12 @@ inline bool operator==(const MovePayload& aLHS, const MovePayload& aRHS)
 }
 
 struct SendCreepPayload {
-    CreepType    Type;
-    entt::entity CliPredictedEntity{entt::null};
+    CreepType Type;
 
     bool Archive(auto& aArchive)
     {
         if (!ArchiveValue(aArchive, Type, 0u, uint32_t(CreepType::Count))) return false;
-        return ArchiveEntity(aArchive, CliPredictedEntity);
+        return true;
     }
 };
 
@@ -121,22 +120,20 @@ inline bool operator==(const SendCreepPayload& aLHS, const SendCreepPayload& aRH
 }
 
 struct BuildTowerPayload {
-    TowerType    Tower;
-    glm::vec3    Position{0.0f};
-    entt::entity CliPredictedEntity{entt::null};
+    TowerType Tower;
+    glm::vec3 Position{0.0f};
 
     bool Archive(auto& aArchive)
     {
         if (!ArchiveValue(aArchive, Tower, 0u, uint32_t(TowerType::Count))) return false;
         if (!ArchiveVector(aArchive, Position, 0.0f, 20.0f)) return false;
-        return ArchiveEntity(aArchive, CliPredictedEntity);
+        return true;
     }
 };
 
 inline bool operator==(const BuildTowerPayload& aLHS, const BuildTowerPayload& aRHS)
 {
-    return aLHS.Tower == aRHS.Tower && aLHS.Position == aRHS.Position
-           && aLHS.CliPredictedEntity == aRHS.CliPredictedEntity;
+    return aLHS.Tower == aRHS.Tower && aLHS.Position == aRHS.Position;
 }
 
 struct PlacementModePayload {

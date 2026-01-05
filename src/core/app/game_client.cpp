@@ -13,6 +13,7 @@
 #include "components/model_rotation_offset.hpp"
 #include "components/net.hpp"
 #include "components/projectile.hpp"
+#include "components/tower_attack.hpp"
 #include "core/net/enet_client.hpp"
 #include "core/net/net.hpp"
 #include "core/snapshot.hpp"
@@ -276,115 +277,244 @@ void GameClient::consumeNetworkResponses()
                         .get<RigidBody>(inAr)
                         .get<Collider>(inAr);
                 },
-                [&](const AcknowledgementResponse aAck) {
-                    WATO_INFO(mRegistry, "got ack {} for {}", aAck.Ack, aAck.Entity);
-                    if (aAck.Ack) {
-                        mRegistry.remove<Predicted>(aAck.Entity);
-                        mRegistry.emplace<Synced>(aAck.Entity, aAck.ServerEntity);
-                        mRegistry.ctx().get<EntitySyncMap>().insert_or_assign(
-                            aAck.ServerEntity,
-                            aAck.Entity);
-                    } else {
-                        mRegistry.destroy(aAck.Entity);
-                    }
-                },
-                [&](const RigidBodyUpdateResponse aUpdate) {
+                [&](const RigidBodyUpdateResponse& aUpdate) {
                     auto& syncMap = mRegistry.ctx().get<EntitySyncMap>();
 
-                    if (syncMap.contains(aUpdate.Entity)) {
-                        mRegistry.patch<RigidBody>(
-                            syncMap[aUpdate.Entity],
-                            [&aUpdate](RigidBody& aBody) { aBody.Params = aUpdate.Params; });
-                        if (mRegistry.get<RigidBody>(syncMap[aUpdate.Entity]).Params.Velocity
-                            == 0.0f) {
+                    switch (aUpdate.Event) {
+                        case RigidBodyEvent::Create: {
+                            // Handle entity creation
+                            std::visit(
+                                VariantVisitor{
+                                    [&](const ProjectileInitData& aProjectileInit) {
+                                        WATO_INFO(mRegistry, "got projectile init data");
+                                        // Map source tower entity
+                                        auto sourceTowerIt =
+                                            syncMap.find(aProjectileInit.SourceTower);
+                                        if (sourceTowerIt == syncMap.end()) {
+                                            WATO_WARN(
+                                                mRegistry,
+                                                "source tower {} not found in sync map",
+                                                aProjectileInit.SourceTower);
+                                            return;
+                                        }
+
+                                        entt::entity clientTower = sourceTowerIt->second;
+                                        auto*        towerTransform =
+                                            mRegistry.try_get<Transform3D>(clientTower);
+                                        if (!towerTransform) {
+                                            WATO_WARN(
+                                                mRegistry,
+                                                "source tower {} has no transform",
+                                                clientTower);
+                                            return;
+                                        }
+
+                                        // Create projectile
+                                        auto projectile = mRegistry.create();
+
+                                        glm::vec3 position =
+                                            towerTransform->Position + glm::vec3(0.0f, 0.5f, 0.0f);
+
+                                        mRegistry.emplace<Transform3D>(
+                                            projectile,
+                                            position,
+                                            glm::identity<glm::quat>(),
+                                            glm::vec3(0.05f));
+
+                                        mRegistry.emplace<ModelRotationOffset>(
+                                            projectile,
+                                            glm::angleAxis(
+                                                glm::radians(180.0f),
+                                                glm::vec3(0, 1, 0)));
+
+                                        // Map target if it exists
+                                        entt::entity clientTarget = entt::null;
+                                        auto targetIt = syncMap.find(aProjectileInit.Target);
+                                        if (targetIt != syncMap.end()) {
+                                            clientTarget = targetIt->second;
+                                        }
+
+                                        mRegistry.emplace<Projectile>(
+                                            projectile,
+                                            aProjectileInit.Damage,
+                                            aProjectileInit.Speed,
+                                            clientTarget);
+
+                                        mRegistry.emplace<RigidBody>(
+                                            projectile,
+                                            RigidBody{.Params = aUpdate.Params});
+
+                                        mRegistry.emplace<Collider>(
+                                            projectile,
+                                            Collider{
+                                                .Params =
+                                                    ColliderParams{
+                                                        .CollisionCategoryBits =
+                                                            Category::Projectiles,
+                                                        .CollideWithMaskBits = Category::Entities,
+                                                        .IsTrigger           = true,
+                                                        .Offset              = Transform3D{},
+                                                        .ShapeParams =
+                                                            CapsuleShapeParams{
+                                                                .Radius = 0.05f,
+                                                                .Height = 0.1f,
+                                                            },
+                                                    },
+                                            });
+
+                                        mRegistry.emplace<SceneObject>(projectile, "arrow"_hs);
+
+                                        syncMap.insert_or_assign(aUpdate.Entity, projectile);
+
+                                        WATO_INFO(
+                                            mRegistry,
+                                            "created projectile {} from server entity {}",
+                                            projectile,
+                                            aUpdate.Entity);
+                                    },
+                                    [&](const TowerInitData& aTowerInit) {
+                                        // Create tower on client
+                                        auto  tower = mRegistry.create();
+                                        auto& phy   = mRegistry.ctx().get<Physics>();
+
+                                        auto& transform = mRegistry.emplace<Transform3D>(
+                                            tower,
+                                            aTowerInit.Position,
+                                            glm::identity<glm::quat>(),
+                                            glm::vec3(0.1f));
+
+                                        // Create physics body and collider
+                                        Collider collider{
+                                            .Params =
+                                                ColliderParams{
+                                                    .CollisionCategoryBits = Category::Entities,
+                                                    .CollideWithMaskBits =
+                                                        Category::Terrain | Category::Entities,
+                                                    .IsTrigger = false,
+                                                    .Offset    = Transform3D{},
+                                                    .ShapeParams =
+                                                        BoxShapeParams{
+                                                            .HalfExtents =
+                                                                glm::vec3(0.35f, 0.65f, 0.35f),
+                                                        },
+                                                },
+                                        };
+                                        rp3d::RigidBody* body =
+                                            phy.CreateRigidBody(aUpdate.Params, transform);
+                                        rp3d::Collider* c = phy.AddCollider(body, collider.Params);
+
+                                        mRegistry.emplace<Tower>(tower, aTowerInit.Type);
+                                        mRegistry.emplace<RigidBody>(tower, aUpdate.Params, body);
+                                        mRegistry.emplace<Collider>(tower, collider.Params, c);
+                                        mRegistry.emplace<Health>(tower, 100.0f);
+                                        mRegistry.emplace<SceneObject>(tower, "tower_model"_hs);
+                                        mRegistry.emplace<TowerAttack>(
+                                            tower,
+                                            TowerAttack{
+                                                .Range    = 30.0f,
+                                                .FireRate = 1.0f,
+                                            });
+
+                                        syncMap.insert_or_assign(aUpdate.Entity, tower);
+
+                                        WATO_INFO(
+                                            mRegistry,
+                                            "created tower {} from server entity {}",
+                                            tower,
+                                            aUpdate.Entity);
+                                    },
+                                    [&](const CreepInitData& aCreepInit) {
+                                        // Create creep on client
+                                        auto  creep = mRegistry.create();
+                                        auto& phy   = mRegistry.ctx().get<Physics>();
+
+                                        auto& transform = mRegistry.emplace<Transform3D>(
+                                            creep,
+                                            aCreepInit.Position,
+                                            glm::identity<glm::quat>(),
+                                            glm::vec3(0.5f));
+
+                                        mRegistry.emplace<ModelRotationOffset>(
+                                            creep,
+                                            glm::angleAxis(
+                                                glm::radians(90.0f),
+                                                glm::vec3(0, 1, 0)));
+
+                                        // Create physics body and collider
+                                        RigidBody body{.Params = aUpdate.Params};
+                                        Collider  collider{
+                                             .Params =
+                                                ColliderParams{
+                                                     .CollisionCategoryBits = Category::Entities,
+                                                     .CollideWithMaskBits   = Category::Projectiles,
+                                                     .IsTrigger             = false,
+                                                     .Offset                = Transform3D{},
+                                                     .ShapeParams =
+                                                        CapsuleShapeParams{
+                                                             .Radius = 0.1f,
+                                                             .Height = 0.05f,
+                                                        },
+                                                },
+                                        };
+                                        body.Body = phy.CreateRigidBody(body.Params, transform);
+                                        collider.Handle =
+                                            phy.AddCollider(body.Body, collider.Params);
+
+                                        mRegistry.emplace<Creep>(creep, aCreepInit.Type);
+                                        mRegistry.emplace<RigidBody>(creep, body);
+                                        mRegistry.emplace<Collider>(creep, collider);
+                                        mRegistry.emplace<Health>(creep, 100.0f);
+                                        mRegistry.emplace<SceneObject>(creep, "phoenix"_hs);
+                                        mRegistry.emplace<ImguiDrawable>(creep, "phoenix", true);
+                                        mRegistry.emplace<Animator>(creep, 0.0f, "Take 001");
+
+                                        // TODO: Add Path component - need graph context
+
+                                        syncMap.insert_or_assign(aUpdate.Entity, creep);
+
+                                        WATO_INFO(
+                                            mRegistry,
+                                            "created creep {} from server entity {}",
+                                            creep,
+                                            aUpdate.Entity);
+                                    },
+                                    [&](const std::monostate&) {
+                                        // Generic entity creation (e.g., terrain colliders)
+                                        WATO_INFO(
+                                            mRegistry,
+                                            "created entity {} (no specific init data)",
+                                            aUpdate.Entity);
+                                    },
+                                },
+                                aUpdate.InitData);
+                            break;
+                        }
+                        case RigidBodyEvent::Update: {
+                            // Handle entity update
+                            if (syncMap.contains(aUpdate.Entity)) {
+                                mRegistry.patch<RigidBody>(
+                                    syncMap[aUpdate.Entity],
+                                    [&aUpdate](RigidBody& aBody) {
+                                        aBody.Params = aUpdate.Params;
+                                    });
+                            }
+                            break;
+                        }
+                        case RigidBodyEvent::Destroy: {
+                            // Handle entity destruction
+                            if (syncMap.contains(aUpdate.Entity)) {
+                                entt::entity clientEntity = syncMap[aUpdate.Entity];
+                                mRegistry.destroy(clientEntity);
+                                syncMap.erase(aUpdate.Entity);
+                                WATO_INFO(
+                                    mRegistry,
+                                    "destroyed entity {} (server entity {})",
+                                    clientEntity,
+                                    aUpdate.Entity);
+                            }
+                            break;
                         }
                     }
-                },
-                [&](const ProjectileSpawnResponse& aSpawn) {
-                    auto& syncMap = mRegistry.ctx().get<EntitySyncMap>();
-
-                    // Map server tower entity to client entity
-                    auto sourceTowerIt = syncMap.find(aSpawn.SourceTower);
-                    if (sourceTowerIt == syncMap.end()) {
-                        WATO_WARN(
-                            mRegistry,
-                            "source tower {} not found in sync map",
-                            aSpawn.SourceTower);
-                        return;
-                    }
-
-                    entt::entity clientTower    = sourceTowerIt->second;
-                    auto*        towerTransform = mRegistry.try_get<Transform3D>(clientTower);
-                    if (!towerTransform) {
-                        WATO_WARN(mRegistry, "source tower {} has no transform", clientTower);
-                        return;
-                    }
-
-                    // Create projectile
-                    auto projectile = mRegistry.create();
-
-                    // Calculate initial position from tower
-                    glm::vec3 position = towerTransform->Position + glm::vec3(0.0f, 0.5f, 0.0f);
-
-                    mRegistry.emplace<Transform3D>(
-                        projectile,
-                        position,
-                        glm::identity<glm::quat>(),
-                        glm::vec3(0.05f));
-
-                    mRegistry.emplace<ModelRotationOffset>(
-                        projectile,
-                        glm::angleAxis(glm::radians(180.0f), glm::vec3(0, 1, 0)));
-
-                    // Map target if it exists
-                    entt::entity clientTarget = entt::null;
-                    auto         targetIt     = syncMap.find(aSpawn.Target);
-                    if (targetIt != syncMap.end()) {
-                        clientTarget = targetIt->second;
-                    }
-
-                    mRegistry
-                        .emplace<Projectile>(projectile, aSpawn.Damage, aSpawn.Speed, clientTarget);
-
-                    mRegistry.emplace<RigidBody>(
-                        projectile,
-                        RigidBody{
-                            .Params =
-                                RigidBodyParams{
-                                    .Type           = rp3d::BodyType::KINEMATIC,
-                                    .Velocity       = aSpawn.Speed,
-                                    .Direction      = aSpawn.Direction,
-                                    .GravityEnabled = false,
-                                },
-                        });
-
-                    mRegistry.emplace<Collider>(
-                        projectile,
-                        Collider{
-                            .Params =
-                                ColliderParams{
-                                    .CollisionCategoryBits = Category::Projectiles,
-                                    .CollideWithMaskBits   = Category::Entities,
-                                    .IsTrigger             = true,
-                                    .Offset                = Transform3D{},
-                                    .ShapeParams =
-                                        CapsuleShapeParams{
-                                            .Radius = 0.05f,
-                                            .Height = 0.1f,
-                                        },
-                                },
-                        });
-
-                    mRegistry.emplace<SceneObject>(projectile, "arrow"_hs);
-
-                    // Add to sync map for future RigidBodyUpdateResponse
-                    syncMap.insert_or_assign(aSpawn.ServerEntity, projectile);
-
-                    WATO_INFO(
-                        mRegistry,
-                        "spawned projectile {} from server entity {}",
-                        projectile,
-                        aSpawn.ServerEntity);
                 },
                 [&](const std::monostate) {},
             },

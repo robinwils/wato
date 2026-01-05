@@ -76,65 +76,127 @@ struct ConnectedResponse {
 
 inline bool operator==(const ConnectedResponse&, const ConnectedResponse&) { return true; }
 
-struct AcknowledgementResponse {
-    bool         Ack;
-    entt::entity Entity, ServerEntity;
+enum class RigidBodyEvent : std::uint16_t {
+    Create,
+    Update,
+    Destroy,
+};
 
-    bool Archive(auto& aArchive)
+template <>
+struct fmt::formatter<RigidBodyEvent> : fmt::formatter<std::string> {
+    auto format(RigidBodyEvent const& aObj, format_context& aCtx) const -> decltype(aCtx.out())
     {
-        if (!ArchiveBool(aArchive, Ack)) return false;
-        if (!ArchiveEntity(aArchive, Entity)) return false;
-        return ArchiveEntity(aArchive, ServerEntity);
+        switch (aObj) {
+            case RigidBodyEvent::Create:
+                return fmt::format_to(aCtx.out(), "Create Event");
+            case RigidBodyEvent::Update:
+                return fmt::format_to(aCtx.out(), "Update Event");
+            case RigidBodyEvent::Destroy:
+                return fmt::format_to(aCtx.out(), "Destroy Event");
+            default:
+                return fmt::format_to(aCtx.out(), "Unknown Event");
+        }
     }
 };
 
-inline bool operator==(const AcknowledgementResponse& aLHS, const AcknowledgementResponse& aRHS)
+struct ProjectileInitData {
+    entt::entity SourceTower;
+    float        Damage;
+    float        Speed;
+    entt::entity Target;
+
+    bool Archive(auto& aArchive)
+    {
+        if (!ArchiveEntity(aArchive, SourceTower)) return false;
+        if (!ArchiveValue(aArchive, Damage, 0.0f, 100.0f)) return false;
+        if (!ArchiveValue(aArchive, Speed, 0.0f, 10.0f)) return false;
+        if (!ArchiveEntity(aArchive, Target)) return false;
+        return true;
+    }
+};
+
+inline bool operator==(const ProjectileInitData& aLHS, const ProjectileInitData& aRHS)
 {
-    return aLHS.Ack == aRHS.Ack && aLHS.Entity == aRHS.Entity
-           && aLHS.ServerEntity == aRHS.ServerEntity;
+    return aLHS.SourceTower == aRHS.SourceTower && aLHS.Damage == aRHS.Damage
+           && aLHS.Speed == aRHS.Speed && aLHS.Target == aRHS.Target;
 }
+
+struct TowerInitData {
+    TowerType Type;
+    glm::vec3 Position;
+
+    bool Archive(auto& aArchive)
+    {
+        if (!ArchiveValue(aArchive, Type, 0u, uint32_t(TowerType::Count))) return false;
+        if (!ArchiveVector(aArchive, Position, 0.0f, 20.0f)) return false;
+        return true;
+    }
+};
+
+inline bool operator==(const TowerInitData& aLHS, const TowerInitData& aRHS)
+{
+    return aLHS.Type == aRHS.Type && aLHS.Position == aRHS.Position;
+}
+
+struct CreepInitData {
+    CreepType Type;
+    glm::vec3 Position;
+
+    bool Archive(auto& aArchive)
+    {
+        if (!ArchiveValue(aArchive, Type, 0u, uint32_t(CreepType::Count))) return false;
+        if (!ArchiveVector(aArchive, Position, 0.0f, 20.0f)) return false;
+        return true;
+    }
+};
+
+inline bool operator==(const CreepInitData& aLHS, const CreepInitData& aRHS)
+{
+    return aLHS.Type == aRHS.Type && aLHS.Position == aRHS.Position;
+}
+
+using EntityInitData =
+    std::variant<std::monostate, ProjectileInitData, TowerInitData, CreepInitData>;
+
+template <>
+struct fmt::formatter<EntityInitData> : fmt::formatter<std::string> {
+    auto format(EntityInitData const& aObj, format_context& aCtx) const -> decltype(aCtx.out())
+    {
+        std::visit(
+            VariantVisitor{
+                [&](const ProjectileInitData&) {
+                    fmt::format_to(aCtx.out(), "projectile init data");
+                },
+                [&](const TowerInitData&) { fmt::format_to(aCtx.out(), "tower init data"); },
+                [&](const CreepInitData&) { fmt::format_to(aCtx.out(), "creep init data"); },
+                [&](const std::monostate&) { fmt::format_to(aCtx.out(), "no init data"); },
+            },
+            aObj);
+        return aCtx.out();
+    }
+};
 
 struct RigidBodyUpdateResponse {
     RigidBodyParams Params;
     entt::entity    Entity;
+    RigidBodyEvent  Event;
+    EntityInitData  InitData;
 
     bool Archive(auto& aArchive)
     {
         if (!Params.Archive(aArchive)) return false;
-        return ArchiveEntity(aArchive, Entity);
+        if (!ArchiveEntity(aArchive, Entity)) return false;
+        if (!ArchiveValue(aArchive, Event, uint16_t(0), uint16_t(RigidBodyEvent::Destroy)))
+            return false;
+        if (!ArchiveVariant(aArchive, InitData)) return false;
+        return true;
     }
 };
 
 inline bool operator==(const RigidBodyUpdateResponse& aLHS, const RigidBodyUpdateResponse& aRHS)
 {
-    return aLHS.Params == aRHS.Params && aLHS.Entity == aRHS.Entity;
-}
-
-struct ProjectileSpawnResponse {
-    entt::entity ServerEntity;
-    entt::entity SourceTower;
-    float        Damage;
-    float        Speed;
-    entt::entity Target;
-    glm::vec3    Direction;
-
-    bool Archive(auto& aArchive)
-    {
-        if (!ArchiveEntity(aArchive, ServerEntity)) return false;
-        if (!ArchiveEntity(aArchive, SourceTower)) return false;
-        if (!ArchiveValue(aArchive, Damage, 0.0f, 100.0f)) return false;
-        if (!ArchiveValue(aArchive, Speed, 0.0f, 10.0f)) return false;
-        if (!ArchiveEntity(aArchive, Target)) return false;
-        if (!ArchiveVector(aArchive, Direction, -1.0f, 1.0f)) return false;
-        return true;
-    }
-};
-
-inline bool operator==(const ProjectileSpawnResponse& aLHS, const ProjectileSpawnResponse& aRHS)
-{
-    return aLHS.ServerEntity == aRHS.ServerEntity && aLHS.SourceTower == aRHS.SourceTower
-           && aLHS.Damage == aRHS.Damage && aLHS.Speed == aRHS.Speed
-           && aLHS.Target == aRHS.Target && aLHS.Direction == aRHS.Direction;
+    return aLHS.Params == aRHS.Params && aLHS.Entity == aRHS.Entity && aLHS.Event == aRHS.Event
+           && aLHS.InitData == aRHS.InitData;
 }
 
 enum class PacketType : std::uint16_t {
@@ -152,9 +214,7 @@ using NetworkResponsePayload = std::variant<
     NewGameResponse,
     ConnectedResponse,
     SyncPayload,
-    AcknowledgementResponse,
-    RigidBodyUpdateResponse,
-    ProjectileSpawnResponse>;
+    RigidBodyUpdateResponse>;
 
 template <typename _Payload>
 struct NetworkEvent {
@@ -175,6 +235,49 @@ struct NetworkEvent {
 
 using NetworkResponse = NetworkEvent<NetworkResponsePayload>;
 using NetworkRequest  = NetworkEvent<NetworkRequestPayload>;
+
+template <>
+struct fmt::formatter<NetworkResponsePayload> : fmt::formatter<std::string> {
+    auto format(NetworkResponsePayload const& aObj, format_context& aCtx) const
+        -> decltype(aCtx.out())
+    {
+        std::visit(
+            VariantVisitor{
+                [&](const NewGameResponse& aResp) {
+                    fmt::format_to(aCtx.out(), "new game response, game ID {}", aResp.GameID);
+                },
+                [&](const ConnectedResponse&) { fmt::format_to(aCtx.out(), "connected response"); },
+                [&](const SyncPayload& aResp) {
+                    fmt::format_to(aCtx.out(), "sync payload for game {}", aResp.GameID);
+                },
+                [&](const RigidBodyUpdateResponse& aResp) {
+                    fmt::format_to(
+                        aCtx.out(),
+                        "rigid body update, {}, with {}",
+                        aResp.Event,
+                        aResp.InitData);
+                },
+                [&](const std::monostate&) {
+                    fmt::format_to(aCtx.out(), "no network response payload");
+                },
+            },
+            aObj);
+        return aCtx.out();
+    }
+};
+
+template <typename PL>
+struct fmt::formatter<NetworkEvent<PL>> : fmt::formatter<std::string> {
+    auto format(NetworkEvent<PL> const& aObj, format_context& aCtx) const -> decltype(aCtx.out())
+    {
+        return fmt::format_to(
+            aCtx.out(),
+            "network event at tick {} for player {}: {}",
+            aObj.Tick,
+            aObj.PlayerID,
+            aObj.Payload);
+    }
+};
 
 template <>
 struct fmt::formatter<ENetAddress> : fmt::formatter<std::string> {

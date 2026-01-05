@@ -140,7 +140,7 @@ void TowerAttackSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint3
 
             glm::vec3 direction = glm::normalize(targetTransform->Position - pT.Position);
 
-            aRegistry.emplace<RigidBody>(
+            auto& rigidBody = aRegistry.emplace<RigidBody>(
                 projectile,
                 RigidBody{
                     .Params =
@@ -175,15 +175,21 @@ void TowerAttackSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint3
                     .PlayerID = 0,
                     .Tick     = aRegistry.ctx().get<GameInstance&>().Tick,
                     .Payload =
-                        ProjectileSpawnResponse{
-                            .ServerEntity = projectile,
-                            .SourceTower  = towerEntity,
-                            .Damage       = 10.0f,
-                            .Speed        = 5.0f,
-                            .Target       = attack.CurrentTarget,
-                            .Direction    = direction,
+                        RigidBodyUpdateResponse{
+                            .Params = rigidBody.Params,
+                            .Entity = projectile,
+                            .Event  = RigidBodyEvent::Create,
+                            .InitData =
+                                ProjectileInitData{
+                                    .SourceTower = towerEntity,
+                                    .Damage      = 10.0f,
+                                    .Speed       = 5.0f,
+                                    .Target      = attack.CurrentTarget,
+                                },
                         },
                 });
+            } else {
+                WATO_WARN(aRegistry, "enet server not instanciated");
             }
 
             WATO_DBG(
