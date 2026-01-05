@@ -1,6 +1,7 @@
 #include "systems/collision.hpp"
 
 #include <tuple>
+#include <unordered_set>
 
 #include "components/creep.hpp"
 #include "components/game.hpp"
@@ -19,6 +20,9 @@ void CollisionSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_
     }
 
     auto& colliderMap = aRegistry.ctx().get<ColliderEntityMap>();
+
+    // Track projectiles to destroy after processing all collisions
+    std::unordered_set<entt::entity> projectilesToDestroy;
 
     for (const auto& event : listener->GetEvents()) {
         if (event.Event != rp3d::OverlapCallback::OverlapPair::EventType::OverlapStart) {
@@ -70,8 +74,10 @@ void CollisionSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_
                 auto* creep  = aRegistry.try_get<Creep>(targetEntity);
 
                 if (health && creep) {
-                    health->Health -= projectile->Damage;
-                    WATO_DBG(
+                    aRegistry.patch<Health>(targetEntity, [&projectile](Health& aHealth) {
+                        aHealth.Health -= projectile->Damage;
+                    });
+                    WATO_INFO(
                         aRegistry,
                         "projectile {} hit creep {}, health now {}",
                         projectileEntity,
@@ -93,10 +99,12 @@ void CollisionSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_
                 }
             }
         }
+    }
 
-        // Destroy projectile regardless of what it hit
-        aRegistry.destroy(projectileEntity);
-        WATO_TRACE(aRegistry, "destroyed projectile {} on collision", projectileEntity);
+    for (entt::entity projectile : projectilesToDestroy) {
+        if (aRegistry.valid(projectile)) {
+            aRegistry.destroy(projectile);
+        }
     }
 
     listener->ClearEvents();
