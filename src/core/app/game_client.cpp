@@ -9,6 +9,7 @@
 #include <span>
 
 #include "components/game.hpp"
+#include "components/health.hpp"
 #include "components/imgui.hpp"
 #include "components/model_rotation_offset.hpp"
 #include "components/net.hpp"
@@ -514,6 +515,22 @@ void GameClient::consumeNetworkResponses()
                             }
                             break;
                         }
+                    }
+                },
+                [&](const HealthUpdateResponse& aUpdate) {
+                    auto& syncMap = mRegistry.ctx().get<EntitySyncMap>();
+
+                    if (syncMap.contains(aUpdate.Entity)) {
+                        entt::entity e = syncMap[aUpdate.Entity];
+                        WATO_INFO(
+                            mRegistry,
+                            "received health update for server {}, updating local {} => {}",
+                            aUpdate.Entity,
+                            e,
+                            aUpdate.Health);
+                        mRegistry.patch<Health>(e, [&aUpdate](Health& aHealth) {
+                            aHealth.Health = aUpdate.Health;
+                        });
                     }
                 },
                 [&](const std::monostate) {},

@@ -199,6 +199,22 @@ inline bool operator==(const RigidBodyUpdateResponse& aLHS, const RigidBodyUpdat
            && aLHS.InitData == aRHS.InitData;
 }
 
+struct HealthUpdateResponse {
+    entt::entity Entity;
+    float        Health;
+
+    bool Archive(auto& aArchive)
+    {
+        if (!ArchiveEntity(aArchive, Entity)) return false;
+        return ArchiveValue(aArchive, Health, 0.0f, 1000.0f);
+    }
+};
+
+inline bool operator==(const HealthUpdateResponse& aLHS, const HealthUpdateResponse& aRHS)
+{
+    return aLHS.Entity == aRHS.Entity && aLHS.Health == aRHS.Health;
+}
+
 enum class PacketType : std::uint16_t {
     ClientSync,
     ServerSync,
@@ -214,7 +230,8 @@ using NetworkResponsePayload = std::variant<
     NewGameResponse,
     ConnectedResponse,
     SyncPayload,
-    RigidBodyUpdateResponse>;
+    RigidBodyUpdateResponse,
+    HealthUpdateResponse>;
 
 template <typename _Payload>
 struct NetworkEvent {
@@ -256,6 +273,13 @@ struct fmt::formatter<NetworkResponsePayload> : fmt::formatter<std::string> {
                         "rigid body update, {}, with {}",
                         aResp.Event,
                         aResp.InitData);
+                },
+                [&](const HealthUpdateResponse& aResp) {
+                    fmt::format_to(
+                        aCtx.out(),
+                        "health update for {}: {}",
+                        aResp.Entity,
+                        aResp.Health);
                 },
                 [&](const std::monostate&) {
                     fmt::format_to(aCtx.out(), "no network response payload");

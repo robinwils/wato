@@ -3,10 +3,12 @@
 #include <tuple>
 
 #include "components/creep.hpp"
+#include "components/game.hpp"
 #include "components/health.hpp"
 #include "components/projectile.hpp"
-#include "core/physics/physics_event_listener.hpp"
+#include "core/net/enet_server.hpp"
 #include "core/physics/physics.hpp"
+#include "core/physics/physics_event_listener.hpp"
 #include "core/sys/log.hpp"
 
 void CollisionSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t aTick)
@@ -75,6 +77,19 @@ void CollisionSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_
                         projectileEntity,
                         targetEntity,
                         health->Health);
+
+                    if (auto* server = aRegistry.ctx().find<ENetServer>()) {
+                        server->EnqueueResponse(new NetworkResponse{
+                            .Type     = PacketType::Ack,
+                            .PlayerID = 0,
+                            .Tick     = aRegistry.ctx().get<GameInstance&>().Tick,
+                            .Payload =
+                                HealthUpdateResponse{
+                                    .Entity = targetEntity,
+                                    .Health = health->Health,
+                                },
+                        });
+                    }
                 }
             }
         }
