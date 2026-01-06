@@ -163,10 +163,10 @@ inline rp3d::Vector3 ToRP3D(const glm::vec3 aVector)
 /// Returns colliders ordered as {aFirstCategory, aSecondCategory}.
 /// Returns {nullptr, nullptr} if categories don't match.
 inline std::pair<rp3d::Collider*, rp3d::Collider*> MatchColliderPair(
-    rp3d::Collider* aCollider1,
-    rp3d::Collider* aCollider2,
-    unsigned short  aFirstCategory,
-    unsigned short  aSecondCategory)
+    const rp3d::Collider* aCollider1,
+    const rp3d::Collider* aCollider2,
+    unsigned short        aFirstCategory,
+    unsigned short        aSecondCategory)
 {
     auto cat1 = aCollider1->getCollisionCategoryBits();
     auto cat2 = aCollider2->getCollisionCategoryBits();

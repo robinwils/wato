@@ -4,12 +4,20 @@
 
 #include <vector>
 
+#include "core/physics/physics.hpp"
 #include "core/sys/log.hpp"
 
 struct TriggerEvent {
-    rp3d::Collider*                                     Collider1;
-    rp3d::Collider*                                     Collider2;
+    rp3d::Collider*                               Collider1;
+    rp3d::Collider*                               Collider2;
     rp3d::OverlapCallback::OverlapPair::EventType Event;
+
+    inline std::pair<rp3d::Collider*, rp3d::Collider*> Matches(
+        unsigned short aFirstCategory,
+        unsigned short aSecondCategory) const
+    {
+        return MatchColliderPair(Collider1, Collider2, aFirstCategory, aSecondCategory);
+    }
 };
 
 class PhysicsEventListener : public rp3d::EventListener
