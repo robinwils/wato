@@ -12,7 +12,7 @@ struct TriggerEvent {
     rp3d::Collider*                               Collider2;
     rp3d::OverlapCallback::OverlapPair::EventType Event;
 
-    inline std::pair<rp3d::Collider*, rp3d::Collider*> Matches(
+    inline std::pair<const rp3d::Collider*, const rp3d::Collider*> Matches(
         unsigned short aFirstCategory,
         unsigned short aSecondCategory) const
     {

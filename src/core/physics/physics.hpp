@@ -85,7 +85,7 @@ struct ColliderParams {
     ColliderShapeParams ShapeParams;
 };
 
-using ColliderEntityMap = std::unordered_map<reactphysics3d::Collider*, entt::entity>;
+using ColliderEntityMap = std::unordered_map<const rp3d::Collider*, entt::entity>;
 
 struct PhysicsParams {
     bool InfoLogs    = false;
@@ -162,7 +162,7 @@ inline rp3d::Vector3 ToRP3D(const glm::vec3 aVector)
 /// Matches a collision pair against expected categories.
 /// Returns colliders ordered as {aFirstCategory, aSecondCategory}.
 /// Returns {nullptr, nullptr} if categories don't match.
-inline std::pair<rp3d::Collider*, rp3d::Collider*> MatchColliderPair(
+inline std::pair<const rp3d::Collider*, const rp3d::Collider*> MatchColliderPair(
     const rp3d::Collider* aCollider1,
     const rp3d::Collider* aCollider2,
     unsigned short        aFirstCategory,
