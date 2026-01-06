@@ -47,9 +47,9 @@ void GameServer::OnGameInstanceCreated(Registry& aRegistry)
     auto& fixedExec = aRegistry.ctx().get<FixedSystemExecutor>();
 
     fixedExec.Register<NetworkSyncSystem<ENetServer>>();
-    fixedExec.Register<PhysicsSystem>();
     fixedExec.Register<HealthSystem>();
     fixedExec.Register<CollisionSystem>();
+    fixedExec.Register<PhysicsSystem>();
     fixedExec.Register<TowerBuiltSystem>();
     fixedExec.Register<RigidBodiesUpdateSystem>();
     fixedExec.Register<ProjectileSystem>();
