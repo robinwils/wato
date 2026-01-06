@@ -214,6 +214,7 @@ if (ENABLE_CLIENT)
     src/systems/action.hpp
     src/systems/animation.hpp
     src/systems/input.hpp
+    src/systems/network_response.hpp
     src/systems/render.hpp
     src/systems/sync.hpp
 
@@ -238,6 +239,7 @@ if (ENABLE_CLIENT)
     src/systems/action.cpp
     src/systems/animation.cpp
     src/systems/input.cpp
+    src/systems/network_response.cpp
     src/systems/render.cpp
     src/systems/sync.cpp
 
