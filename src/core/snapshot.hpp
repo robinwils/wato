@@ -32,7 +32,7 @@ class BitInputArchive : public StreamDecoder
         }
     }
 
-    BitInputArchive(bit_buffer& aBits, bool aEnableLogger = true) : StreamDecoder(aBits)
+    BitInputArchive(const bit_buffer& aBits, bool aEnableLogger = true) : StreamDecoder(aBits)
     {
         if (!aEnableLogger) {
             WATO_SER_LOGGER->set_level(spdlog::level::off);

@@ -54,9 +54,10 @@ constexpr T bswap_any(T v)
     }
 }
 
-using word       = uint32_t;
-using bit_stream = std::span<word>;
-using bit_buffer = std::vector<word>;
+using word             = uint32_t;
+using bit_stream       = std::span<word>;
+using const_bit_stream = std::span<const word>;
+using bit_buffer       = std::vector<word>;
 
 class BitWriter
 {
@@ -149,7 +150,7 @@ class BitReader
         : mBuf(std::move(aBits)), mScratch(0), mCurBit(0), mNext(mBuf.data())
     {
     }
-    BitReader(bit_buffer& aBits)
+    BitReader(const bit_buffer& aBits)
         : mBuf(std::span(aBits)), mScratch(0), mCurBit(0), mNext(mBuf.data())
     {
     }
@@ -203,10 +204,10 @@ class BitReader
     }
 
    private:
-    bit_stream mBuf;
-    uint64_t   mScratch;
-    uint32_t   mCurBit;
-    word*      mNext;
+    const_bit_stream mBuf;
+    uint64_t         mScratch;
+    uint32_t         mCurBit;
+    const word*      mNext;
 };
 
 template <typename T, typename M>
@@ -366,7 +367,7 @@ class StreamDecoder
    public:
     StreamDecoder() = default;
     StreamDecoder(bit_stream&& aBits) : mBits(std::move(aBits)) {}
-    StreamDecoder(bit_buffer& aBits) : mBits(aBits) {}
+    StreamDecoder(const bit_buffer& aBits) : mBits(aBits) {}
     StreamDecoder(uint8_t* aBytes, std::size_t aSize)
         : mBits(bit_stream(std::bit_cast<word*>(aBytes), aSize))
     {
