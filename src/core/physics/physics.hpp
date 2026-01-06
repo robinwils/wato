@@ -111,8 +111,10 @@ class Physics
     // Enumeration for categories
     enum Category {
         Terrain     = 0x0001,
-        Entities    = 0x0002,
-        Projectiles = 0x0004,
+        Base        = 0x0002,
+        Spawn       = 0x0004,
+        Entities    = 0x0008,
+        Projectiles = 0x0010,
         Count       = (Projectiles << 1) - 1
     };
 

@@ -130,9 +130,9 @@ void PlacementModeContextHandler::operator()(Registry& aRegistry, BuildTowerPayl
             .Params =
                 ColliderParams{
                     .CollisionCategoryBits = Category::Entities,
-                    .CollideWithMaskBits   = Category::Terrain | Category::Entities,
-                    .IsTrigger             = false,
-                    .Offset                = Transform3D{},
+                    .CollideWithMaskBits = Category::Terrain | Category::Entities | Category::Base,
+                    .IsTrigger           = false,
+                    .Offset              = Transform3D{},
                     .ShapeParams =
                         BoxShapeParams{
                             .HalfExtents = glm::vec3(0.35f, 0.65f, 0.35f),
@@ -187,7 +187,7 @@ void ServerContextHandler::operator()(Registry& aRegistry, BuildTowerPayload& aP
         .Params =
             ColliderParams{
                 .CollisionCategoryBits = Category::Entities,
-                .CollideWithMaskBits   = Category::Terrain | Category::Entities,
+                .CollideWithMaskBits   = Category::Terrain | Category::Entities | Category::Base,
                 .IsTrigger             = false,
                 .Offset                = Transform3D{},
                 .ShapeParams =
@@ -278,7 +278,7 @@ void ServerContextHandler::operator()(Registry& aRegistry, SendCreepPayload& aPa
                 .Params =
                     ColliderParams{
                         .CollisionCategoryBits = Category::Entities,
-                        .CollideWithMaskBits   = Category::Projectiles,
+                        .CollideWithMaskBits   = Category::Projectiles | Category::Base,
                         .IsTrigger             = false,
                         .Offset                = Transform3D{},
                         .ShapeParams =

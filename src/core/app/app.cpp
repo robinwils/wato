@@ -102,7 +102,7 @@ void Application::SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeigh
         Collider{
             .Params =
                 ColliderParams{
-                    .CollisionCategoryBits = Category::Terrain,
+                    .CollisionCategoryBits = Category::Base,
                     .CollideWithMaskBits   = Category::Terrain | Category::Entities,
                     .IsTrigger             = true,
                     .ShapeParams =
