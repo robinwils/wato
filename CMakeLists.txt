@@ -473,6 +473,7 @@ target_sources(watolib
     src/core/tower_building_handler.cpp
     src/systems/ai.cpp
     src/systems/collision.cpp
+    src/systems/health.cpp
     src/systems/physics.cpp
     src/systems/projectile.cpp
     src/systems/rigid_bodies_update.cpp

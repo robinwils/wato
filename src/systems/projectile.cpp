@@ -12,12 +12,6 @@ void ProjectileSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32
 {
     for (auto&& [projectileEntity, projectile, transform, rb] :
          aRegistry.view<Projectile, Transform3D, RigidBody>().each()) {
-        if (!aRegistry.valid(projectile.Target)) {
-            aRegistry.destroy(projectileEntity);
-            WATO_TRACE(aRegistry, "destroyed projectile {} (invalid target)", projectileEntity);
-            continue;
-        }
-
         auto* targetTransform = aRegistry.try_get<Transform3D>(projectile.Target);
         if (!targetTransform) {
             WATO_TRACE(aRegistry, "projectile has dead target", projectileEntity);

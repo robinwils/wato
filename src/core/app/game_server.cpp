@@ -14,6 +14,7 @@
 #include "systems/action.hpp"
 #include "systems/ai.hpp"
 #include "systems/collision.hpp"
+#include "systems/health.hpp"
 #include "systems/physics.hpp"
 #include "systems/projectile.hpp"
 #include "systems/rigid_bodies_update.hpp"
@@ -47,6 +48,7 @@ void GameServer::OnGameInstanceCreated(Registry& aRegistry)
 
     fixedExec.Register<NetworkSyncSystem<ENetServer>>();
     fixedExec.Register<PhysicsSystem>();
+    fixedExec.Register<HealthSystem>();
     fixedExec.Register<CollisionSystem>();
     fixedExec.Register<TowerBuiltSystem>();
     fixedExec.Register<RigidBodiesUpdateSystem>();
