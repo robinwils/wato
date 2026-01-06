@@ -6,8 +6,11 @@
 
 #include <thread>
 
+#include "components/player.hpp"
+#include "components/spawner.hpp"
 #include "core/net/net.hpp"
 #include "core/snapshot.hpp"
+#include "core/sys/log.hpp"
 #include "core/types.hpp"
 #include "input/action.hpp"
 #include "registry/registry.hpp"
@@ -44,6 +47,8 @@ GameServer::~GameServer()
 
 void GameServer::OnGameInstanceCreated(Registry& aRegistry)
 {
+    spawnPlayers(aRegistry);
+
     auto& fixedExec = aRegistry.ctx().get<FixedSystemExecutor>();
 
     fixedExec.Register<NetworkSyncSystem<ENetServer>>();
@@ -79,11 +84,19 @@ void GameServer::ConsumeNetworkRequests()
                 [&](const NewGameRequest& aNewGame) {
                     GameInstanceID gameID = createGameInstance(aNewGame);
                     mLogger->info("Created game {}", gameID);
-                    mServer.EnqueueResponse(new NetworkResponse{
-                        .Type     = PacketType::NewGame,
-                        .PlayerID = 0,
-                        .Tick     = 0,
-                        .Payload  = NewGameResponse{.GameID = gameID}});
+
+                    for (auto&& [entity, player] : mGameInstances[gameID].view<Player>().each()) {
+                        mLogger->debug(
+                            "Sending network response for game {}, player {}, player {}",
+                            gameID,
+                            player.ID,
+                            entity);
+                        mServer.EnqueueResponse(new NetworkResponse{
+                            .Type     = PacketType::NewGame,
+                            .PlayerID = player.ID,
+                            .Tick     = 0,
+                            .Payload  = NewGameResponse{.GameID = gameID, .PlayerEntity = entity}});
+                    }
                 },
                 [&](const std::monostate&) {}},
             aEvent->Payload);
@@ -134,6 +147,50 @@ int GameServer::Run(tf::Executor& aExecutor)
 }
 
 void GameServer::Stop() { mRunning = false; }
+
+void GameServer::spawnPlayers(Registry& aRegistry)
+{
+    auto& colliderToEntity = aRegistry.ctx().get<ColliderEntityMap>();
+    auto& graph            = aRegistry.ctx().get<Graph>();
+
+    auto player = aRegistry.create();
+    // TODO: ID should be something coming from outside (menu, DB, etc...)
+    aRegistry.emplace<Player>(player, 0u);
+    aRegistry.emplace<Name>(player, "stion");
+    aRegistry.emplace<Health>(player, 100.0f);
+
+    WATO_INFO(aRegistry, "server player {} created", player);
+
+    auto& pTransform = aRegistry.emplace<Transform3D>(player, glm::vec3(2.0f, 0.004f, 2.0f));
+    aRegistry.emplace<RigidBody>(
+        player,
+        RigidBody{
+            .Params =
+                RigidBodyParams{
+                    .Type           = rp3d::BodyType::STATIC,
+                    .Velocity       = 0.0f,
+                    .Direction      = glm::vec3(0.0f),
+                    .GravityEnabled = false,
+                },
+        });
+    auto& c = aRegistry.emplace<Collider>(
+        player,
+        Collider{
+            .Params =
+                ColliderParams{
+                    .CollisionCategoryBits = Category::Base,
+                    .CollideWithMaskBits   = Category::Terrain | Category::Entities,
+                    .IsTrigger             = true,
+                    .ShapeParams =
+                        BoxShapeParams{
+                            .HalfExtents = GraphCell(1, 1).ToWorld() * 0.5f,
+                        },
+                },
+        });
+    colliderToEntity[c.Handle] = player;
+
+    graph.ComputePaths(GraphCell::FromWorldPoint(pTransform.Position));
+}
 
 GameInstanceID GameServer::createGameInstance(const NewGameRequest&)
 {

@@ -93,6 +93,9 @@ class GameClient : public Application
         mRegistry.ctx().emplace<ShaderCache>();
         mRegistry.ctx().emplace<ModelCache>();
         mRegistry.ctx().emplace<EntitySyncMap>();
+
+        // Create dispatcher for network events
+        mRegistry.ctx().emplace<entt::dispatcher>();
     }
     void networkThread();
     void consumeNetworkResponses();

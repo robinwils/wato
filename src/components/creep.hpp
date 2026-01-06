@@ -18,4 +18,5 @@ enum class CreepType {
 
 struct Creep {
     CreepType Type;
+    float     Damage;
 };

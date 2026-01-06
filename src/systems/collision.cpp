@@ -35,7 +35,7 @@ void CollisionSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_
         }
 
         projectileHits(aRegistry, event, entitiesToDestroy);
-        creepHitsBase(aRegistry, event);
+        creepHitsPlayerBase(aRegistry, event);
     }
 
     for (entt::entity e : entitiesToDestroy) {
@@ -136,25 +136,44 @@ void CollisionSystem::projectileHits(
     }
 }
 
-void CollisionSystem::creepHitsBase(Registry& aRegistry, const TriggerEvent& aEvent)
+void CollisionSystem::creepHitsPlayerBase(Registry& aRegistry, const TriggerEvent& aEvent)
 {
     const auto& colliderMap = aRegistry.ctx().get<ColliderEntityMap>();
 
-    auto [creepCollider, baseCollider] = aEvent.Matches(Category::Entities, Category::Base);
+    auto [creepCollider, playerCollider] = aEvent.Matches(Category::Entities, Category::Base);
 
-    if (creepCollider && baseCollider) {
-        entt::entity creepEntity = colliderMap.at(creepCollider);
-        entt::entity baseEntity  = colliderMap.at(baseCollider);
+    if (creepCollider && playerCollider) {
+        entt::entity creepEntity  = colliderMap.at(creepCollider);
+        entt::entity playerEntity = colliderMap.at(playerCollider);
 
-        if (!aRegistry.valid(baseEntity) || !aRegistry.valid(creepEntity)) {
+        if (!aRegistry.valid(playerEntity) || !aRegistry.valid(creepEntity)) {
             return;
         }
 
-        auto& base  = aRegistry.get<Base>(baseEntity);
-        auto& creep = aRegistry.get<Creep>(creepEntity);
-
-        aRegistry.patch<Health>(base.Player, [&creep](Health& aHealth) {
+        auto& creep  = aRegistry.get<Creep>(creepEntity);
+        auto& health = aRegistry.patch<Health>(playerEntity, [&creep](Health& aHealth) {
             aHealth.Health -= creep.Damage;
         });
+
+        WATO_DBG(
+            aRegistry,
+            "creep hits base, player {} looses {} health, {} left",
+            playerEntity,
+            creep.Damage,
+            health.Health);
+
+        aRegistry.patch<Health>(creepEntity, [](Health& aHealth) { aHealth.Health = 0.0f; });
+        if (auto* server = aRegistry.ctx().find<ENetServer>()) {
+            server->EnqueueResponse(new NetworkResponse{
+                .Type     = PacketType::Ack,
+                .PlayerID = 0,
+                .Tick     = aRegistry.ctx().get<GameInstance&>().Tick,
+                .Payload =
+                    HealthUpdateResponse{
+                        .Entity = playerEntity,
+                        .Health = health.Health,
+                    },
+            });
+        }
     }
 }

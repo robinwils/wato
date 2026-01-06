@@ -36,7 +36,7 @@ void TowerBuiltSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32
 
     // FIXME: need to think about player ownership and how to handle only updating the correct
     // player's grid
-    for (auto&& [base, transform] : aRegistry.view<Base, Transform3D>().each()) {
+    for (auto&& [e, base, transform] : aRegistry.view<Base, Transform3D>().each()) {
         graph.ComputePaths(GraphCell::FromWorldPoint(transform.Position));
         WATO_TRACE(aRegistry, "paths updated");
         WATO_DBG(aRegistry, "{}", aRegistry.ctx().get<Graph>());

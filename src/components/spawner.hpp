@@ -1,7 +1,6 @@
 #pragma once
 
-struct Spawner {
-};
+#include <entt/entity/fwd.hpp>
 
-struct Base {
+struct Spawner {
 };

@@ -56,12 +56,13 @@ inline bool operator==(const SyncPayload& aLHS, const SyncPayload& aRHS)
 
 struct NewGameResponse {
     GameInstanceID GameID;
+    entt::entity   PlayerEntity;
 
     bool Archive(auto& aArchive)
     {
         if (!ArchiveValue(aArchive, GameID, uint64_t(0), std::numeric_limits<uint64_t>::max()))
             return false;
-        return true;
+        return ArchiveEntity(aArchive, PlayerEntity);
     }
 };
 

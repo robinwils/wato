@@ -24,5 +24,5 @@ class CollisionSystem : public FixedSystem
         Registry&                         aRegistry,
         const TriggerEvent&               aEvent,
         std::unordered_set<entt::entity>& aToDestroy);
-    void creepHitsBase(Registry& aRegistry, const TriggerEvent& aEvent);
+    void creepHitsPlayerBase(Registry& aRegistry, const TriggerEvent& aEvent);
 };
