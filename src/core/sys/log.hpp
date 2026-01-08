@@ -109,5 +109,5 @@ inline Logger CreateLogger(const std::string& aName, const std::string& aLevel)
 #define WATO_SER_INFO(...)
 #define WATO_SER_WARN(...)
 #define WATO_SER_ERR(...)
-#define WATO_SER_CRITICAL(...)
+#define WATO_SER_CRIT(...)
 #endif
