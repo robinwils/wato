@@ -1,14 +1,20 @@
 #pragma once
 
-#include "core/window.hpp"
 #include "systems/system.hpp"
 
-class InputSystem : public System<InputSystem>
+/**
+ * @brief Input handling system (frame time)
+ *
+ * Processes keyboard/mouse input and generates actions.
+ * Runs at variable frame rate for responsive input.
+ */
+class InputSystem : public FrameSystem
 {
    public:
-    void operator()(Registry& aRegistry);
+    using FrameSystem::FrameSystem;
 
-    static constexpr const char* StaticName() { return "InputSystem"; }
+   protected:
+    void Execute(Registry& aRegistry, float aDelta) override;
 
    private:
     void handleMouseMovement(Registry& aRegistry);

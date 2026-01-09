@@ -16,6 +16,7 @@
 
 #include "components/animator.hpp"
 #include "components/camera.hpp"
+#include "components/health.hpp"
 #include "components/imgui.hpp"
 #include "components/scene_object.hpp"
 #include "core/physics/physics.hpp"
@@ -28,7 +29,7 @@
 #include "renderer/renderer.hpp"
 #include "resource/cache.hpp"
 
-void RenderSystem::operator()(Registry& aRegistry)
+void RenderSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDelta)
 {
     auto& renderer = aRegistry.ctx().get<BgfxRenderer&>();
     // This dummy draw call is here to make sure that view 0 is cleared
@@ -136,7 +137,7 @@ void RenderSystem::renderGrid(Registry& aRegistry)
     }
 }
 
-void RenderImguiSystem::operator()(Registry& aRegistry)
+void RenderImguiSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDelta)
 {
     auto& window = aRegistry.ctx().get<WatoWindow&>();
     imguiBeginFrame(window.GetInput(), window.Width<int>(), window.Height<int>());
@@ -223,13 +224,21 @@ void RenderImguiSystem::operator()(Registry& aRegistry)
     auto& graph = aRegistry.ctx().get<Graph>();
     for (auto&& [entity, imgui, t] : aRegistry.view<ImguiDrawable, Transform3D>().each()) {
         if (imgui.PosOnUnit) {
-            GraphCell c      = GraphCell::FromWorldPoint(t.Position);
-            glm::vec3 screen = window.ProjectPosition(t.Position, cam, camT.Position);
+            GraphCell   c      = GraphCell::FromWorldPoint(t.Position);
+            glm::vec3   screen = window.ProjectPosition(t.Position, cam, camT.Position);
+            std::string s      = "";
+
+            if (auto* health = aRegistry.try_get<Health>(entity); health) {
+                s = fmt::format("{} {}, {} health", c.Location.x, c.Location.y, health->Health);
+            } else {
+                s = fmt::format("{} {}", c.Location.x, c.Location.y);
+            }
+
             text(
                 screen.x,
                 window.Height<float>() - screen.y,
                 fmt::format("graph_pos_{}", entt::id_type(entity)),
-                fmt::format("{} {}", c.Location.x, c.Location.y));
+                s);
 
             if (auto next = graph.GetNextCell(GraphCell::FromWorldPoint(t.Position))) {
                 screen = window.ProjectPosition(next->ToWorld(), cam, camT.Position);
@@ -248,7 +257,7 @@ void RenderImguiSystem::operator()(Registry& aRegistry)
     imguiEndFrame();
 }
 
-void CameraSystem::operator()(Registry& aRegistry)
+void CameraSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDelta)
 {
     auto& window   = aRegistry.ctx().get<WatoWindow&>();
     auto& renderer = aRegistry.ctx().get<BgfxRenderer&>();
@@ -288,7 +297,7 @@ struct PosColor {
 };
 bgfx::VertexLayout PosColor::msLayout;
 
-void PhysicsDebugSystem::operator()(Registry& aRegistry)
+void PhysicsDebugSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDelta)
 {
     const auto&                phy           = aRegistry.ctx().get<Physics&>();
     auto&                      renderer      = aRegistry.ctx().get<BgfxRenderer&>();

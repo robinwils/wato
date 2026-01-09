@@ -84,7 +84,7 @@ inline Logger CreateLogger(const std::string& aName, const std::string& aLevel)
     return logger;
 }
 
-#define WATO_REG_LOGGER(reg) (reg.ctx().get<Logger&>())
+#define WATO_REG_LOGGER(reg) ((reg).ctx().get<Logger&>())
 
 #define WATO_TRACE(reg, ...) WATO_REG_LOGGER(reg)->trace(__VA_ARGS__)
 #define WATO_DBG(reg, ...)   WATO_REG_LOGGER(reg)->debug(__VA_ARGS__)
@@ -95,3 +95,19 @@ inline Logger CreateLogger(const std::string& aName, const std::string& aLevel)
 #define WATO_NAMED_LOGGER(name) \
     (spdlog::get(name) ? spdlog::get(name) : spdlog::stdout_color_mt(name))
 #define WATO_SER_LOGGER WATO_NAMED_LOGGER("serialize")
+
+#if WATO_DEBUG
+#define WATO_SER_TRACE(...) WATO_SER_LOGGER->trace(__VA_ARGS__)
+#define WATO_SER_DBG(...)   WATO_SER_LOGGER->debug(__VA_ARGS__)
+#define WATO_SER_INFO(...)  WATO_SER_LOGGER->info(__VA_ARGS__)
+#define WATO_SER_WARN(...)  WATO_SER_LOGGER->warn(__VA_ARGS__)
+#define WATO_SER_ERR(...)   WATO_SER_LOGGER->error(__VA_ARGS__)
+#define WATO_SER_CRIT(...)  WATO_SER_LOGGER->critical(__VA_ARGS__)
+#else
+#define WATO_SER_TRACE(...)
+#define WATO_SER_DBG(...)
+#define WATO_SER_INFO(...)
+#define WATO_SER_WARN(...)
+#define WATO_SER_ERR(...)
+#define WATO_SER_CRIT(...)
+#endif

@@ -5,14 +5,20 @@
 
 #include <chrono>
 #include <entt/core/fwd.hpp>
+#include <entt/signal/dispatcher.hpp>
 #include <memory>
 #include <span>
 
 #include "components/game.hpp"
+#include "components/health.hpp"
 #include "components/imgui.hpp"
+#include "components/model_rotation_offset.hpp"
 #include "components/net.hpp"
+#include "components/projectile.hpp"
+#include "components/tower_attack.hpp"
 #include "core/net/enet_client.hpp"
 #include "core/net/net.hpp"
+#include "core/net/network_events.hpp"
 #include "core/snapshot.hpp"
 #include "core/sys/log.hpp"
 #include "core/types.hpp"
@@ -22,8 +28,16 @@
 #include "renderer/grid_preview_material.hpp"
 #include "renderer/primitive.hpp"
 #include "renderer/renderer.hpp"
+#include "systems/action.hpp"
+#include "systems/animation.hpp"
+#include "systems/input.hpp"
+#include "systems/network_response.hpp"
+#include "systems/physics.hpp"
 #include "systems/render.hpp"
+#include "systems/rigid_bodies_update.hpp"
+#include "systems/sync.hpp"
 #include "systems/system.hpp"
+#include "systems/tower_built.hpp"
 
 using namespace std::literals::chrono_literals;
 using namespace entt::literals;
@@ -42,45 +56,20 @@ void GameClient::Init()
     renderer.Init(window);
     netClient.Init();
 
-    entt::organizer organizerFixedTime;
     LoadResources(mRegistry);
-    mSystems.push_back(RenderImguiSystem::MakeDelegate(mRenderImguiSystem));
-    mSystems.push_back(InputSystem::MakeDelegate(mInputSystem));
-    mSystems.push_back(RealTimeActionSystem::MakeDelegate(mRTActionSystem));
-    mSystems.push_back(CameraSystem::MakeDelegate(mCameraSystem));
-    mSystems.push_back(RenderSystem::MakeDelegate(mRenderSystem));
 
+    // Register frame-time systems (variable delta)
+    // in reversed order, entt::scheduler executes processes starting from the end
 #if WATO_DEBUG
-    mSystems.push_back(PhysicsDebugSystem::MakeDelegate(mPhysicsDbgSystem));
+    mFrameExecutor.Register<PhysicsDebugSystem>();
 #endif
-
-    mSystemsFT.push_back(DeterministicActionSystem::MakeDelegate(mFTActionSystem));
-    mSystemsFT.push_back(TowerBuiltSystem::MakeDelegate(mTowerBuiltSystem));
-    mSystemsFT.push_back(RigidBodiesUpdateSystem::MakeDelegate(mRBUpdatesSystem));
-    mSystemsFT.push_back(AnimationSystem::MakeDelegate(mAnimationSystem));
-    mSystemsFT.push_back(PhysicsSystem::MakeDelegate(mPhysicsSystem));
-    mSystemsFT.push_back(NetworkSyncSystem<ENetClient>::MakeDelegate(mNetworkSyncSystem));
-
-    auto graph = organizerFixedTime.graph();
-    WATO_INFO(mRegistry, "graph size: {}", graph.size());
-    // TODO: use these tasks
-    std::unordered_map<std::string, tf::Task> tasks;
-
-    for (auto&& v : graph) {
-        v.prepare(mRegistry);
-        tasks[v.name()] = mTaskflow.emplace([&]() {
-            typename entt::organizer::function_type* cb = v.callback();
-            cb(v.data(), mRegistry);
-        });
-    }
-
-    for (auto&& v : graph) {
-        auto& in = v.in_edges();
-
-        for (auto& iv : in) {
-            tasks[graph[iv].name()].precede(tasks[v.name()]);
-        }
-    }
+    mFrameExecutor.Register<RenderSystem>();
+    mFrameExecutor.Register<RenderImguiSystem>();
+    mFrameExecutor.Register<SimulationSystem>();
+    mFrameExecutor.Register<CameraSystem>();
+    mFrameExecutor.Register<AnimationSystem>();
+    mFrameExecutor.Register<RealTimeActionSystem>();
+    mFrameExecutor.Register<InputSystem>();
 }
 
 int GameClient::Run(tf::Executor& aExecutor)
@@ -90,7 +79,8 @@ int GameClient::Run(tf::Executor& aExecutor)
     auto& netClient = mRegistry.ctx().get<ENetClient&>();
     auto  prevTime  = clock_type::now();
 
-    aExecutor.silent_async([&]() { networkThread(); });
+    std::thread networkThreadHandle([this]() { networkThread(); });
+    networkThreadHandle.detach();
 
     if (!netClient.Connect()) {
         throw std::runtime_error("No available peers for initiating an ENet connection.");
@@ -113,16 +103,9 @@ int GameClient::Run(tf::Executor& aExecutor)
         consumeNetworkResponses();
 
         if (mRegistry.ctx().contains<GameInstance>()) {
-            auto& instance = mRegistry.ctx().get<GameInstance&>();
-
-            for (const auto& system : mSystems) {
-                system(mRegistry, frameTime.count());
-            }
-
-            AdvanceSimulation(mRegistry, frameTime.count());
-
-            mUpdateTransformsSystem(mRegistry, instance.Accumulator / kTimeStep);
+            mFrameExecutor.Update(frameTime.count(), &mRegistry);
         }
+
         renderer.Render();
         input.PrevKeyboardState   = input.KeyboardState;
         input.PrevMouseState      = input.MouseState;
@@ -244,16 +227,30 @@ void GameClient::prepareGridPreview()
         std::span<const uint8_t>(graph.GridLayout().data(), graph.Width() * graph.Height()));
 }
 
-void GameClient::OnGameInstanceCreated()
+void GameClient::OnGameInstanceCreated(Registry& aRegistry)
 {
+    auto& fixedExec = aRegistry.ctx().get<FixedSystemExecutor>();
+
+    // Create dispatcher for network events
+    aRegistry.ctx().emplace<entt::dispatcher>();
+
     spawnPlayerAndCamera();
     prepareGridPreview();
-    mRegistry.ctx().get<Physics>().World()->setEventListener(&mPhysicsEventHandler);
+
+    fixedExec.Register<NetworkSyncSystem<ENetClient>>();
+    fixedExec.Register<PhysicsSystem>();
+    fixedExec.Register<RigidBodiesUpdateSystem>();
+    fixedExec.Register<TowerBuiltSystem>();
+    fixedExec.Register<DeterministicActionSystem>();
+    fixedExec.Register<NetworkResponseSystem>();
 }
 
 void GameClient::consumeNetworkResponses()
 {
     auto& netClient = mRegistry.ctx().get<ENetClient>();
+
+    auto* dispatcher = mRegistry.ctx().find<entt::dispatcher>();
+
     netClient.ConsumeNetworkResponses([&](NetworkResponse* aEvent) {
         std::visit(
             VariantVisitor{
@@ -273,47 +270,21 @@ void GameClient::consumeNetworkResponses()
                     WATO_INFO(mRegistry, "game {} created", aResp.GameID);
                 },
                 [&](SyncPayload& aResp) {
-                    if (aResp.State.Snapshot.empty()) {
-                        return;
-                    }
-
-                    BitInputArchive       inAr(aResp.State.Snapshot);
-                    Registry              tmp;
-                    entt::snapshot_loader loader{tmp};
-
-                    WATO_TRACE(
-                        mRegistry,
-                        "loading state snapshot {} of size {}",
-                        aResp.State.Tick,
-                        aResp.State.Snapshot.size());
-                    loader.get<entt::entity>(inAr)
-                        .get<Transform3D>(inAr)
-                        .get<RigidBody>(inAr)
-                        .get<Collider>(inAr);
-                },
-                [&](const AcknowledgementResponse aAck) {
-                    WATO_INFO(mRegistry, "got ack {} for {}", aAck.Ack, aAck.Entity);
-                    if (aAck.Ack) {
-                        mRegistry.remove<Predicted>(aAck.Entity);
-                        mRegistry.emplace<Synced>(aAck.Entity, aAck.ServerEntity);
-                        mRegistry.ctx().get<EntitySyncMap>().insert_or_assign(
-                            aAck.ServerEntity,
-                            aAck.Entity);
-                    } else {
-                        mRegistry.destroy(aAck.Entity);
+                    if (dispatcher) {
+                        dispatcher->enqueue<SyncPayloadEvent>(
+                            SyncPayloadEvent{.Reg = &mRegistry, .Payload = std::move(aResp)});
                     }
                 },
-                [&](const RigidBodyUpdateResponse aUpdate) {
-                    auto& syncMap = mRegistry.ctx().get<EntitySyncMap>();
-
-                    if (syncMap.contains(aUpdate.Entity)) {
-                        mRegistry.patch<RigidBody>(
-                            syncMap[aUpdate.Entity],
-                            [&aUpdate](RigidBody& aBody) { aBody.Params = aUpdate.Params; });
-                        if (mRegistry.get<RigidBody>(syncMap[aUpdate.Entity]).Params.Velocity
-                            == 0.0f) {
-                            WATO_INFO(mRegistry, "stopping rigid body for {}", aUpdate.Entity);
-                        }
+                [&](const RigidBodyUpdateResponse& aUpdate) {
+                    if (dispatcher) {
+                        dispatcher->enqueue<RigidBodyUpdateEvent>(
+                            RigidBodyUpdateEvent{.Reg = &mRegistry, .Response = aUpdate});
+                    }
+                },
+                [&](const HealthUpdateResponse& aUpdate) {
+                    if (dispatcher) {
+                        dispatcher->enqueue<HealthUpdateEvent>(
+                            HealthUpdateEvent{.Reg = &mRegistry, .Response = aUpdate});
                     }
                 },
                 [&](const std::monostate) {},

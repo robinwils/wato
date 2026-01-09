@@ -12,8 +12,8 @@
 #include "components/tile.hpp"
 #include "components/transform3d.hpp"
 #include "core/graph.hpp"
-#include "core/physics/event_handler.hpp"
 #include "core/physics/physics.hpp"
+#include "core/physics/physics_event_listener.hpp"
 #include "core/state.hpp"
 #include "input/action.hpp"
 
@@ -32,18 +32,22 @@ void Application::StartGameInstance(
 
     aRegistry.ctx().emplace<GameStateBuffer>();
     aRegistry.ctx().emplace<GameInstance>(aGameID, 0.0f, 0u);
+    aRegistry.ctx().emplace<ColliderEntityMap>();
+    aRegistry.ctx().emplace<FixedSystemExecutor>();
 
     physics.Init();
 
-    stack.push_back(
-        ActionContext{
-            .State    = aIsServer ? ActionContext::State::Server : ActionContext::State::Default,
-            .Bindings = ActionBindings::Defaults(),
-            .Payload  = NormalPayload{}});
+    stack.push_back(ActionContext{
+        .State    = aIsServer ? ActionContext::State::Server : ActionContext::State::Default,
+        .Bindings = ActionBindings::Defaults(),
+        .Payload  = NormalPayload{}});
+
+    auto& l = aRegistry.ctx().emplace<PhysicsEventListener>(mLogger);
+    aRegistry.ctx().get<Physics>().World()->setEventListener(&l);
 
     SetupObservers(aRegistry);
     SpawnMap(aRegistry, 20, 20);
-    OnGameInstanceCreated();
+    OnGameInstanceCreated(aRegistry);
 }
 
 void Application::StopGameInstance(Registry& aRegistry)
@@ -52,29 +56,6 @@ void Application::StopGameInstance(Registry& aRegistry)
     aRegistry.ctx().erase<ActionContextStack>();
     aRegistry.ctx().erase<GameStateBuffer>();
     aRegistry.ctx().erase<GameInstance>();
-}
-
-void Application::AdvanceSimulation(Registry& aRegistry, const float aDeltaTime)
-{
-    auto& state    = aRegistry.ctx().get<GameStateBuffer&>();
-    auto& instance = aRegistry.ctx().get<GameInstance&>();
-
-    instance.Accumulator += aDeltaTime;
-
-    // While there is enough accumulated time to take
-    // one or several physics steps
-    while (instance.Accumulator >= kTimeStep) {
-        // Decrease the accumulated time
-        instance.Accumulator -= kTimeStep;
-
-        for (const auto& system : mSystemsFT) {
-            system(aRegistry, kTimeStep);
-        }
-        state.Push();
-        state.Latest().Tick = ++instance.Tick;
-        ClearAllObservers(aRegistry);
-    }
-    mUpdateTransformsSystem(aRegistry, instance.Accumulator / kTimeStep);
 }
 
 void Application::SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeight)
@@ -121,7 +102,7 @@ void Application::SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeigh
         Collider{
             .Params =
                 ColliderParams{
-                    .CollisionCategoryBits = Category::Entities,
+                    .CollisionCategoryBits = Category::Terrain,
                     .CollideWithMaskBits   = Category::Terrain | Category::Entities,
                     .IsTrigger             = true,
                     .ShapeParams =
@@ -151,7 +132,7 @@ void Application::SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeigh
             .Params =
                 ColliderParams{
                     .CollisionCategoryBits = Category::Terrain,
-                    .CollideWithMaskBits   = Category::Entities,
+                    .CollideWithMaskBits   = Category::Entities | Category::Projectiles,
                     .IsTrigger             = false,
                     .Offset =
                         Transform3D{
@@ -167,31 +148,23 @@ void Application::SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeigh
         });
 }
 
-void Application::ClearAllObservers(Registry& aRegistry)
-{
-    for (const entt::hashed_string& hash : mObserverNames) {
-        auto* storage = aRegistry.storage(hash);
-
-        if (storage == nullptr) {
-            throw std::runtime_error(fmt::format("{} storage not initiated", hash.data()));
-        }
-
-        storage->clear();
-    }
-}
-
 void Application::SetupObservers(Registry& aRegistry)
 {
-    mObserverNames.push_back("tower_built_observer");
+    auto& observers = aRegistry.ctx().emplace<Observers>();
+
+    observers.push_back("tower_built_observer");
     auto& tbo = aRegistry.storage<entt::reactive>("tower_built_observer"_hs);
     tbo.on_construct<Tower>();
 
-    mObserverNames.push_back("rigid_bodies_observer");
-    auto& rbo = aRegistry.storage<entt::reactive>("rigid_bodies_observer"_hs);
-    rbo.on_construct<RigidBody>();
-    rbo.on_update<RigidBody>();
+    observers.push_back("rigid_bodies_observer");
+    aRegistry.storage<entt::reactive>("rigid_bodies_observer"_hs)
+        .on_construct<RigidBody>()
+        .on_update<RigidBody>();
 
-    mObserverNames.push_back("placement_mode_observer");
+    observers.push_back("rigid_bodies_destroy_observer");
+    aRegistry.storage<entt::reactive>("rigid_bodies_destroy_observer"_hs).on_destroy<RigidBody>();
+
+    observers.push_back("placement_mode_observer");
     auto& pmo = aRegistry.storage<entt::reactive>("placement_mode_observer"_hs);
     pmo.on_update<Transform3D>();
     mLogger->info("observers created");

@@ -25,27 +25,25 @@
 class BitInputArchive : public StreamDecoder
 {
    public:
-    BitInputArchive(bit_stream&& aBits, bool aEnableLogger = false)
-        : StreamDecoder(std::move(aBits)), mLogger(WATO_SER_LOGGER)
+    BitInputArchive(bit_stream&& aBits, bool aEnableLogger = true) : StreamDecoder(std::move(aBits))
     {
         if (!aEnableLogger) {
-            mLogger->set_level(spdlog::level::off);
+            WATO_SER_LOGGER->set_level(spdlog::level::off);
         }
     }
 
-    BitInputArchive(bit_buffer& aBits, bool aEnableLogger = false)
-        : StreamDecoder(aBits), mLogger(WATO_SER_LOGGER)
+    BitInputArchive(const bit_buffer& aBits, bool aEnableLogger = true) : StreamDecoder(aBits)
     {
         if (!aEnableLogger) {
-            mLogger->set_level(spdlog::level::off);
+            WATO_SER_LOGGER->set_level(spdlog::level::off);
         }
     }
 
-    BitInputArchive(uint8_t* aBytes, std::size_t aSize, bool aEnableLogger = false)
-        : StreamDecoder(aBytes, aSize), mLogger(WATO_SER_LOGGER)
+    BitInputArchive(uint8_t* aBytes, std::size_t aSize, bool aEnableLogger = true)
+        : StreamDecoder(aBytes, aSize)
     {
         if (!aEnableLogger) {
-            mLogger->set_level(spdlog::level::off);
+            WATO_SER_LOGGER->set_level(spdlog::level::off);
         }
     }
 
@@ -53,55 +51,52 @@ class BitInputArchive : public StreamDecoder
     {
         ENTT_ID_TYPE entityV;
         if (!DecodeUInt(entityV, 0, std::numeric_limits<uint32_t>::max())) {
-            mLogger->critical("could not decode entity");
+            WATO_SER_CRIT("could not decode entity");
             return;
         }
 
         aEntity = entt::entity(entityV);
-        mLogger->info("read entity {:d}", static_cast<ENTT_ID_TYPE>(aEntity));
+        WATO_SER_TRACE("read entity {:d}", static_cast<ENTT_ID_TYPE>(aEntity));
     }
 
     void operator()(std::underlying_type_t<entt::entity>& aEntity)
     {
         if (!DecodeUInt(aEntity, 0, std::numeric_limits<uint32_t>::max())) {
-            mLogger->critical("could not read component set size");
+            WATO_SER_CRIT("could not read component set size");
             return;
         }
-        mLogger->info("=====> reading set of size {:d} <=====", aEntity);
+        WATO_SER_TRACE("=====> reading set of size {:d} <=====", aEntity);
     }
 
     template <typename T>
     void operator()(T& aObj)
     {
         if (!aObj.Archive(*this)) {
-            mLogger->critical("could not read component from archive");
+            WATO_SER_CRIT("could not read component from archive");
         }
     }
-
-   private:
-    Logger mLogger;
 };
 
 class BitOutputArchive : public StreamEncoder
 {
    public:
-    BitOutputArchive(bool aEnableLogger = false) : mLogger(WATO_SER_LOGGER)
+    BitOutputArchive(bool aEnableLogger = true)
     {
         if (!aEnableLogger) {
-            mLogger->set_level(spdlog::level::off);
+            WATO_SER_LOGGER->set_level(spdlog::level::off);
         }
     }
 
     void operator()(entt::entity aEntity)
     {
         ENTT_ID_TYPE entityV = static_cast<ENTT_ID_TYPE>(aEntity);
-        mLogger->info("writing entity {:d}", static_cast<ENTT_ID_TYPE>(aEntity));
+        WATO_SER_TRACE("writing entity {:d}", static_cast<ENTT_ID_TYPE>(aEntity));
         EncodeUInt(entityV, 0, std::numeric_limits<uint32_t>::max());
     }
 
     void operator()(std::underlying_type_t<entt::entity> aEntity)
     {
-        mLogger->info("<===== writing set of size {:d} =====> ", aEntity);
+        WATO_SER_TRACE("<===== writing set of size {:d} =====> ", aEntity);
         EncodeUInt(aEntity, 0, std::numeric_limits<uint32_t>::max());
     }
 
@@ -120,7 +115,6 @@ class BitOutputArchive : public StreamEncoder
     const std::vector<uint8_t> ByteVector() { return mBits.ByteVector(); }
 
    private:
-    Logger mLogger;
 };
 
 template <typename OutArchive>

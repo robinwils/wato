@@ -3,12 +3,12 @@
 #include "systems/system.hpp"
 
 /**
- * @brief AI pathfinding system (fixed timestep)
+ * @brief Collision response system (fixed timestep)
  *
- * Updates creep pathfinding and movement direction based on graph paths.
- * Runs at deterministic 60 FPS.
+ * Processes trigger events from PhysicsEventListener and applies game logic
+ *
  */
-class AiSystem : public FixedSystem
+class CollisionSystem : public FixedSystem
 {
    public:
     using FixedSystem::FixedSystem;

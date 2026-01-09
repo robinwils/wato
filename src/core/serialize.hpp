@@ -54,9 +54,10 @@ constexpr T bswap_any(T v)
     }
 }
 
-using word       = uint32_t;
-using bit_stream = std::span<word>;
-using bit_buffer = std::vector<word>;
+using word             = uint32_t;
+using bit_stream       = std::span<word>;
+using const_bit_stream = std::span<const word>;
+using bit_buffer       = std::vector<word>;
 
 class BitWriter
 {
@@ -149,7 +150,7 @@ class BitReader
         : mBuf(std::move(aBits)), mScratch(0), mCurBit(0), mNext(mBuf.data())
     {
     }
-    BitReader(bit_buffer& aBits)
+    BitReader(const bit_buffer& aBits)
         : mBuf(std::span(aBits)), mScratch(0), mCurBit(0), mNext(mBuf.data())
     {
     }
@@ -203,10 +204,10 @@ class BitReader
     }
 
    private:
-    bit_stream mBuf;
-    uint64_t   mScratch;
-    uint32_t   mCurBit;
-    word*      mNext;
+    const_bit_stream mBuf;
+    uint64_t         mScratch;
+    uint32_t         mCurBit;
+    const word*      mNext;
 };
 
 template <typename T, typename M>
@@ -253,30 +254,28 @@ void AssertBoundsAndVal(T aVal, M aMin, M aMax)
 template <typename T, typename M>
 bool CheckBounds(M aMin, M aMax)
 {
-    Logger logger = WATO_SER_LOGGER;
-
     if constexpr (std::is_floating_point_v<M>) {
         if (!std::isfinite(aMin)) {
-            logger->critical("min {} is not finite", aMin);
+            WATO_SER_CRIT("min {} is not finite", aMin);
             return false;
         }
         if (!std::isfinite(aMax)) {
-            logger->critical("max {} is not finite", aMax);
+            WATO_SER_CRIT("max {} is not finite", aMax);
             return false;
         }
     }
     if (aMin >= aMax) {
-        logger->critical("min >= max: {} >= {}", aMin, aMax);
+        WATO_SER_CRIT("min >= max: {} >= {}", aMin, aMax);
         return false;
     }
 
     if constexpr (sizeof(T) <= sizeof(int32_t)) {
         if (aMax > std::numeric_limits<T>::max()) {
-            logger->critical("max > lim: {} > {}", aMax, std::numeric_limits<T>::max());
+            WATO_SER_CRIT("max > lim: {} > {}", aMax, std::numeric_limits<T>::max());
             return false;
         }
         if (aMin < std::numeric_limits<T>::min()) {
-            logger->critical("min < lim: {} < {}", aMin, std::numeric_limits<T>::min());
+            WATO_SER_CRIT("min < lim: {} < {}", aMin, std::numeric_limits<T>::min());
             return false;
         }
     }
@@ -286,24 +285,22 @@ bool CheckBounds(M aMin, M aMax)
 template <typename T, typename M>
 bool CheckBoundsAndVal(T aVal, M aMin, M aMax)
 {
-    Logger logger = WATO_SER_LOGGER;
-
     if (!CheckBounds<T, M>(aMin, aMax)) return false;
 
     if constexpr (std::is_floating_point_v<M>) {
         if (!std::isfinite(aVal)) {
-            logger->critical("val {} is not finite", aVal);
+            WATO_SER_CRIT("val {} is not finite", aVal);
             return false;
         }
     }
 
     if (aVal < aMin) {
-        logger->critical("val < min: {} < {}", aVal, aMin);
+        WATO_SER_CRIT("val < min: {} < {}", aVal, aMin);
         return false;
     }
 
     if (aVal > aMax) {
-        logger->critical("val > max: {} > {}", aVal, aMax);
+        WATO_SER_CRIT("val > max: {} > {}", aVal, aMax);
         return false;
     }
 
@@ -370,7 +367,7 @@ class StreamDecoder
    public:
     StreamDecoder() = default;
     StreamDecoder(bit_stream&& aBits) : mBits(std::move(aBits)) {}
-    StreamDecoder(bit_buffer& aBits) : mBits(aBits) {}
+    StreamDecoder(const bit_buffer& aBits) : mBits(aBits) {}
     StreamDecoder(uint8_t* aBytes, std::size_t aSize)
         : mBits(bit_stream(std::bit_cast<word*>(aBytes), aSize))
     {
@@ -507,46 +504,69 @@ bool ArchiveValue(Archive& aR, T&& aValue, MinMaxT aMin, MinMaxT aMax)
         using U = std::underlying_type_t<value_t>;
         if constexpr (IsStreamEncoder<Archive>) {
             U val = static_cast<U>(aValue);
-            WATO_SER_LOGGER->info("encoding enum {}", val);
+            WATO_SER_TRACE("encoding enum {}", val);
             return ArchiveValue(aR, val, static_cast<U>(aMin), static_cast<U>(aMax));
         } else {
             U tmp;
             if (!ArchiveValue(aR, tmp, static_cast<U>(aMin), static_cast<U>(aMax))) return false;
             aValue = static_cast<value_t>(tmp);
-            WATO_SER_LOGGER->info("decoded enum {}", tmp);
+            WATO_SER_TRACE("decoded enum {}", tmp);
             return true;
         }
     } else if constexpr (std::is_same_v<value_t, float>) {
         if constexpr (IsStreamEncoder<Archive>) {
-            WATO_SER_LOGGER->info("encoding float {}", aValue);
             aR.EncodeFloat(aValue);
             return true;
         } else {
-            if (!aR.DecodeFloat(aValue)) return false;
-            if (aValue > aMax || aValue < aMin) return false;
-            WATO_SER_LOGGER->info("decoded float {}", aValue);
+            if (!aR.DecodeFloat(aValue)) {
+                WATO_SER_ERR("failed to decode float in range [{}, {}]", aMin, aMax);
+                return false;
+            }
+            if (aValue > aMax || aValue < aMin) {
+                WATO_SER_ERR("decoded float {} outside bounds [{}, {}]", aValue, aMin, aMax);
+                return false;
+            }
+            WATO_SER_TRACE("decoded float {}", aValue);
             return true;
         }
     } else if constexpr (std::is_integral_v<value_t> && std::is_signed_v<value_t>) {
         if constexpr (IsStreamEncoder<Archive>) {
-            WATO_SER_LOGGER->info("encoding int {}", aValue);
             aR.EncodeInt(aValue, aMin, aMax);
             return true;
         } else {
-            if (!aR.DecodeInt(aValue, aMin, aMax)) return false;
-            if (aValue > aMax || aValue < aMin) return false;
-            WATO_SER_LOGGER->info("decoded int {}", aValue);
+            if (!aR.DecodeInt(aValue, aMin, aMax)) {
+                WATO_SER_ERR("failed to decode int in range [{}, {}]", aMin, aMax);
+                return false;
+            }
+            if (aValue > aMax || aValue < aMin) {
+                WATO_SER_ERR("decoded int {} outside bounds [{}, {}]", aValue, aMin, aMax);
+                return false;
+            }
+            WATO_SER_TRACE("decoded int {}", aValue);
             return true;
         }
     } else if constexpr (std::is_integral_v<value_t> && std::is_unsigned_v<value_t>) {
         if constexpr (IsStreamEncoder<Archive>) {
-            WATO_SER_LOGGER->info("encoding uint{}_t {}", sizeof(value_t), aValue);
             aR.EncodeUInt(aValue, aMin, aMax);
             return true;
         } else {
-            if (!aR.DecodeUInt(aValue, aMin, aMax)) return false;
-            if (aValue > aMax || aValue < aMin) return false;
-            WATO_SER_LOGGER->info("decoded uint{}_t {}", sizeof(value_t), aValue);
+            if (!aR.DecodeUInt(aValue, aMin, aMax)) {
+                WATO_SER_ERR(
+                    "failed to decode uint{}_t in range [{}, {}]",
+                    sizeof(value_t),
+                    aMin,
+                    aMax);
+                return false;
+            }
+            if (aValue > aMax || aValue < aMin) {
+                WATO_SER_ERR(
+                    "decoded uint{}_t {} outside bounds [{}, {}]",
+                    sizeof(value_t),
+                    aValue,
+                    aMin,
+                    aMax);
+                return false;
+            }
             return true;
         }
     }

@@ -13,7 +13,7 @@
 
 using namespace entt::literals;
 
-void TowerBuiltSystem::operator()(Registry& aRegistry)
+void TowerBuiltSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t aTick)
 {
     auto& graph   = aRegistry.ctx().get<Graph>();
     auto& phy     = aRegistry.ctx().get<Physics>();

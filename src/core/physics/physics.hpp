@@ -66,7 +66,7 @@ struct RigidBodyParams {
     {
         if (!ArchiveValue(aArchive, Type, 0, 3)) return false;
         if (!ArchiveValue(aArchive, Velocity, 0.0f, 100.0f)) return false;
-        if (!ArchiveVector(aArchive, Direction, 0.0f, 1.0f)) return false;
+        if (!ArchiveVector(aArchive, Direction, -1.0f, 1.0f)) return false;
         return ArchiveBool(aArchive, GravityEnabled);
     }
 };
@@ -85,6 +85,8 @@ struct ColliderParams {
     ColliderShapeParams ShapeParams;
 };
 
+using ColliderEntityMap = std::unordered_map<reactphysics3d::Collider*, entt::entity>;
+
 struct PhysicsParams {
     bool InfoLogs    = false;
     bool WarningLogs = false;
@@ -100,11 +102,19 @@ struct PhysicsParams {
 #endif
 };
 
+struct RigidBodyUserData {
+};
+
 class Physics
 {
    public:
     // Enumeration for categories
-    enum Category { Terrain = 0x0001, Entities = 0x0002, Count = (Entities << 1) - 1 };
+    enum Category {
+        Terrain     = 0x0001,
+        Entities    = 0x0002,
+        Projectiles = 0x0004,
+        Count       = (Projectiles << 1) - 1
+    };
 
     Physics(const Logger& aLogger) : mLogger(aLogger) {}
     ~Physics() { mLogger->trace("destroying physics"); }
@@ -145,6 +155,27 @@ using Category = Physics::Category;
 inline rp3d::Vector3 ToRP3D(const glm::vec3 aVector)
 {
     return rp3d::Vector3(aVector.x, aVector.y, aVector.z);
+}
+
+/// Matches a collision pair against expected categories.
+/// Returns colliders ordered as {aFirstCategory, aSecondCategory}.
+/// Returns {nullptr, nullptr} if categories don't match.
+inline std::pair<rp3d::Collider*, rp3d::Collider*> MatchColliderPair(
+    rp3d::Collider* aCollider1,
+    rp3d::Collider* aCollider2,
+    unsigned short  aFirstCategory,
+    unsigned short  aSecondCategory)
+{
+    auto cat1 = aCollider1->getCollisionCategoryBits();
+    auto cat2 = aCollider2->getCollisionCategoryBits();
+
+    if ((cat1 & aFirstCategory) && (cat2 & aSecondCategory)) {
+        return {aCollider1, aCollider2};
+    }
+    if ((cat2 & aFirstCategory) && (cat1 & aSecondCategory)) {
+        return {aCollider2, aCollider1};
+    }
+    return {nullptr, nullptr};
 }
 
 struct WorldRaycastCallback : public rp3d::RaycastCallback {

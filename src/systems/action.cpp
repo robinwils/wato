@@ -8,12 +8,14 @@
 #include "components/game.hpp"
 #include "components/health.hpp"
 #include "components/imgui.hpp"
+#include "components/model_rotation_offset.hpp"
 #include "components/net.hpp"
 #include "components/path.hpp"
 #include "components/placement_mode.hpp"
 #include "components/rigid_body.hpp"
 #include "components/scene_object.hpp"
 #include "components/spawner.hpp"
+#include "components/tower_attack.hpp"
 #include "components/transform3d.hpp"
 #include "components/velocity.hpp"
 #include "core/graph.hpp"
@@ -64,60 +66,8 @@ void DefaultContextHandler::operator()(
 
 void DefaultContextHandler::operator()(Registry& aRegistry, SendCreepPayload& aPayload)
 {
-    auto& graph = aRegistry.ctx().get<Graph&>();
-
-    for (auto&& [entity, spawnTransform] : aRegistry.view<Spawner, Transform3D>().each()) {
-        auto creep = aRegistry.create();
-        aRegistry.emplace<Transform3D>(
-            creep,
-            spawnTransform.Position,
-            glm::identity<glm::quat>(),
-            glm::vec3(0.5f));
-
-        aRegistry.emplace<Health>(creep, 100.0f);
-        aRegistry.emplace<Creep>(creep, aPayload.Type);
-        aRegistry.emplace<SceneObject>(creep, "phoenix"_hs);
-        aRegistry.emplace<ImguiDrawable>(creep, "phoenix", true);
-        aRegistry.emplace<Animator>(creep, 0.0f, "Take 001");
-        aRegistry.emplace<Path>(
-            creep,
-            GraphCell::FromWorldPoint(spawnTransform.Position),
-            graph.GetNextCell(GraphCell::FromWorldPoint(spawnTransform.Position)));
-
-        aRegistry.emplace<RigidBody>(
-            creep,
-            RigidBody{
-                .Params =
-                    RigidBodyParams{
-                        .Type           = rp3d::BodyType::KINEMATIC,
-                        .Velocity       = 0.4f,
-                        .Direction      = glm::vec3(0.0f),
-                        .GravityEnabled = false,
-                    },
-            });
-        aRegistry.emplace<Collider>(
-            creep,
-            Collider{
-                .Params =
-                    ColliderParams{
-                        .CollisionCategoryBits = Category::Entities,
-                        .CollideWithMaskBits   = 0,
-                        .IsTrigger             = false,
-                        .Offset                = Transform3D{},
-                        .ShapeParams =
-                            CapsuleShapeParams{
-                                .Radius = 0.1f,
-                                .Height = 0.05f,
-                            },
-                    },
-            });
-        aRegistry.emplace<Predicted>(creep);
-
-        aPayload.CliPredictedEntity = creep;
-        // only one iteration, we could think of putting multiple spawns but we have only 1 action
-        // for x creep spawned
-        break;
-    }
+    // No client-side prediction - server will create and broadcast creep to all clients
+    // Client just sends the request
 }
 
 void DefaultContextHandler::operator()(Registry& aRegistry, const PlacementModePayload& aPayload)
@@ -164,6 +114,7 @@ void PlacementModeContextHandler::operator()(Registry& aRegistry, BuildTowerPayl
     auto& phy = aRegistry.ctx().get<Physics>();
 
     for (const auto&& [tower, pm, t] : aRegistry.view<PlacementMode, Transform3D>().each()) {
+        // Client-side validation - create temporary body for collision test
         TowerBuildingHandler handler(WATO_REG_LOGGER(aRegistry));
 
         RigidBody body = RigidBody{
@@ -192,22 +143,18 @@ void PlacementModeContextHandler::operator()(Registry& aRegistry, BuildTowerPayl
         collider.Handle = phy.AddCollider(body.Body, collider.Params);
 
         phy.World()->testOverlap(body.Body, handler);
+
+        // Clean up temporary test body
+        phy.World()->destroyRigidBody(body.Body);
+
         if (!handler.CanBuildTower) {
-            phy.World()->destroyRigidBody(body.Body);
-            return;
+            WATO_ERR(aRegistry, "Cannot build tower at {}", t.Position);
+            return;  // Ghost tower stays for repositioning
         }
 
-        aPayload.CliPredictedEntity = tower;
-        aRegistry.emplace<Tower>(tower, aPayload.Tower);
-        aRegistry.emplace<RigidBody>(tower, body);
-        aRegistry.emplace<Collider>(tower, collider);
-        aRegistry.emplace<Predicted>(tower);
-        aRegistry.emplace<Health>(tower, 100.0f);
-        aRegistry.remove<ImguiDrawable>(tower);
-
-        // remove component so that ExitPlacement does not destroy the entity
-        aRegistry.remove<PlacementMode>(tower);
-        SPDLOG_INFO("tower {} created", tower);
+        // Valid placement - server will create tower and broadcast to all clients
+        // Ghost tower will be destroyed by ExitPlacement
+        SPDLOG_INFO("Validated tower placement at {}", t.Position);
     }
 
     SPDLOG_DEBUG("exiting placement mode");
@@ -250,32 +197,49 @@ void ServerContextHandler::operator()(Registry& aRegistry, BuildTowerPayload& aP
             },
     };
 
-    body.Body       = phy.CreateRigidBody(body.Params, t);
-    collider.Handle = phy.AddCollider(body.Body, collider.Params);
+    rp3d::RigidBody* rpb = phy.CreateRigidBody(body.Params, t);
+    rp3d::Collider*  rpc = phy.AddCollider(rpb, collider.Params);
 
     TowerBuildingHandler handler(WATO_REG_LOGGER(aRegistry));
-    phy.World()->testOverlap(body.Body, handler);
+    phy.World()->testOverlap(rpb, handler);
+
+    phy.World()->destroyRigidBody(rpb);
 
     if (!handler.CanBuildTower) {
-        phy.World()->destroyRigidBody(body.Body);
         aRegistry.destroy(tower);
         WATO_ERR(aRegistry, "tower {} at {} invalidated", tower, t.Position);
         return;
     }
-    WATO_INFO(aRegistry, "tower {} at {} validated", aPayload.CliPredictedEntity, t.Position);
+
+    WATO_INFO(aRegistry, "tower {} at {} validated", tower, t.Position);
     aRegistry.emplace<Tower>(tower, aPayload.Tower);
     aRegistry.emplace<RigidBody>(tower, body);
     aRegistry.emplace<Collider>(tower, collider);
+    aRegistry.emplace<TowerAttack>(
+        tower,
+        TowerAttack{
+            .Range    = 30.0f,
+            .FireRate = 1.0f,
+        });
 
+    // TODO: Add Health component here (check it's not added elsewhere to avoid double-add crash)
+
+    // Broadcast tower creation to all clients
     aRegistry.ctx().get<ENetServer&>().EnqueueResponse(new NetworkResponse{
         .Type     = PacketType::Ack,
         .PlayerID = 0,
         .Tick     = aRegistry.ctx().get<GameInstance&>().Tick,
         .Payload =
-            AcknowledgementResponse{
-                .Ack          = true,
-                .Entity       = aPayload.CliPredictedEntity,
-                .ServerEntity = tower},
+            RigidBodyUpdateResponse{
+                .Params = body.Params,
+                .Entity = tower,
+                .Event  = RigidBodyEvent::Create,
+                .InitData =
+                    TowerInitData{
+                        .Type     = aPayload.Tower,
+                        .Position = aPayload.Position,
+                    },
+            },
     });
 }
 
@@ -314,7 +278,7 @@ void ServerContextHandler::operator()(Registry& aRegistry, SendCreepPayload& aPa
                 .Params =
                     ColliderParams{
                         .CollisionCategoryBits = Category::Entities,
-                        .CollideWithMaskBits   = 0,
+                        .CollideWithMaskBits   = Category::Projectiles,
                         .IsTrigger             = false,
                         .Offset                = Transform3D{},
                         .ShapeParams =
@@ -325,26 +289,31 @@ void ServerContextHandler::operator()(Registry& aRegistry, SendCreepPayload& aPa
                     },
             });
 
+        // Broadcast creep creation to all clients
+        auto& rigidBody = aRegistry.get<RigidBody>(creep);
+        auto& transform = aRegistry.get<Transform3D>(creep);
         aRegistry.ctx().get<ENetServer&>().EnqueueResponse(new NetworkResponse{
             .Type     = PacketType::Ack,
             .PlayerID = 0,
             .Tick     = aRegistry.ctx().get<GameInstance&>().Tick,
             .Payload =
-                AcknowledgementResponse{
-                    .Ack          = true,
-                    .Entity       = aPayload.CliPredictedEntity,
-                    .ServerEntity = creep},
+                RigidBodyUpdateResponse{
+                    .Params = rigidBody.Params,
+                    .Entity = creep,
+                    .Event  = RigidBodyEvent::Create,
+                    .InitData =
+                        CreepInitData{
+                            .Type     = aPayload.Type,
+                            .Position = transform.Position,
+                        },
+                },
         });
 
         break;
     }
 }
 
-template <typename Derived>
-void ActionSystem<Derived>::handleAction(
-    Registry&   aRegistry,
-    Action&     aAction,
-    const float aDeltaTime)
+void ActionSystem::HandleAction(Registry& aRegistry, Action& aAction, const float aDeltaTime)
 {
     WATO_TRACE(aRegistry, "handling {}", aAction);
     auto&       contextStack = aRegistry.ctx().get<ActionContextStack&>();
@@ -353,27 +322,23 @@ void ActionSystem<Derived>::handleAction(
     switch (currentCtx.State) {
         case ActionContext::State::Default: {
             DefaultContextHandler handler;
-            handleContext(aRegistry, aAction, handler, aDeltaTime);
+            HandleContext(aRegistry, aAction, handler, aDeltaTime);
             break;
         }
         case ActionContext::State::Placement: {
             PlacementModeContextHandler handler;
-            handleContext(aRegistry, aAction, handler, aDeltaTime);
+            HandleContext(aRegistry, aAction, handler, aDeltaTime);
             break;
         }
         case ActionContext::State::Server: {
             ServerContextHandler handler;
-            handleContext(aRegistry, aAction, handler, aDeltaTime);
+            HandleContext(aRegistry, aAction, handler, aDeltaTime);
             break;
         }
     }
 }
 
-template <typename Derived>
-void ActionSystem<Derived>::processActions(
-    Registry&   aRegistry,
-    ActionTag   aFilterTag,
-    const float aDeltaTime)
+void ActionSystem::ProcessActions(Registry& aRegistry, ActionTag aFilterTag, const float aDeltaTime)
 {
     auto&        buf           = aRegistry.ctx().get<GameStateBuffer&>();
     ActionsType& latestActions = buf.Latest().Actions;
@@ -386,12 +351,11 @@ void ActionSystem<Derived>::processActions(
         if (action.Tag != aFilterTag) {
             continue;
         }
-        handleAction(aRegistry, action, aDeltaTime);
+        HandleAction(aRegistry, action, aDeltaTime);
     }
 }
 
-template <typename Derived>
-void ActionSystem<Derived>::handleContext(
+void ActionSystem::HandleContext(
     Registry&             aRegistry,
     Action&               aAction,
     ActionContextHandler& aCtxHandler,
@@ -406,8 +370,3 @@ void ActionSystem<Derived>::handleContext(
         },
         aAction.Payload);
 }
-
-// Explicit template instantiations
-template class ActionSystem<RealTimeActionSystem>;
-template class ActionSystem<DeterministicActionSystem>;
-template class ActionSystem<ServerActionSystem>;

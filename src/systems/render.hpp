@@ -10,52 +10,68 @@
 #include "registry/registry.hpp"
 #include "systems/system.hpp"
 
-class RenderSystem : public System<RenderSystem>
+/**
+ * @brief Main rendering system (frame time)
+ *
+ * Renders all scene objects, handles instancing, lighting, and grid visualization.
+ * Runs at variable frame rate.
+ */
+class RenderSystem : public FrameSystem
 {
    public:
-    using view_type = entt::view<entt::get_t<const SceneObject, const Transform3D>>;
+    using FrameSystem::FrameSystem;
 
-    void Register(entt::organizer& aOrganizer)
-    {
-        aOrganizer.emplace<&RenderSystem::operator(), const LightSource, const PlacementMode>(
-            *this,
-            StaticName());
-    }
-    void operator()(Registry& aRegistry);
-
-    static constexpr const char* StaticName() { return "RenderSystem"; }
+   protected:
+    void Execute(Registry& aRegistry, float aDelta) override;
 
    private:
     void updateGridTexture(Registry& aRegistry);
     void renderGrid(Registry& aRegistry);
 };
 
-class RenderImguiSystem : public System<RenderImguiSystem>
+/**
+ * @brief ImGui rendering system (frame time)
+ *
+ * Renders debug UI and overlays.
+ * Runs at variable frame rate.
+ */
+class RenderImguiSystem : public FrameSystem
 {
    public:
-    void operator()(Registry& aRegistry);
+    using FrameSystem::FrameSystem;
 
-    static constexpr const char* StaticName() { return "RenderImguiSystem"; }
+   protected:
+    void Execute(Registry& aRegistry, float aDelta) override;
 };
 
-class CameraSystem : public System<CameraSystem>
+/**
+ * @brief Camera system (frame time)
+ *
+ * Updates camera view/projection matrices.
+ * Runs at variable frame rate.
+ */
+class CameraSystem : public FrameSystem
 {
    public:
-    void operator()(Registry& aRegistry);
+    using FrameSystem::FrameSystem;
 
-    static constexpr const char* StaticName() { return "CameraSystem"; }
+   protected:
+    void Execute(Registry& aRegistry, float aDelta) override;
 };
 
 #if WATO_DEBUG
-class PhysicsDebugSystem : public System<PhysicsDebugSystem>
+/**
+ * @brief Physics debug rendering system (frame time)
+ *
+ * Renders physics debug visualization (colliders, constraints).
+ * Runs at variable frame rate.
+ */
+class PhysicsDebugSystem : public FrameSystem
 {
    public:
-    void Register(entt::organizer& aOrganizer)
-    {
-        aOrganizer.emplace<&PhysicsDebugSystem::operator(), Physics>(*this, StaticName());
-    }
-    void operator()(Registry& aRegistry);
+    using FrameSystem::FrameSystem;
 
-    static constexpr const char* StaticName() { return "PhysicsDebugSystem "; }
+   protected:
+    void Execute(Registry& aRegistry, float aDelta) override;
 };
 #endif

@@ -73,7 +73,7 @@ void ENetBase::Poll()
                     peerData = std::string(reinterpret_cast<char*>(event.peer->data));
                 }
 
-                mLogger->debug(
+                mLogger->trace(
                     "A packet of length {} was received from {} with data "
                     "{} on "
                     "channel {}.",

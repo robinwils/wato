@@ -3,12 +3,12 @@
 #include "systems/system.hpp"
 
 /**
- * @brief Tower construction system (fixed timestep)
+ * @brief Projectile tracking system (fixed timestep)
  *
- * Handles tower building, obstacle registration, and pathfinding updates.
+ * Updates projectile direction to track targets and destroys projectiles when target is invalid.
  * Runs at deterministic 60 FPS.
  */
-class TowerBuiltSystem : public FixedSystem
+class ProjectileSystem : public FixedSystem
 {
    public:
     using FixedSystem::FixedSystem;

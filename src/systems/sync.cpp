@@ -9,7 +9,9 @@
 #include "registry/registry.hpp"
 
 template <>
-void NetworkSyncSystem<ENetClient>::operator()(Registry& aRegistry)
+void NetworkSyncSystem<ENetClient>::Execute(
+    Registry&                      aRegistry,
+    [[maybe_unused]] std::uint32_t aTick)
 {
     auto& buf      = aRegistry.ctx().get<GameStateBuffer&>();
     auto& net      = aRegistry.ctx().get<ENetClient&>();
@@ -39,11 +41,15 @@ void NetworkSyncSystem<ENetClient>::operator()(Registry& aRegistry)
 }
 
 template <>
-void NetworkSyncSystem<ENetServer>::operator()(Registry& aRegistry)
+void NetworkSyncSystem<ENetServer>::Execute(
+    Registry&                      aRegistry,
+    [[maybe_unused]] std::uint32_t aTick)
 {
     auto& net       = aRegistry.ctx().get<ENetServer&>();
     auto& instance  = aRegistry.ctx().get<GameInstance&>();
     auto& rbStorage = aRegistry.storage<entt::reactive>("rigid_bodies_observer"_hs);
+    auto& rbDestroyedStorage =
+        aRegistry.storage<entt::reactive>("rigid_bodies_destroy_observer"_hs);
 
     // TODO: snapshot every other frame
     // auto& buf = aRegistry.ctx().get<GameStateBuffer&>();
@@ -80,7 +86,30 @@ void NetworkSyncSystem<ENetServer>::operator()(Registry& aRegistry)
             .Type     = PacketType::Ack,
             .PlayerID = 0,
             .Tick     = instance.Tick,
-            .Payload  = RigidBodyUpdateResponse{.Params = rigidBody.Params, .Entity = entity},
+            .Payload =
+                RigidBodyUpdateResponse{
+                    .Params   = rigidBody.Params,
+                    .Entity   = entity,
+                    .Event    = RigidBodyEvent::Update,
+                    .InitData = std::monostate{},
+                },
+        });
+    }
+
+    for (auto& e : rbDestroyedStorage) {
+        WATO_DBG(aRegistry, "rigid body destroyed for {}", e);
+
+        net.EnqueueResponse(new NetworkResponse{
+            .Type     = PacketType::Ack,
+            .PlayerID = 0,
+            .Tick     = aTick,
+            .Payload =
+                RigidBodyUpdateResponse{
+                    .Params   = RigidBodyParams{},
+                    .Entity   = e,
+                    .Event    = RigidBodyEvent::Destroy,
+                    .InitData = std::monostate{},
+                },
         });
     }
 }

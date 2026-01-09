@@ -3,12 +3,12 @@
 #include "systems/system.hpp"
 
 /**
- * @brief Tower construction system (fixed timestep)
+ * @brief Health system (fixed timestep)
  *
- * Handles tower building, obstacle registration, and pathfinding updates.
+ * Destroys entities when their health drops to zero or below.
  * Runs at deterministic 60 FPS.
  */
-class TowerBuiltSystem : public FixedSystem
+class HealthSystem : public FixedSystem
 {
    public:
     using FixedSystem::FixedSystem;

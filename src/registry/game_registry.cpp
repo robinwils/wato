@@ -121,7 +121,14 @@ void LoadModels(Registry& aRegistry)
         aRegistry.ctx().get<ModelCache>(),
         "tower_model",
         aRegistry,
-        "assets/models/tower.fbx",
+        "assets/models/arrow_tower.fbx",
+        aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_PreTransformVertices
+            | aiProcess_GlobalScale);
+    LoadResource(
+        aRegistry.ctx().get<ModelCache>(),
+        "arrow",
+        aRegistry,
+        "assets/models/arrow.fbx",
         aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_PreTransformVertices
             | aiProcess_GlobalScale);
     LoadResource(

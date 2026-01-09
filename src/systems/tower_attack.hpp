@@ -3,12 +3,12 @@
 #include "systems/system.hpp"
 
 /**
- * @brief Tower construction system (fixed timestep)
+ * @brief Tower attack system (fixed timestep)
  *
- * Handles tower building, obstacle registration, and pathfinding updates.
+ * Handles tower target acquisition and projectile spawning.
  * Runs at deterministic 60 FPS.
  */
-class TowerBuiltSystem : public FixedSystem
+class TowerAttackSystem : public FixedSystem
 {
    public:
     using FixedSystem::FixedSystem;
