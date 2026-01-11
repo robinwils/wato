@@ -192,6 +192,7 @@ if (ENABLE_CLIENT)
     src/core/window.hpp
     src/imgui/wato_imgui_config.h
     src/imgui/imgui_helper.h
+    src/imgui/imgui_hud.hpp
     src/input/action.hpp
     src/input/input.hpp
     src/registry/game_registry.hpp
@@ -224,6 +225,7 @@ if (ENABLE_CLIENT)
     src/core/sys/mem.cpp
     src/core/window.cpp
     src/imgui/imgui_helper.cpp
+    src/imgui/imgui_hud.cpp
     src/input/action.cpp
     src/input/input.cpp
     src/main.cpp
