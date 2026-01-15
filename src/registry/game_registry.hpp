@@ -4,6 +4,7 @@
 
 #include <entt/entity/registry.hpp>
 
+#include "components/player.hpp"
 #include "registry/registry.hpp"
 
 class EventHandler;

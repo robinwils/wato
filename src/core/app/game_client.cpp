@@ -279,6 +279,8 @@ void GameClient::consumeNetworkResponses()
                             HealthUpdateEvent{.Reg = &mRegistry, .Response = aUpdate});
                     }
                 },
+                [&](const PlayerEliminatedResponse&) {},
+                [&](const GameEndResponse&) {},
                 [&](const std::monostate) {},
             },
             aEvent->Payload);

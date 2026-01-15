@@ -17,3 +17,6 @@ struct Name {
 struct Owner {
     PlayerID ID;
 };
+
+struct Eliminated {
+};

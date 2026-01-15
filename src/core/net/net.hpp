@@ -216,6 +216,46 @@ inline bool operator==(const HealthUpdateResponse& aLHS, const HealthUpdateRespo
     return aLHS.Entity == aRHS.Entity && aLHS.Health == aRHS.Health;
 }
 
+struct PlayerEliminatedResponse {
+    ::PlayerID              PlayerID;
+    std::vector<::PlayerID> Ranking;
+
+    bool Archive(auto& aArchive)
+    {
+        if (!ArchiveValue(aArchive, PlayerID, 0u, 1000000000u)) return false;
+        return ArchiveVector(
+            aArchive,
+            Ranking,
+            ::PlayerID(0),
+            ::PlayerID(std::numeric_limits<::PlayerID>::max()),
+            8u);
+    }
+};
+
+inline bool operator==(const PlayerEliminatedResponse& aLHS, const PlayerEliminatedResponse& aRHS)
+{
+    return aLHS.PlayerID == aRHS.PlayerID && aLHS.Ranking == aRHS.Ranking;
+}
+
+struct GameEndResponse {
+    std::vector<PlayerID> Ranking;
+
+    bool Archive(auto& aArchive)
+    {
+        return ArchiveVector(
+            aArchive,
+            Ranking,
+            PlayerID(0),
+            PlayerID(std::numeric_limits<PlayerID>::max()),
+            8u);
+    }
+};
+
+inline bool operator==(const GameEndResponse& aLHS, const GameEndResponse& aRHS)
+{
+    return aLHS.Ranking == aRHS.Ranking;
+}
+
 enum class PacketType : std::uint16_t {
     ClientSync,
     ServerSync,
@@ -232,7 +272,9 @@ using NetworkResponsePayload = std::variant<
     ConnectedResponse,
     SyncPayload,
     RigidBodyUpdateResponse,
-    HealthUpdateResponse>;
+    HealthUpdateResponse,
+    PlayerEliminatedResponse,
+    GameEndResponse>;
 
 template <typename _Payload>
 struct NetworkEvent {
@@ -281,6 +323,16 @@ struct fmt::formatter<NetworkResponsePayload> : fmt::formatter<std::string> {
                         "health update for {}: {}",
                         aResp.Entity,
                         aResp.Health);
+                },
+                [&](const PlayerEliminatedResponse& aResp) {
+                    fmt::format_to(
+                        aCtx.out(),
+                        "player {} eliminated, current rankings: {}",
+                        aResp.PlayerID,
+                        aResp.Ranking);
+                },
+                [&](const GameEndResponse& aResp) {
+                    fmt::format_to(aCtx.out(), "game ended, final rankings: {}", aResp.Ranking);
                 },
                 [&](const std::monostate&) {
                     fmt::format_to(aCtx.out(), "no network response payload");

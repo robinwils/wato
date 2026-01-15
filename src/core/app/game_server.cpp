@@ -47,6 +47,9 @@ GameServer::~GameServer()
 
 void GameServer::OnGameInstanceCreated(Registry& aRegistry)
 {
+    // init groups when registry is empty to get the most performance
+    aRegistry.group<Player>(entt::get<Health>, entt::exclude<Eliminated>);
+
     spawnPlayers(aRegistry);
 
     auto& fixedExec = aRegistry.ctx().get<FixedSystemExecutor>();
@@ -74,8 +77,13 @@ void GameServer::ConsumeNetworkRequests()
                         return;
                     }
 
+                    Registry& registry = mGameInstances[aReq.GameID];
+                    if (IsPlayerEliminated(registry, aEvent->PlayerID)) {
+                        mLogger->debug("got event for eliminated player {}", aEvent->PlayerID);
+                        return;
+                    }
+
                     const ActionsType& incoming = aReq.State.Actions;
-                    Registry&          registry = mGameInstances[aReq.GameID];
                     auto& actions = registry.ctx().get<GameStateBuffer&>().Latest().Actions;
 
                     mLogger->debug("got {} actions: {}", incoming.size(), incoming);
@@ -203,6 +211,7 @@ GameInstanceID GameServer::createGameInstance(const NewGameRequest&)
 
     registry.ctx().emplace<Logger>(mLogger);
     registry.ctx().emplace<ENetServer&>(mServer);
+    registry.ctx().emplace_as<std::vector<PlayerID>>("ranking"_hs);
 
     StartGameInstance(registry, gameID, true);
 

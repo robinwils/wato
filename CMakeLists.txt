@@ -473,6 +473,7 @@ target_sources(watolib
     src/core/physics/physics_event_listener.cpp
     src/core/sys/backtrace.cpp
     src/core/tower_building_handler.cpp
+    src/registry/registry.cpp
     src/systems/ai.cpp
     src/systems/collision.cpp
     src/systems/health.cpp
