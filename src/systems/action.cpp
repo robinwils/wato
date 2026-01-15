@@ -255,7 +255,7 @@ void ServerContextHandler::operator()(Registry& aRegistry, SendCreepPayload& aPa
             glm::identity<glm::quat>(),
             glm::vec3(0.5f));
         aRegistry.emplace<Health>(creep, 100.0f);
-        aRegistry.emplace<Creep>(creep, aPayload.Type);
+        aRegistry.emplace<Creep>(creep, aPayload.Type, 1.0f);
         aRegistry.emplace<Path>(
             creep,
             GraphCell::FromWorldPoint(spawnTransform.Position),
