@@ -70,7 +70,7 @@ void CollisionSystem::projectileHits(
     }
 
     entt::entity projectileEntity = colliderMap.at(projCollider);
-    if (!aRegistry.valid(projectileEntity)) {
+    if (!aRegistry.valid(projectileEntity) || aToDestroy.contains(projectileEntity)) {
         return;
     }
 
