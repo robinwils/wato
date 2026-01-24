@@ -207,7 +207,7 @@ struct HealthUpdateResponse {
     bool Archive(auto& aArchive)
     {
         if (!ArchiveEntity(aArchive, Entity)) return false;
-        return ArchiveValue(aArchive, Health, 0.0f, 1000.0f);
+        return ArchiveValue(aArchive, Health, -10.0f, 1000.0f);
     }
 };
 
