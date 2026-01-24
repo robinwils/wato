@@ -301,7 +301,7 @@ target_compile_definitions(wato_common
     WATO_DEBUG=$<IF:$<CONFIG:Debug>,1,0>
     GLM_FORCE_SIZE_T_LENGTH
     GLM_ENABLE_EXPERIMENTAL
-    $<$<CONFIG:Debug>:SAFEINT_ASSERT_ON_EXCEPTION>
+    $<$<CONFIG:Debug>:SAFEINT_ASSERT_ON_EXCEPTION BX_CONFIG_DEBUG>
 )
 
 target_compile_definitions(watolib PUBLIC DOCTEST_CONFIG_DISABLE)
