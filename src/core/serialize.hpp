@@ -213,6 +213,7 @@ class BitReader
 template <typename T, typename M>
 void AssertBounds(M aMin, M aMax)
 {
+#if WATO_DEBUG
     M typeMin;
     if constexpr (std::is_floating_point_v<M>) {
         BX_ASSERT(std::isfinite(aMin), "%s", fmt::to_string(aMin).c_str());
@@ -237,6 +238,10 @@ void AssertBounds(M aMin, M aMax)
             fmt::to_string(aMin).c_str(),
             fmt::to_string(typeMin).c_str());
     }
+#else
+    BX_UNUSED(aMin);
+    BX_UNUSED(aMax);
+#endif
 }
 
 template <typename T, typename M>
@@ -244,11 +249,15 @@ void AssertBoundsAndVal(T aVal, M aMin, M aMax)
 {
     AssertBounds<T, M>(aMin, aMax);
 
+#if WATO_DEBUG
     if constexpr (std::is_floating_point_v<M>) {
         BX_ASSERT(std::isfinite(aVal), "%s", fmt::to_string(aVal).c_str());
     }
     BX_ASSERT(aVal >= aMin, "%s < %s", fmt::to_string(aVal).c_str(), fmt::to_string(aMin).c_str());
     BX_ASSERT(aVal <= aMax, "%s > %s", fmt::to_string(aVal).c_str(), fmt::to_string(aMax).c_str());
+#else
+    BX_UNUSED(aVal);
+#endif
 }
 
 template <typename T, typename M>
