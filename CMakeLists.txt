@@ -188,10 +188,14 @@ if (ENABLE_CLIENT)
     BASE_DIRS src
     FILES
     src/core/app/game_client.hpp
+    src/core/menu/menu_state.hpp
+    src/core/menu/menu_backend.hpp
     src/core/tile.hpp
     src/core/window.hpp
     src/imgui/wato_imgui_config.h
     src/imgui/imgui_helper.h
+    src/imgui/imgui_hud.hpp
+    src/imgui/imgui_menu.hpp
     src/input/action.hpp
     src/input/input.hpp
     src/registry/game_registry.hpp
@@ -224,6 +228,8 @@ if (ENABLE_CLIENT)
     src/core/sys/mem.cpp
     src/core/window.cpp
     src/imgui/imgui_helper.cpp
+    src/imgui/imgui_hud.cpp
+    src/imgui/imgui_menu.cpp
     src/input/action.cpp
     src/input/input.cpp
     src/main.cpp
@@ -299,7 +305,7 @@ target_compile_definitions(wato_common
     WATO_DEBUG=$<IF:$<CONFIG:Debug>,1,0>
     GLM_FORCE_SIZE_T_LENGTH
     GLM_ENABLE_EXPERIMENTAL
-    $<$<CONFIG:Debug>:SAFEINT_ASSERT_ON_EXCEPTION>
+    $<$<CONFIG:Debug>:SAFEINT_ASSERT_ON_EXCEPTION BX_CONFIG_DEBUG>
 )
 
 target_compile_definitions(watolib PUBLIC DOCTEST_CONFIG_DISABLE)
@@ -471,6 +477,7 @@ target_sources(watolib
     src/core/physics/physics_event_listener.cpp
     src/core/sys/backtrace.cpp
     src/core/tower_building_handler.cpp
+    src/registry/registry.cpp
     src/systems/ai.cpp
     src/systems/collision.cpp
     src/systems/health.cpp

@@ -24,6 +24,8 @@
 #include "core/types.hpp"
 #include "core/window.hpp"
 #include "imgui_helper.h"
+#include "imgui_hud.hpp"
+#include "imgui_menu.hpp"
 #include "input/action.hpp"
 #include "renderer/instance_buffer.hpp"
 #include "renderer/renderer.hpp"
@@ -140,8 +142,14 @@ void RenderSystem::renderGrid(Registry& aRegistry)
 void RenderImguiSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDelta)
 {
     auto& window = aRegistry.ctx().get<WatoWindow&>();
+    auto& hud    = aRegistry.ctx().get<ImGuiHUD>();
+    auto& menu   = aRegistry.ctx().get<ImGuiGameMenu>();
+
     imguiBeginFrame(window.GetInput(), window.Width<int>(), window.Height<int>());
     showImguiDialogs(window.Width<float>(), window.Height<float>());
+
+    hud.Render(aRegistry, window);
+    menu.Render(aRegistry, window);
 
     for (auto&& [entity, imgui] : aRegistry.view<ImguiDrawable>().each()) {
         auto [camera, transform] = aRegistry.try_get<Camera, Transform3D>(entity);
@@ -177,6 +185,7 @@ void RenderImguiSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDel
 
     auto& phy = aRegistry.ctx().get<Physics&>();
 
+#if WATO_DEBUG
     ImGui::Text("Physics info");
     if (ImGui::Checkbox("Information Logs", &phy.Params.InfoLogs)
         || ImGui::Checkbox("Warning Logs", &phy.Params.WarningLogs)
@@ -184,7 +193,6 @@ void RenderImguiSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDel
         phy.InitLogger();
     }
 
-#if WATO_DEBUG
     rp3d::DebugRenderer& debugRenderer = phy.World()->getDebugRenderer();
     auto                 nTri          = debugRenderer.getNbTriangles();
     auto                 nLines        = debugRenderer.getNbLines();

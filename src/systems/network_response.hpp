@@ -29,6 +29,7 @@ class NetworkResponseSystem : public FixedSystem
     void ensureConnected(entt::dispatcher& aDispatcher);
 
     // Event handlers (use mRegistry member set during Execute)
+    void onNewGame(const NewGameEvent& aEvent);
     void onRigidBodyUpdate(const RigidBodyUpdateEvent& aEvent);
     void onHealthUpdate(const HealthUpdateEvent& aEvent);
     void onSyncPayload(const SyncPayloadEvent& aEvent);

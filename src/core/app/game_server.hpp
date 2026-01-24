@@ -45,6 +45,7 @@ class GameServer : public Application
     virtual void OnGameInstanceCreated(Registry& aRegistry) override;
 
    private:
+    void           spawnPlayers(Registry& aRegistry);
     GameInstanceID createGameInstance(const NewGameRequest& aNewGame);
     tf::Taskflow   mNetTaskflow;
 

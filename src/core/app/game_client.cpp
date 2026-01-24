@@ -10,12 +10,7 @@
 #include <span>
 
 #include "components/game.hpp"
-#include "components/health.hpp"
 #include "components/imgui.hpp"
-#include "components/model_rotation_offset.hpp"
-#include "components/net.hpp"
-#include "components/projectile.hpp"
-#include "components/tower_attack.hpp"
 #include "core/net/enet_client.hpp"
 #include "core/net/net.hpp"
 #include "core/net/network_events.hpp"
@@ -162,11 +157,6 @@ void GameClient::spawnPlayerAndCamera()
         glm::identity<glm::quat>(),
         glm::vec3(1.0f));
     mRegistry.emplace<ImguiDrawable>(camera, "Camera");
-
-    auto player = mRegistry.create();
-    // TODO: ID should be something coming from outside (menu, DB, etc...)
-    mRegistry.emplace<Player>(player, 0u);
-    mRegistry.emplace<Name>(player, "stion");
 }
 
 void GameClient::prepareGridPreview()
@@ -231,9 +221,6 @@ void GameClient::OnGameInstanceCreated(Registry& aRegistry)
 {
     auto& fixedExec = aRegistry.ctx().get<FixedSystemExecutor>();
 
-    // Create dispatcher for network events
-    aRegistry.ctx().emplace<entt::dispatcher>();
-
     spawnPlayerAndCamera();
     prepareGridPreview();
 
@@ -268,6 +255,11 @@ void GameClient::consumeNetworkResponses()
                 [&](const NewGameResponse& aResp) {
                     StartGameInstance(mRegistry, aResp.GameID, false);
                     WATO_INFO(mRegistry, "game {} created", aResp.GameID);
+
+                    if (dispatcher) {
+                        dispatcher->enqueue<NewGameEvent>(
+                            NewGameEvent{.Reg = &mRegistry, .Response = std::move(aResp)});
+                    }
                 },
                 [&](SyncPayload& aResp) {
                     if (dispatcher) {
@@ -286,6 +278,16 @@ void GameClient::consumeNetworkResponses()
                         dispatcher->enqueue<HealthUpdateEvent>(
                             HealthUpdateEvent{.Reg = &mRegistry, .Response = aUpdate});
                     }
+                },
+                [&](const PlayerEliminatedResponse& aResp) {
+                    auto& menu = mRegistry.ctx().get<ImGuiGameMenu>();
+                    mRegistry.ctx().insert_or_assign("ranking"_hs, aResp.Ranking);
+                    menu.GoToEnd();
+                },
+                [&](const GameEndResponse& aResp) {
+                    auto& menu = mRegistry.ctx().get<ImGuiGameMenu>();
+                    mRegistry.ctx().insert_or_assign("ranking"_hs, aResp.Ranking);
+                    menu.GoToEnd();
                 },
                 [&](const std::monostate) {},
             },

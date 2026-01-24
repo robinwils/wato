@@ -309,6 +309,9 @@ CMakeUserPresets.json
 build
 _build*
 
+# VCPKG
+vcpkg_installed
+
 # mise
 .mise.toml
 
@@ -320,3 +323,6 @@ shaders/*.bin
 
 #Vagrant
 .vagrant
+
+# logs
+logs

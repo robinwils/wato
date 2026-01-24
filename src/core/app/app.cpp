@@ -5,6 +5,7 @@
 #include <spdlog/spdlog.h>
 
 #include "components/game.hpp"
+#include "components/health.hpp"
 #include "components/player.hpp"
 #include "components/rigid_body.hpp"
 #include "components/scene_object.hpp"
@@ -46,6 +47,7 @@ void Application::StartGameInstance(
     aRegistry.ctx().get<Physics>().World()->setEventListener(&l);
 
     SetupObservers(aRegistry);
+
     SpawnMap(aRegistry, 20, 20);
     OnGameInstanceCreated(aRegistry);
 }
@@ -60,12 +62,11 @@ void Application::StopGameInstance(Registry& aRegistry)
 
 void Application::SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeight)
 {
-    entt::entity first = entt::null;
-
     auto& graph = aRegistry.ctx().emplace<Graph>(
         aWidth * GraphCell::kCellsPerAxis,
         aHeight * GraphCell::kCellsPerAxis);
-    // Create tiles
+    entt::entity first = entt::null;
+
     for (uint32_t i = 0; i < aWidth; ++i) {
         for (uint32_t j = 0; j < aHeight; ++j) {
             auto tile = aRegistry.create();
@@ -83,36 +84,6 @@ void Application::SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeigh
     aRegistry.emplace<Transform3D>(spawner, glm::vec3(0.0f));
     aRegistry.emplace<Spawner>(spawner);
 
-    auto  base          = aRegistry.create();
-    auto& baseTransform = aRegistry.emplace<Transform3D>(base, glm::vec3(2.0f, 0.004f, 2.0f));
-    aRegistry.emplace<Base>(base);
-    aRegistry.emplace<RigidBody>(
-        base,
-        RigidBody{
-            .Params =
-                RigidBodyParams{
-                    .Type           = rp3d::BodyType::STATIC,
-                    .Velocity       = 0.0f,
-                    .Direction      = glm::vec3(0.0f),
-                    .GravityEnabled = false,
-                },
-        });
-    aRegistry.emplace<Collider>(
-        base,
-        Collider{
-            .Params =
-                ColliderParams{
-                    .CollisionCategoryBits = Category::Terrain,
-                    .CollideWithMaskBits   = Category::Terrain | Category::Entities,
-                    .IsTrigger             = true,
-                    .ShapeParams =
-                        BoxShapeParams{
-                            .HalfExtents = GraphCell(1, 1).ToWorld() * 0.5f,
-                        },
-                },
-        });
-
-    graph.ComputePaths(GraphCell::FromWorldPoint(baseTransform.Position));
     WATO_DBG(aRegistry, "{}", graph);
 
     aRegistry.emplace<RigidBody>(

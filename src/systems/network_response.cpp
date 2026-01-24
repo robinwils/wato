@@ -27,6 +27,7 @@ void NetworkResponseSystem::ensureConnected(entt::dispatcher& aDispatcher)
         return;
     }
 
+    aDispatcher.sink<NewGameEvent>().connect<&NetworkResponseSystem::onNewGame>(*this);
     aDispatcher.sink<RigidBodyUpdateEvent>().connect<&NetworkResponseSystem::onRigidBodyUpdate>(
         *this);
     aDispatcher.sink<HealthUpdateEvent>().connect<&NetworkResponseSystem::onHealthUpdate>(*this);
@@ -44,6 +45,55 @@ void NetworkResponseSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::u
 
     ensureConnected(*dispatcher);
     dispatcher->update();
+}
+void NetworkResponseSystem::onNewGame(const NewGameEvent& aEvent)
+{
+    Registry&   registry = *aEvent.Reg;
+    const auto& resp     = aEvent.Response;
+    auto&       syncMap  = registry.ctx().get<EntitySyncMap>();
+
+    if (syncMap.contains(resp.PlayerEntity)) {
+        WATO_WARN(registry, "player {} already exists", resp.PlayerEntity);
+    } else {
+        auto player = registry.create();
+        registry.emplace<Health>(player, 10.0f);
+        registry.emplace<Player>(player, 0u);
+        registry.emplace<::Name>(player, "stion");
+
+        registry.emplace<Transform3D>(player, glm::vec3(2.0f, 0.004f, 2.0f));
+        registry.emplace<RigidBody>(
+            player,
+            RigidBody{
+                .Params =
+                    RigidBodyParams{
+                        .Type           = rp3d::BodyType::STATIC,
+                        .Velocity       = 0.0f,
+                        .Direction      = glm::vec3(0.0f),
+                        .GravityEnabled = false,
+                    },
+            });
+        registry.emplace<Collider>(
+            player,
+            Collider{
+                .Params =
+                    ColliderParams{
+                        .CollisionCategoryBits = Category::Base,
+                        .CollideWithMaskBits   = Category::Terrain | Category::Entities,
+                        .IsTrigger             = true,
+                        .ShapeParams =
+                            BoxShapeParams{
+                                .HalfExtents = GraphCell(1, 1).ToWorld() * 0.5f,
+                            },
+                    },
+            });
+
+        syncMap.insert_or_assign(resp.PlayerEntity, player);
+        WATO_INFO(
+            registry,
+            "created local player {} for server player {}",
+            player,
+            resp.PlayerEntity);
+    }
 }
 
 void NetworkResponseSystem::onRigidBodyUpdate(const RigidBodyUpdateEvent& aEvent)
@@ -110,6 +160,12 @@ void NetworkResponseSystem::onHealthUpdate(const HealthUpdateEvent& aEvent)
             e,
             update.Health);
         registry.patch<Health>(e, [&update](Health& aHealth) { aHealth.Health = update.Health; });
+    } else {
+        WATO_WARN(
+            registry,
+            "received health update for server {} with {}, but entity not synced",
+            update.Entity,
+            update.Health);
     }
 }
 
@@ -276,7 +332,7 @@ void NetworkResponseSystem::createCreep(
          .Params =
             ColliderParams{
                  .CollisionCategoryBits = Category::Entities,
-                 .CollideWithMaskBits   = Category::Projectiles,
+                 .CollideWithMaskBits   = Category::Projectiles | Category::Entities,
                  .IsTrigger             = false,
                  .Offset                = Transform3D{},
                  .ShapeParams =
