@@ -56,7 +56,7 @@ void NetworkResponseSystem::onNewGame(const NewGameEvent& aEvent)
         WATO_WARN(registry, "player {} already exists", resp.PlayerEntity);
     } else {
         auto player = registry.create();
-        registry.emplace<Health>(player, 100.0f);
+        registry.emplace<Health>(player, 10.0f);
         registry.emplace<Player>(player, 0u);
         registry.emplace<::Name>(player, "stion");
 
