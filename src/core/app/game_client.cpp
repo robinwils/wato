@@ -279,8 +279,16 @@ void GameClient::consumeNetworkResponses()
                             HealthUpdateEvent{.Reg = &mRegistry, .Response = aUpdate});
                     }
                 },
-                [&](const PlayerEliminatedResponse&) {},
-                [&](const GameEndResponse&) {},
+                [&](const PlayerEliminatedResponse& aResp) {
+                    auto& menu = mRegistry.ctx().get<ImGuiGameMenu>();
+                    mRegistry.ctx().insert_or_assign("ranking"_hs, aResp.Ranking);
+                    menu.GoToEnd();
+                },
+                [&](const GameEndResponse& aResp) {
+                    auto& menu = mRegistry.ctx().get<ImGuiGameMenu>();
+                    mRegistry.ctx().insert_or_assign("ranking"_hs, aResp.Ranking);
+                    menu.GoToEnd();
+                },
                 [&](const std::monostate) {},
             },
             aEvent->Payload);
