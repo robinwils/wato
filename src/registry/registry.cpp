@@ -14,3 +14,12 @@ bool IsPlayerEliminated(const Registry& aRegistry, PlayerID aID)
     return false;
 }
 
+entt::entity FindPlayerEntity(const Registry& aRegistry, PlayerID aID)
+{
+    for (const auto&& [entity, player] : aRegistry.view<Player>().each()) {
+        if (player.ID == aID) {
+            return entity;
+        }
+    }
+    return entt::null;
+}

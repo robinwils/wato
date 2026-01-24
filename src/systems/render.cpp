@@ -25,6 +25,7 @@
 #include "core/window.hpp"
 #include "imgui_helper.h"
 #include "imgui_hud.hpp"
+#include "imgui_menu.hpp"
 #include "input/action.hpp"
 #include "renderer/instance_buffer.hpp"
 #include "renderer/renderer.hpp"
@@ -142,11 +143,13 @@ void RenderImguiSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDel
 {
     auto& window = aRegistry.ctx().get<WatoWindow&>();
     auto& hud    = aRegistry.ctx().get<ImGuiHUD>();
+    auto& menu   = aRegistry.ctx().get<ImGuiGameMenu>();
 
     imguiBeginFrame(window.GetInput(), window.Width<int>(), window.Height<int>());
     showImguiDialogs(window.Width<float>(), window.Height<float>());
 
     hud.Render(aRegistry, window);
+    menu.Render(aRegistry, window);
 
     for (auto&& [entity, imgui] : aRegistry.view<ImguiDrawable>().each()) {
         auto [camera, transform] = aRegistry.try_get<Camera, Transform3D>(entity);

@@ -188,11 +188,14 @@ if (ENABLE_CLIENT)
     BASE_DIRS src
     FILES
     src/core/app/game_client.hpp
+    src/core/menu/menu_state.hpp
+    src/core/menu/menu_backend.hpp
     src/core/tile.hpp
     src/core/window.hpp
     src/imgui/wato_imgui_config.h
     src/imgui/imgui_helper.h
     src/imgui/imgui_hud.hpp
+    src/imgui/imgui_menu.hpp
     src/input/action.hpp
     src/input/input.hpp
     src/registry/game_registry.hpp
@@ -226,6 +229,7 @@ if (ENABLE_CLIENT)
     src/core/window.cpp
     src/imgui/imgui_helper.cpp
     src/imgui/imgui_hud.cpp
+    src/imgui/imgui_menu.cpp
     src/input/action.cpp
     src/input/input.cpp
     src/main.cpp

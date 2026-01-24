@@ -12,3 +12,5 @@ using Observers = std::vector<entt::hashed_string>;
 using namespace entt::literals;
 
 bool IsPlayerEliminated(const Registry& aRegistry, PlayerID aID);
+
+entt::entity FindPlayerEntity(const Registry& aRegistry, PlayerID aID);
