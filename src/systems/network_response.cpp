@@ -332,7 +332,7 @@ void NetworkResponseSystem::createCreep(
          .Params =
             ColliderParams{
                  .CollisionCategoryBits = Category::Entities,
-                 .CollideWithMaskBits   = Category::Projectiles,
+                 .CollideWithMaskBits   = Category::Projectiles | Category::Entities,
                  .IsTrigger             = false,
                  .Offset                = Transform3D{},
                  .ShapeParams =

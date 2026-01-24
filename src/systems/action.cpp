@@ -278,9 +278,10 @@ void ServerContextHandler::operator()(Registry& aRegistry, SendCreepPayload& aPa
                 .Params =
                     ColliderParams{
                         .CollisionCategoryBits = Category::Entities,
-                        .CollideWithMaskBits   = Category::Projectiles | Category::Base,
-                        .IsTrigger             = false,
-                        .Offset                = Transform3D{},
+                        .CollideWithMaskBits =
+                            Category::Projectiles | Category::Entities | Category::Base,
+                        .IsTrigger = false,
+                        .Offset    = Transform3D{},
                         .ShapeParams =
                             CapsuleShapeParams{
                                 .Radius = 0.1f,
