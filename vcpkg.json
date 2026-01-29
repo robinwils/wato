@@ -5,7 +5,9 @@
     "libsodium",
     "spdlog",
     "reactphysics3d",
-    "safeint"
+    "safeint",
+    "glaze",
+    "cpr"
   ],
   "features": {
     "client": {
