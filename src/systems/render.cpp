@@ -34,6 +34,9 @@
 void RenderSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDelta)
 {
     auto& renderer = aRegistry.ctx().get<BgfxRenderer&>();
+    auto& window   = aRegistry.ctx().get<WatoWindow&>();
+
+    renderer.SetViewRect(0, 0, 0, window.Width<uint16_t>(), window.Height<uint16_t>());
     // This dummy draw call is here to make sure that view 0 is cleared
     // if no other draw calls are submitted to view 0.
     renderer.Touch(0);
@@ -365,7 +368,6 @@ void CameraSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDelta)
         const auto& viewMat = camera.View(transform.Position);
         const auto& proj    = camera.Projection(window.Width<float>(), window.Height<float>());
         renderer.SetViewTransform(0, viewMat, proj);
-        renderer.SetViewRect(0, 0, 0, window.Width<uint16_t>(), window.Height<uint16_t>());
 
         // just because I know there is only 1 camera (for now)
         // TODO: put in registry context var as singleton ?
