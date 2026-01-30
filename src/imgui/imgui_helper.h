@@ -124,6 +124,18 @@ inline bool ImageButton(
     return ImageButton(aHandle, IMGUI_FLAGS_ALPHA_BLEND, 0, aSize, aUv0, aUv1, aBgCol, aTintCol);
 }
 
+// Helper to display a little (?) mark which shows a tooltip when hovered.
+static void HelpMarker(const char* aDesc)
+{
+    ImGui::TextDisabled("(?)");
+    if (ImGui::BeginItemTooltip()) {
+        ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+        ImGui::TextUnformatted(aDesc);
+        ImGui::PopTextWrapPos();
+        ImGui::EndTooltip();
+    }
+}
+
 ///
 inline void NextLine() { SetCursorPosY(GetCursorPosY() + GetTextLineHeightWithSpacing()); }
 

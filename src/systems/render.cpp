@@ -287,6 +287,33 @@ void RenderImguiSystem::renderMenu(const Registry& aRegistry)
 }
 void RenderImguiSystem::renderMainMenu(const Registry& aRegistry)
 {
+    auto& win    = aRegistry.ctx().get<WatoWindow>();
+    auto  width  = win.Width<float>();
+    auto  height = win.Height<float>();
+    float winW   = width / 10.0f;
+    float winH   = height / 10.0f;
+
+    ImGui::SetNextWindowPos(
+        ImVec2(width * 0.5f - winW / 2.0f, height * 0.5f - winH * 0.5f),
+        ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(winW, winH), ImGuiCond_FirstUseEver);
+
+    ImGui::Begin("Login");
+
+    static char account[64]  = {0};
+    static char password[64] = {0};
+    ImGui::InputTextWithHint("##account", "<Account#TAG>", account, IM_ARRAYSIZE(account));
+    ImGui::InputTextWithHint(
+        "##password",
+        "<Password>",
+        password,
+        IM_ARRAYSIZE(password),
+        ImGuiInputTextFlags_Password);
+    ImGui::SameLine();
+    ImGui::HelpMarker(
+        "Display all characters as '*'.\nDisable clipboard cut and copy.\nDisable logging.\n");
+
+    ImGui::End();
 }
 void RenderImguiSystem::renderInGame(const Registry& aRegistry) {}
 void RenderImguiSystem::renderEndGame(const Registry& aRegistry)
