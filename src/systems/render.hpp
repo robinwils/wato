@@ -44,10 +44,10 @@ class RenderImguiSystem : public FrameSystem
     void Execute(Registry& aRegistry, float aDelta) override;
 
    private:
-    void renderMenu(const Registry& aRegistry);
+    void renderMenu(Registry& aRegistry);
 
    private:
-    void renderMainMenu(const Registry& aRegistry);
+    void renderMainMenu(Registry& aRegistry);
     void renderInGame(const Registry& aRegistry);
     void renderEndGame(const Registry& aRegistry);
 };

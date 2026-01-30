@@ -2,6 +2,7 @@
 
 #include <bgfx/bgfx.h>
 #include <bgfx/defines.h>
+#include <imgui.h>
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
@@ -20,7 +21,9 @@
 #include "components/imgui.hpp"
 #include "components/scene_object.hpp"
 #include "core/menu/menu_state.hpp"
+#include "core/net/services/auth.hpp"
 #include "core/physics/physics.hpp"
+#include "core/sys/log.hpp"
 #include "core/tile.hpp"
 #include "core/types.hpp"
 #include "core/window.hpp"
@@ -275,7 +278,7 @@ void RenderImguiSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDel
     window.GetInput().ClearInputChars();
 }
 
-void RenderImguiSystem::renderMenu(const Registry& aRegistry)
+void RenderImguiSystem::renderMenu(Registry& aRegistry)
 {
     const auto& state = aRegistry.ctx().get<MenuState>();
     switch (state) {
@@ -290,7 +293,7 @@ void RenderImguiSystem::renderMenu(const Registry& aRegistry)
             break;
     }
 }
-void RenderImguiSystem::renderMainMenu(const Registry& aRegistry)
+void RenderImguiSystem::renderMainMenu(Registry& aRegistry)
 {
     auto& win    = aRegistry.ctx().get<WatoWindow>();
     auto  width  = win.Width<float>();
@@ -318,6 +321,16 @@ void RenderImguiSystem::renderMainMenu(const Registry& aRegistry)
     ImGui::HelpMarker(
         "Display all characters as '*'.\nDisable clipboard cut and copy.\nDisable logging.\n");
 
+    if (ImGui::Button("Login")) {
+        auto& auth = aRegistry.ctx().get<AuthService>();
+        auto  resp = auth.Login(account, password);
+
+        if (resp) {
+            WATO_INFO(aRegistry, "user {} logged in", resp->record.name);
+        } else {
+            WATO_ERR(aRegistry, "cannot login");
+        }
+    }
     ImGui::End();
 }
 void RenderImguiSystem::renderInGame(const Registry& aRegistry) {}
