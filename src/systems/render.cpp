@@ -263,6 +263,7 @@ void RenderImguiSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDel
 #endif
 
     imguiEndFrame();
+    window.GetInput().ClearInputChars();
 }
 
 void CameraSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDelta)

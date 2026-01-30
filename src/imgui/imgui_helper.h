@@ -35,12 +35,7 @@ struct AllocatorI;
 void imguiCreate(float aFontSize = 18.0f, bx::AllocatorI* aAllocator = NULL);
 void imguiDestroy();
 
-void imguiBeginFrame(
-    const Input& aInput,
-    int          aWidth,
-    int          aHeight,
-    int          aInputChar = -1,
-    bgfx::ViewId aView      = 255);
+void imguiBeginFrame(const Input& aInput, int aWidth, int aHeight, bgfx::ViewId aView = 255);
 
 void imguiEndFrame();
 

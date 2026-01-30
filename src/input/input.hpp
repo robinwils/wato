@@ -5,6 +5,7 @@
 #include <glm/glm.hpp>
 #include <optional>
 #include <string>
+#include <vector>
 
 struct Keyboard {
     enum Key {
@@ -243,11 +244,16 @@ class Input
 
     const std::optional<glm::vec3>& MouseWorldIntersect() const { return mMouseWorldIntersect; }
 
+    void AddInputChar(uint32_t aCodepoint) { mInputChars.push_back(aCodepoint); }
+    void ClearInputChars() { mInputChars.clear(); }
+    const std::vector<uint32_t>& InputChars() const { return mInputChars; }
+
     struct MouseState    MouseState, PrevMouseState;
     struct KeyboardState KeyboardState, PrevKeyboardState;
 
    private:
     std::optional<glm::vec3> mMouseWorldIntersect;
+    std::vector<uint32_t>    mInputChars;  // Unicode codepoints typed this frame
 
     friend class WatoWindow;
 };

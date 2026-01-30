@@ -318,7 +318,7 @@ void WatoWindow::Init()
     glfwMakeContextCurrent(mGLFWWindow.get());
 
     glfwSetKeyCallback(mGLFWWindow.get(), keyCallback);
-    // glfwSetCharCallback(m_window[0], charCb);
+    glfwSetCharCallback(mGLFWWindow.get(), charCallback);
     glfwSetScrollCallback(mGLFWWindow.get(), scrollCallback);
     glfwSetCursorPosCallback(mGLFWWindow.get(), cursorPosCallback);
     glfwSetMouseButtonCallback(mGLFWWindow.get(), mouseButtonCallback);
@@ -478,4 +478,12 @@ void WatoWindow::scrollCallback(GLFWwindow* aWindow, double aXoffset, double aYo
 
     input.MouseState.Scroll.x = aXoffset;
     input.MouseState.Scroll.y = aYoffset;
+}
+
+void WatoWindow::charCallback(GLFWwindow* aWindow, uint32_t aCodepoint)
+{
+    auto*  win   = static_cast<WatoWindow*>(glfwGetWindowUserPointer(aWindow));
+    Input& input = win->GetInput();
+
+    input.AddInputChar(aCodepoint);
 }

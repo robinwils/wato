@@ -313,14 +313,15 @@ struct OcornutImguiContext {
         style.WindowBorderSize = 0.0f;
     }
 
-    void
-    BeginFrame(const Input& aInput, int aWidth, int aHeight, int aInputChar, bgfx::ViewId aViewId)
+    void BeginFrame(const Input& aInput, int aWidth, int aHeight, bgfx::ViewId aViewId)
     {
         ViewID = aViewId;
 
         ImGuiIO& io = ImGui::GetIO();
-        if (aInputChar >= 0) {
-            io.AddInputCharacter(aInputChar);
+
+        // Add all queued input characters
+        for (uint32_t c : aInput.InputChars()) {
+            io.AddInputCharacter(c);
         }
 
         io.DisplaySize = ImVec2((float)aWidth, (float)aHeight);
@@ -392,14 +393,9 @@ void imguiCreate(float aFontSize, bx::AllocatorI* aAllocator)
 
 void imguiDestroy() { sCtx.Destroy(); }
 
-void imguiBeginFrame(
-    const Input& aInput,
-    int          aWidth,
-    int          aHeight,
-    int          aInputChar,
-    bgfx::ViewId aViewId)
+void imguiBeginFrame(const Input& aInput, int aWidth, int aHeight, bgfx::ViewId aViewId)
 {
-    sCtx.BeginFrame(aInput, aWidth, aHeight, aInputChar, aViewId);
+    sCtx.BeginFrame(aInput, aWidth, aHeight, aViewId);
 }
 
 void imguiEndFrame() { sCtx.EndFrame(); }

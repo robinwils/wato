@@ -92,6 +92,7 @@ class WatoWindow
     static void cursorPosCallback(GLFWwindow* aWindow, double aXpos, double aYpos);
     static void
     mouseButtonCallback(GLFWwindow* aWindow, int32_t aButton, int32_t aAction, int32_t aMods);
+    static void charCallback(GLFWwindow* aWindow, uint32_t aCodepoint);
     static void errorCallback(int aCode, const char* aDescription)
     {
         spdlog::error("GLFW error [{}]: {}", aCode, aDescription);
