@@ -263,6 +263,11 @@ void RenderImguiSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDel
 #endif
 
     imguiEndFrame();
+
+    // Set UI capture flags for next frame's input processing
+    ImGuiIO& io                       = ImGui::GetIO();
+    window.GetInput().UiWantsMouse    = io.WantCaptureMouse;
+    window.GetInput().UiWantsKeyboard = io.WantCaptureKeyboard;
     window.GetInput().ClearInputChars();
 }
 

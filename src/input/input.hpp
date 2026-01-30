@@ -248,6 +248,9 @@ class Input
     void ClearInputChars() { mInputChars.clear(); }
     const std::vector<uint32_t>& InputChars() const { return mInputChars; }
 
+    bool UiWantsMouse    = false;
+    bool UiWantsKeyboard = false;
+
     struct MouseState    MouseState, PrevMouseState;
     struct KeyboardState KeyboardState, PrevKeyboardState;
 

@@ -54,6 +54,9 @@ ActionsType ActionBindings::ActionsFromInput(const Input& aInput)
         std::visit(
             VariantVisitor{// handle keyboard binding
                            [&](const Keyboard::Key& aKey) {
+                               if (aInput.UiWantsKeyboard) {
+                                   return;
+                               }
                                if (binding.KeyState.State == KeyState::State::Hold
                                    && ((aInput.KeyboardState.IsKeyPressed(aKey)
                                         && aInput.PrevKeyboardState.IsKeyPressed(aKey))
@@ -68,6 +71,9 @@ ActionsType ActionBindings::ActionsFromInput(const Input& aInput)
                                }
                            },
                            [&](const Mouse::Button& aButton) {
+                               if (aInput.UiWantsMouse) {
+                                   return;
+                               }
                                if (binding.KeyState.State == KeyState::State::Hold
                                    && ((aInput.MouseState.IsKeyPressed(aButton)
                                         && aInput.PrevMouseState.IsKeyPressed(aButton))
@@ -86,10 +92,12 @@ ActionsType ActionBindings::ActionsFromInput(const Input& aInput)
             binding.KeyState.Key);
     }
 
-    if (aInput.MouseState.Scroll.y > 0) {
-        actions.push_back(kMoveDownAction);
-    } else if (aInput.MouseState.Scroll.y < 0) {
-        actions.push_back(kMoveUpAction);
+    if (!aInput.UiWantsMouse) {
+        if (aInput.MouseState.Scroll.y > 0) {
+            actions.push_back(kMoveDownAction);
+        } else if (aInput.MouseState.Scroll.y < 0) {
+            actions.push_back(kMoveUpAction);
+        }
     }
 
     return actions;
