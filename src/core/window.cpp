@@ -476,8 +476,8 @@ void WatoWindow::scrollCallback(GLFWwindow* aWindow, double aXoffset, double aYo
     auto*  win   = static_cast<WatoWindow*>(glfwGetWindowUserPointer(aWindow));
     Input& input = win->GetInput();
 
-    input.MouseState.Scroll.x = aXoffset;
-    input.MouseState.Scroll.y = aYoffset;
+    input.MouseState.Scroll.x += aXoffset;
+    input.MouseState.Scroll.y += aYoffset;
 }
 
 void WatoWindow::charCallback(GLFWwindow* aWindow, uint32_t aCodepoint)

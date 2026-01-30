@@ -102,9 +102,9 @@ int GameClient::Run(tf::Executor& aExecutor)
         }
 
         renderer.Render();
-        input.PrevKeyboardState   = input.KeyboardState;
-        input.PrevMouseState      = input.MouseState;
-        input.MouseState.Scroll.y = 0;
+        input.PrevKeyboardState = input.KeyboardState;
+        input.PrevMouseState    = input.MouseState;
+        input.MouseState.Scroll = glm::dvec2(0.0);
     }
 
     StopGameInstance(mRegistry);

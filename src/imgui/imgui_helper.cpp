@@ -196,9 +196,8 @@ struct OcornutImguiContext {
             Allocator = &allocator;
         }
 
-        ViewID     = 255;
-        LastScroll = 0;
-        Last       = bx::getHPCounter();
+        ViewID = 255;
+        Last   = bx::getHPCounter();
 
         ImGui::SetAllocatorFunctions(memAlloc, memFree, NULL);
 
@@ -343,8 +342,9 @@ struct OcornutImguiContext {
         io.AddMouseButtonEvent(
             ImGuiMouseButton_Middle,
             aInput.MouseState.IsKeyPressed(Mouse::Button::Middle));
-        io.AddMouseWheelEvent(0.0f, aInput.MouseState.Scroll.y - LastScroll);
-        LastScroll = aInput.MouseState.Scroll.y;
+        io.AddMouseWheelEvent(
+            static_cast<float>(aInput.MouseState.Scroll.x),
+            static_cast<float>(aInput.MouseState.Scroll.y));
 
         ImGui::NewFrame();
     }
@@ -365,7 +365,6 @@ struct OcornutImguiContext {
     bgfx::UniformHandle UniformImageLodEnabled;
     ImFont*             Fonts[ImGui::Font::Count];
     int64_t             Last;
-    double              LastScroll;
     bgfx::ViewId        ViewID;
 #if USE_ENTRY
     ImGuiKey m_keyMap[(int)entry::Key::Count];
