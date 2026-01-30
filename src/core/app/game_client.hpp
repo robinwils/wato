@@ -7,6 +7,7 @@
 #include "core/app/app.hpp"
 #include "core/menu/menu_state.hpp"
 #include "core/net/enet_client.hpp"
+#include "core/net/services/auth.hpp"
 #include "core/physics/physics_event_listener.hpp"
 #include "imgui_hud.hpp"
 #include "input/action.hpp"
@@ -97,6 +98,7 @@ class GameClient : public Application
         mRegistry.ctx().emplace<ShaderCache>();
         mRegistry.ctx().emplace<ModelCache>();
         mRegistry.ctx().emplace<EntitySyncMap>();
+        mRegistry.ctx().emplace<AuthService>(mOptions.BackendAddr(), mLogger);
 
         // Create dispatcher for network events
         mRegistry.ctx().emplace<entt::dispatcher>();
