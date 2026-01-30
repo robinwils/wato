@@ -66,6 +66,13 @@ void GameClient::Init()
     mFrameExecutor.Register<AnimationSystem>();
     mFrameExecutor.Register<RealTimeActionSystem>();
     mFrameExecutor.Register<InputSystem>();
+
+    mMenuExecutor.Register<RenderSystem>();
+    mMenuExecutor.Register<RenderImguiSystem>();
+
+    // TODO: We need to handle NewGame in main menu, separate game instance
+    // lifetime from FixedTime system ?
+    // mMenuExecutor.Register<NetworkResponseSystem>();
 }
 
 int GameClient::Run(tf::Executor& aExecutor)
@@ -98,8 +105,17 @@ int GameClient::Run(tf::Executor& aExecutor)
 
         consumeNetworkResponses();
 
-        if (mRegistry.ctx().contains<GameInstance>()) {
-            mFrameExecutor.Update(frameTime.count(), &mRegistry);
+        switch (mRegistry.ctx().get<MenuState>()) {
+            case MenuState::MainMenu:
+                mMenuExecutor.Update(frameTime.count(), &mRegistry);
+                break;
+            case MenuState::InGame:
+                if (mRegistry.ctx().contains<GameInstance>()) {
+                    mFrameExecutor.Update(frameTime.count(), &mRegistry);
+                }
+                break;
+            case MenuState::EndGame:
+                break;
         }
 
         renderer.Render();

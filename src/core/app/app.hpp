@@ -54,7 +54,9 @@ class Application
 
     Options mOptions;
 
-    FrameSystemExecutor mFrameExecutor;  // Time-based (variable frame rate)
+    // Time-based (variable frame rate)
+    FrameSystemExecutor mFrameExecutor;
+    FrameSystemExecutor mMenuExecutor;
 
     std::atomic_bool mRunning;
 
