@@ -11,6 +11,7 @@
 
 #include "components/game.hpp"
 #include "components/imgui.hpp"
+#include "core/menu/menu_state.hpp"
 #include "core/net/enet_client.hpp"
 #include "core/net/net.hpp"
 #include "core/net/network_events.hpp"
@@ -280,14 +281,12 @@ void GameClient::consumeNetworkResponses()
                     }
                 },
                 [&](const PlayerEliminatedResponse& aResp) {
-                    auto& menu = mRegistry.ctx().get<ImGuiGameMenu>();
                     mRegistry.ctx().insert_or_assign("ranking"_hs, aResp.Ranking);
-                    menu.GoToEnd();
+                    mRegistry.ctx().insert_or_assign<MenuState>(MenuState::EndGame);
                 },
                 [&](const GameEndResponse& aResp) {
-                    auto& menu = mRegistry.ctx().get<ImGuiGameMenu>();
                     mRegistry.ctx().insert_or_assign("ranking"_hs, aResp.Ranking);
-                    menu.GoToEnd();
+                    mRegistry.ctx().insert_or_assign<MenuState>(MenuState::EndGame);
                 },
                 [&](const std::monostate) {},
             },

@@ -19,13 +19,13 @@
 #include "components/health.hpp"
 #include "components/imgui.hpp"
 #include "components/scene_object.hpp"
+#include "core/menu/menu_state.hpp"
 #include "core/physics/physics.hpp"
 #include "core/tile.hpp"
 #include "core/types.hpp"
 #include "core/window.hpp"
 #include "imgui_helper.h"
 #include "imgui_hud.hpp"
-#include "imgui_menu.hpp"
 #include "input/action.hpp"
 #include "renderer/instance_buffer.hpp"
 #include "renderer/renderer.hpp"
@@ -143,13 +143,12 @@ void RenderImguiSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDel
 {
     auto& window = aRegistry.ctx().get<WatoWindow&>();
     auto& hud    = aRegistry.ctx().get<ImGuiHUD>();
-    auto& menu   = aRegistry.ctx().get<ImGuiGameMenu>();
 
     imguiBeginFrame(window.GetInput(), window.Width<int>(), window.Height<int>());
     showImguiDialogs(window.Width<float>(), window.Height<float>());
 
     hud.Render(aRegistry, window);
-    menu.Render(aRegistry, window);
+    renderMenu(aRegistry);
 
     for (auto&& [entity, imgui] : aRegistry.view<ImguiDrawable>().each()) {
         auto [camera, transform] = aRegistry.try_get<Camera, Transform3D>(entity);
@@ -269,6 +268,66 @@ void RenderImguiSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDel
     window.GetInput().UiWantsMouse    = io.WantCaptureMouse;
     window.GetInput().UiWantsKeyboard = io.WantCaptureKeyboard;
     window.GetInput().ClearInputChars();
+}
+
+void RenderImguiSystem::renderMenu(const Registry& aRegistry)
+{
+    const auto& state = aRegistry.ctx().get<MenuState>();
+    switch (state) {
+        case MenuState::MainMenu:
+            renderMainMenu(aRegistry);
+            break;
+        case MenuState::InGame:
+            renderInGame(aRegistry);
+            break;
+        case MenuState::EndGame:
+            renderEndGame(aRegistry);
+            break;
+    }
+}
+void RenderImguiSystem::renderMainMenu(const Registry& aRegistry)
+{
+}
+void RenderImguiSystem::renderInGame(const Registry& aRegistry) {}
+void RenderImguiSystem::renderEndGame(const Registry& aRegistry)
+{
+    auto& ranking = aRegistry.ctx().get<std::vector<PlayerID>>("ranking"_hs);
+    auto& win     = aRegistry.ctx().get<WatoWindow>();
+
+    // TODO: have imgui window creation helpers
+    auto  width  = win.Width<float>();
+    auto  height = win.Height<float>();
+    float winW   = width / 2.0f;
+    float winH   = height / 2.0f;
+
+    ImGui::SetNextWindowPos(
+        ImVec2(width - winW / 2.0f - winW, height - winH / 2.0f - winH),
+        ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(winW, winH), ImGuiCond_FirstUseEver);
+    ImGui::Begin("Final Board");
+
+    std::ranges::reverse_view rv{ranking};
+    for (auto i = 0U; i < rv.size(); ++i) {
+        auto         rank   = i + 1;
+        ImVec4       color  = ImColor(IM_COL32_WHITE);
+        entt::entity player = FindPlayerEntity(aRegistry, rv[i]);
+
+        switch (i) {
+            case 0:
+                color = ImColor(255, 215, 0);
+                break;
+            case 1:
+                color = ImColor(192, 192, 192);
+                break;
+            case 2:
+                color = ImColor(205, 127, 50);
+                break;
+            default:
+                break;
+        }
+        ImGui::TextColored(color, "%d. %s", rank, aRegistry.get<::Name>(player).Username.c_str());
+    }
+    ImGui::End();
 }
 
 void CameraSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDelta)

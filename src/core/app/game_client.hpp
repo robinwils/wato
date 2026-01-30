@@ -5,10 +5,10 @@
 #include <entt/entity/fwd.hpp>
 
 #include "core/app/app.hpp"
+#include "core/menu/menu_state.hpp"
 #include "core/net/enet_client.hpp"
 #include "core/physics/physics_event_listener.hpp"
 #include "imgui_hud.hpp"
-#include "imgui_menu.hpp"
 #include "input/action.hpp"
 #include "registry/registry.hpp"
 #include "renderer/renderer.hpp"
@@ -90,7 +90,7 @@ class GameClient : public Application
         mRegistry.ctx().emplace<ActionContextStack>();
         mRegistry.ctx().emplace<WatoWindow>(aWidth, aHeight);
         mRegistry.ctx().emplace<BgfxRenderer>(mOptions.Renderer());
-        mRegistry.ctx().emplace<ImGuiGameMenu>();
+        mRegistry.ctx().emplace<MenuState>(MenuState::MainMenu);
         mRegistry.ctx().emplace<ImGuiHUD>();
         mRegistry.ctx().emplace<ENetClient>(mLogger);
         mRegistry.ctx().emplace<TextureCache>();
