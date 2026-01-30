@@ -61,7 +61,7 @@ void RenderSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDelta)
             glm::vec4(source.color, 0.0f));
     }
 
-    if (aRegistry.ctx().get<Graph>().GridDirty) {
+    if (auto* graph = aRegistry.ctx().find<Graph>(); graph && graph->GridDirty) {
         updateGridTexture(aRegistry);
     }
 
@@ -185,38 +185,39 @@ void RenderImguiSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDel
         }
     }
 
-    auto& phy = aRegistry.ctx().get<Physics&>();
-
 #if WATO_DEBUG
-    ImGui::Text("Physics info");
-    if (ImGui::Checkbox("Information Logs", &phy.Params.InfoLogs)
-        || ImGui::Checkbox("Warning Logs", &phy.Params.WarningLogs)
-        || ImGui::Checkbox("Error logs", &phy.Params.ErrorLogs)) {
-        phy.InitLogger();
+    if (auto* phyp = aRegistry.ctx().find<Physics>()) {
+        Physics& phy = *phyp;
+        ImGui::Text("Physics info");
+        if (ImGui::Checkbox("Information Logs", &phy.Params.InfoLogs)
+            || ImGui::Checkbox("Warning Logs", &phy.Params.WarningLogs)
+            || ImGui::Checkbox("Error logs", &phy.Params.ErrorLogs)) {
+            phy.InitLogger();
+        }
+
+        rp3d::DebugRenderer& debugRenderer = phy.World()->getDebugRenderer();
+        auto                 nTri          = debugRenderer.getNbTriangles();
+        auto                 nLines        = debugRenderer.getNbLines();
+
+        ImGui::Text("%d debug lines and %d debug triangles", nLines, nTri);
+        ImGui::Checkbox("Collider Shapes", &phy.Params.RenderShapes);
+        ImGui::Checkbox("Collider AABB", &phy.Params.RenderAabb);
+        ImGui::Checkbox("Contact Points", &phy.Params.RenderContactPoints);
+        ImGui::Checkbox("Contact Normals", &phy.Params.RenderContactNormals);
+
+        debugRenderer.setIsDebugItemDisplayed(
+            rp3d::DebugRenderer::DebugItem::COLLISION_SHAPE,
+            phy.Params.RenderShapes);
+        debugRenderer.setIsDebugItemDisplayed(
+            rp3d::DebugRenderer::DebugItem::COLLIDER_AABB,
+            phy.Params.RenderAabb);
+        debugRenderer.setIsDebugItemDisplayed(
+            rp3d::DebugRenderer::DebugItem::CONTACT_POINT,
+            phy.Params.RenderContactPoints);
+        debugRenderer.setIsDebugItemDisplayed(
+            rp3d::DebugRenderer::DebugItem::CONTACT_NORMAL,
+            phy.Params.RenderContactNormals);
     }
-
-    rp3d::DebugRenderer& debugRenderer = phy.World()->getDebugRenderer();
-    auto                 nTri          = debugRenderer.getNbTriangles();
-    auto                 nLines        = debugRenderer.getNbLines();
-
-    ImGui::Text("%d debug lines and %d debug triangles", nLines, nTri);
-    ImGui::Checkbox("Collider Shapes", &phy.Params.RenderShapes);
-    ImGui::Checkbox("Collider AABB", &phy.Params.RenderAabb);
-    ImGui::Checkbox("Contact Points", &phy.Params.RenderContactPoints);
-    ImGui::Checkbox("Contact Normals", &phy.Params.RenderContactNormals);
-
-    debugRenderer.setIsDebugItemDisplayed(
-        rp3d::DebugRenderer::DebugItem::COLLISION_SHAPE,
-        phy.Params.RenderShapes);
-    debugRenderer.setIsDebugItemDisplayed(
-        rp3d::DebugRenderer::DebugItem::COLLIDER_AABB,
-        phy.Params.RenderAabb);
-    debugRenderer.setIsDebugItemDisplayed(
-        rp3d::DebugRenderer::DebugItem::CONTACT_POINT,
-        phy.Params.RenderContactPoints);
-    debugRenderer.setIsDebugItemDisplayed(
-        rp3d::DebugRenderer::DebugItem::CONTACT_NORMAL,
-        phy.Params.RenderContactNormals);
 #endif
 
     ImGui::End();
@@ -231,34 +232,35 @@ void RenderImguiSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDel
         break;
     }
 
-    auto& graph = aRegistry.ctx().get<Graph>();
-    for (auto&& [entity, imgui, t] : aRegistry.view<ImguiDrawable, Transform3D>().each()) {
-        if (imgui.PosOnUnit) {
-            GraphCell   c      = GraphCell::FromWorldPoint(t.Position);
-            glm::vec3   screen = window.ProjectPosition(t.Position, cam, camT.Position);
-            std::string s      = "";
+    if (auto* graph = aRegistry.ctx().find<Graph>()) {
+        for (auto&& [entity, imgui, t] : aRegistry.view<ImguiDrawable, Transform3D>().each()) {
+            if (imgui.PosOnUnit) {
+                GraphCell   c      = GraphCell::FromWorldPoint(t.Position);
+                glm::vec3   screen = window.ProjectPosition(t.Position, cam, camT.Position);
+                std::string s      = "";
 
-            if (auto* health = aRegistry.try_get<Health>(entity); health) {
-                s = fmt::format("{} {}, {} health", c.Location.x, c.Location.y, health->Health);
-            } else {
-                s = fmt::format("{} {}", c.Location.x, c.Location.y);
-            }
-
-            text(
-                screen.x,
-                window.Height<float>() - screen.y,
-                fmt::format("graph_pos_{}", entt::id_type(entity)),
-                s);
-
-            if (auto next = graph.GetNextCell(GraphCell::FromWorldPoint(t.Position))) {
-                screen = window.ProjectPosition(next->ToWorld(), cam, camT.Position);
+                if (auto* health = aRegistry.try_get<Health>(entity); health) {
+                    s = fmt::format("{} {}, {} health", c.Location.x, c.Location.y, health->Health);
+                } else {
+                    s = fmt::format("{} {}", c.Location.x, c.Location.y);
+                }
 
                 text(
                     screen.x,
-                    window.Height<float>() - screen.y - 20.0f,
-                    fmt::format("next_graph_pos_{}", entt::id_type(entity)),
-                    fmt::format("{} {}", next->Location.x, next->Location.y),
-                    imguiRGBA(255, 0, 0));
+                    window.Height<float>() - screen.y,
+                    fmt::format("graph_pos_{}", entt::id_type(entity)),
+                    s);
+
+                if (auto next = graph->GetNextCell(GraphCell::FromWorldPoint(t.Position))) {
+                    screen = window.ProjectPosition(next->ToWorld(), cam, camT.Position);
+
+                    text(
+                        screen.x,
+                        window.Height<float>() - screen.y - 20.0f,
+                        fmt::format("next_graph_pos_{}", entt::id_type(entity)),
+                        fmt::format("{} {}", next->Location.x, next->Location.y),
+                        imguiRGBA(255, 0, 0));
+                }
             }
         }
     }
