@@ -3,8 +3,24 @@
 #include <optional>
 #include <string>
 
-#include "core/net/services/auth.hpp"
+#include "core/net/http_client.hpp"
+#include "core/sys/log.hpp"
 #include "registry/registry.hpp"
+
+struct Record {
+    std::string avatar{};
+    std::string email{};
+    std::string accountName{};
+};
+
+struct LoginResult {
+    Record      record{};
+    std::string token{};
+};
+
+struct RefreshResult {
+    std::string token{};
+};
 
 enum class LoginState {
     Idle,
@@ -14,15 +30,9 @@ enum class LoginState {
 };
 
 struct LoginContext {
-    LoginState                              State = LoginState::Idle;
-    std::string                             Error;
-    std::optional<AuthService::LoginResult> Result;
-};
-
-struct LoginResultEvent {
-    Registry*                               Reg;
-    std::optional<AuthService::LoginResult> Result;
-    std::string                             Error;
+    LoginState                 State = LoginState::Idle;
+    std::string                Error;
+    std::optional<LoginResult> Result;
 };
 
 /**
@@ -31,11 +41,40 @@ struct LoginResultEvent {
  * Contains services and their associated state contexts.
  * Stored in registry context. State updated on main thread only.
  */
-struct PocketBaseClient {
-    AuthService  Auth;
-    LoginContext LoginCtx;
+class PocketBaseClient
+{
+   public:
+    PocketBaseClient(const std::string& aURL, const Logger& aLogger)
+        : Client(aURL), mLogger(aLogger)
+    {
+    }
 
-    PocketBaseClient(const std::string& aURL, const Logger& aLogger) : Auth(aURL, aLogger) {}
+    void Login(
+        const std::string&         aAccount,
+        const std::string&         aPassword,
+        AsyncCallback<LoginResult> aCallback)
+    {
+        Client.PostAsync<LoginResult>(
+            "/api/collections/users/auth-with-password",
+            std::move(aCallback),
+            cpr::Parameters{{"fields", "record.avatar,record.email,record.accountName,token"}},
+            cpr::Payload{{"identity", aAccount}, {"password", aPassword}});
+    }
 
-    void SetToken(const std::string& aToken) { Auth.SetToken(aToken); }
+    void RefreshToken(AsyncCallback<RefreshResult> aCallback)
+    {
+        Client.PostAsync<RefreshResult>(
+            "/api/collections/users/auth-refresh",
+            std::move(aCallback),
+            AuthHeader(),
+            cpr::Parameters{{"fields", "token"}});
+    }
+
+    cpr::Header AuthHeader() const { return cpr::Header{{"Authorization", Token}}; }
+
+    HTTPClient  Client;
+    std::string Token;
+
+   private:
+    Logger mLogger;
 };

@@ -1,6 +1,6 @@
-#include "core/net/services/auth.hpp"
+#include "core/net/pocketbase.hpp"
 
-void AuthService::Login(
+void PocketBaseClient::Login(
     std::string const&         aAccount,
     std::string const&         aPassword,
     AsyncCallback<LoginResult> aCallback)
@@ -12,7 +12,7 @@ void AuthService::Login(
         cpr::Payload{{"identity", aAccount}, {"password", aPassword}});
 }
 
-void AuthService::RefreshToken(AsyncCallback<RefreshResult> aCallback)
+void PocketBaseClient::RefreshToken(AsyncCallback<RefreshResult> aCallback)
 {
     mClient.PostAsync<RefreshResult>(
         "/api/collections/users/auth-refresh",
