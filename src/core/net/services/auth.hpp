@@ -12,20 +12,23 @@ class AuthService : public BackendService
     struct Record {
         std::string avatar{};
         std::string email{};
-        std::string name{};
+        std::string accountName{};
     };
     struct LoginResult {
         Record      record{};
         std::string token{};
     };
+    struct RefreshResult {
+        std::string token{};
+    };
+
     using BackendService::BackendService;
 
-    std::optional<LoginResult> Login(const std::string& aAccount, const std::string& aPassword);
-    LoginResult
-    Register(const std::string& aUsername, const std::string& aTag, const std::string& aPassword);
-    bool RefreshToken();
+    void Login(const std::string& aAccount, const std::string& aPassword, AsyncCallback<LoginResult> aCallback);
+    void RefreshToken(AsyncCallback<RefreshResult> aCallback);
 
     cpr::Header AuthHeader() const { return cpr::Header{{"Authorization", mToken}}; }
+    void        SetToken(const std::string& aToken) { mToken = aToken; }
 
    private:
     std::string mToken;
