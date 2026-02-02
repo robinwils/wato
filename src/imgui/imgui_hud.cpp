@@ -14,8 +14,9 @@ void ImGuiHUD::Render(const Registry& aRegistry, const WatoWindow& aWin)
     ImGui::SetNextWindowSize(ImVec2(width / 3.0f, height / 3.5f), ImGuiCond_FirstUseEver);
     ImGui::Begin("HUD");
 
-    for (auto&& [entity, player, name, health] : aRegistry.view<Player, Name, Health>().each()) {
-        ImGui::Text("Player %s health: %f", name.Username.c_str(), health.Health);
+    for (auto&& [entity, player, name, health] :
+         aRegistry.view<Player, DisplayName, Health>().each()) {
+        ImGui::Text("Player %s health: %f", name.Value.c_str(), health.Health);
     }
     ImGui::End();
 }

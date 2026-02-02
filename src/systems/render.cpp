@@ -19,6 +19,7 @@
 #include "components/camera.hpp"
 #include "components/health.hpp"
 #include "components/imgui.hpp"
+#include "components/player.hpp"
 #include "components/scene_object.hpp"
 #include "core/menu/menu.hpp"
 #include "core/menu/menu_events.hpp"
@@ -312,9 +313,10 @@ void RenderImguiSystem::renderMainMenu(Registry& aRegistry)
 
     ImGui::Begin("Login");
 
-        ImGui::Text("Hello %s!", pb.LoginCtx.Result->record.accountName.c_str());
     if (menu.LoginState == LoginState::Success) {
+        entt::entity player = aRegistry.ctx().get<entt::entity>("player"_hs);
 
+        ImGui::Text("Hello %s!", aRegistry.get<AccountName>(player).Value.c_str());
         ImGui::Separator();
 
     } else {
@@ -394,7 +396,11 @@ void RenderImguiSystem::renderEndGame(const Registry& aRegistry)
             default:
                 break;
         }
-        ImGui::TextColored(color, "%d. %s", rank, aRegistry.get<::Name>(player).Username.c_str());
+        ImGui::TextColored(
+            color,
+            "%d. %s",
+            rank,
+            aRegistry.get<::DisplayName>(player).Label.c_str());
     }
     ImGui::End();
 }

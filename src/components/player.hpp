@@ -10,8 +10,16 @@ struct Player {
     PlayerID ID;
 };
 
-struct Name {
-    std::string Username;
+struct DisplayName {
+    std::string Value;
+};
+
+struct AccountName {
+    std::string Value;
+};
+
+struct Email {
+    std::string Value;
 };
 
 struct Owner {

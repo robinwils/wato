@@ -55,7 +55,7 @@ void NetworkResponseSystem::onNewGame(const NewGameEvent& aEvent)
         auto player = registry.create();
         registry.emplace<Health>(player, 10.0f);
         registry.emplace<Player>(player, 0u);
-        registry.emplace<::Name>(player, "stion");
+        registry.emplace<::DisplayName>(player, "stion");
 
         registry.emplace<Transform3D>(player, glm::vec3(2.0f, 0.004f, 2.0f));
         registry.emplace<RigidBody>(

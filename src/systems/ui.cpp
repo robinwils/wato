@@ -58,6 +58,12 @@ void UISystem::onLoginResult(const LoginResultEvent& aEvent)
     auto& menu = registry.ctx().get<MenuContext>();
 
     if (aEvent.Error.empty()) {
+        entt::entity player = registry.create();
+
+        registry.emplace<Email>(player, aEvent.Email);
+        registry.emplace<AccountName>(player, aEvent.AccountName);
+        registry.ctx().emplace_as<entt::entity>("player"_hs, player);
+
         menu.LoginState = LoginState::Success;
         pb.Token        = aEvent.Token;
 

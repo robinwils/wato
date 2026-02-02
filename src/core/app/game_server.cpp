@@ -164,7 +164,7 @@ void GameServer::spawnPlayers(Registry& aRegistry)
     auto player = aRegistry.create();
     // TODO: ID should be something coming from outside (menu, DB, etc...)
     aRegistry.emplace<Player>(player, 0u);
-    aRegistry.emplace<Name>(player, "stion");
+    aRegistry.emplace<DisplayName>(player, "stion");
     aRegistry.emplace<Health>(player, 10.0f);
 
     WATO_INFO(aRegistry, "server player {} created", player);
