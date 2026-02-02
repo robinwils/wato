@@ -38,13 +38,10 @@ void NetworkResponseSystem::ensureConnected(entt::dispatcher& aDispatcher)
 
 void NetworkResponseSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t aTick)
 {
-    auto* dispatcher = aRegistry.ctx().find<entt::dispatcher>();
-    if (!dispatcher) {
-        return;
-    }
+    auto& dispatcher = aRegistry.ctx().get<entt::dispatcher>("net_dispatcher"_hs);
 
-    ensureConnected(*dispatcher);
-    dispatcher->update();
+    ensureConnected(dispatcher);
+    dispatcher.update();
 }
 void NetworkResponseSystem::onNewGame(const NewGameEvent& aEvent)
 {

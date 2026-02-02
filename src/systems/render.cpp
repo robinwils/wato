@@ -20,8 +20,9 @@
 #include "components/health.hpp"
 #include "components/imgui.hpp"
 #include "components/scene_object.hpp"
+#include "core/menu/menu_events.hpp"
 #include "core/menu/menu_state.hpp"
-#include "core/net/services/auth.hpp"
+#include "core/net/pocketbase.hpp"
 #include "core/physics/physics.hpp"
 #include "core/sys/log.hpp"
 #include "core/tile.hpp"
@@ -295,11 +296,13 @@ void RenderImguiSystem::renderMenu(Registry& aRegistry)
 }
 void RenderImguiSystem::renderMainMenu(Registry& aRegistry)
 {
-    auto& win    = aRegistry.ctx().get<WatoWindow>();
-    auto  width  = win.Width<float>();
-    auto  height = win.Height<float>();
-    float winW   = width / 10.0f;
-    float winH   = height / 10.0f;
+    auto& win        = aRegistry.ctx().get<WatoWindow>();
+    auto& dispatcher = aRegistry.ctx().get<entt::dispatcher>("ui_dispatcher"_hs);
+    auto& pb         = aRegistry.ctx().get<PocketBaseClient>();
+    auto  width      = win.Width<float>();
+    auto  height     = win.Height<float>();
+    float winW       = width * 0.2f;
+    float winH       = height * 0.2f;
 
     ImGui::SetNextWindowPos(
         ImVec2(width * 0.5f - winW / 2.0f, height * 0.5f - winH * 0.5f),
@@ -308,29 +311,48 @@ void RenderImguiSystem::renderMainMenu(Registry& aRegistry)
 
     ImGui::Begin("Login");
 
-    static char account[64]  = {0};
-    static char password[64] = {0};
-    ImGui::InputTextWithHint("##account", "<Account#TAG>", account, IM_ARRAYSIZE(account));
-    ImGui::InputTextWithHint(
-        "##password",
-        "<Password>",
-        password,
-        IM_ARRAYSIZE(password),
-        ImGuiInputTextFlags_Password);
-    ImGui::SameLine();
-    ImGui::HelpMarker(
-        "Display all characters as '*'.\nDisable clipboard cut and copy.\nDisable logging.\n");
+    if (pb.LoginCtx.State == LoginState::Success) {
+        ImGui::Text("Hello %s!", pb.LoginCtx.Result->record.accountName.c_str());
+        ImGui::Separator();
 
-    if (ImGui::Button("Login")) {
-        auto& auth = aRegistry.ctx().get<AuthService>();
-        auto  resp = auth.Login(account, password);
+    } else {
+        static char account[64]  = {0};
+        static char password[64] = {0};
+        ImGui::InputTextWithHint("##account", "<Account#TAG>", account, IM_ARRAYSIZE(account));
+        ImGui::InputTextWithHint(
+            "##password",
+            "<Password>",
+            password,
+            IM_ARRAYSIZE(password),
+            ImGuiInputTextFlags_Password);
+        ImGui::SameLine();
+        ImGui::HelpMarker(
+            "Display all characters as '*'.\nDisable clipboard cut and copy.\nDisable logging.\n");
 
-        if (resp) {
-            WATO_INFO(aRegistry, "user {} logged in", resp->record.name);
-        } else {
-            WATO_ERR(aRegistry, "cannot login");
+        bool isPending = pb.LoginCtx.State == LoginState::Pending;
+        if (isPending) {
+            ImGui::BeginDisabled();
+        }
+        if (ImGui::Button("Login")) {
+            dispatcher.enqueue<LoginEvent>(LoginEvent{
+                .Reg      = &aRegistry,
+                .Account  = std::move(account),
+                .Password = std::move(password)});
+        }
+        if (isPending) {
+            ImGui::EndDisabled();
+        }
+
+        if (pb.LoginCtx.State == LoginState::Pending) {
+            ImGui::Text("Logging in...");
+        } else if (pb.LoginCtx.State == LoginState::Failed) {
+            ImGui::TextColored(
+                ImVec4(1.0f, 0.0f, 0.0f, 1.0f),
+                "Error: %s",
+                pb.LoginCtx.Error.c_str());
         }
     }
+
     ImGui::End();
 }
 void RenderImguiSystem::renderInGame(const Registry& aRegistry) {}

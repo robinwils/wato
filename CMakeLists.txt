@@ -221,6 +221,7 @@ if (ENABLE_CLIENT)
     src/systems/network_response.hpp
     src/systems/render.hpp
     src/systems/sync.hpp
+    src/systems/ui.hpp
 
     PRIVATE
     src/core/app/game_client.cpp
@@ -247,6 +248,7 @@ if (ENABLE_CLIENT)
     src/systems/network_response.cpp
     src/systems/render.cpp
     src/systems/sync.cpp
+    src/systems/ui.cpp
 
     shaders/fs_blinnphong.sc
     shaders/fs_grid.sc

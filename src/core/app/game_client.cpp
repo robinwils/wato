@@ -34,6 +34,7 @@
 #include "systems/sync.hpp"
 #include "systems/system.hpp"
 #include "systems/tower_built.hpp"
+#include "systems/ui.hpp"
 
 using namespace std::literals::chrono_literals;
 using namespace entt::literals;
@@ -69,6 +70,7 @@ void GameClient::Init()
 
     mMenuExecutor.Register<RenderSystem>();
     mMenuExecutor.Register<RenderImguiSystem>();
+    mMenuExecutor.Register<UISystem>();
 
     // TODO: We need to handle NewGame in main menu, separate game instance
     // lifetime from FixedTime system ?
@@ -253,7 +255,7 @@ void GameClient::consumeNetworkResponses()
 {
     auto& netClient = mRegistry.ctx().get<ENetClient>();
 
-    auto* dispatcher = mRegistry.ctx().find<entt::dispatcher>();
+    auto& dispatcher = mRegistry.ctx().get<entt::dispatcher>("net_dispatcher"_hs);
 
     netClient.ConsumeNetworkResponses([&](NetworkResponse* aEvent) {
         std::visit(
@@ -273,28 +275,20 @@ void GameClient::consumeNetworkResponses()
                     StartGameInstance(mRegistry, aResp.GameID, false);
                     WATO_INFO(mRegistry, "game {} created", aResp.GameID);
 
-                    if (dispatcher) {
-                        dispatcher->enqueue<NewGameEvent>(
-                            NewGameEvent{.Reg = &mRegistry, .Response = std::move(aResp)});
-                    }
+                    dispatcher.enqueue<NewGameEvent>(
+                        NewGameEvent{.Reg = &mRegistry, .Response = std::move(aResp)});
                 },
                 [&](SyncPayload& aResp) {
-                    if (dispatcher) {
-                        dispatcher->enqueue<SyncPayloadEvent>(
-                            SyncPayloadEvent{.Reg = &mRegistry, .Payload = std::move(aResp)});
-                    }
+                    dispatcher.enqueue<SyncPayloadEvent>(
+                        SyncPayloadEvent{.Reg = &mRegistry, .Payload = std::move(aResp)});
                 },
                 [&](const RigidBodyUpdateResponse& aUpdate) {
-                    if (dispatcher) {
-                        dispatcher->enqueue<RigidBodyUpdateEvent>(
-                            RigidBodyUpdateEvent{.Reg = &mRegistry, .Response = aUpdate});
-                    }
+                    dispatcher.enqueue<RigidBodyUpdateEvent>(
+                        RigidBodyUpdateEvent{.Reg = &mRegistry, .Response = aUpdate});
                 },
                 [&](const HealthUpdateResponse& aUpdate) {
-                    if (dispatcher) {
-                        dispatcher->enqueue<HealthUpdateEvent>(
-                            HealthUpdateEvent{.Reg = &mRegistry, .Response = aUpdate});
-                    }
+                    dispatcher.enqueue<HealthUpdateEvent>(
+                        HealthUpdateEvent{.Reg = &mRegistry, .Response = aUpdate});
                 },
                 [&](const PlayerEliminatedResponse& aResp) {
                     mRegistry.ctx().insert_or_assign("ranking"_hs, aResp.Ranking);
