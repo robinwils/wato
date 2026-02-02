@@ -29,21 +29,28 @@
         {
           "name": "bgfx",
           "default-features": false,
-          "features": [ "multithreaded", "tools" ],
+          "features": [
+            "multithreaded",
+            "tools"
+          ],
           "host": true,
           "$reason": "tools are used on host, can't compile on non native"
         },
         {
           "name": "bgfx",
-          "features": [ "multithreaded" ]
+          "features": [
+            "multithreaded"
+          ]
         },
         "assimp",
         "imgui"
       ]
     },
-    "tests" : {
+    "tests": {
       "description": "Build tests",
-      "dependencies": [ "bgfx" ]
+      "dependencies": [
+        "bgfx"
+      ]
     }
   }
 }
