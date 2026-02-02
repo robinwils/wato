@@ -9,3 +9,12 @@ struct LoginEvent {
     std::string Account;
     std::string Password;
 };
+
+struct LoginResultEvent {
+    Registry*   Reg;
+    std::string Avatar{};
+    std::string Email{};
+    std::string AccountName{};
+    std::string Token{};
+    std::string Error{};
+};

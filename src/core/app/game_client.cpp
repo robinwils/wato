@@ -11,7 +11,7 @@
 
 #include "components/game.hpp"
 #include "components/imgui.hpp"
-#include "core/menu/menu_state.hpp"
+#include "core/menu/menu.hpp"
 #include "core/net/enet_client.hpp"
 #include "core/net/net.hpp"
 #include "core/net/network_events.hpp"
@@ -107,7 +107,7 @@ int GameClient::Run(tf::Executor& aExecutor)
 
         consumeNetworkResponses();
 
-        switch (mRegistry.ctx().get<MenuState>()) {
+        switch (mRegistry.ctx().get<MenuContext>().State) {
             case MenuState::MainMenu:
                 mMenuExecutor.Update(frameTime.count(), &mRegistry);
                 break;
@@ -292,11 +292,11 @@ void GameClient::consumeNetworkResponses()
                 },
                 [&](const PlayerEliminatedResponse& aResp) {
                     mRegistry.ctx().insert_or_assign("ranking"_hs, aResp.Ranking);
-                    mRegistry.ctx().insert_or_assign<MenuState>(MenuState::EndGame);
+                    mRegistry.ctx().get<MenuContext&>().State = MenuState::EndGame;
                 },
                 [&](const GameEndResponse& aResp) {
                     mRegistry.ctx().insert_or_assign("ranking"_hs, aResp.Ranking);
-                    mRegistry.ctx().insert_or_assign<MenuState>(MenuState::EndGame);
+                    mRegistry.ctx().get<MenuContext&>().State = MenuState::EndGame;
                 },
                 [&](const std::monostate) {},
             },

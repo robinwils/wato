@@ -5,7 +5,7 @@
 #include <entt/entity/fwd.hpp>
 
 #include "core/app/app.hpp"
-#include "core/menu/menu_state.hpp"
+#include "core/menu/menu.hpp"
 #include "core/net/enet_client.hpp"
 #include "core/net/pocketbase.hpp"
 #include "core/physics/physics_event_listener.hpp"
@@ -91,7 +91,7 @@ class GameClient : public Application
         mRegistry.ctx().emplace<ActionContextStack>();
         mRegistry.ctx().emplace<WatoWindow>(aWidth, aHeight);
         mRegistry.ctx().emplace<BgfxRenderer>(mOptions.Renderer());
-        mRegistry.ctx().emplace<MenuState>(MenuState::MainMenu);
+        mRegistry.ctx().emplace<MenuContext>(MenuState::MainMenu);
         mRegistry.ctx().emplace<ImGuiHUD>();
         mRegistry.ctx().emplace<ENetClient>(mLogger);
         mRegistry.ctx().emplace<TextureCache>();
@@ -102,7 +102,6 @@ class GameClient : public Application
 
         // Create dispatcher for network events
         mRegistry.ctx().emplace_as<entt::dispatcher>("net_dispatcher"_hs);
-        mRegistry.ctx().emplace_as<entt::dispatcher>("ui_dispatcher"_hs);
     }
     void networkThread();
     void consumeNetworkResponses();

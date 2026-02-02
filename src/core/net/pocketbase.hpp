@@ -7,32 +7,19 @@
 #include "core/sys/log.hpp"
 #include "registry/registry.hpp"
 
-struct Record {
+struct LoginRecord {
     std::string avatar{};
     std::string email{};
     std::string accountName{};
 };
 
 struct LoginResult {
-    Record      record{};
+    LoginRecord record{};
     std::string token{};
 };
 
 struct RefreshResult {
     std::string token{};
-};
-
-enum class LoginState {
-    Idle,
-    Pending,
-    Success,
-    Failed,
-};
-
-struct LoginContext {
-    LoginState                 State = LoginState::Idle;
-    std::string                Error;
-    std::optional<LoginResult> Result;
 };
 
 /**

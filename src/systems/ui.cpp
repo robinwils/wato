@@ -1,5 +1,6 @@
 #include "ui.hpp"
 
+#include "core/menu/menu.hpp"
 #include "core/net/pocketbase.hpp"
 #include "core/sys/log.hpp"
 
@@ -37,25 +38,34 @@ void UISystem::onLogin(const LoginEvent& aEvent)
         aEvent.Account,
         aEvent.Password,
         [reg, &dispatcher](
-            const std::optional<AuthService::LoginResult>& aResult, const std::string& aError) {
-            dispatcher.enqueue<LoginResultEvent>(
-                LoginResultEvent{.Reg = reg, .Result = aResult, .Error = aError});
+            const std::optional<AuthService::LoginResult>& aResult,
+            const std::string&                             aError) {
+            dispatcher.enqueue<LoginResultEvent>(LoginResultEvent{
+                .Reg         = reg,
+                .Avatar      = aResult->record.avatar,
+                .Email       = aResult->record.email,
+                .AccountName = aResult->record.accountName,
+                .Token       = aResult->token,
+                .Error       = aError});
         });
 }
 
 void UISystem::onLoginResult(const LoginResultEvent& aEvent)
 {
     Registry& registry = *aEvent.Reg;
-    auto&     pb       = registry.ctx().get<PocketBaseClient>();
 
-    if (aEvent.Result) {
-        pb.LoginCtx.State  = LoginState::Success;
-        pb.LoginCtx.Result = aEvent.Result;
-        pb.SetToken(aEvent.Result->token);
-        WATO_INFO(registry, "user {} logged in", aEvent.Result->record.accountName);
+    auto& pb   = registry.ctx().get<PocketBaseClient>();
+    auto& menu = registry.ctx().get<MenuContext>();
+
+    if (aEvent.Error.empty()) {
+        menu.LoginState = LoginState::Success;
+        pb.Token        = aEvent.Token;
+
+        WATO_INFO(registry, "user {} logged in", aEvent.AccountName);
     } else {
-        pb.LoginCtx.State = LoginState::Failed;
-        pb.LoginCtx.Error = aEvent.Error;
+        menu.LoginState = LoginState::Failed;
+        menu.LoginError = aEvent.Error;
+
         WATO_ERR(registry, "login failed: {}", aEvent.Error);
     }
 }

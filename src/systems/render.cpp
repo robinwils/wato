@@ -20,8 +20,8 @@
 #include "components/health.hpp"
 #include "components/imgui.hpp"
 #include "components/scene_object.hpp"
+#include "core/menu/menu.hpp"
 #include "core/menu/menu_events.hpp"
-#include "core/menu/menu_state.hpp"
 #include "core/net/pocketbase.hpp"
 #include "core/physics/physics.hpp"
 #include "core/sys/log.hpp"
@@ -281,8 +281,7 @@ void RenderImguiSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDel
 
 void RenderImguiSystem::renderMenu(Registry& aRegistry)
 {
-    const auto& state = aRegistry.ctx().get<MenuState>();
-    switch (state) {
+    switch (aRegistry.ctx().get<MenuContext>().State) {
         case MenuState::MainMenu:
             renderMainMenu(aRegistry);
             break;
@@ -299,10 +298,12 @@ void RenderImguiSystem::renderMainMenu(Registry& aRegistry)
     auto& win        = aRegistry.ctx().get<WatoWindow>();
     auto& dispatcher = aRegistry.ctx().get<entt::dispatcher>("ui_dispatcher"_hs);
     auto& pb         = aRegistry.ctx().get<PocketBaseClient>();
-    auto  width      = win.Width<float>();
-    auto  height     = win.Height<float>();
-    float winW       = width * 0.2f;
-    float winH       = height * 0.2f;
+    auto& menu       = aRegistry.ctx().get<MenuContext>();
+
+    auto  width  = win.Width<float>();
+    auto  height = win.Height<float>();
+    float winW   = width * 0.2f;
+    float winH   = height * 0.2f;
 
     ImGui::SetNextWindowPos(
         ImVec2(width * 0.5f - winW / 2.0f, height * 0.5f - winH * 0.5f),
@@ -311,8 +312,9 @@ void RenderImguiSystem::renderMainMenu(Registry& aRegistry)
 
     ImGui::Begin("Login");
 
-    if (pb.LoginCtx.State == LoginState::Success) {
         ImGui::Text("Hello %s!", pb.LoginCtx.Result->record.accountName.c_str());
+    if (menu.LoginState == LoginState::Success) {
+
         ImGui::Separator();
 
     } else {
@@ -329,7 +331,7 @@ void RenderImguiSystem::renderMainMenu(Registry& aRegistry)
         ImGui::HelpMarker(
             "Display all characters as '*'.\nDisable clipboard cut and copy.\nDisable logging.\n");
 
-        bool isPending = pb.LoginCtx.State == LoginState::Pending;
+        bool isPending = menu.LoginState == LoginState::Pending;
         if (isPending) {
             ImGui::BeginDisabled();
         }
@@ -343,13 +345,13 @@ void RenderImguiSystem::renderMainMenu(Registry& aRegistry)
             ImGui::EndDisabled();
         }
 
-        if (pb.LoginCtx.State == LoginState::Pending) {
+        if (menu.LoginState == LoginState::Pending) {
             ImGui::Text("Logging in...");
-        } else if (pb.LoginCtx.State == LoginState::Failed) {
+        } else if (menu.LoginState == LoginState::Failed) {
             ImGui::TextColored(
                 ImVec4(1.0f, 0.0f, 0.0f, 1.0f),
                 "Error: %s",
-                pb.LoginCtx.Error.c_str());
+                menu.LoginError.c_str());
         }
     }
 

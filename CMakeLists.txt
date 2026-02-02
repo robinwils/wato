@@ -189,7 +189,7 @@ if (ENABLE_CLIENT)
     BASE_DIRS src
     FILES
     src/core/app/game_client.hpp
-    src/core/menu/menu_state.hpp
+    src/core/menu/menu.hpp
     src/core/menu/menu_backend.hpp
     src/core/tile.hpp
     src/core/window.hpp
