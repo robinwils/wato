@@ -3,14 +3,13 @@
 #include <entt/signal/dispatcher.hpp>
 
 #include "core/menu/menu_events.hpp"
-#include "core/net/network_events.hpp"
 #include "core/net/pocketbase.hpp"
 #include "systems/system.hpp"
 
 /**
  * @brief Processes UI events
  *
- * Handles HTTP requests and more
+ * Handles HTTP requests and matchmaking flow
  *
  */
 class UISystem : public FrameSystem
@@ -28,6 +27,12 @@ class UISystem : public FrameSystem
 
     void onLogin(const LoginEvent& aEvent);
     void onLoginResult(const LoginResultEvent& aEvent);
+
+    void onJoinMatchmaking(const JoinMatchmakingEvent& aEvent);
+    void onLeaveMatchmaking(const LeaveMatchmakingEvent& aEvent);
+    void onJoinResult(const JoinResultEvent& aEvent);
+    void onMatchFound(const MatchFoundEvent& aEvent);
+    void onMatchmakingError(const MatchmakingErrorEvent& aEvent);
 
     bool mConnected = false;
 };

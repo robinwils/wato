@@ -14,39 +14,48 @@ void UISystem::ensureConnected(entt::dispatcher& aDispatcher)
 
     aDispatcher.sink<LoginEvent>().connect<&UISystem::onLogin>(*this);
     aDispatcher.sink<LoginResultEvent>().connect<&UISystem::onLoginResult>(*this);
+    aDispatcher.sink<JoinMatchmakingEvent>().connect<&UISystem::onJoinMatchmaking>(*this);
+    aDispatcher.sink<LeaveMatchmakingEvent>().connect<&UISystem::onLeaveMatchmaking>(*this);
+    aDispatcher.sink<JoinResultEvent>().connect<&UISystem::onJoinResult>(*this);
+    aDispatcher.sink<MatchFoundEvent>().connect<&UISystem::onMatchFound>(*this);
+    aDispatcher.sink<MatchmakingErrorEvent>().connect<&UISystem::onMatchmakingError>(*this);
 
     mConnected = true;
 }
 
 void UISystem::Execute(Registry& aRegistry, [[maybe_unused]] float aTick)
 {
-    auto& dispatcher = aRegistry.ctx().get<entt::dispatcher>("ui_dispatcher"_hs);
+    auto& menu = aRegistry.ctx().get<MenuContext>();
 
-    ensureConnected(dispatcher);
-    dispatcher.update();
+    ensureConnected(menu.Dispatcher);
+    menu.Dispatcher.update();
 }
 
 void UISystem::onLogin(const LoginEvent& aEvent)
 {
-    Registry* reg        = aEvent.Reg;
-    auto&     pb         = reg->ctx().get<PocketBaseClient>();
-    auto&     dispatcher = reg->ctx().get<entt::dispatcher>("ui_dispatcher"_hs);
+    Registry* reg  = aEvent.Reg;
+    auto&     pb   = reg->ctx().get<PocketBaseClient>();
+    auto&     menu = reg->ctx().get<MenuContext>();
 
-    pb.LoginCtx.State = LoginState::Pending;
+    menu.LoginState = LoginState::Pending;
 
-    pb.Auth.Login(
+    pb.Login(
         aEvent.Account,
         aEvent.Password,
-        [reg, &dispatcher](
-            const std::optional<AuthService::LoginResult>& aResult,
-            const std::string&                             aError) {
-            dispatcher.enqueue<LoginResultEvent>(LoginResultEvent{
-                .Reg         = reg,
-                .Avatar      = aResult->record.avatar,
-                .Email       = aResult->record.email,
-                .AccountName = aResult->record.accountName,
-                .Token       = aResult->token,
-                .Error       = aError});
+        [reg](const std::optional<LoginResult>& aResult, const std::string& aError) {
+            auto& dispatcher = reg->ctx().get<MenuContext>().Dispatcher;
+            if (aResult) {
+                dispatcher.enqueue<LoginResultEvent>(LoginResultEvent{
+                    .Reg         = reg,
+                    .ID          = aResult->record.id,
+                    .Avatar      = aResult->record.avatar,
+                    .Email       = aResult->record.email,
+                    .AccountName = aResult->record.accountName,
+                    .Token       = aResult->token,
+                    .Error       = ""});
+            } else {
+                dispatcher.enqueue<LoginResultEvent>(LoginResultEvent{.Reg = reg, .Error = aError});
+            }
         });
 }
 
@@ -60,6 +69,7 @@ void UISystem::onLoginResult(const LoginResultEvent& aEvent)
     if (aEvent.Error.empty()) {
         entt::entity player = registry.create();
 
+        registry.emplace<RecordID>(player, aEvent.ID);
         registry.emplace<Email>(player, aEvent.Email);
         registry.emplace<AccountName>(player, aEvent.AccountName);
         registry.ctx().emplace_as<entt::entity>("player"_hs, player);
@@ -74,4 +84,116 @@ void UISystem::onLoginResult(const LoginResultEvent& aEvent)
 
         WATO_ERR(registry, "login failed: {}", aEvent.Error);
     }
+}
+
+void UISystem::onJoinMatchmaking(const JoinMatchmakingEvent& aEvent)
+{
+    Registry* reg  = aEvent.Reg;
+    auto&     pb   = reg->ctx().get<PocketBaseClient>();
+    auto&     menu = reg->ctx().get<MenuContext>();
+    auto&     id   = reg->get<RecordID>(aEvent.Player);
+
+    if (menu.Matchmaking.State != MatchmakingState::Idle) {
+        return;
+    }
+
+    menu.Matchmaking.State = MatchmakingState::Joining;
+
+    pb.JoinQueue(
+        id.Value,
+        [reg](const std::optional<MatchmakingRecord>& aResult, const std::string& aError) {
+            auto& dispatcher = reg->ctx().get<MenuContext>().Dispatcher;
+            if (aResult) {
+                dispatcher.enqueue<JoinResultEvent>(JoinResultEvent{
+                    .Reg         = reg,
+                    .ID          = aResult->id,
+                    .AccountName = aResult->accountName,
+                    .Status      = aResult->status,
+                    .GameId      = aResult->gameId,
+                    .ServerAddr  = aResult->serverAddr,
+                    .Created     = aResult->created,
+                    .Updated     = aResult->updated,
+                });
+            } else {
+                dispatcher.enqueue<MatchmakingErrorEvent>(
+                    MatchmakingErrorEvent{.Reg = reg, .Error = aError});
+            }
+        });
+}
+
+void UISystem::onLeaveMatchmaking(const LeaveMatchmakingEvent& aEvent)
+{
+    Registry* reg = aEvent.Reg;
+
+    auto& pb   = reg->ctx().get<PocketBaseClient>();
+    auto& menu = reg->ctx().get<MenuContext>();
+    auto& id   = reg->get<RecordID>(aEvent.Player);
+
+    if (menu.Matchmaking.State == MatchmakingState::Idle) {
+        return;
+    }
+
+    pb.Unsubscribe();
+
+    if (!menu.Matchmaking.RecordId.empty()) {
+        pb.LeaveQueue(id.Value, [](const std::optional<std::string>&, const std::string&) {
+            // Fire and forget
+        });
+    }
+
+    menu.Matchmaking = MatchmakingContext{};
+}
+
+void UISystem::onJoinResult(const JoinResultEvent& aEvent)
+{
+    Registry* reg  = aEvent.Reg;
+    auto&     pb   = reg->ctx().get<PocketBaseClient>();
+    auto&     menu = reg->ctx().get<MenuContext>();
+
+    menu.Matchmaking.State    = MatchmakingState::Waiting;
+    menu.Matchmaking.RecordId = aEvent.ID;
+
+    pb.Subscribe<MatchmakingRecord>(
+        "matchmaking_queue/" + aEvent.ID,
+        [reg](const std::optional<PBSSE<MatchmakingRecord>>& aRecord, const std::string& aError) {
+            if (aRecord && aRecord->record.status == "matched" && aRecord->record.gameId != 0) {
+                auto& dispatcher = reg->ctx().get<MenuContext>().Dispatcher;
+                dispatcher.enqueue<MatchFoundEvent>(MatchFoundEvent{
+                    .Reg        = reg,
+                    .GameId     = aRecord->record.gameId,
+                    .ServerAddr = aRecord->record.serverAddr,
+                });
+            }
+        });
+
+    WATO_INFO(*reg, "joined matchmaking queue, record id: {}", aEvent.ID);
+}
+
+void UISystem::onMatchFound(const MatchFoundEvent& aEvent)
+{
+    Registry& registry = *aEvent.Reg;
+    auto&     pb       = registry.ctx().get<PocketBaseClient>();
+    auto&     menu     = registry.ctx().get<MenuContext>();
+
+    menu.Matchmaking.State         = MatchmakingState::Matched;
+    menu.Matchmaking.MatchedGameId = aEvent.GameId;
+    menu.Matchmaking.ServerAddr    = aEvent.ServerAddr;
+
+    pb.Unsubscribe();
+
+    WATO_INFO(registry, "match found! game_id: {}, server: {}", aEvent.GameId, aEvent.ServerAddr);
+}
+
+void UISystem::onMatchmakingError(const MatchmakingErrorEvent& aEvent)
+{
+    Registry& registry = *aEvent.Reg;
+    auto&     pb       = registry.ctx().get<PocketBaseClient>();
+    auto&     menu     = registry.ctx().get<MenuContext>();
+
+    menu.Matchmaking.State = MatchmakingState::Failed;
+    menu.Matchmaking.Error = aEvent.Error;
+
+    pb.Unsubscribe();
+
+    WATO_ERR(registry, "matchmaking error: {}", aEvent.Error);
 }

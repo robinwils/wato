@@ -10,6 +10,10 @@ struct Player {
     PlayerID ID;
 };
 
+struct RecordID {
+    std::string Value;
+};
+
 struct DisplayName {
     std::string Value;
 };

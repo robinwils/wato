@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <entt/entity/fwd.hpp>
 #include <glm/ext/matrix_float4x4.hpp>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -297,9 +298,8 @@ void RenderImguiSystem::renderMenu(Registry& aRegistry)
 void RenderImguiSystem::renderMainMenu(Registry& aRegistry)
 {
     auto& win        = aRegistry.ctx().get<WatoWindow>();
-    auto& dispatcher = aRegistry.ctx().get<entt::dispatcher>("ui_dispatcher"_hs);
-    auto& pb         = aRegistry.ctx().get<PocketBaseClient>();
     auto& menu       = aRegistry.ctx().get<MenuContext>();
+    auto& dispatcher = menu.Dispatcher;
 
     auto  width  = win.Width<float>();
     auto  height = win.Height<float>();
@@ -319,6 +319,30 @@ void RenderImguiSystem::renderMainMenu(Registry& aRegistry)
         ImGui::Text("Hello %s!", aRegistry.get<AccountName>(player).Value.c_str());
         ImGui::Separator();
 
+        switch (menu.Matchmaking.State) {
+            case MatchmakingState::Idle:
+                if (ImGui::Button("Find Match")) {
+                    dispatcher.enqueue(JoinMatchmakingEvent{
+                        .Reg    = &aRegistry,
+                        .Player = player,
+                    });
+                }
+                break;
+            case MatchmakingState::Joining:
+            case MatchmakingState::Waiting:
+                ImGui::Text("Waiting for match...");
+                if (ImGui::Button("Cancel")) {
+                    dispatcher.enqueue(JoinMatchmakingEvent{
+                        .Reg    = &aRegistry,
+                        .Player = player,
+                    });
+                }
+                break;
+            case MatchmakingState::Matched:
+            case MatchmakingState::Connecting:
+            case MatchmakingState::Failed:
+                break;
+        }
     } else {
         static char account[64]  = {0};
         static char password[64] = {0};
@@ -338,7 +362,7 @@ void RenderImguiSystem::renderMainMenu(Registry& aRegistry)
             ImGui::BeginDisabled();
         }
         if (ImGui::Button("Login")) {
-            dispatcher.enqueue<LoginEvent>(LoginEvent{
+            dispatcher.enqueue(LoginEvent{
                 .Reg      = &aRegistry,
                 .Account  = std::move(account),
                 .Password = std::move(password)});
@@ -400,7 +424,7 @@ void RenderImguiSystem::renderEndGame(const Registry& aRegistry)
             color,
             "%d. %s",
             rank,
-            aRegistry.get<::DisplayName>(player).Label.c_str());
+            aRegistry.get<::DisplayName>(player).Value.c_str());
     }
     ImGui::End();
 }

@@ -303,6 +303,7 @@ endif()
 # Preprocessor
 target_compile_definitions(wato_common
   INTERFACE
+    ENTT_MAYBE_ATOMIC
     SPDLOG_ACTIVE_LEVEL=$<IF:$<CONFIG:Debug>,SPDLOG_LEVEL_TRACE,SPDLOG_LEVEL_INFO>
     WATO_DEBUG=$<IF:$<CONFIG:Debug>,1,0>
     GLM_FORCE_SIZE_T_LENGTH
