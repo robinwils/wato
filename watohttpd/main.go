@@ -7,10 +7,21 @@ import (
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
+	"github.com/pocketbase/pocketbase/plugins/migratecmd"
+
+	_ "watohttpd/migrations"
 )
 
 func main() {
 	app := pocketbase.New()
+
+	autoMigrate := os.Getenv("AUTOMIGRATE")
+
+	migratecmd.MustRegister(app, app.RootCmd, migratecmd.Config{
+		// enable auto creation of migration files when making collection changes in the Dashboard
+		// (the isGoRun check is to enable it only during development)
+		Automigrate: autoMigrate != "",
+	})
 
 	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
 		// serves static files from the provided public dir (if exists)
