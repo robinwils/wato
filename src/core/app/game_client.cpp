@@ -108,7 +108,9 @@ int GameClient::Run(tf::Executor& aExecutor)
         consumeNetworkResponses();
 
         switch (mRegistry.ctx().get<MenuContext>().State) {
-            case MenuState::MainMenu:
+            case MenuState::Login:
+            case MenuState::Register:
+            case MenuState::Lobby:
                 mMenuExecutor.Update(frameTime.count(), &mRegistry);
                 break;
             case MenuState::InGame:

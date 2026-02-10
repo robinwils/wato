@@ -7,7 +7,9 @@
 #include "core/types.hpp"
 
 enum class MenuState {
-    MainMenu,
+    Login,
+    Register,
+    Lobby,
     InGame,
     EndGame,
 };
@@ -38,7 +40,7 @@ struct MatchmakingContext {
 
 struct MenuContext {
     MenuContext(std::unique_ptr<MenuBackend>&& aBackend)
-        : State(MenuState::MainMenu), LoginState(LoginState::Idle), Backend(std::move(aBackend))
+        : State(MenuState::Login), LoginState(LoginState::Idle), Backend(std::move(aBackend))
     {
     }
 

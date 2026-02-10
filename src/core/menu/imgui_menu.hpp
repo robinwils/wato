@@ -11,6 +11,7 @@ class ImGuiMenu : public MenuBackend
    private:
     void renderMainMenu(Registry& aRegistry);
     void renderLogin(Registry& aRegistry);
+    void renderRegister(Registry& aRegistry);
     void renderLobby(Registry& aRegistry);
 
     void renderInGame(const Registry& aRegistry);

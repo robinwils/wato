@@ -10,7 +10,9 @@
 void ImGuiMenu::Render(Registry& aReg)
 {
     switch (aReg.ctx().get<MenuContext>().State) {
-        case MenuState::MainMenu:
+        case MenuState::Login:
+        case MenuState::Register:
+        case MenuState::Lobby:
             renderMainMenu(aReg);
             break;
         case MenuState::InGame:
@@ -40,10 +42,19 @@ void ImGuiMenu::renderMainMenu(Registry& aRegistry)
 
     ImGui::Begin("Login");
 
-    if (menu.LoginState == LoginState::Success) {
-        renderLobby(aRegistry);
-    } else {
-        renderLogin(aRegistry);
+    switch (menu.State) {
+        break;
+        case MenuState::Login:
+            renderLogin(aRegistry);
+            break;
+        case MenuState::Register:
+            renderRegister(aRegistry);
+            break;
+        case MenuState::Lobby:
+            renderLobby(aRegistry);
+            break;
+        default:
+            break;
     }
 
     ImGui::End();
@@ -78,6 +89,63 @@ void ImGuiMenu::renderLogin(Registry& aRegistry)
                 .Reg      = &aRegistry,
                 .Account  = std::move(account),
                 .Password = std::move(password)});
+    }
+
+    if (ImGui::Button("Register")) {
+        menu.State = MenuState::Register;
+    }
+
+    if (isPending) {
+        ImGui::EndDisabled();
+    }
+
+    if (menu.LoginState == LoginState::Pending) {
+        ImGui::Text("Logging in...");
+    } else if (menu.LoginState == LoginState::Failed) {
+        ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Error: %s", menu.LoginError.c_str());
+    }
+}
+
+void ImGuiMenu::renderRegister(Registry& aRegistry)
+{
+    auto& menu       = aRegistry.ctx().get<MenuContext>();
+    auto& dispatcher = menu.Dispatcher;
+
+    static char account[64]        = {0};
+    static char tag[4]             = {0};
+    static char password[64]       = {0};
+    static char passwordRepeat[64] = {0};
+    ImGui::InputTextWithHint("##account", "<Account>", account, IM_ARRAYSIZE(account));
+    ImGui::InputTextWithHint("##tag", "<Tag>", tag, IM_ARRAYSIZE(tag));
+
+    ImGui::InputTextWithHint(
+        "##password",
+        "<Password>",
+        password,
+        IM_ARRAYSIZE(password),
+        ImGuiInputTextFlags_Password);
+    ImGui::HelpMarker(
+        "Display all characters as '*'.\nDisable clipboard cut and copy.\nDisable logging.\n");
+
+    ImGui::InputTextWithHint(
+        "##passwordrep",
+        "<Repeat Password>",
+        passwordRepeat,
+        IM_ARRAYSIZE(passwordRepeat),
+        ImGuiInputTextFlags_Password);
+    ImGui::SameLine();
+
+    bool isPending = menu.LoginState == LoginState::Pending;
+    if (isPending) {
+        ImGui::BeginDisabled();
+    }
+
+    if (ImGui::Button("Register")) {
+        // TODO
+    }
+
+    if (ImGui::Button("Login")) {
+        menu.State = MenuState::Login;
     }
 
     if (isPending) {
