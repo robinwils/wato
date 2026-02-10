@@ -179,16 +179,24 @@ class PocketBaseClient
         const std::string& aSubscription,
         const std::string& aFields = "")
     {
+        std::string topic = aSubscription;
+        if (!aFields.empty()) {
+            glz::generic opts;
+            opts["query"]    = glz::generic{{"fields", aFields}};
+            opts["headers"]  = glz::generic{};
+            topic           += "?options=" + glz::write_json(opts).value_or("{}");
+        }
+
         glz::generic payload;
         payload["clientId"]      = aClientId;
-        payload["subscriptions"] = std::vector<std::string>{aCollection};
+        payload["subscriptions"] = std::vector<std::string>{topic};
 
         Client.Post<std::string>(
             "/api/realtime",
             cpr::Header{{"Content-Type", "application/json"}, {"Authorization", Token}},
             cpr::Body{glz::write_json(payload).value_or("{}")});
 
-        mLogger->info("SSE: Subscribed to {}", aCollection);
+        mLogger->info("SSE: Subscribed to {}", topic);
     }
 
     Logger mLogger;

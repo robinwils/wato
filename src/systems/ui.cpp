@@ -164,7 +164,9 @@ void UISystem::onJoinResult(const JoinResultEvent& aEvent)
                     .ServerAddr = aRecord->record.serverAddr,
                 });
             }
-        });
+        },
+        "action,record.id,record.accountName,record.status,record.gameID,record.serverAddr,record."
+        "creatd,record.updated");
 
     WATO_INFO(*reg, "joined matchmaking queue, record id: {}", aEvent.ID);
 }
