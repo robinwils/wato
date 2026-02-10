@@ -30,6 +30,15 @@ func main() {
 		return se.Next()
 	})
 
+	app.OnRecordAfterCreateSuccess("users", "articles").BindFunc(func(e *core.RecordEvent) error {
+		err := Matchmaking(e.App, e.Record.GetInt("teamSize"), e.Record.GetInt("teamCount"))
+		if err != nil {
+			return err
+		}
+
+		return e.Next()
+	})
+
 	if err := app.Start(); err != nil {
 		log.Fatal(err)
 	}
