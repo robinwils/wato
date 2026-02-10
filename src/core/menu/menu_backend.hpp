@@ -7,6 +7,7 @@ class WatoWindow;
 class MenuBackend
 {
    public:
-    virtual ~MenuBackend();
-    virtual void Render(const Registry& aReg, const WatoWindow& aWin) = 0;
+    virtual ~MenuBackend() = default;
+
+    virtual void Render(Registry& aReg) = 0;
 };

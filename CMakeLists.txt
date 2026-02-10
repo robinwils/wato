@@ -191,6 +191,7 @@ if (ENABLE_CLIENT)
     src/core/app/game_client.hpp
     src/core/menu/menu.hpp
     src/core/menu/menu_backend.hpp
+    src/core/menu/imgui_menu.hpp
     src/core/tile.hpp
     src/core/window.hpp
     src/imgui/wato_imgui_config.h
@@ -225,6 +226,7 @@ if (ENABLE_CLIENT)
 
     PRIVATE
     src/core/app/game_client.cpp
+    src/core/menu/imgui_menu.cpp
     src/core/physics/physics_event_listener.cpp
     src/core/sys/mem.cpp
     src/core/window.cpp

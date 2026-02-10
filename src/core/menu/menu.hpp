@@ -3,6 +3,7 @@
 #include <entt/signal/dispatcher.hpp>
 #include <string>
 
+#include "core/menu/menu_backend.hpp"
 #include "core/types.hpp"
 
 enum class MenuState {
@@ -36,12 +37,19 @@ struct MatchmakingContext {
 };
 
 struct MenuContext {
+    MenuContext(std::unique_ptr<MenuBackend>&& aBackend)
+        : State(MenuState::MainMenu), LoginState(LoginState::Idle), Backend(std::move(aBackend))
+    {
+    }
+
     MenuState        State;
-    entt::dispatcher Dispatcher;
+    entt::dispatcher Dispatcher{};
 
     // Login state
     ::LoginState LoginState = LoginState::Idle;
     std::string  LoginError{};
 
     MatchmakingContext Matchmaking;
+
+    std::unique_ptr<MenuBackend> Backend;
 };

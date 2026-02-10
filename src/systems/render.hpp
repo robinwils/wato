@@ -42,14 +42,6 @@ class RenderImguiSystem : public FrameSystem
 
    protected:
     void Execute(Registry& aRegistry, float aDelta) override;
-
-   private:
-    void renderMenu(Registry& aRegistry);
-
-   private:
-    void renderMainMenu(Registry& aRegistry);
-    void renderInGame(const Registry& aRegistry);
-    void renderEndGame(const Registry& aRegistry);
 };
 
 /**

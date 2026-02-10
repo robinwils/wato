@@ -3,8 +3,10 @@
 #include <bgfx/bgfx.h>
 
 #include <entt/entity/fwd.hpp>
+#include <memory>
 
 #include "core/app/app.hpp"
+#include "core/menu/imgui_menu.hpp"
 #include "core/menu/menu.hpp"
 #include "core/net/enet_client.hpp"
 #include "core/net/pocketbase.hpp"
@@ -91,7 +93,7 @@ class GameClient : public Application
         mRegistry.ctx().emplace<ActionContextStack>();
         mRegistry.ctx().emplace<WatoWindow>(aWidth, aHeight);
         mRegistry.ctx().emplace<BgfxRenderer>(mOptions.Renderer());
-        mRegistry.ctx().emplace<MenuContext>(MenuState::MainMenu);
+        mRegistry.ctx().emplace<MenuContext>(std::make_unique<ImGuiMenu>());
         mRegistry.ctx().emplace<ImGuiHUD>();
         mRegistry.ctx().emplace<ENetClient>(mLogger);
         mRegistry.ctx().emplace<TextureCache>();
