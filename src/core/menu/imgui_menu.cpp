@@ -1,5 +1,6 @@
 #include "core/menu/imgui_menu.hpp"
 
+#include <cstring>
 #include <ranges>
 
 #include "core/menu/menu.hpp"
@@ -122,6 +123,7 @@ void ImGuiMenu::renderRegister(Registry& aRegistry)
         password,
         IM_ARRAYSIZE(password),
         ImGuiInputTextFlags_Password);
+    ImGui::SameLine();
     ImGui::HelpMarker(
         "Display all characters as '*'.\nDisable clipboard cut and copy.\nDisable logging.\n");
 
@@ -131,15 +133,25 @@ void ImGuiMenu::renderRegister(Registry& aRegistry)
         passwordRepeat,
         IM_ARRAYSIZE(passwordRepeat),
         ImGuiInputTextFlags_Password);
-    ImGui::SameLine();
 
-    bool isPending = menu.LoginState == LoginState::Pending;
-    if (isPending) {
+    bool isPending      = menu.RegisterState == RegisterState::Pending;
+    bool passwordsMatch = 0 == strncmp(password, passwordRepeat, 64);
+
+    if (isPending || !passwordsMatch) {
         ImGui::BeginDisabled();
     }
 
-    if (ImGui::Button("Register")) {
-        // TODO
+    if (ImGui::Button("Register") && passwordsMatch) {
+        dispatcher.enqueue(RegisterEvent{
+            .Reg         = &aRegistry,
+            .AccountName = fmt::format("{}#{}", account, tag),
+            .Password    = std::move(password),
+        });
+    }
+
+    if (!passwordsMatch) {
+        menu.Error = "Passwords don't match";
+        ImGui::EndDisabled();
     }
 
     if (ImGui::Button("Login")) {
