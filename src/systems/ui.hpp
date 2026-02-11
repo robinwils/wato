@@ -28,6 +28,9 @@ class UISystem : public FrameSystem
     void onLogin(const LoginEvent& aEvent);
     void onLoginResult(const LoginResultEvent& aEvent);
 
+    void onRegister(const RegisterEvent& aEvent);
+    void onRegisterResult(const RegisterResultEvent& aEvent);
+
     void onJoinMatchmaking(const JoinMatchmakingEvent& aEvent);
     void onLeaveMatchmaking(const LeaveMatchmakingEvent& aEvent);
     void onJoinResult(const JoinResultEvent& aEvent);

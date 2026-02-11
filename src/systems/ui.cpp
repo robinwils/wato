@@ -14,6 +14,8 @@ void UISystem::ensureConnected(entt::dispatcher& aDispatcher)
 
     aDispatcher.sink<LoginEvent>().connect<&UISystem::onLogin>(*this);
     aDispatcher.sink<LoginResultEvent>().connect<&UISystem::onLoginResult>(*this);
+    aDispatcher.sink<RegisterEvent>().connect<&UISystem::onRegister>(*this);
+    aDispatcher.sink<RegisterResultEvent>().connect<&UISystem::onRegisterResult>(*this);
     aDispatcher.sink<JoinMatchmakingEvent>().connect<&UISystem::onJoinMatchmaking>(*this);
     aDispatcher.sink<LeaveMatchmakingEvent>().connect<&UISystem::onLeaveMatchmaking>(*this);
     aDispatcher.sink<JoinResultEvent>().connect<&UISystem::onJoinResult>(*this);
@@ -83,6 +85,54 @@ void UISystem::onLoginResult(const LoginResultEvent& aEvent)
         menu.LoginError = aEvent.Error;
 
         WATO_ERR(registry, "login failed: {}", aEvent.Error);
+    }
+}
+
+void UISystem::onRegister(const RegisterEvent& aEvent)
+{
+    Registry* reg  = aEvent.Reg;
+    auto&     pb   = reg->ctx().get<PocketBaseClient>();
+    auto&     menu = reg->ctx().get<MenuContext>();
+
+    menu.RegisterState = RegisterState::Pending;
+
+    pb.Register(
+        aEvent.AccountName,
+        aEvent.Password,
+        [reg](const std::optional<RegisterResult>& aResult, const std::string& aError) {
+            auto& dispatcher = reg->ctx().get<MenuContext>().Dispatcher;
+            if (aResult) {
+                dispatcher.enqueue<RegisterResultEvent>(RegisterResultEvent{
+                    .Reg         = reg,
+                    .ID          = aResult->id,
+                    .AccountName = aResult->accountName,
+                    .Error       = ""});
+            } else {
+                dispatcher.enqueue<RegisterResultEvent>(
+                    RegisterResultEvent{.Reg = reg, .Error = aError});
+            }
+        });
+}
+
+void UISystem::onRegisterResult(const RegisterResultEvent& aEvent)
+{
+    Registry& registry = *aEvent.Reg;
+
+    auto& menu = registry.ctx().get<MenuContext>();
+
+    if (aEvent.Error.empty()) {
+        menu.RegisterState = RegisterState::Success;
+        menu.Message       = fmt::format("user {} registered, please log in.", aEvent.AccountName);
+        menu.Error.clear();
+        menu.State = MenuState::Login;
+
+        WATO_INFO(registry, "user {} registered", aEvent.AccountName);
+    } else {
+        menu.RegisterState = RegisterState::Failed;
+        menu.Error         = aEvent.Error;
+        menu.Message.clear();
+
+        WATO_ERR(registry, "register failed: {}", aEvent.Error);
     }
 }
 

@@ -21,6 +21,13 @@ enum class LoginState {
     Failed,
 };
 
+enum class RegisterState {
+    Idle,
+    Pending,
+    Success,
+    Failed,
+};
+
 enum class MatchmakingState {
     Idle,
     Joining,
@@ -47,9 +54,8 @@ struct MenuContext {
     MenuState        State;
     entt::dispatcher Dispatcher{};
 
-    // Login state
-    ::LoginState LoginState = LoginState::Idle;
-    std::string  LoginError{};
+    ::LoginState    LoginState    = LoginState::Idle;
+    ::RegisterState RegisterState = RegisterState::Idle;
 
     MatchmakingContext Matchmaking;
 
