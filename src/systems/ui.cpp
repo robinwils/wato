@@ -154,6 +154,8 @@ void UISystem::onJoinMatchmaking(const JoinMatchmakingEvent& aEvent)
 
     pb.JoinQueue(
         id.Value,
+        1,
+        2,
         [reg](const std::optional<MatchmakingRecord>& aResult, const std::string& aError) {
             auto& dispatcher = reg->ctx().get<MenuContext>().Dispatcher;
             if (aResult) {

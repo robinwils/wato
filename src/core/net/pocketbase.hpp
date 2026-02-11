@@ -114,14 +114,23 @@ class PocketBaseClient
             cpr::Parameters{{"fields", "token"}});
     }
 
-    void JoinQueue(const std::string& aID, AsyncCallback<MatchmakingRecord> aCallback)
+    void JoinQueue(
+        const std::string&               aID,
+        int                              aTeamSize,
+        int                              aTeamCount,
+        AsyncCallback<MatchmakingRecord> aCallback)
     {
         Client.PostAsync<MatchmakingRecord, PocketBaseErrorResponse>(
             "/api/collections/matchmaking_queue/records",
             std::move(aCallback),
             cpr::Header{{"Authorization", Token}, {"Content-Type", "application/json"}},
             cpr::Parameters{{"fields", "id,accountName,ceated,status"}},
-            cpr::Body{glz::write_json(glz::generic{{"accountName", aID}}).value_or("{}")});
+            cpr::Body{glz::write_json(glz::generic{
+                                          {"accountName", aID},
+                                          {"status", "waiting"},
+                                          {"teamSize", aTeamSize},
+                                          {"teamCount", aTeamCount}})
+                          .value_or("{}")});
     }
 
     void LeaveQueue(const std::string& aRecordId, AsyncCallback<std::string> aCallback)
