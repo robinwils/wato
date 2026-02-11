@@ -78,11 +78,13 @@ void UISystem::onLoginResult(const LoginResultEvent& aEvent)
 
         menu.LoginState = LoginState::Success;
         pb.Token        = aEvent.Token;
+        menu.ClearMsgs();
 
         WATO_INFO(registry, "user {} logged in", aEvent.AccountName);
     } else {
         menu.LoginState = LoginState::Failed;
-        menu.LoginError = aEvent.Error;
+        menu.Error      = aEvent.Error;
+        menu.Message.clear();
 
         WATO_ERR(registry, "login failed: {}", aEvent.Error);
     }
@@ -148,6 +150,7 @@ void UISystem::onJoinMatchmaking(const JoinMatchmakingEvent& aEvent)
     }
 
     menu.Matchmaking.State = MatchmakingState::Joining;
+    menu.ClearMsgs();
 
     pb.JoinQueue(
         id.Value,
@@ -243,7 +246,8 @@ void UISystem::onMatchmakingError(const MatchmakingErrorEvent& aEvent)
     auto&     menu     = registry.ctx().get<MenuContext>();
 
     menu.Matchmaking.State = MatchmakingState::Failed;
-    menu.Matchmaking.Error = aEvent.Error;
+    menu.Error             = aEvent.Error;
+    menu.Message.clear();
 
     pb.Unsubscribe();
 

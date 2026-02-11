@@ -80,6 +80,7 @@ void ImGuiMenu::renderLogin(Registry& aRegistry)
 
     bool isPending = menu.LoginState == LoginState::Pending;
     if (isPending) {
+        menu.Message = "Logging in...";
         ImGui::BeginDisabled();
     }
 
@@ -93,17 +94,14 @@ void ImGuiMenu::renderLogin(Registry& aRegistry)
 
     if (ImGui::Button("Register")) {
         menu.State = MenuState::Register;
+        menu.ClearMsgs();
     }
 
     if (isPending) {
         ImGui::EndDisabled();
     }
 
-    if (menu.LoginState == LoginState::Pending) {
-        ImGui::Text("Logging in...");
-    } else if (menu.LoginState == LoginState::Failed) {
-        ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Error: %s", menu.LoginError.c_str());
-    }
+    renderStatusMsg(aRegistry);
 }
 
 void ImGuiMenu::renderRegister(Registry& aRegistry)
@@ -146,16 +144,26 @@ void ImGuiMenu::renderRegister(Registry& aRegistry)
 
     if (ImGui::Button("Login")) {
         menu.State = MenuState::Login;
+        menu.ClearMsgs();
     }
 
     if (isPending) {
+        menu.Message = "Registering...";
         ImGui::EndDisabled();
     }
 
-    if (menu.LoginState == LoginState::Pending) {
-        ImGui::Text("Logging in...");
-    } else if (menu.LoginState == LoginState::Failed) {
-        ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Error: %s", menu.LoginError.c_str());
+    renderStatusMsg(aRegistry);
+}
+
+void ImGuiMenu::renderStatusMsg(Registry& aRegistry)
+{
+    auto& menu = aRegistry.ctx().get<MenuContext>();
+
+    if (!menu.Message.empty()) {
+        ImGui::Text("%s", menu.Message.c_str());
+    }
+    if (!menu.Error.empty()) {
+        ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "%s", menu.Error.c_str());
     }
 }
 
@@ -180,7 +188,7 @@ void ImGuiMenu::renderLobby(Registry& aRegistry)
             break;
         case MatchmakingState::Joining:
         case MatchmakingState::Waiting:
-            ImGui::Text("Waiting for match...");
+            menu.Message = "Waiting for match...";
             if (ImGui::Button("Cancel")) {
                 dispatcher.enqueue(
                     JoinMatchmakingEvent{
@@ -194,6 +202,8 @@ void ImGuiMenu::renderLobby(Registry& aRegistry)
         case MatchmakingState::Failed:
             break;
     }
+
+    renderStatusMsg(aRegistry);
 }
 
 void ImGuiMenu::renderInGame(const Registry& aRegistry) {}

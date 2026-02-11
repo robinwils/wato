@@ -40,7 +40,6 @@ enum class MatchmakingState {
 struct MatchmakingContext {
     MatchmakingState State = MatchmakingState::Idle;
     std::string      RecordId;
-    std::string      Error;
     std::string      ServerAddr;
     GameInstanceID   MatchedGameId{0};
 };
@@ -51,6 +50,12 @@ struct MenuContext {
     {
     }
 
+    void ClearMsgs()
+    {
+        Error.clear();
+        Message.clear();
+    }
+
     MenuState        State;
     entt::dispatcher Dispatcher{};
 
@@ -58,6 +63,9 @@ struct MenuContext {
     ::RegisterState RegisterState = RegisterState::Idle;
 
     MatchmakingContext Matchmaking;
+
+    std::string Error{};
+    std::string Message{};
 
     std::unique_ptr<MenuBackend> Backend;
 };
