@@ -23,6 +23,11 @@ struct LoginResult {
     std::string token{};
 };
 
+struct RegisterResult {
+    std::string id{};
+    std::string accountName{};
+};
+
 struct RefreshResult {
     std::string token{};
 };
@@ -83,6 +88,21 @@ class PocketBaseClient
             cpr::Parameters{
                 {"fields", "record.id,record.avatar,record.email,record.accountName,token"}},
             cpr::Payload{{"identity", aAccount}, {"password", aPassword}});
+    }
+
+    void Register(
+        const std::string&            aAccount,
+        const std::string&            aPassword,
+        AsyncCallback<RegisterResult> aCallback)
+    {
+        Client.PostAsync<RegisterResult, PocketBaseErrorResponse>(
+            "/api/collections/users/records",
+            std::move(aCallback),
+            cpr::Parameters{{"fields", "id,accountName"}},
+            cpr::Payload{
+                {"accountName", aAccount},
+                {"password", aPassword},
+                {"passwordConfirm", aPassword}});
     }
 
     void RefreshToken(AsyncCallback<RefreshResult> aCallback)
