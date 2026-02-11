@@ -8,17 +8,22 @@
 
 #include "core/app/app.hpp"
 #include "core/net/enet_server.hpp"
+#include "core/net/pocketbase.hpp"
 #include "core/types.hpp"
 
 class GameServer : public Application
 {
    public:
     explicit GameServer(char** aArgv)
-        : Application("server", aArgv), mServer(mOptions.ServerAddr, mLogger)
+        : Application("server", aArgv),
+          mServer(mOptions.ServerAddr, mLogger),
+          mPBClient(mOptions.BackendAddr(), mLogger, "")
     {
     }
-    explicit GameServer(const Options& aOptions)
-        : Application("server", aOptions), mServer(mOptions.ServerAddr, mLogger)
+    explicit GameServer(const Options& aOptions, const std::string& aAdminToken)
+        : Application("server", aOptions),
+          mServer(mOptions.ServerAddr, mLogger),
+          mPBClient(mOptions.BackendAddr(), mLogger, aAdminToken)
     {
     }
     virtual ~GameServer();
@@ -51,4 +56,6 @@ class GameServer : public Application
 
     ENetServer                                   mServer;
     std::unordered_map<GameInstanceID, Registry> mGameInstances;
+
+    PocketBaseClient mPBClient;
 };

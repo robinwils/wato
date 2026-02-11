@@ -19,7 +19,10 @@ int main(int, char** argv)
         opts.ServerAddr = "127.0.0.1:7777";
     }
 
-    GameServer s(opts);
+    char*       tokenEnv = getenv("PB_TOKEN");
+    std::string token    = tokenEnv ? tokenEnv : "";
+
+    GameServer s(opts, token);
     s.Init();
     return s.Run(exec);
 }

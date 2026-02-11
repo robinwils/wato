@@ -67,8 +67,8 @@ struct PocketBaseErrorResponse {
 class PocketBaseClient
 {
    public:
-    PocketBaseClient(const std::string& aURL, const Logger& aLogger)
-        : Client(aURL, aLogger), mLogger(aLogger)
+    PocketBaseClient(const std::string& aURL, const Logger& aLogger, const std::string& aToken = "")
+        : Client(aURL, aLogger), Token(aToken), mLogger(aLogger)
     {
     }
 

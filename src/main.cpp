@@ -24,9 +24,12 @@ int main(int, char** argv)
     tf::Future<void>            future;
     std::unique_ptr<GameServer> server;
 
+    char*       tokenEnv = getenv("PB_TOKEN");
+    std::string token    = tokenEnv ? tokenEnv : "";
+
     if (opts.ServerAddr == "") {
         opts.ServerAddr = "any:7777";
-        server          = std::make_unique<GameServer>(opts);
+        server          = std::make_unique<GameServer>(opts, token);
 
         flow.emplace([&]() {
             server->Init();
