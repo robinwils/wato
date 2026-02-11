@@ -189,6 +189,7 @@ void ImGuiMenu::renderLobby(Registry& aRegistry)
     ImGui::Separator();
 
     switch (menu.Matchmaking.State) {
+        case MatchmakingState::Failed:
         case MatchmakingState::Idle:
             if (ImGui::Button("Find Match")) {
                 dispatcher.enqueue(
@@ -211,7 +212,6 @@ void ImGuiMenu::renderLobby(Registry& aRegistry)
             break;
         case MatchmakingState::Matched:
         case MatchmakingState::Connecting:
-        case MatchmakingState::Failed:
             break;
     }
 
