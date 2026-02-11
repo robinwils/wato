@@ -53,8 +53,6 @@ void GameClient::Init()
     renderer.Init(window);
     netClient.Init();
 
-    LoadResources(mRegistry);
-
     // Register frame-time systems (variable delta)
     // in reversed order, entt::scheduler executes processes starting from the end
 #if WATO_DEBUG
@@ -240,6 +238,8 @@ void GameClient::prepareGridPreview()
 
 void GameClient::OnGameInstanceCreated(Registry& aRegistry)
 {
+    LoadResources(aRegistry);
+
     auto& fixedExec = aRegistry.ctx().get<FixedSystemExecutor>();
 
     spawnPlayerAndCamera();
