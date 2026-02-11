@@ -77,6 +77,7 @@ void UISystem::onLoginResult(const LoginResultEvent& aEvent)
         registry.ctx().emplace_as<entt::entity>("player"_hs, player);
 
         menu.LoginState = LoginState::Success;
+        menu.State      = MenuState::Lobby;
         pb.Token        = aEvent.Token;
         menu.ClearMsgs();
 
@@ -145,7 +146,8 @@ void UISystem::onJoinMatchmaking(const JoinMatchmakingEvent& aEvent)
     auto&     menu = reg->ctx().get<MenuContext>();
     auto&     id   = reg->get<RecordID>(aEvent.Player);
 
-    if (menu.Matchmaking.State != MatchmakingState::Idle) {
+    if (menu.Matchmaking.State != MatchmakingState::Idle
+        && menu.Matchmaking.State != MatchmakingState::Failed) {
         return;
     }
 
@@ -184,7 +186,8 @@ void UISystem::onLeaveMatchmaking(const LeaveMatchmakingEvent& aEvent)
     auto& menu = reg->ctx().get<MenuContext>();
     auto& id   = reg->get<RecordID>(aEvent.Player);
 
-    if (menu.Matchmaking.State == MatchmakingState::Idle) {
+    if (menu.Matchmaking.State != MatchmakingState::Joining
+        && menu.Matchmaking.State != MatchmakingState::Waiting) {
         return;
     }
 
