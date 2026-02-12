@@ -162,19 +162,20 @@ struct Action {
 
     void AddExtraInputInfo(const Input& aInput)
     {
-        std::visit(
-            VariantVisitor{
-                [&](MovePayload&) {},
-                [&](SendCreepPayload&) {},
-                [&](BuildTowerPayload& aPayload) {
-                    BX_ASSERT(
-                        aInput.MouseWorldIntersect().has_value(),
-                        "input has no mouse intersection");
-                    aPayload.Position = *aInput.MouseWorldIntersect();
-                },
-                [&](PlacementModePayload&) {},
-            },
-            Payload);
+        struct Visitor {
+            const Input* In;
+
+            void operator()(MovePayload&) const {}
+            void operator()(SendCreepPayload&) const {}
+            void operator()(BuildTowerPayload& aPayload) const
+            {
+                BX_ASSERT(In->MouseWorldIntersect().has_value(), "input has no mouse intersection");
+                aPayload.Position = *In->MouseWorldIntersect();
+            }
+            void operator()(PlacementModePayload&) const {}
+        };
+
+        std::visit(Visitor{&aInput}, Payload);
     }
 
     bool Archive(auto& aArchive)

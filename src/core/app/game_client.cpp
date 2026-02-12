@@ -254,53 +254,64 @@ void GameClient::OnGameInstanceCreated(Registry& aRegistry)
 
 void GameClient::consumeNetworkResponses()
 {
-    auto& netClient = mRegistry.ctx().get<ENetClient>();
+    struct NetworkResponseVisitor {
+        Registry*         Reg;
+        entt::dispatcher* Dispatcher;
+        GameClient*       Client;
 
+        void operator()(const ConnectedResponse&) const
+        {
+            WATO_INFO(*Reg, "got connected response");
+        }
+
+        void operator()(const NewGameResponse& aResp) const
+        {
+            Client->StartGameInstance(*Reg, aResp.GameID, false);
+            WATO_INFO(*Reg, "game {} created", aResp.GameID);
+
+            Dispatcher->enqueue<NewGameEvent>(
+                NewGameEvent{.Reg = Reg, .Response = std::move(aResp)});
+        }
+
+        void operator()(SyncPayload& aResp) const
+        {
+            Dispatcher->enqueue<SyncPayloadEvent>(
+                SyncPayloadEvent{.Reg = Reg, .Payload = std::move(aResp)});
+        }
+
+        void operator()(const RigidBodyUpdateResponse& aUpdate) const
+        {
+            Dispatcher->enqueue<RigidBodyUpdateEvent>(
+                RigidBodyUpdateEvent{.Reg = Reg, .Response = aUpdate});
+        }
+
+        void operator()(const HealthUpdateResponse& aUpdate) const
+        {
+            Dispatcher->enqueue<HealthUpdateEvent>(
+                HealthUpdateEvent{.Reg = Reg, .Response = aUpdate});
+        }
+
+        void operator()(const PlayerEliminatedResponse& aResp) const
+        {
+            Reg->ctx().insert_or_assign("ranking"_hs, aResp.Ranking);
+            Reg->ctx().get<MenuContext&>().State = MenuState::EndGame;
+        }
+
+        void operator()(const GameEndResponse& aResp) const
+        {
+            Reg->ctx().insert_or_assign("ranking"_hs, aResp.Ranking);
+            Reg->ctx().get<MenuContext&>().State = MenuState::EndGame;
+        }
+
+        void operator()(std::monostate) const {}
+    };
+
+    auto& netClient  = mRegistry.ctx().get<ENetClient>();
     auto& dispatcher = mRegistry.ctx().get<entt::dispatcher>("net_dispatcher"_hs);
 
-    netClient.ConsumeNetworkResponses([&](NetworkResponse* aEvent) {
-        std::visit(
-            VariantVisitor{
-                [&](const ConnectedResponse&) {
-                    WATO_INFO(mRegistry, "got connected response");
+    NetworkResponseVisitor visitor{&mRegistry, &dispatcher, this};
 
-                    // TODO: should be triggered by player input (menu, matchmaking,...)
-                    netClient.EnqueueRequest(new NetworkRequest{
-                        .Type     = PacketType::NewGame,
-                        .PlayerID = 0,
-                        .Tick     = 0,
-                        .Payload  = NewGameRequest{.PlayerAID = 0},
-                    });
-                },
-                [&](const NewGameResponse& aResp) {
-                    StartGameInstance(mRegistry, aResp.GameID, false);
-                    WATO_INFO(mRegistry, "game {} created", aResp.GameID);
+    netClient.ConsumeNetworkResponses(
+        [&](NetworkResponse* aEvent) { std::visit(visitor, aEvent->Payload); });
 
-                    dispatcher.enqueue<NewGameEvent>(
-                        NewGameEvent{.Reg = &mRegistry, .Response = std::move(aResp)});
-                },
-                [&](SyncPayload& aResp) {
-                    dispatcher.enqueue<SyncPayloadEvent>(
-                        SyncPayloadEvent{.Reg = &mRegistry, .Payload = std::move(aResp)});
-                },
-                [&](const RigidBodyUpdateResponse& aUpdate) {
-                    dispatcher.enqueue<RigidBodyUpdateEvent>(
-                        RigidBodyUpdateEvent{.Reg = &mRegistry, .Response = aUpdate});
-                },
-                [&](const HealthUpdateResponse& aUpdate) {
-                    dispatcher.enqueue<HealthUpdateEvent>(
-                        HealthUpdateEvent{.Reg = &mRegistry, .Response = aUpdate});
-                },
-                [&](const PlayerEliminatedResponse& aResp) {
-                    mRegistry.ctx().insert_or_assign("ranking"_hs, aResp.Ranking);
-                    mRegistry.ctx().get<MenuContext&>().State = MenuState::EndGame;
-                },
-                [&](const GameEndResponse& aResp) {
-                    mRegistry.ctx().insert_or_assign("ranking"_hs, aResp.Ranking);
-                    mRegistry.ctx().get<MenuContext&>().State = MenuState::EndGame;
-                },
-                [&](const std::monostate) {},
-            },
-            aEvent->Payload);
-    });
 }

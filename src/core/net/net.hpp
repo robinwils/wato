@@ -163,16 +163,28 @@ template <>
 struct fmt::formatter<EntityInitData> : fmt::formatter<std::string> {
     auto format(EntityInitData const& aObj, format_context& aCtx) const -> decltype(aCtx.out())
     {
-        std::visit(
-            VariantVisitor{
-                [&](const ProjectileInitData&) {
-                    fmt::format_to(aCtx.out(), "projectile init data");
-                },
-                [&](const TowerInitData&) { fmt::format_to(aCtx.out(), "tower init data"); },
-                [&](const CreepInitData&) { fmt::format_to(aCtx.out(), "creep init data"); },
-                [&](const std::monostate&) { fmt::format_to(aCtx.out(), "no init data"); },
-            },
-            aObj);
+        struct Visitor {
+            format_context* Ctx;
+
+            void operator()(const ProjectileInitData&) const
+            {
+                fmt::format_to(Ctx->out(), "projectile init data");
+            }
+            void operator()(const TowerInitData&) const
+            {
+                fmt::format_to(Ctx->out(), "tower init data");
+            }
+            void operator()(const CreepInitData&) const
+            {
+                fmt::format_to(Ctx->out(), "creep init data");
+            }
+            void operator()(const std::monostate&) const
+            {
+                fmt::format_to(Ctx->out(), "no init data");
+            }
+        };
+
+        std::visit(Visitor{&aCtx}, aObj);
         return aCtx.out();
     }
 };
@@ -301,44 +313,52 @@ struct fmt::formatter<NetworkResponsePayload> : fmt::formatter<std::string> {
     auto format(NetworkResponsePayload const& aObj, format_context& aCtx) const
         -> decltype(aCtx.out())
     {
-        std::visit(
-            VariantVisitor{
-                [&](const NewGameResponse& aResp) {
-                    fmt::format_to(aCtx.out(), "new game response, game ID {}", aResp.GameID);
-                },
-                [&](const ConnectedResponse&) { fmt::format_to(aCtx.out(), "connected response"); },
-                [&](const SyncPayload& aResp) {
-                    fmt::format_to(aCtx.out(), "sync payload for game {}", aResp.GameID);
-                },
-                [&](const RigidBodyUpdateResponse& aResp) {
-                    fmt::format_to(
-                        aCtx.out(),
-                        "rigid body update, {}, with {}",
-                        aResp.Event,
-                        aResp.InitData);
-                },
-                [&](const HealthUpdateResponse& aResp) {
-                    fmt::format_to(
-                        aCtx.out(),
-                        "health update for {}: {}",
-                        aResp.Entity,
-                        aResp.Health);
-                },
-                [&](const PlayerEliminatedResponse& aResp) {
-                    fmt::format_to(
-                        aCtx.out(),
-                        "player {} eliminated, current rankings: {}",
-                        aResp.PlayerID,
-                        aResp.Ranking);
-                },
-                [&](const GameEndResponse& aResp) {
-                    fmt::format_to(aCtx.out(), "game ended, final rankings: {}", aResp.Ranking);
-                },
-                [&](const std::monostate&) {
-                    fmt::format_to(aCtx.out(), "no network response payload");
-                },
-            },
-            aObj);
+        struct Visitor {
+            format_context* Ctx;
+
+            void operator()(const NewGameResponse& aResp) const
+            {
+                fmt::format_to(Ctx->out(), "new game response, game ID {}", aResp.GameID);
+            }
+            void operator()(const ConnectedResponse&) const
+            {
+                fmt::format_to(Ctx->out(), "connected response");
+            }
+            void operator()(const SyncPayload& aResp) const
+            {
+                fmt::format_to(Ctx->out(), "sync payload for game {}", aResp.GameID);
+            }
+            void operator()(const RigidBodyUpdateResponse& aResp) const
+            {
+                fmt::format_to(
+                    Ctx->out(),
+                    "rigid body update, {}, with {}",
+                    aResp.Event,
+                    aResp.InitData);
+            }
+            void operator()(const HealthUpdateResponse& aResp) const
+            {
+                fmt::format_to(Ctx->out(), "health update for {}: {}", aResp.Entity, aResp.Health);
+            }
+            void operator()(const PlayerEliminatedResponse& aResp) const
+            {
+                fmt::format_to(
+                    Ctx->out(),
+                    "player {} eliminated, current rankings: {}",
+                    aResp.PlayerID,
+                    aResp.Ranking);
+            }
+            void operator()(const GameEndResponse& aResp) const
+            {
+                fmt::format_to(Ctx->out(), "game ended, final rankings: {}", aResp.Ranking);
+            }
+            void operator()(const std::monostate&) const
+            {
+                fmt::format_to(Ctx->out(), "no network response payload");
+            }
+        };
+
+        std::visit(Visitor{&aCtx}, aObj);
         return aCtx.out();
     }
 };

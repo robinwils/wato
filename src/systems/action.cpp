@@ -356,18 +356,22 @@ void ActionSystem::ProcessActions(Registry& aRegistry, ActionTag aFilterTag, con
     }
 }
 
+struct ActionPayloadVisitor {
+    Registry*             Reg;
+    ActionContextHandler* Handler;
+    float                 DeltaTime;
+
+    void operator()(const PlacementModePayload& aPayload) const { (*Handler)(*Reg, aPayload); }
+    void operator()(const MovePayload& aPayload) const { (*Handler)(*Reg, aPayload, DeltaTime); }
+    void operator()(BuildTowerPayload& aPayload) const { (*Handler)(*Reg, aPayload); }
+    void operator()(SendCreepPayload& aPayload) const { (*Handler)(*Reg, aPayload); }
+};
+
 void ActionSystem::HandleContext(
     Registry&             aRegistry,
     Action&               aAction,
     ActionContextHandler& aCtxHandler,
     const float           aDeltaTime)
 {
-    std::visit(
-        VariantVisitor{
-            [&](const PlacementModePayload& aPayload) { aCtxHandler(aRegistry, aPayload); },
-            [&](const MovePayload& aPayload) { aCtxHandler(aRegistry, aPayload, aDeltaTime); },
-            [&](BuildTowerPayload& aPayload) { aCtxHandler(aRegistry, aPayload); },
-            [&](SendCreepPayload& aPayload) { aCtxHandler(aRegistry, aPayload); },
-        },
-        aAction.Payload);
+    std::visit(ActionPayloadVisitor{&aRegistry, &aCtxHandler, aDeltaTime}, aAction.Payload);
 }

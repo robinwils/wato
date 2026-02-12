@@ -68,46 +68,37 @@ void GameServer::OnGameInstanceCreated(Registry& aRegistry)
 
 void GameServer::ConsumeNetworkRequests()
 {
+    struct RequestVisitor {
+        std::unordered_map<GameInstanceID, Registry>* GameInstances;
+        spdlog::logger*                               Log;
+        NetworkRequest*                               Event;
+
+        void operator()(const SyncPayload& aReq) const
+        {
+            if (!GameInstances->contains(aReq.GameID)) {
+                Log->warn("got event for non existing game {}", aReq.GameID);
+                return;
+            }
+
+            Registry& registry = (*GameInstances)[aReq.GameID];
+            if (IsPlayerEliminated(registry, Event->PlayerID)) {
+                Log->debug("got event for eliminated player {}", Event->PlayerID);
+                return;
+            }
+
+            const ActionsType& incoming = aReq.State.Actions;
+            auto&              actions  = registry.ctx().get<GameStateBuffer&>().Latest().Actions;
+
+            Log->debug("got {} actions: {}", incoming.size(), incoming);
+            actions.insert(actions.end(), incoming.begin(), incoming.end());
+        }
+
+        void operator()(const NewGameRequest&) const {}
+        void operator()(const std::monostate&) const {}
+    };
+
     mServer.ConsumeNetworkRequests([&](NetworkRequest* aEvent) {
-        std::visit(
-            VariantVisitor{
-                [&](const SyncPayload& aReq) {
-                    if (!mGameInstances.contains(aReq.GameID)) {
-                        mLogger->warn("got event for non existing game {}", aReq.GameID);
-                        return;
-                    }
-
-                    Registry& registry = mGameInstances[aReq.GameID];
-                    if (IsPlayerEliminated(registry, aEvent->PlayerID)) {
-                        mLogger->debug("got event for eliminated player {}", aEvent->PlayerID);
-                        return;
-                    }
-
-                    const ActionsType& incoming = aReq.State.Actions;
-                    auto& actions = registry.ctx().get<GameStateBuffer&>().Latest().Actions;
-
-                    mLogger->debug("got {} actions: {}", incoming.size(), incoming);
-                    actions.insert(actions.end(), incoming.begin(), incoming.end());
-                },
-                [&](const NewGameRequest& aNewGame) {
-                    GameInstanceID gameID = createGameInstance(aNewGame);
-                    mLogger->info("Created game {}", gameID);
-
-                    for (auto&& [entity, player] : mGameInstances[gameID].view<Player>().each()) {
-                        mLogger->debug(
-                            "Sending network response for game {}, player {}, player {}",
-                            gameID,
-                            player.ID,
-                            entity);
-                        mServer.EnqueueResponse(new NetworkResponse{
-                            .Type     = PacketType::NewGame,
-                            .PlayerID = player.ID,
-                            .Tick     = 0,
-                            .Payload  = NewGameResponse{.GameID = gameID, .PlayerEntity = entity}});
-                    }
-                },
-                [&](const std::monostate&) {}},
-            aEvent->Payload);
+        std::visit(RequestVisitor{&mGameInstances, mLogger.get(), aEvent}, aEvent->Payload);
     });
 }
 

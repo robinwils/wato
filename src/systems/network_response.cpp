@@ -99,23 +99,32 @@ void NetworkResponseSystem::onRigidBodyUpdate(const RigidBodyUpdateEvent& aEvent
     const auto& update   = aEvent.Response;
     auto&       syncMap  = registry.ctx().get<EntitySyncMap>();
 
+    struct EntityCreateVisitor {
+        NetworkResponseSystem*         Self;
+        Registry*                      Reg;
+        const RigidBodyUpdateResponse* Update;
+
+        void operator()(const ProjectileInitData& aInit) const
+        {
+            Self->createProjectile(*Reg, *Update, aInit);
+        }
+        void operator()(const TowerInitData& aInit) const
+        {
+            Self->createTower(*Reg, *Update, aInit);
+        }
+        void operator()(const CreepInitData& aInit) const
+        {
+            Self->createCreep(*Reg, *Update, aInit);
+        }
+        void operator()(const std::monostate&) const
+        {
+            WATO_INFO(*Reg, "created entity {} (no specific init data)", Update->Entity);
+        }
+    };
+
     switch (update.Event) {
         case RigidBodyEvent::Create: {
-            std::visit(
-                VariantVisitor{
-                    [&](const ProjectileInitData& aInit) {
-                        createProjectile(registry, update, aInit);
-                    },
-                    [&](const TowerInitData& aInit) { createTower(registry, update, aInit); },
-                    [&](const CreepInitData& aInit) { createCreep(registry, update, aInit); },
-                    [&](const std::monostate&) {
-                        WATO_INFO(
-                            registry,
-                            "created entity {} (no specific init data)",
-                            update.Entity);
-                    },
-                },
-                update.InitData);
+            std::visit(EntityCreateVisitor{this, &registry, &update}, update.InitData);
             break;
         }
         case RigidBodyEvent::Update: {
