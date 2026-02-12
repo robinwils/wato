@@ -1,5 +1,6 @@
 #include "core/app/app.hpp"
 
+#include <cpr/async.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
@@ -20,7 +21,14 @@
 
 using namespace entt::literals;
 
-void Application::Init() {}
+void Application::Init()
+{
+    // CPR's thread pool has a bug where idle_thread_num (atomic size_t)
+    // underflows to SIZE_MAX when threads are cleaned up after the default
+    // 250ms idle timeout, permanently preventing new thread creation.
+    // Use a longer idle timeout to avoid triggering the underflow.
+    cpr::async::startup(1, std::thread::hardware_concurrency(), std::chrono::minutes(5));
+}
 
 void Application::StartGameInstance(
     Registry&            aRegistry,
