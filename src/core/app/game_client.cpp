@@ -82,8 +82,7 @@ int GameClient::Run(tf::Executor& aExecutor)
     auto& netClient = mRegistry.ctx().get<ENetClient&>();
     auto  prevTime  = clock_type::now();
 
-    std::thread networkThreadHandle([this]() { networkThread(); });
-    networkThreadHandle.detach();
+    mNetworkThread = std::thread([this]() { networkThread(); });
 
     if (!netClient.Connect()) {
         throw std::runtime_error("No available peers for initiating an ENet connection.");
