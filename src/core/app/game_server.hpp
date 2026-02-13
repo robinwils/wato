@@ -51,11 +51,13 @@ class GameServer : public Application
 
    private:
     void           spawnPlayers(Registry& aRegistry);
+    void           createGameInstance(GameInstanceID aGameID);
     GameInstanceID createGameInstance(const NewGameRequest& aNewGame);
     tf::Taskflow   mNetTaskflow;
 
     ENetServer                                   mServer;
     std::unordered_map<GameInstanceID, Registry> mGameInstances;
 
-    PocketBaseClient mPBClient;
+    PocketBaseClient           mPBClient;
+    Channel<PBSSE<GameRecord>> mPBGameChan;
 };

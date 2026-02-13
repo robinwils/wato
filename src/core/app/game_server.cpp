@@ -9,6 +9,7 @@
 #include "components/player.hpp"
 #include "components/spawner.hpp"
 #include "core/net/net.hpp"
+#include "core/net/pocketbase.hpp"
 #include "core/snapshot.hpp"
 #include "core/sys/log.hpp"
 #include "core/types.hpp"
@@ -36,6 +37,15 @@ void GameServer::Init()
     }
 
     mFrameExecutor.Register<SimulationSystem>();
+
+    mPBClient.Subscribe<GameRecord>(
+        "game/*",
+        [this](const std::optional<PBSSE<GameRecord>>& aRecord, const std::string& aError) {
+            if (aRecord) {
+                mPBGameChan.Send(new PBSSE<GameRecord>(*aRecord));
+            }
+        },
+        "id,players");
 }
 
 GameServer::~GameServer()
@@ -102,6 +112,32 @@ void GameServer::ConsumeNetworkRequests()
 
     mServer.ConsumeNetworkRequests([&](NetworkRequest* aEvent) {
         std::visit(RequestVisitor{&mGameInstances, mLogger.get(), aEvent}, aEvent->Payload);
+    });
+
+    mPBGameChan.Drain([&](PBSSE<GameRecord>* aEvent) {
+        if (aEvent->action == "create") {
+            mLogger->info("Created game {}", aEvent->record.id);
+
+            auto gameID = GameIDFromHexString(aEvent->record.id);
+
+            if (!gameID) {
+                mLogger->error("Invalid game ID from server: '{}'", aEvent->record.id);
+            }
+            createGameInstance(*gameID);
+
+            for (auto&& [entity, player] : mGameInstances[*gameID].view<Player>().each()) {
+                mLogger->debug(
+                    "Sending network response for game {}, player {}, player {}",
+                    *gameID,
+                    player.ID,
+                    entity);
+                mServer.EnqueueResponse(new NetworkResponse{
+                    .Type     = PacketType::NewGame,
+                    .PlayerID = player.ID,
+                    .Tick     = 0,
+                    .Payload  = NewGameResponse{.GameID = *gameID, .PlayerEntity = entity}});
+            }
+        }
     });
 }
 
@@ -195,6 +231,17 @@ void GameServer::spawnPlayers(Registry& aRegistry)
     colliderToEntity[c.Handle] = player;
 
     graph.ComputePaths(GraphCell::FromWorldPoint(pTransform.Position));
+}
+
+void GameServer::createGameInstance(GameInstanceID aGameID)
+{
+    Registry& registry = mGameInstances[aGameID];
+
+    registry.ctx().emplace<Logger>(mLogger);
+    registry.ctx().emplace<ENetServer&>(mServer);
+    registry.ctx().emplace_as<std::vector<PlayerID>>("ranking"_hs);
+
+    StartGameInstance(registry, aGameID, true);
 }
 
 GameInstanceID GameServer::createGameInstance(const NewGameRequest&)
