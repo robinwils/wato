@@ -59,6 +59,8 @@ void UISystem::onLogin(const LoginEvent& aEvent)
                 dispatcher.enqueue<LoginResultEvent>(LoginResultEvent{.Reg = reg, .Error = aError});
             }
         });
+
+    WATO_INFO(*reg, "pb.Login() returned (not blocked)");
 }
 
 void UISystem::onLoginResult(const LoginResultEvent& aEvent)
@@ -161,12 +163,11 @@ void UISystem::onJoinMatchmaking(const JoinMatchmakingEvent& aEvent)
         [reg](const std::optional<MatchmakingRecord>& aResult, const std::string& aError) {
             auto& dispatcher = reg->ctx().get<MenuContext>().Dispatcher;
             if (aResult) {
-                dispatcher.enqueue<JoinResultEvent>(JoinResultEvent{
+                dispatcher.enqueue(JoinResultEvent{
                     .Reg         = reg,
                     .ID          = aResult->id,
                     .AccountName = aResult->accountName,
                     .Status      = aResult->status,
-                    .GameId      = aResult->gameId,
                     .ServerAddr  = aResult->serverAddr,
                     .Created     = aResult->created,
                     .Updated     = aResult->updated,
@@ -191,7 +192,10 @@ void UISystem::onLeaveMatchmaking(const LeaveMatchmakingEvent& aEvent)
         return;
     }
 
-    pb.Unsubscribe();
+    if (menu.Matchmaking.RecordId.empty()) {
+        return;
+    }
+    pb.Unsubscribe(menu.Matchmaking.RecordId);
 
     if (!menu.Matchmaking.RecordId.empty()) {
         pb.LeaveQueue(id.Value, [](const std::optional<std::string>&, const std::string&) {
@@ -214,17 +218,22 @@ void UISystem::onJoinResult(const JoinResultEvent& aEvent)
     pb.Subscribe<MatchmakingRecord>(
         "matchmaking_queue/" + aEvent.ID,
         [reg](const std::optional<PBSSE<MatchmakingRecord>>& aRecord, const std::string& aError) {
-            if (aRecord && aRecord->record.status == "matched" && aRecord->record.gameId != 0) {
+            if (aRecord && aRecord->record.status == "matched" && !aRecord->record.game.empty()) {
+                auto gameID = GameIDFromHexString(aRecord->record.game);
+                if (!gameID) {
+                    WATO_ERR(*reg, "invalid game ID from server: '{}'", aRecord->record.game);
+                    return;
+                }
+
                 auto& dispatcher = reg->ctx().get<MenuContext>().Dispatcher;
                 dispatcher.enqueue<MatchFoundEvent>(MatchFoundEvent{
                     .Reg        = reg,
-                    .GameId     = aRecord->record.gameId,
+                    .GameId     = *gameID,
                     .ServerAddr = aRecord->record.serverAddr,
                 });
             }
         },
-        "action,record.id,record.accountName,record.status,record.gameID,record.serverAddr,record."
-        "creatd,record.updated");
+        "id,accountName,status,game,serverAddr,created,updated");
 
     WATO_INFO(*reg, "joined matchmaking queue, record id: {}", aEvent.ID);
 }
@@ -239,9 +248,11 @@ void UISystem::onMatchFound(const MatchFoundEvent& aEvent)
     menu.Matchmaking.MatchedGameId = aEvent.GameId;
     menu.Matchmaking.ServerAddr    = aEvent.ServerAddr;
 
-    pb.Unsubscribe();
+    if (!menu.Matchmaking.RecordId.empty()) {
+        pb.Unsubscribe(menu.Matchmaking.RecordId);
+    }
 
-    WATO_INFO(registry, "match found! game_id: {}, server: {}", aEvent.GameId, aEvent.ServerAddr);
+    WATO_INFO(registry, "match found! game_id: {}", aEvent.GameId);
 }
 
 void UISystem::onMatchmakingError(const MatchmakingErrorEvent& aEvent)
@@ -254,7 +265,9 @@ void UISystem::onMatchmakingError(const MatchmakingErrorEvent& aEvent)
     menu.Error             = aEvent.Error;
     menu.Message.clear();
 
-    pb.Unsubscribe();
+    if (!menu.Matchmaking.RecordId.empty()) {
+        pb.Unsubscribe(menu.Matchmaking.RecordId);
+    }
 
     WATO_ERR(registry, "matchmaking error: {}", aEvent.Error);
 }

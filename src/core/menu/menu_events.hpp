@@ -46,14 +46,13 @@ struct LeaveMatchmakingEvent {
 };
 
 struct JoinResultEvent {
-    Registry*      Reg;
-    std::string    ID;
-    std::string    AccountName;
-    std::string    Status;
-    GameInstanceID GameId;
-    std::string    ServerAddr;
-    std::string    Created;
-    std::string    Updated;
+    Registry*   Reg;
+    std::string ID;
+    std::string AccountName;
+    std::string Status;
+    std::string ServerAddr;
+    std::string Created;
+    std::string Updated;
 };
 
 struct MatchFoundEvent {
