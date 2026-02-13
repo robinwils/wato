@@ -1,8 +1,24 @@
 #pragma once
 
 #include <SafeInt.hpp>
+#include <charconv>
+#include <expected>
+#include <string>
 
 using GameInstanceID = std::uint64_t;
+
+inline std::expected<GameInstanceID, std::errc> GameIDFromHexString(const std::string& aHexStr)
+{
+    if (aHexStr.empty()) {
+        return std::unexpected(std::errc::invalid_argument);
+    }
+    GameInstanceID gameID{};
+    auto [ptr, ec] = std::from_chars(aHexStr.data(), aHexStr.data() + aHexStr.size(), gameID, 16);
+    if (ec == std::errc{}) {
+        return gameID;
+    }
+    return std::unexpected(ec);
+}
 
 template <class... Ts>
 struct VariantVisitor : Ts... {
