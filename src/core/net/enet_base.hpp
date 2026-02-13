@@ -30,6 +30,7 @@ class ENetBase
     // blocking: meant to be called in a dedicated thread
     virtual void Poll();
 
+    [[nodiscard]] bool IsInit() const noexcept { return bool(mHost); }
     [[nodiscard]] bool Running() const noexcept { return mRunning; }
 
     template <typename Func>
@@ -55,7 +56,7 @@ class ENetBase
     virtual void OnDisconnectTimeout(ENetEvent& aEvent) = 0;
     virtual void OnNone(ENetEvent& aEvent)              = 0;
 
-    std::atomic_bool     mRunning;
+    std::atomic_bool     mRunning{false};
     enet_host_ptr        mHost;
     bx::DefaultAllocator mAlloc;
 

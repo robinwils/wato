@@ -29,17 +29,18 @@ void ENetServer::Init()
 
     if (host != "any") {
         if (-1 == enet_address_set_host(&address, host.c_str())) {
-            throw std::runtime_error(
-                fmt::format(
-                    "An error occurred while trying to set ENet server host on '{}'",
-                    host.c_str()));
+            mLogger->error(
+                "An error occurred while trying to set ENet server host on '{}'",
+                host.c_str());
+            return;
         }
     }
 
     mHost = enet_host_ptr{enet_host_create(&address, 128, 2, 0, 0)};
 
     if (!mHost) {
-        throw std::runtime_error("An error occurred while trying to create an ENet server host.");
+        mLogger->error("An error occurred while trying to create an ENet server host.");
+        return;
     }
     mLogger->info("created ENet server at {}:{}", host, port);
 }

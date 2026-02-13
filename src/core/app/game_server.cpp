@@ -31,6 +31,9 @@ void GameServer::Init()
     Application::Init();
 
     mServer.Init();
+    if (!mServer.IsInit()) {
+        return;
+    }
 
     mFrameExecutor.Register<SimulationSystem>();
 }
@@ -104,6 +107,9 @@ void GameServer::ConsumeNetworkRequests()
 
 int GameServer::Run(tf::Executor& aExecutor)
 {
+    if (!mServer.IsInit()) {
+        return 1;
+    }
     mLogger->debug("running game server");
     auto prevTime = clock_type::now();
     mRunning      = true;
