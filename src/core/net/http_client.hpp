@@ -34,9 +34,9 @@ class HTTPClient
     }
 
     template <typename T, typename ErrT, typename... Args>
-    void PostAsync(const std::string& aEndpoint, AsyncCallback<T> aCallback, Args&&... aArgs)
+    auto PostAsync(const std::string& aEndpoint, AsyncCallback<T> aCallback, Args&&... aArgs)
     {
-        cpr::PostCallback(
+        return cpr::PostCallback(
             [callback = std::move(aCallback), this](const cpr::Response& aResp) {
                 decodeResp<T, ErrT>(aResp, callback);
             },
@@ -45,31 +45,30 @@ class HTTPClient
     }
 
     template <typename T, typename ErrT, typename... Args>
-    void GetAsync(const std::string& aEndpoint, AsyncCallback<T> aCallback, Args&&... aArgs)
-    {
-        cpr::GetCallback(
-            [callback = std::move(aCallback), this](const cpr::Response& aResp) {
-                decodeResp<T, ErrT>(aResp, callback);
-            },
-            cpr::Url(mURL + aEndpoint),
-            std::forward<Args>(aArgs)...);
-    }
-
-    template <typename T, typename ErrT, typename... Args>
-    void DeleteAsync(const std::string& aEndpoint, AsyncCallback<T> aCallback, Args&&... aArgs)
-    {
-        cpr::DeleteCallback(
-            [callback = std::move(aCallback), this](const cpr::Response& aResp) {
-                decodeResp<T, ErrT>(aResp, callback);
-            },
-            cpr::Url(mURL + aEndpoint),
-            std::forward<Args>(aArgs)...);
-    }
-
-    // SSE - returns AsyncResponse for caller to store
-    template <typename... Args>
     cpr::AsyncResponse
-    ConnectSSE(const std::string& aEndpoint, SSECallback aCallback, Args&&... aArgs)
+    GetAsync(const std::string& aEndpoint, AsyncCallback<T> aCallback, Args&&... aArgs)
+    {
+        return cpr::GetCallback(
+            [callback = std::move(aCallback), this](const cpr::Response& aResp) {
+                decodeResp<T, ErrT>(aResp, callback);
+            },
+            cpr::Url(mURL + aEndpoint),
+            std::forward<Args>(aArgs)...);
+    }
+
+    template <typename T, typename ErrT, typename... Args>
+    auto DeleteAsync(const std::string& aEndpoint, AsyncCallback<T> aCallback, Args&&... aArgs)
+    {
+        return cpr::DeleteCallback(
+            [callback = std::move(aCallback), this](const cpr::Response& aResp) {
+                decodeResp<T, ErrT>(aResp, callback);
+            },
+            cpr::Url(mURL + aEndpoint),
+            std::forward<Args>(aArgs)...);
+    }
+
+    template <typename... Args>
+    auto ConnectSSE(const std::string& aEndpoint, SSECallback aCallback, Args&&... aArgs)
     {
         return cpr::GetAsync(
             cpr::Url{mURL + aEndpoint},

@@ -1,13 +1,17 @@
 #pragma once
 
+#include <fmt/format.h>
+
 #include <atomic>
 #include <functional>
 #include <glaze/glaze.hpp>
 #include <glaze/json/write.hpp>
 #include <optional>
 #include <string>
+#include <vector>
 
 #include "core/net/http_client.hpp"
+#include "core/queue/channel.hpp"
 #include "core/sys/log.hpp"
 #include "core/types.hpp"
 
@@ -37,13 +41,31 @@ struct PBConnectEvent {
 };
 
 struct MatchmakingRecord {
-    std::string    id{};
-    std::string    accountName{};
-    std::string    status{};
-    GameInstanceID gameId{0};
-    std::string    serverAddr{};
-    std::string    created{};
-    std::string    updated{};
+    std::string id{};
+    std::string accountName{};
+    std::string status{};
+    std::string game{};
+    std::string serverAddr{};
+    std::string created{};
+    std::string updated{};
+};
+
+template <>
+struct fmt::formatter<MatchmakingRecord> : fmt::formatter<std::string> {
+    auto format(MatchmakingRecord const& aObj, format_context& aCtx) const -> decltype(aCtx.out())
+    {
+        return fmt::format_to(
+            aCtx.out(),
+            "MatchmakingRecord: id = {}, accountName = {}, status = {}, game = {}, serverAddr = "
+            "{}, created = {}, updated = {}",
+            aObj.id,
+            aObj.accountName,
+            aObj.status,
+            aObj.game,
+            aObj.serverAddr,
+            aObj.created,
+            aObj.updated);
+    }
 };
 
 struct ServerMatchRequest {
@@ -51,10 +73,35 @@ struct ServerMatchRequest {
     std::string UserId;
 };
 
+struct GameRecord {
+    std::string              id{};
+    std::vector<std::string> players;
+};
+
+template <>
+struct fmt::formatter<GameRecord> : fmt::formatter<std::string> {
+    auto format(GameRecord const& aObj, format_context& aCtx) const -> decltype(aCtx.out())
+    {
+        return fmt::format_to(
+            aCtx.out(),
+            "GameRecord: id = {}, players = {}",
+            aObj.id,
+            aObj.players);
+    }
+};
+
 template <typename T>
 struct PBSSE {
     std::string action{};
     T           record{};
+};
+
+template <typename T>
+struct fmt::formatter<PBSSE<T>> : fmt::formatter<std::string> {
+    auto format(PBSSE<T> const& aObj, format_context& aCtx) const -> decltype(aCtx.out())
+    {
+        return fmt::format_to(aCtx.out(), "SSE {} Event: {}", aObj.action, aObj.record);
+    }
 };
 
 struct PocketBaseErrorResponse {
@@ -72,6 +119,12 @@ struct PocketBaseErrorResponse {
 class PocketBaseClient
 {
    public:
+    using AsyncRespCB = cpr::AsyncWrapper<void, true>;
+
+    PocketBaseClient(const PocketBaseClient&)            = delete;
+    PocketBaseClient(PocketBaseClient&&)                 = delete;
+    PocketBaseClient& operator=(const PocketBaseClient&) = delete;
+    PocketBaseClient& operator=(PocketBaseClient&&)      = delete;
     PocketBaseClient(const std::string& aURL, const Logger& aLogger, const std::string& aToken = "")
         : Client(aURL, aLogger), Token(aToken), mLogger(aLogger)
     {
@@ -82,12 +135,12 @@ class PocketBaseClient
         const std::string&         aPassword,
         AsyncCallback<LoginResult> aCallback)
     {
-        Client.PostAsync<LoginResult, PocketBaseErrorResponse>(
+        mAsyncResponses.emplace_back(Client.PostAsync<LoginResult, PocketBaseErrorResponse>(
             "/api/collections/users/auth-with-password",
             std::move(aCallback),
             cpr::Parameters{
                 {"fields", "record.id,record.avatar,record.email,record.accountName,token"}},
-            cpr::Payload{{"identity", aAccount}, {"password", aPassword}});
+            cpr::Payload{{"identity", aAccount}, {"password", aPassword}}));
     }
 
     void Register(
@@ -95,23 +148,23 @@ class PocketBaseClient
         const std::string&            aPassword,
         AsyncCallback<RegisterResult> aCallback)
     {
-        Client.PostAsync<RegisterResult, PocketBaseErrorResponse>(
+        mAsyncResponses.emplace_back(Client.PostAsync<RegisterResult, PocketBaseErrorResponse>(
             "/api/collections/users/records",
             std::move(aCallback),
             cpr::Parameters{{"fields", "id,accountName"}},
             cpr::Payload{
                 {"accountName", aAccount},
                 {"password", aPassword},
-                {"passwordConfirm", aPassword}});
+                {"passwordConfirm", aPassword}}));
     }
 
     void RefreshToken(AsyncCallback<RefreshResult> aCallback)
     {
-        Client.PostAsync<RefreshResult, PocketBaseErrorResponse>(
+        mAsyncResponses.emplace_back(Client.PostAsync<RefreshResult, PocketBaseErrorResponse>(
             "/api/collections/users/auth-refresh",
             std::move(aCallback),
             AuthHeader(),
-            cpr::Parameters{{"fields", "token"}});
+            cpr::Parameters{{"fields", "token"}}));
     }
 
     void JoinQueue(
@@ -120,7 +173,7 @@ class PocketBaseClient
         int                              aTeamCount,
         AsyncCallback<MatchmakingRecord> aCallback)
     {
-        Client.PostAsync<MatchmakingRecord, PocketBaseErrorResponse>(
+        mAsyncResponses.emplace_back(Client.PostAsync<MatchmakingRecord, PocketBaseErrorResponse>(
             "/api/collections/matchmaking_queue/records",
             std::move(aCallback),
             cpr::Header{{"Authorization", Token}, {"Content-Type", "application/json"}},
@@ -130,15 +183,15 @@ class PocketBaseClient
                                           {"status", "waiting"},
                                           {"teamSize", aTeamSize},
                                           {"teamCount", aTeamCount}})
-                          .value_or("{}")});
+                          .value_or("{}")}));
     }
 
     void LeaveQueue(const std::string& aRecordId, AsyncCallback<std::string> aCallback)
     {
-        Client.DeleteAsync<std::string, PocketBaseErrorResponse>(
+        mAsyncResponses.emplace_back(Client.DeleteAsync<std::string, PocketBaseErrorResponse>(
             "/api/collections/matchmaking_queue/records/" + aRecordId,
             std::move(aCallback),
-            AuthHeader());
+            AuthHeader()));
     }
 
     /**
@@ -154,14 +207,18 @@ class PocketBaseClient
         AsyncCallback<PBSSE<T>> aCallback,
         const std::string&      aFields = "")
     {
-        Unsubscribe();
-        mSSERunning = true;
+        Unsubscribe(aSubscription);
 
-        mSSEResponse = Client.ConnectSSE(
+        mSubscriptions.try_emplace(aSubscription);
+        auto& sub = mSubscriptions.at(aSubscription);
+
+        sub.SSEResponse = Client.ConnectSSE(
             "/api/realtime",
-            [this, aSubscription, aFields, cb = std::move(aCallback)](const SSEEvent& aEvent) {
+            [this, &sub, aSubscription, aFields, cb = std::move(aCallback)](
+                const SSEEvent& aEvent) {
                 mLogger->debug("got SSEEvent {}: {}", aEvent.Event, aEvent.Data);
-                if (!mSSERunning) {
+                if (sub.StopSource.stop_requested()) {
+                    mLogger->info("Stop requested for subscription {}", aSubscription);
                     return false;
                 }
 
@@ -178,8 +235,8 @@ class PocketBaseClient
 
                 auto record = glz::read_json<PBSSE<T>>(aEvent.Data);
                 if (record) {
-                    mLogger->info("got SSE");
-                    cb(*record, "");
+                    mLogger->info("got SSE: {}", *record);
+                    cb(std::move(*record), "");
                 } else {
                     mLogger->error("cannot decode sse record: {}", aEvent.Data);
                     cb(std::nullopt, "cannot decode server event");
@@ -189,13 +246,35 @@ class PocketBaseClient
             AuthHeader());
     }
 
-    void Unsubscribe()
+    void Unsubscribe(const std::string& aSubscription)
     {
-        mSSERunning = false;
-        mLogger->debug("unsubscribed");
+        if (auto it = mSubscriptions.find(aSubscription); it != mSubscriptions.end()) {
+            it->second.StopSource.request_stop();
+            mSubscriptions.erase(it);
+            mLogger->debug("unsubscribed");
+        }
     }
 
-    bool IsSubscribed() const { return mSSERunning.load(); }
+    bool IsSubscribed(const std::string& aSubscription) const
+    {
+        return mSubscriptions.contains(aSubscription);
+    }
+
+    void Update()
+    {
+        std::erase_if(mAsyncResponses, [](const AsyncRespCB& aRes) {
+            return aRes.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready;
+        });
+        std::erase_if(mSubscriptions, [this](const auto& aPair) {
+            auto& [name, state] = aPair;
+            if (state.SSEResponse.wait_for(std::chrono::milliseconds(0))
+                == std::future_status::ready) {
+                mLogger->warn("SSE connection closed for subscription '{}'", name);
+                return true;
+            }
+            return false;
+        });
+    }
 
     cpr::Header AuthHeader() const { return cpr::Header{{"Authorization", Token}}; }
 
@@ -203,6 +282,10 @@ class PocketBaseClient
     std::string Token;
 
    private:
+    struct SSEState {
+        std::stop_source   StopSource;
+        cpr::AsyncResponse SSEResponse{};
+    };
     void sendSubscription(
         const std::string& aClientId,
         const std::string& aSubscription,
@@ -211,9 +294,8 @@ class PocketBaseClient
         std::string topic = aSubscription;
         if (!aFields.empty()) {
             glz::generic opts;
-            opts["query"]    = glz::generic{{"fields", aFields}};
-            opts["headers"]  = glz::generic{};
-            topic           += "?options=" + glz::write_json(opts).value_or("{}");
+            opts["query"] = glz::generic{{"fields", aFields}};
+            topic        += "?options=" + glz::write_json(opts).value_or("{}");
         }
 
         glz::generic payload;
@@ -230,7 +312,8 @@ class PocketBaseClient
 
     Logger mLogger;
 
+    std::vector<AsyncRespCB> mAsyncResponses;
+
     // SSE state
-    cpr::AsyncResponse mSSEResponse;
-    std::atomic_bool   mSSERunning{false};
+    std::unordered_map<std::string, SSEState> mSubscriptions;
 };
