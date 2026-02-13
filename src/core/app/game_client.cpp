@@ -15,6 +15,7 @@
 #include "core/net/enet_client.hpp"
 #include "core/net/net.hpp"
 #include "core/net/network_events.hpp"
+#include "core/net/pocketbase.hpp"
 #include "core/snapshot.hpp"
 #include "core/sys/log.hpp"
 #include "core/types.hpp"
@@ -314,4 +315,5 @@ void GameClient::consumeNetworkResponses()
     netClient.ConsumeNetworkResponses(
         [&](NetworkResponse* aEvent) { std::visit(visitor, aEvent->Payload); });
 
+    mRegistry.ctx().get<PocketBaseClient>().Update();
 }
