@@ -158,13 +158,13 @@ class PocketBaseClient
                 {"passwordConfirm", aPassword}}));
     }
 
-    void RefreshToken(AsyncCallback<RefreshResult> aCallback)
+    void RefreshToken(AsyncCallback<LoginResult> aCallback, const std::string& aToken = "")
     {
-        mAsyncResponses.emplace_back(Client.PostAsync<RefreshResult, PocketBaseErrorResponse>(
+        mAsyncResponses.emplace_back(Client.PostAsync<LoginResult, PocketBaseErrorResponse>(
             "/api/collections/users/auth-refresh",
             std::move(aCallback),
-            AuthHeader(),
-            cpr::Parameters{{"fields", "token"}}));
+            AuthHeader(aToken),
+            cpr::Parameters{{"fields", "record.id,token"}}));
     }
 
     void JoinQueue(
@@ -276,7 +276,10 @@ class PocketBaseClient
         });
     }
 
-    cpr::Header AuthHeader() const { return cpr::Header{{"Authorization", Token}}; }
+    cpr::Header AuthHeader(const std::string& aToken = "") const
+    {
+        return cpr::Header{{"Authorization", aToken.empty() ? Token : aToken}};
+    }
 
     HTTPClient  Client;
     std::string Token;
