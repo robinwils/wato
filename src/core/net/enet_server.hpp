@@ -5,13 +5,15 @@
 #include "core/net/enet_base.hpp"
 #include "core/sys/log.hpp"
 
+class PocketBaseClient;
+
 class ENetServer : public ENetBase
 {
     using peer_map = std::unordered_map<PlayerID, ENetPeer*>;
 
    public:
-    ENetServer(const std::string& aSrvAddr, Logger aLogger)
-        : ENetBase(aLogger, false), mServerAddr(aSrvAddr)
+    ENetServer(const std::string& aSrvAddr, Logger aLogger, PocketBaseClient& aPBClient)
+        : ENetBase(aLogger, false), mServerAddr(aSrvAddr), mPBClient(aPBClient)
     {
     }
     ENetServer(ENetServer&&)                 = delete;
@@ -39,6 +41,8 @@ class ENetServer : public ENetBase
     virtual void OnNone(ENetEvent& aEvent) override;
 
    private:
-    peer_map    mConnectedPeers;
-    std::string mServerAddr;
+    // R/W on the separate network thread, careful
+    peer_map            mConnectedPeers;
+    std::string         mServerAddr;
+    PocketBaseClient&   mPBClient;
 };

@@ -505,4 +505,5 @@ target_link_libraries(watolib
     sodium
     spdlog::spdlog
     ReactPhysics3D::ReactPhysics3D
+    cpr::cpr
 )

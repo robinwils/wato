@@ -16,14 +16,14 @@ class GameServer : public Application
    public:
     explicit GameServer(char** aArgv)
         : Application("server", aArgv),
-          mServer(mOptions.ServerAddr, mLogger),
-          mPBClient(mOptions.BackendAddr(), mLogger, "")
+          mPBClient(mOptions.BackendAddr(), mLogger, ""),
+          mServer(mOptions.ServerAddr, mLogger, mPBClient)
     {
     }
     explicit GameServer(const Options& aOptions, const std::string& aAdminToken)
         : Application("server", aOptions),
-          mServer(mOptions.ServerAddr, mLogger),
-          mPBClient(mOptions.BackendAddr(), mLogger, aAdminToken)
+          mPBClient(mOptions.BackendAddr(), mLogger, aAdminToken),
+          mServer(mOptions.ServerAddr, mLogger, mPBClient)
     {
     }
     virtual ~GameServer();
@@ -52,12 +52,12 @@ class GameServer : public Application
    private:
     void           spawnPlayers(Registry& aRegistry);
     void           createGameInstance(GameInstanceID aGameID);
-    GameInstanceID createGameInstance(const NewGameRequest& aNewGame);
+    GameInstanceID createGameInstance();
     tf::Taskflow   mNetTaskflow;
 
+    PocketBaseClient                             mPBClient;
     ENetServer                                   mServer;
     std::unordered_map<GameInstanceID, Registry> mGameInstances;
 
-    PocketBaseClient           mPBClient;
     Channel<PBSSE<GameRecord>> mPBGameChan;
 };
