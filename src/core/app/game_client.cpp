@@ -70,10 +70,6 @@ void GameClient::Init()
     mMenuExecutor.Register<RenderSystem>();
     mMenuExecutor.Register<RenderImguiSystem>();
     mMenuExecutor.Register<UISystem>();
-
-    // TODO: We need to handle NewGame in main menu, separate game instance
-    // lifetime from FixedTime system ?
-    // mMenuExecutor.Register<NetworkResponseSystem>();
 }
 
 int GameClient::Run(tf::Executor& aExecutor)
