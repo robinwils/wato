@@ -735,6 +735,32 @@ constexpr bool ArchiveQuaternion(auto& aArchive, glm::qua<T, Q>& aObj)
     }
     return true;
 }
+
+template <typename Archive>
+    requires(IsStreamEncoder<Archive> || IsStreamDecoder<Archive>)
+bool ArchiveString(Archive& aR, std::string& aStr, std::size_t aMaxLen)
+{
+    if constexpr (IsStreamEncoder<Archive>) {
+        if (!ArchiveValue(aR, aStr.size(), std::size_t(0), aMaxLen)) return false;
+        for (std::size_t i = 0; i < aStr.size(); ++i) {
+            uint8_t byte = static_cast<uint8_t>(aStr[i]);
+            if (!ArchiveValue(aR, byte, uint8_t(0), uint8_t(255))) return false;
+        }
+        return true;
+    } else if constexpr (IsStreamDecoder<Archive>) {
+        std::size_t len = 0;
+        if (!ArchiveValue(aR, len, std::size_t(0), aMaxLen)) return false;
+        aStr.resize(len);
+        for (std::size_t i = 0; i < len; ++i) {
+            uint8_t byte = 0;
+            if (!ArchiveValue(aR, byte, uint8_t(0), uint8_t(255))) return false;
+            aStr[i] = static_cast<char>(byte);
+        }
+        return true;
+    }
+    return false;
+}
+
 #ifndef DOCTEST_CONFIG_DISABLE
 #include "test.hpp"
 
