@@ -3,6 +3,7 @@
 #include <unordered_map>
 
 #include "core/net/enet_base.hpp"
+#include "core/net/net.hpp"
 #include "core/sys/log.hpp"
 
 class PocketBaseClient;
@@ -30,6 +31,21 @@ class ENetServer : public ENetBase
     void Init() override;
     void ProcessAuthResults();
 
+    void BroadcastResponse(
+        const std::span<const PlayerID> aPlayers,
+        PacketType                      aType,
+        uint32_t                        aTick,
+        const NetworkResponsePayload&   aPayload)
+    {
+        for (const PlayerID& id : aPlayers) {
+            mRespChannel.Send(new NetworkResponse{
+                .Type     = aType,
+                .PlayerID = id,
+                .Tick     = aTick,
+                .Payload  = aPayload,
+            });
+        }
+    }
     bool Send(PlayerID aID, const std::span<uint8_t> aData)
     {
         if (!mConnectedPeers.contains(aID)) {
