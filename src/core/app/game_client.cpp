@@ -269,6 +269,7 @@ void GameClient::consumeNetworkResponses()
         void operator()(const NewGameResponse& aResp) const
         {
             Client->StartGameInstance(*Reg, aResp.GameID, false);
+            Reg->ctx().get<MenuContext&>().State = MenuState::InGame;
             WATO_INFO(*Reg, "game {} created", aResp.GameID);
 
             Dispatcher->enqueue<NewGameEvent>(
