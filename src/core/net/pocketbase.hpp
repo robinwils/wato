@@ -6,6 +6,7 @@
 #include <functional>
 #include <glaze/glaze.hpp>
 #include <glaze/json/write.hpp>
+#include <mutex>
 #include <optional>
 #include <string>
 #include <vector>
@@ -135,6 +136,7 @@ class PocketBaseClient
         const std::string&         aPassword,
         AsyncCallback<LoginResult> aCallback)
     {
+        std::lock_guard lock(mAsyncMutex);
         mAsyncResponses.emplace_back(Client.PostAsync<LoginResult, PocketBaseErrorResponse>(
             "/api/collections/users/auth-with-password",
             std::move(aCallback),
@@ -148,6 +150,7 @@ class PocketBaseClient
         const std::string&            aPassword,
         AsyncCallback<RegisterResult> aCallback)
     {
+        std::lock_guard lock(mAsyncMutex);
         mAsyncResponses.emplace_back(Client.PostAsync<RegisterResult, PocketBaseErrorResponse>(
             "/api/collections/users/records",
             std::move(aCallback),
@@ -160,6 +163,7 @@ class PocketBaseClient
 
     void RefreshToken(AsyncCallback<LoginResult> aCallback, const std::string& aToken = "")
     {
+        std::lock_guard lock(mAsyncMutex);
         mAsyncResponses.emplace_back(Client.PostAsync<LoginResult, PocketBaseErrorResponse>(
             "/api/collections/users/auth-refresh",
             std::move(aCallback),
@@ -173,6 +177,7 @@ class PocketBaseClient
         int                              aTeamCount,
         AsyncCallback<MatchmakingRecord> aCallback)
     {
+        std::lock_guard lock(mAsyncMutex);
         mAsyncResponses.emplace_back(Client.PostAsync<MatchmakingRecord, PocketBaseErrorResponse>(
             "/api/collections/matchmaking_queue/records",
             std::move(aCallback),
@@ -188,6 +193,7 @@ class PocketBaseClient
 
     void LeaveQueue(const std::string& aRecordId, AsyncCallback<std::string> aCallback)
     {
+        std::lock_guard lock(mAsyncMutex);
         mAsyncResponses.emplace_back(Client.DeleteAsync<std::string, PocketBaseErrorResponse>(
             "/api/collections/matchmaking_queue/records/" + aRecordId,
             std::move(aCallback),
@@ -262,6 +268,7 @@ class PocketBaseClient
 
     void Update()
     {
+        std::lock_guard lock(mAsyncMutex);
         std::erase_if(mAsyncResponses, [](const AsyncRespCB& aRes) {
             return aRes.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready;
         });
@@ -315,6 +322,7 @@ class PocketBaseClient
 
     Logger mLogger;
 
+    std::mutex               mAsyncMutex;
     std::vector<AsyncRespCB> mAsyncResponses;
 
     // SSE state
