@@ -34,7 +34,6 @@ class UISystem : public FrameSystem
     void onJoinMatchmaking(const JoinMatchmakingEvent& aEvent);
     void onLeaveMatchmaking(const LeaveMatchmakingEvent& aEvent);
     void onJoinResult(const JoinResultEvent& aEvent);
-    void onMatchFound(const MatchFoundEvent& aEvent);
     void onMatchmakingError(const MatchmakingErrorEvent& aEvent);
 
     bool mConnected = false;

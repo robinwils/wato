@@ -2,7 +2,6 @@
 
 #include <string>
 
-#include "core/types.hpp"
 #include "registry/registry.hpp"
 
 struct LoginEvent {
@@ -53,12 +52,6 @@ struct JoinResultEvent {
     std::string ServerAddr;
     std::string Created;
     std::string Updated;
-};
-
-struct MatchFoundEvent {
-    Registry*      Reg;
-    GameInstanceID GameId;
-    std::string    ServerAddr{};
 };
 
 struct MatchmakingErrorEvent {
