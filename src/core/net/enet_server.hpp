@@ -9,8 +9,9 @@
 class PocketBaseClient;
 
 struct AuthResult {
-    ENetPeer* Peer;
-    PlayerID  ID;
+    ENetPeer*   Peer;
+    PlayerID    ID;
+    std::string AccountName;
 };
 
 class ENetServer : public ENetBase
@@ -55,6 +56,13 @@ class ENetServer : public ENetBase
         }
     }
 
+    const std::string& GetAccountName(PlayerID aID) const
+    {
+        static const std::string empty;
+        auto                     it = mAccountNames.find(aID);
+        return it != mAccountNames.end() ? it->second : empty;
+    }
+
    protected:
     virtual void OnConnect(ENetEvent& aEvent) override;
     virtual void OnReceive(ENetEvent& aEvent) override;
@@ -68,4 +76,6 @@ class ENetServer : public ENetBase
     std::string         mServerAddr;
     Channel<AuthResult> mAuthResultChan;
     PocketBaseClient&   mPBClient;
+
+    std::unordered_map<PlayerID, std::string> mAccountNames;
 };

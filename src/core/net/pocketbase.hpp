@@ -168,7 +168,7 @@ class PocketBaseClient
             "/api/collections/users/auth-refresh",
             std::move(aCallback),
             AuthHeader(aToken),
-            cpr::Parameters{{"fields", "record.id,token"}}));
+            cpr::Parameters{{"fields", "record.id,record.accountName,token"}}));
     }
 
     void JoinQueue(

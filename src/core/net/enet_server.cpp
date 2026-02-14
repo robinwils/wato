@@ -74,7 +74,8 @@ void ENetServer::OnReceive(ENetEvent& aEvent)
                 if (aResult) {
                     auto playerID = PlayerIDFromHexString(aResult->record.id);
                     if (playerID) {
-                        chan.Send(new AuthResult{peer, *playerID});
+                        chan.Send(new AuthResult{
+                            peer, *playerID, aResult->record.accountName});
                         return;
                     }
                 }
@@ -92,7 +93,9 @@ void ENetServer::ProcessAuthResults()
 {
     mAuthResultChan.Drain([this](AuthResult* aResult) {
         mConnectedPeers[aResult->ID] = aResult->Peer;
-        mLogger->info("player {} authenticated and registered", aResult->ID);
+        mAccountNames[aResult->ID]   = aResult->AccountName;
+        mLogger->info(
+            "player {} ({}) authenticated and registered", aResult->ID, aResult->AccountName);
 
         auto resp = NetworkResponse{
             .Type     = PacketType::Auth,
