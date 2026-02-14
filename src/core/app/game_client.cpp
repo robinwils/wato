@@ -81,11 +81,6 @@ int GameClient::Run(tf::Executor& aExecutor)
 
     mNetworkThread = std::thread([this]() { networkThread(); });
 
-    if (!netClient.Connect()) {
-        throw std::runtime_error("No available peers for initiating an ENet connection.");
-    }
-    WATO_DBG(mRegistry, "connected to server");
-
     while (!window.ShouldClose()) {
         window.PollEvents();
 
@@ -259,6 +254,16 @@ void GameClient::consumeNetworkResponses()
         void operator()(const ConnectedResponse&) const
         {
             WATO_INFO(*Reg, "got connected response");
+
+            auto& pb        = Reg->ctx().get<PocketBaseClient>();
+            auto& netClient = Reg->ctx().get<ENetClient&>();
+
+            auto* req     = new NetworkRequest;
+            req->Type     = PacketType::Auth;
+            req->PlayerID = 0;
+            req->Tick     = 0;
+            req->Payload  = AuthRequest{.Token = pb.Token};
+            netClient.EnqueueRequest(req);
         }
 
         void operator()(const NewGameResponse& aResp) const
@@ -298,6 +303,15 @@ void GameClient::consumeNetworkResponses()
         {
             Reg->ctx().insert_or_assign("ranking"_hs, aResp.Ranking);
             Reg->ctx().get<MenuContext&>().State = MenuState::EndGame;
+        }
+
+        void operator()(const AuthResponse& aResp) const
+        {
+            if (aResp.Success) {
+                WATO_INFO(*Reg, "authenticated as player {}", aResp.ID);
+            } else {
+                WATO_ERR(*Reg, "authentication failed");
+            }
         }
 
         void operator()(std::monostate) const {}

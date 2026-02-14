@@ -1,6 +1,7 @@
 #include "ui.hpp"
 
 #include "core/menu/menu.hpp"
+#include "core/net/enet_client.hpp"
 #include "core/net/pocketbase.hpp"
 #include "core/sys/log.hpp"
 
@@ -71,17 +72,27 @@ void UISystem::onLoginResult(const LoginResultEvent& aEvent)
     auto& menu = registry.ctx().get<MenuContext>();
 
     if (aEvent.Error.empty()) {
-        entt::entity player = registry.create();
-
-        registry.emplace<RecordID>(player, aEvent.ID);
-        registry.emplace<Email>(player, aEvent.Email);
-        registry.emplace<AccountName>(player, aEvent.AccountName);
-        registry.ctx().emplace_as<entt::entity>("player"_hs, player);
+        auto playerID = PlayerIDFromHexString(aEvent.ID);
+        if (!playerID) {
+            WATO_ERR(registry, "invalid player ID: '{}'", aEvent.ID);
+            return;
+        }
 
         menu.LoginState = LoginState::Success;
         menu.State      = MenuState::Lobby;
         pb.Token        = aEvent.Token;
         menu.ClearMsgs();
+
+        auto& netClient = registry.ctx().get<ENetClient&>();
+        netClient.Connect();
+
+        entt::entity player = registry.create();
+
+        registry.emplace<RecordID>(player, aEvent.ID);
+        registry.emplace<Player>(player, *playerID);
+        registry.emplace<Email>(player, aEvent.Email);
+        registry.emplace<AccountName>(player, aEvent.AccountName);
+        registry.ctx().emplace_as<entt::entity>("player"_hs, player);
 
         WATO_INFO(registry, "user {} logged in", aEvent.AccountName);
     } else {

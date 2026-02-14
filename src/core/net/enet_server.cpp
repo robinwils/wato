@@ -9,6 +9,7 @@
 
 #include "components/player.hpp"
 #include "core/net/net.hpp"
+#include "core/net/pocketbase.hpp"
 #include "core/snapshot.hpp"
 #include "core/sys/log.hpp"
 
@@ -45,24 +46,63 @@ void ENetServer::Init()
     mLogger->info("created ENet server at {}:{}", host, port);
 }
 
-void ENetServer::OnConnect(ENetEvent&) {}
+void ENetServer::OnConnect(ENetEvent& aEvent)
+{
+    BX_UNUSED(aEvent);
+    mLogger->info("peer connected, awaiting auth");
+}
 
 void ENetServer::OnReceive(ENetEvent& aEvent)
 {
     BitInputArchive archive(aEvent.packet->data, aEvent.packet->dataLength);
-    auto            ev = new NetworkRequest;
+    auto*           ev = new NetworkRequest;
 
     if (!ev->Archive(archive)) {
         spdlog::critical("cannot decode packet");
+        delete ev;
+        return;
     }
 
-    if (ev->Type == PacketType::NewGame) {
-        auto payload = std::get<NewGameRequest>(ev->Payload);
-        if (!mConnectedPeers.contains(payload.PlayerAID)) {
-            mConnectedPeers[payload.PlayerAID] = aEvent.peer;
-        }
+    if (ev->Type == PacketType::Auth) {
+        auto  token = std::get<AuthRequest>(ev->Payload).Token;
+        auto* peer  = aEvent.peer;
+
+        mPBClient.RefreshToken(
+            [peer, &chan = mAuthResultChan, logger = mLogger](
+                const std::optional<LoginResult>& aResult,
+                const std::string&                aError) {
+                if (aResult) {
+                    auto playerID = PlayerIDFromHexString(aResult->record.id);
+                    if (playerID) {
+                        chan.Send(new AuthResult{peer, *playerID});
+                        return;
+                    }
+                }
+                logger->warn("auth verification failed: {}", aError);
+            },
+            token);
+        delete ev;
+        return;
     }
+
     mReqChannel.Send(ev);
+}
+
+void ENetServer::ProcessAuthResults()
+{
+    mAuthResultChan.Drain([this](AuthResult* aResult) {
+        mConnectedPeers[aResult->ID] = aResult->Peer;
+        mLogger->info("player {} authenticated and registered", aResult->ID);
+
+        auto resp = NetworkResponse{
+            .Type     = PacketType::Auth,
+            .PlayerID = aResult->ID,
+            .Tick     = 0,
+            .Payload  = AuthResponse{.ID = aResult->ID, .Success = true}};
+        BitOutputArchive archive;
+        resp.Archive(archive);
+        ENetBase::Send(aResult->Peer, archive.Bytes());
+    });
 }
 
 void ENetServer::OnDisconnect(ENetEvent&) {}

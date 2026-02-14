@@ -7,6 +7,11 @@
 
 class PocketBaseClient;
 
+struct AuthResult {
+    ENetPeer* Peer;
+    PlayerID  ID;
+};
+
 class ENetServer : public ENetBase
 {
     using peer_map = std::unordered_map<PlayerID, ENetPeer*>;
@@ -23,6 +28,7 @@ class ENetServer : public ENetBase
     ~ENetServer()                            = default;
 
     void Init() override;
+    void ProcessAuthResults();
 
     bool Send(PlayerID aID, const std::span<uint8_t> aData)
     {
@@ -44,5 +50,6 @@ class ENetServer : public ENetBase
     // R/W on the separate network thread, careful
     peer_map            mConnectedPeers;
     std::string         mServerAddr;
+    Channel<AuthResult> mAuthResultChan;
     PocketBaseClient&   mPBClient;
 };

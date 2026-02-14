@@ -106,7 +106,7 @@ void GameServer::ConsumeNetworkRequests()
             actions.insert(actions.end(), incoming.begin(), incoming.end());
         }
 
-        void operator()(const NewGameRequest&) const {}
+        void operator()(const AuthRequest&) const {}
         void operator()(const std::monostate&) const {}
     };
 
@@ -152,6 +152,7 @@ int GameServer::Run(tf::Executor& aExecutor)
 
     aExecutor.silent_async([&]() {
         while (mRunning) {
+            mServer.ProcessAuthResults();
             mServer.ConsumeNetworkResponses([&](NetworkResponse* aEvent) {
                 BitOutputArchive archive;
                 if (!aEvent->Archive(archive)) {
@@ -244,7 +245,7 @@ void GameServer::createGameInstance(GameInstanceID aGameID)
     StartGameInstance(registry, aGameID, true);
 }
 
-GameInstanceID GameServer::createGameInstance(const NewGameRequest&)
+GameInstanceID GameServer::createGameInstance()
 {
     GameInstanceID gameID;
     do {

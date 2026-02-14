@@ -21,21 +21,6 @@ struct ENetHostDeleter {
 };
 using enet_host_ptr = std::unique_ptr<ENetHost, ENetHostDeleter>;
 
-struct NewGameRequest {
-    PlayerID PlayerAID;
-
-    bool Archive(auto& aArchive)
-    {
-        if (!ArchiveValue(aArchive, PlayerAID, 0u, 1000000000u)) return false;
-        return true;
-    }
-};
-
-inline bool operator==(const NewGameRequest& aLHS, const NewGameRequest& aRHS)
-{
-    return aLHS.PlayerAID == aRHS.PlayerAID;
-}
-
 struct SyncPayload {
     GameInstanceID GameID;
     GameState      State;
@@ -234,7 +219,8 @@ struct PlayerEliminatedResponse {
 
     bool Archive(auto& aArchive)
     {
-        if (!ArchiveValue(aArchive, PlayerID, 0u, 1000000000u)) return false;
+        if (!ArchiveValue(aArchive, PlayerID, 0u, std::numeric_limits<::PlayerID>::max()))
+            return false;
         return ArchiveVector(
             aArchive,
             Ranking,
@@ -268,16 +254,40 @@ inline bool operator==(const GameEndResponse& aLHS, const GameEndResponse& aRHS)
     return aLHS.Ranking == aRHS.Ranking;
 }
 
+struct AuthRequest {
+    std::string Token;
+    bool        Archive(auto& aArchive) { return ArchiveString(aArchive, Token, 1024); }
+};
+
+inline bool operator==(const AuthRequest& a, const AuthRequest& b) { return a.Token == b.Token; }
+
+struct AuthResponse {
+    PlayerID ID;
+    bool     Success;
+
+    bool Archive(auto& aArchive)
+    {
+        if (!ArchiveValue(aArchive, ID, 0u, std::numeric_limits<PlayerID>::max())) return false;
+        return ArchiveBool(aArchive, Success);
+    }
+};
+
+inline bool operator==(const AuthResponse& a, const AuthResponse& b)
+{
+    return a.ID == b.ID && a.Success == b.Success;
+}
+
 enum class PacketType : std::uint16_t {
     ClientSync,
     ServerSync,
     Ack,
     NewGame,
     Connected,
+    Auth,
     Count,
 };
 
-using NetworkRequestPayload  = std::variant<std::monostate, SyncPayload, NewGameRequest>;
+using NetworkRequestPayload  = std::variant<std::monostate, SyncPayload, AuthRequest>;
 using NetworkResponsePayload = std::variant<
     std::monostate,
     NewGameResponse,
@@ -286,7 +296,8 @@ using NetworkResponsePayload = std::variant<
     RigidBodyUpdateResponse,
     HealthUpdateResponse,
     PlayerEliminatedResponse,
-    GameEndResponse>;
+    GameEndResponse,
+    AuthResponse>;
 
 template <typename _Payload>
 struct NetworkEvent {
@@ -298,7 +309,8 @@ struct NetworkEvent {
     bool Archive(auto& aArchive)
     {
         if (!ArchiveValue(aArchive, Type, 0u, uint32_t(PacketType::Count))) return false;
-        if (!ArchiveValue(aArchive, PlayerID, 0u, 1000000000u)) return false;
+        if (!ArchiveValue(aArchive, PlayerID, 0u, std::numeric_limits<::PlayerID>::max()))
+            return false;
         if (!ArchiveValue(aArchive, Tick, 0u, 30000000u)) return false;
         if (!ArchiveVariant(aArchive, Payload)) return false;
         return true;
@@ -351,6 +363,14 @@ struct fmt::formatter<NetworkResponsePayload> : fmt::formatter<std::string> {
             void operator()(const GameEndResponse& aResp) const
             {
                 fmt::format_to(Ctx->out(), "game ended, final rankings: {}", aResp.Ranking);
+            }
+            void operator()(const AuthResponse& aResp) const
+            {
+                fmt::format_to(
+                    Ctx->out(),
+                    "auth response, player {}, success: {}",
+                    aResp.ID,
+                    aResp.Success);
             }
             void operator()(const std::monostate&) const
             {
