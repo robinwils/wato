@@ -12,6 +12,7 @@
 #include "core/physics/physics.hpp"
 #include "core/physics/physics_event_listener.hpp"
 #include "core/sys/log.hpp"
+#include "registry/registry.hpp"
 
 void CollisionSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t aTick)
 {
@@ -99,16 +100,15 @@ void CollisionSystem::projectileHits(
                     health->Health);
 
                 if (auto* server = aRegistry.ctx().find<ENetServer>()) {
-                    server->EnqueueResponse(new NetworkResponse{
-                        .Type     = PacketType::Ack,
-                        .PlayerID = aRegistry.ctx().get<Player>("player"_hs).ID,
-                        .Tick     = aRegistry.ctx().get<GameInstance&>().Tick,
-                        .Payload =
-                            HealthUpdateResponse{
-                                .Entity = targetEntity,
-                                .Health = health->Health,
-                            },
-                    });
+                    server->BroadcastResponse(
+                        GetPlayerIDs(aRegistry),
+                        PacketType::Ack,
+                        aRegistry.ctx().get<GameInstance&>().Tick,
+
+                        HealthUpdateResponse{
+                            .Entity = targetEntity,
+                            .Health = health->Health,
+                        });
                 }
             }
         }
@@ -164,16 +164,14 @@ void CollisionSystem::creepHitsPlayerBase(Registry& aRegistry, const TriggerEven
 
         aRegistry.patch<Health>(creepEntity, [](Health& aHealth) { aHealth.Health = 0.0f; });
         if (auto* server = aRegistry.ctx().find<ENetServer>()) {
-            server->EnqueueResponse(new NetworkResponse{
-                .Type     = PacketType::Ack,
-                .PlayerID = aRegistry.ctx().get<Player>("player"_hs).ID,
-                .Tick     = aRegistry.ctx().get<GameInstance&>().Tick,
-                .Payload =
-                    HealthUpdateResponse{
-                        .Entity = playerEntity,
-                        .Health = health.Health,
-                    },
-            });
+            server->BroadcastResponse(
+                GetPlayerIDs(aRegistry),
+                PacketType::Ack,
+                aRegistry.ctx().get<GameInstance&>().Tick,
+                HealthUpdateResponse{
+                    .Entity = playerEntity,
+                    .Health = health.Health,
+                });
         }
     }
 }

@@ -244,7 +244,14 @@ void ServerContextHandler::operator()(Registry& aRegistry, BuildTowerPayload& aP
 
 void ServerContextHandler::operator()(Registry& aRegistry, SendCreepPayload& aPayload)
 {
-    auto& graph = aRegistry.ctx().get<Graph&>();
+    auto& graphMap = aRegistry.ctx().get<PlayerGraphMap>();
+    auto  it       = graphMap.find(CurrentPlayerID);
+
+    if (it == graphMap.end()) {
+        WATO_ERR(aRegistry, "cannot find player graph");
+        return;
+    }
+    const auto& graph = it->second;
 
     for (auto&& [entity, spawnTransform] : aRegistry.view<Spawner, Transform3D>().each()) {
         auto creep = aRegistry.create();

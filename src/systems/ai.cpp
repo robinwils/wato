@@ -11,6 +11,7 @@
 
 #include "components/creep.hpp"
 #include "components/path.hpp"
+#include "components/player.hpp"
 #include "components/rigid_body.hpp"
 #include "components/transform3d.hpp"
 #include "core/graph.hpp"
@@ -18,10 +19,18 @@
 
 void AiSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t aTick)
 {
-    const auto& graph = aRegistry.ctx().get<Graph>();
+    auto& graphMap = aRegistry.ctx().get<PlayerGraphMap>();
 
-    for (auto&& [e, creep, t, rb, p] :
-         aRegistry.view<Creep, Transform3D, RigidBody, Path>().each()) {
+    for (auto&& [e, creep, owner, t, rb, p] :
+         aRegistry.view<Creep, Owner, Transform3D, RigidBody, Path>().each()) {
+        auto it = graphMap.find(owner.ID);
+
+        if (it == graphMap.end()) {
+            WATO_ERR(aRegistry, "cannot find player graph");
+            continue;
+        }
+        const auto& graph = it->second;
+
         auto c = GraphCell::FromWorldPoint(t.Position);
         if (!p.NextCell || c == p.NextCell) {
             p.NextCell = graph.GetNextCell(c);
