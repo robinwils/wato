@@ -11,11 +11,6 @@
  * Registry pointer is included so handlers can access the ECS.
  */
 
-struct NewGameEvent {
-    Registry*       Reg;
-    NewGameResponse Response;
-};
-
 struct RigidBodyUpdateEvent {
     Registry*               Reg;
     RigidBodyUpdateResponse Response;

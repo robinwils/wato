@@ -7,6 +7,7 @@
 
 #include "components/player.hpp"
 #include "core/physics/physics.hpp"
+#include "core/serialize.hpp"
 #include "core/state.hpp"
 #include "core/types.hpp"
 #include "input/action.hpp"
@@ -39,21 +40,54 @@ inline bool operator==(const SyncPayload& aLHS, const SyncPayload& aRHS)
     return aLHS.GameID == aRHS.GameID && aLHS.State == aRHS.State;
 }
 
+struct PlayerInitData {
+    PlayerID     ID;
+    entt::entity ServerEntity;
+    float        Health;
+    std::string  DisplayName;
+    glm::vec3    Position;
+    glm::uvec2   MapSize;
+    float        MapOffset;
+
+    bool Archive(auto& aArchive)
+    {
+        if (!ArchivePlayerID(aArchive, ID)) return false;
+        if (!ArchiveEntity(aArchive, ServerEntity)) return false;
+        if (!ArchiveValue(aArchive, Health, -10.0f, 1000.0f)) return false;
+        if (!ArchiveString(aArchive, DisplayName, 5000)) return false;
+        if (!ArchiveVector(aArchive, Position, 0.0f, 500.0f)) return false;
+        if (!ArchiveVector(aArchive, MapSize, 0u, 100u)) return false;
+        if (!ArchiveValue(aArchive, MapOffset, 0.0f, 20.0f)) return false;
+        return true;
+    }
+};
+
+inline bool operator==(const PlayerInitData& aLHS, const PlayerInitData& aRHS)
+{
+    return aLHS.ID == aRHS.ID && aLHS.ServerEntity == aRHS.ServerEntity
+           && aLHS.Health == aRHS.Health && aLHS.DisplayName == aRHS.DisplayName
+           && aLHS.Position == aRHS.Position && aLHS.MapSize == aRHS.MapSize
+           && aLHS.MapOffset == aRHS.MapOffset;
+}
+
 struct NewGameResponse {
-    GameInstanceID GameID;
-    entt::entity   PlayerEntity;
+    GameInstanceID              GameID;
+    PlayerID                    YourPlayerID;
+    std::vector<PlayerInitData> Players;
 
     bool Archive(auto& aArchive)
     {
         if (!ArchiveValue(aArchive, GameID, uint64_t(0), std::numeric_limits<uint64_t>::max()))
             return false;
-        return ArchiveEntity(aArchive, PlayerEntity);
+        if (!ArchivePlayerID(aArchive, YourPlayerID)) return false;
+        return ArchiveVector(aArchive, Players, 8u);
     }
 };
 
 inline bool operator==(const NewGameResponse& aLHS, const NewGameResponse& aRHS)
 {
-    return aLHS.GameID == aRHS.GameID;
+    return aLHS.GameID == aRHS.GameID && aLHS.YourPlayerID == aRHS.YourPlayerID
+           && aLHS.Players == aRHS.Players;
 }
 
 struct ConnectedResponse {
@@ -219,8 +253,7 @@ struct PlayerEliminatedResponse {
 
     bool Archive(auto& aArchive)
     {
-        if (!ArchiveValue(aArchive, PlayerID, 0u, std::numeric_limits<::PlayerID>::max()))
-            return false;
+        if (!ArchivePlayerID(aArchive, PlayerID)) return false;
         return ArchiveVector(
             aArchive,
             Ranking,
@@ -267,7 +300,7 @@ struct AuthResponse {
 
     bool Archive(auto& aArchive)
     {
-        if (!ArchiveValue(aArchive, ID, 0u, std::numeric_limits<PlayerID>::max())) return false;
+        if (!ArchivePlayerID(aArchive, ID)) return false;
         return ArchiveBool(aArchive, Success);
     }
 };
@@ -309,8 +342,7 @@ struct NetworkEvent {
     bool Archive(auto& aArchive)
     {
         if (!ArchiveValue(aArchive, Type, 0u, uint32_t(PacketType::Count))) return false;
-        if (!ArchiveValue(aArchive, PlayerID, 0u, std::numeric_limits<::PlayerID>::max()))
-            return false;
+        if (!ArchivePlayerID(aArchive, PlayerID)) return false;
         if (!ArchiveValue(aArchive, Tick, 0u, 30000000u)) return false;
         if (!ArchiveVariant(aArchive, Payload)) return false;
         return true;
@@ -330,7 +362,12 @@ struct fmt::formatter<NetworkResponsePayload> : fmt::formatter<std::string> {
 
             void operator()(const NewGameResponse& aResp) const
             {
-                fmt::format_to(Ctx->out(), "new game response, game ID {}", aResp.GameID);
+                fmt::format_to(
+                    Ctx->out(),
+                    "new game response, game ID {}, your player {}, {} players",
+                    aResp.GameID,
+                    aResp.YourPlayerID,
+                    aResp.Players.size());
             }
             void operator()(const ConnectedResponse&) const
             {

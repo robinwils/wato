@@ -47,13 +47,17 @@ class GameServer : public Application
     }
 
    protected:
-    virtual void OnGameInstanceCreated(Registry& aRegistry) override;
+    virtual void StartGameInstance(
+        Registry&             aRegistry,
+        const GameInstanceID  aGameID,
+        std::vector<PlayerID> aPlayers);
 
    private:
-    void           spawnPlayers(Registry& aRegistry);
-    void           createGameInstance(GameInstanceID aGameID);
-    GameInstanceID createGameInstance();
-    tf::Taskflow   mNetTaskflow;
+    void spawnPlayers(Registry& aRegistry, std::span<const PlayerID> aPlayerIDs);
+    void
+    spawnMap(Registry& aRegistry, PlayerID aID, const glm::uvec2& aSize, const glm::vec2& aOffset);
+    void         createGameInstance(GameInstanceID aGameID, std::vector<PlayerID> aPlayerIDs);
+    tf::Taskflow mNetTaskflow;
 
     PocketBaseClient                             mPBClient;
     ENetServer                                   mServer;

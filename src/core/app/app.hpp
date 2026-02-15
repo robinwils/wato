@@ -5,6 +5,7 @@
 #include <atomic>
 #include <chrono>
 #include <entt/core/fwd.hpp>
+#include <glm/vec2.hpp>
 #include <taskflow/core/executor.hpp>
 
 #include "core/options.hpp"
@@ -43,14 +44,11 @@ class Application
    protected:
     using clock_type = std::chrono::steady_clock;
 
-    void StartGameInstance(Registry& aRegistry, const GameInstanceID aGameID, const bool aIsServer);
+    void StartGameInstance(Registry& aRegistry, const GameInstanceID aGameID);
     void StopGameInstance(Registry& aRegistry);
-
-    void SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeight);
+    void SpawnTerrain(Registry& aRegistry, const glm::uvec2& aSize, const glm::vec2& aOffset);
 
     void SetupObservers(Registry& aRegistry);
-
-    virtual void OnGameInstanceCreated(Registry& aRegistry) = 0;
 
     Options mOptions;
 

@@ -10,7 +10,12 @@
 #include <span>
 
 #include "components/game.hpp"
+#include "components/health.hpp"
 #include "components/imgui.hpp"
+#include "components/player.hpp"
+#include "components/rigid_body.hpp"
+#include "components/transform3d.hpp"
+#include "core/graph.hpp"
 #include "core/menu/menu.hpp"
 #include "core/net/enet_client.hpp"
 #include "core/net/net.hpp"
@@ -146,7 +151,7 @@ void GameClient::networkThread()
     }
 }
 
-void GameClient::spawnPlayerAndCamera()
+void GameClient::spawnCamera(glm::vec3 aPlayerPosition)
 {
     auto camera = mRegistry.create();
     mRegistry.emplace<Camera>(
@@ -163,13 +168,13 @@ void GameClient::spawnPlayerAndCamera()
     // pos, orientation, scale
     mRegistry.emplace<Transform3D>(
         camera,
-        glm::vec3(3.0f, 2.0f, 3.0f),
+        aPlayerPosition + glm::vec3(1.0f, 2.0f, 1.0f),
         glm::identity<glm::quat>(),
         glm::vec3(1.0f));
     mRegistry.emplace<ImguiDrawable>(camera, "Camera");
 }
 
-void GameClient::prepareGridPreview()
+void GameClient::prepareGridPreview(const glm::vec2& aOffset)
 {
     const auto& graph = mRegistry.ctx().get<Graph>();
 
@@ -182,7 +187,7 @@ void GameClient::prepareGridPreview()
     for (GraphCell::size_type i = 0; i < numVertsY; ++i) {
         for (GraphCell::size_type j = 0; j < numVertsX; ++j) {
             GraphCell cell(j, i);
-            vertices.emplace_back(cell.ToWorld());
+            vertices.emplace_back(cell.ToWorld(aOffset));
             if (i != 0) {
                 indices.push_back(SafeU16(i) * numVertsX + j);
                 indices.push_back((SafeU16(i) - 1) * numVertsX + j);
@@ -227,14 +232,79 @@ void GameClient::prepareGridPreview()
         std::span<const uint8_t>(graph.GridLayout().data(), graph.Width() * graph.Height()));
 }
 
-void GameClient::OnGameInstanceCreated(Registry& aRegistry)
+void GameClient::StartGameInstance(
+    Registry&                          aRegistry,
+    const GameInstanceID               aGameID,
+    PlayerID                           aLocalPlayerID,
+    const std::vector<PlayerInitData>& aPlayers)
 {
+    Application::StartGameInstance(aRegistry, aGameID);
     LoadResources(aRegistry);
 
-    auto& fixedExec = aRegistry.ctx().get<FixedSystemExecutor>();
+    auto&     syncMap = aRegistry.ctx().get<EntitySyncMap>();
+    glm::vec3 localPlayerPos{2.0f, 0.004f, 2.0f};
+    glm::vec2 offset{0.0f, 0.0f};
 
-    spawnPlayerAndCamera();
-    prepareGridPreview();
+    for (const auto& p : aPlayers) {
+        SpawnTerrain(aRegistry, p.MapSize, offset);
+
+        // Create player entity
+        auto player = aRegistry.create();
+        aRegistry.emplace<Player>(player, p.ID);
+        aRegistry.emplace<DisplayName>(player, p.DisplayName);
+        aRegistry.emplace<Health>(player, p.Health);
+        aRegistry.emplace<Transform3D>(player, p.Position);
+        aRegistry.emplace<RigidBody>(
+            player,
+            RigidBody{
+                .Params =
+                    RigidBodyParams{
+                        .Type           = rp3d::BodyType::STATIC,
+                        .Velocity       = 0.0f,
+                        .Direction      = glm::vec3(0.0f),
+                        .GravityEnabled = false,
+                    },
+            });
+        aRegistry.emplace<Collider>(
+            player,
+            Collider{
+                .Params =
+                    ColliderParams{
+                        .CollisionCategoryBits = Category::Base,
+                        .CollideWithMaskBits   = Category::Terrain | Category::Entities,
+                        .IsTrigger             = true,
+                        .ShapeParams =
+                            BoxShapeParams{
+                                .HalfExtents = GraphCell(1, 1).ToWorld() * 0.5f,
+                            },
+                    },
+            });
+
+        syncMap.insert_or_assign(p.ServerEntity, player);
+        WATO_INFO(
+            aRegistry,
+            "created player {} (server {}) for player ID {}",
+            player,
+            p.ServerEntity,
+            p.ID);
+
+        if (p.ID == aLocalPlayerID) {
+            localPlayerPos = p.Position;
+            aRegistry.ctx().emplace_as<Player>("player"_hs, p.ID);
+
+            // Create graph for local player (used for grid preview)
+            aRegistry.ctx().emplace<Graph>(
+                p.MapSize.x * GraphCell::kCellsPerAxis,
+                p.MapSize.y * GraphCell::kCellsPerAxis);
+
+            prepareGridPreview(offset);
+        }
+        offset.x += float(p.MapSize.x) + p.MapOffset;
+    }
+
+    spawnCamera(localPlayerPos);
+
+    auto& fixedExec = aRegistry.ctx().get<FixedSystemExecutor>();
 
     fixedExec.Register<NetworkSyncSystem<ENetClient>>();
     fixedExec.Register<PhysicsSystem>();
@@ -268,12 +338,9 @@ void GameClient::consumeNetworkResponses()
 
         void operator()(const NewGameResponse& aResp) const
         {
-            Client->StartGameInstance(*Reg, aResp.GameID, false);
+            Client->StartGameInstance(*Reg, aResp.GameID, aResp.YourPlayerID, aResp.Players);
             Reg->ctx().get<MenuContext&>().State = MenuState::InGame;
-            WATO_INFO(*Reg, "game {} created", aResp.GameID);
-
-            Dispatcher->enqueue<NewGameEvent>(
-                NewGameEvent{.Reg = Reg, .Response = std::move(aResp)});
+            WATO_INFO(*Reg, "game {} created with {} players", aResp.GameID, aResp.Players.size());
         }
 
         void operator()(SyncPayload& aResp) const

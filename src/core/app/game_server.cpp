@@ -6,8 +6,10 @@
 
 #include <thread>
 
+#include "components/health.hpp"
 #include "components/player.hpp"
 #include "components/spawner.hpp"
+#include "components/transform3d.hpp"
 #include "core/net/net.hpp"
 #include "core/net/pocketbase.hpp"
 #include "core/snapshot.hpp"
@@ -58,12 +60,19 @@ GameServer::~GameServer()
     }
 }
 
-void GameServer::OnGameInstanceCreated(Registry& aRegistry)
+void GameServer::StartGameInstance(
+    Registry&             aRegistry,
+    const GameInstanceID  aGameID,
+    std::vector<PlayerID> aPlayerIDs)
 {
+    Application::StartGameInstance(aRegistry, aGameID);
+
+    aRegistry.ctx().emplace<PlayerGraphMap>();
+    aRegistry.ctx().emplace<ActionContextStack>().back().State = ActionContext::State::Server;
     // init groups when registry is empty to get the most performance
     aRegistry.group<Player>(entt::get<Health>, entt::exclude<Eliminated>);
 
-    spawnPlayers(aRegistry);
+    spawnPlayers(aRegistry, aPlayerIDs);
 
     auto& fixedExec = aRegistry.ctx().get<FixedSystemExecutor>();
 
@@ -128,20 +137,49 @@ void GameServer::ConsumeNetworkRequests()
 
             if (!gameID) {
                 mLogger->error("Invalid game ID from server: '{}'", aEvent->record.id);
+                return;
             }
-            createGameInstance(*gameID);
 
-            for (auto&& [entity, player] : mGameInstances[*gameID].view<Player>().each()) {
-                mLogger->debug(
-                    "Sending network response for game {}, player {}, player {}",
-                    *gameID,
-                    player.ID,
-                    entity);
+            std::vector<PlayerID> playerIDs;
+            for (const std::string& pHexID : aEvent->record.players) {
+                auto pID = PlayerIDFromHexString(pHexID);
+                if (!pID) {
+                    mLogger->error("Invalid game ID from server: '{}'", aEvent->record.id);
+                    return;
+                }
+
+                playerIDs.push_back(*pID);
+            }
+            createGameInstance(*gameID, playerIDs);
+
+            Registry&                   reg = mGameInstances[*gameID];
+            std::vector<PlayerInitData> playerInitData;
+
+            for (auto&& [entity, player, health, displayName, transform] :
+                 reg.view<Player, Health, DisplayName, Transform3D>().each()) {
+                auto idx = playerInitData.size();
+                playerInitData.push_back(PlayerInitData{
+                    .ID           = player.ID,
+                    .ServerEntity = entity,
+                    .Health       = health.Health,
+                    .DisplayName  = displayName.Value,
+                    .Position     = transform.Position,
+                    .MapSize      = {20, 20},
+                    .MapOffset    = 5.0f,
+                });
+            }
+
+            for (const auto& p : playerInitData) {
+                mLogger->debug("Sending network response for game {}, player {}", *gameID, p.ID);
                 mServer.EnqueueResponse(new NetworkResponse{
                     .Type     = PacketType::NewGame,
-                    .PlayerID = player.ID,
+                    .PlayerID = p.ID,
                     .Tick     = 0,
-                    .Payload  = NewGameResponse{.GameID = *gameID, .PlayerEntity = entity}});
+                    .Payload  = NewGameResponse{
+                         .GameID       = *gameID,
+                         .YourPlayerID = p.ID,
+                         .Players      = playerInitData,
+                    }});
             }
         }
     });
@@ -196,75 +234,82 @@ int GameServer::Run(tf::Executor& aExecutor)
 
 void GameServer::Stop() { mRunning = false; }
 
-void GameServer::spawnPlayers(Registry& aRegistry)
+void GameServer::spawnMap(
+    Registry&         aRegistry,
+    PlayerID          aID,
+    const glm::uvec2& aSize,
+    const glm::vec2&  aOffset)
 {
-    auto& colliderToEntity = aRegistry.ctx().get<ColliderEntityMap>();
-    auto& graph            = aRegistry.ctx().get<Graph>();
+    SpawnTerrain(aRegistry, aSize, aOffset);
 
-    auto player = aRegistry.create();
-    // TODO: ID should be something coming from outside (menu, DB, etc...)
-    aRegistry.emplace<Player>(player, 0u);
-    aRegistry.emplace<DisplayName>(player, "stion");
-    aRegistry.emplace<Health>(player, 10.0f);
+    auto [it, inserted] = aRegistry.ctx().get<PlayerGraphMap&>().try_emplace(
+        aID,
+        aSize.x * GraphCell::kCellsPerAxis,
+        aSize.y * GraphCell::kCellsPerAxis);
 
-    WATO_INFO(aRegistry, "server player {} created", player);
-
-    auto& pTransform = aRegistry.emplace<Transform3D>(player, glm::vec3(2.0f, 0.004f, 2.0f));
-    aRegistry.emplace<RigidBody>(
-        player,
-        RigidBody{
-            .Params =
-                RigidBodyParams{
-                    .Type           = rp3d::BodyType::STATIC,
-                    .Velocity       = 0.0f,
-                    .Direction      = glm::vec3(0.0f),
-                    .GravityEnabled = false,
-                },
-        });
-    auto& c = aRegistry.emplace<Collider>(
-        player,
-        Collider{
-            .Params =
-                ColliderParams{
-                    .CollisionCategoryBits = Category::Base,
-                    .CollideWithMaskBits   = Category::Terrain | Category::Entities,
-                    .IsTrigger             = true,
-                    .ShapeParams =
-                        BoxShapeParams{
-                            .HalfExtents = GraphCell(1, 1).ToWorld() * 0.5f,
-                        },
-                },
-        });
-    colliderToEntity[c.Handle] = player;
-
-    graph.ComputePaths(GraphCell::FromWorldPoint(pTransform.Position));
+    WATO_DBG(aRegistry, "{}", it->second);
 }
 
-void GameServer::createGameInstance(GameInstanceID aGameID)
+void GameServer::spawnPlayers(Registry& aRegistry, std::span<const PlayerID> aPlayerIDs)
+{
+    auto&      colliderToEntity = aRegistry.ctx().get<ColliderEntityMap>();
+    glm::uvec2 size{20, 20};
+    glm::vec2  offset{0, 0};
+
+    for (const PlayerID id : aPlayerIDs) {
+        auto player = aRegistry.create();
+        // TODO: ID should be something coming from outside (menu, DB, etc...)
+        aRegistry.emplace<Player>(player, id);
+        aRegistry.emplace<DisplayName>(player, mServer.GetAccountName(id));
+        aRegistry.emplace<Health>(player, 10.0f);
+        WATO_INFO(aRegistry, "server player {} created", player);
+
+        auto& pTransform = aRegistry.emplace<Transform3D>(
+            player,
+            glm::vec3(2.0f + offset.x, 0.004f, 2.0f + offset.y));
+        aRegistry.emplace<RigidBody>(
+            player,
+            RigidBody{
+                .Params =
+                    RigidBodyParams{
+                        .Type           = rp3d::BodyType::STATIC,
+                        .Velocity       = 0.0f,
+                        .Direction      = glm::vec3(0.0f),
+                        .GravityEnabled = false,
+                    },
+            });
+        auto& c = aRegistry.emplace<Collider>(
+            player,
+            Collider{
+                .Params =
+                    ColliderParams{
+                        .CollisionCategoryBits = Category::Base,
+                        .CollideWithMaskBits   = Category::Terrain | Category::Entities,
+                        .IsTrigger             = true,
+                        .ShapeParams =
+                            BoxShapeParams{
+                                .HalfExtents = GraphCell(1, 1).ToWorld() * 0.5f,
+                            },
+                    },
+            });
+        colliderToEntity[c.Handle] = player;
+
+        spawnMap(aRegistry, id, size, offset);
+        auto& graph = aRegistry.ctx().get<PlayerGraphMap>().at(id);
+
+        graph.ComputePaths(GraphCell::FromWorldPoint(pTransform.Position));
+        offset.x += size.x + 5;
+    }
+}
+
+void GameServer::createGameInstance(GameInstanceID aGameID, std::vector<PlayerID> aPlayerIDs)
 {
     Registry& registry = mGameInstances[aGameID];
 
     registry.ctx().emplace<Logger>(mLogger);
     registry.ctx().emplace<ENetServer&>(mServer);
     registry.ctx().emplace_as<std::vector<PlayerID>>("ranking"_hs);
+    registry.ctx().emplace<TaggedActionsType>();
 
-    StartGameInstance(registry, aGameID, true);
-}
-
-GameInstanceID GameServer::createGameInstance()
-{
-    GameInstanceID gameID;
-    do {
-        gameID = GenerateGameInstanceID();
-    } while (mGameInstances.contains(gameID));
-
-    Registry& registry = mGameInstances[gameID];
-
-    registry.ctx().emplace<Logger>(mLogger);
-    registry.ctx().emplace<ENetServer&>(mServer);
-    registry.ctx().emplace_as<std::vector<PlayerID>>("ranking"_hs);
-
-    StartGameInstance(registry, gameID, true);
-
-    return gameID;
+    StartGameInstance(registry, aGameID, aPlayerIDs);
 }

@@ -13,7 +13,6 @@
 #include "components/spawner.hpp"
 #include "components/tile.hpp"
 #include "components/transform3d.hpp"
-#include "core/graph.hpp"
 #include "core/physics/physics.hpp"
 #include "core/physics/physics_event_listener.hpp"
 #include "core/state.hpp"
@@ -30,10 +29,7 @@ void Application::Init()
     cpr::async::startup(1, std::thread::hardware_concurrency(), std::chrono::minutes(5));
 }
 
-void Application::StartGameInstance(
-    Registry&            aRegistry,
-    const GameInstanceID aGameID,
-    const bool           aIsServer)
+void Application::StartGameInstance(Registry& aRegistry, const GameInstanceID aGameID)
 {
     WATO_INFO(aRegistry, "spawning game instance");
     auto& physics = aRegistry.ctx().emplace<Physics>(mLogger);
@@ -47,7 +43,7 @@ void Application::StartGameInstance(
     physics.Init();
 
     stack.push_back(ActionContext{
-        .State    = aIsServer ? ActionContext::State::Server : ActionContext::State::Default,
+        .State    = ActionContext::State::Default,
         .Bindings = ActionBindings::Defaults(),
         .Payload  = NormalPayload{}});
 
@@ -55,9 +51,6 @@ void Application::StartGameInstance(
     aRegistry.ctx().get<Physics>().World()->setEventListener(&l);
 
     SetupObservers(aRegistry);
-
-    SpawnMap(aRegistry, 20, 20);
-    OnGameInstanceCreated(aRegistry);
 }
 
 void Application::StopGameInstance(Registry& aRegistry)
@@ -66,65 +59,6 @@ void Application::StopGameInstance(Registry& aRegistry)
     aRegistry.ctx().erase<ActionContextStack>();
     aRegistry.ctx().erase<GameStateBuffer>();
     aRegistry.ctx().erase<GameInstance>();
-}
-
-void Application::SpawnMap(Registry& aRegistry, uint32_t aWidth, uint32_t aHeight)
-{
-    auto& graph = aRegistry.ctx().emplace<Graph>(
-        aWidth * GraphCell::kCellsPerAxis,
-        aHeight * GraphCell::kCellsPerAxis);
-    entt::entity first = entt::null;
-
-    for (uint32_t i = 0; i < aWidth; ++i) {
-        for (uint32_t j = 0; j < aHeight; ++j) {
-            auto tile = aRegistry.create();
-            if (first == entt::null) {
-                first = tile;
-            }
-            aRegistry.emplace<Transform3D>(tile, glm::vec3(i, 0.0f, j));
-            aRegistry.emplace<SceneObject>(tile, "grass_tile"_hs);
-            aRegistry.emplace<Tile>(tile);
-        }
-    }
-
-    // create spawn and base
-    auto spawner = aRegistry.create();
-    aRegistry.emplace<Transform3D>(spawner, glm::vec3(0.0f));
-    aRegistry.emplace<Spawner>(spawner);
-
-    WATO_DBG(aRegistry, "{}", graph);
-
-    aRegistry.emplace<RigidBody>(
-        first,
-        RigidBody{
-            .Params =
-                RigidBodyParams{
-                    .Type           = rp3d::BodyType::STATIC,
-                    .Velocity       = 0.0f,
-                    .Direction      = glm::vec3(0.0f),
-                    .GravityEnabled = false,
-                },
-        });
-    aRegistry.emplace<Collider>(
-        first,
-        Collider{
-            .Params =
-                ColliderParams{
-                    .CollisionCategoryBits = Category::Terrain,
-                    .CollideWithMaskBits   = Category::Entities | Category::Projectiles,
-                    .IsTrigger             = false,
-                    .Offset =
-                        Transform3D{
-                            .Position = glm::vec3(aWidth + 1, 1.004f, aHeight + 1) / 2.0f - 0.5f,
-                        },
-                    .ShapeParams =
-                        HeightFieldShapeParams{
-                            .Data    = std::vector<float>((aWidth + 1) * (aHeight + 1), 0.0f),
-                            .Rows    = SafeI32(aHeight + 1),
-                            .Columns = SafeI32(aWidth + 1),
-                        },
-                },
-        });
 }
 
 void Application::SetupObservers(Registry& aRegistry)
@@ -147,4 +81,62 @@ void Application::SetupObservers(Registry& aRegistry)
     auto& pmo = aRegistry.storage<entt::reactive>("placement_mode_observer"_hs);
     pmo.on_update<Transform3D>();
     mLogger->info("observers created");
+}
+
+void Application::SpawnTerrain(
+    Registry&         aRegistry,
+    const glm::uvec2& aSize,
+    const glm::vec2&  aOffset)
+{
+    entt::entity first = entt::null;
+
+    for (uint32_t i = 0; i < aSize.x; ++i) {
+        for (uint32_t j = 0; j < aSize.y; ++j) {
+            auto tile = aRegistry.create();
+            if (first == entt::null) {
+                first = tile;
+            }
+            aRegistry.emplace<Transform3D>(
+                tile,
+                glm::vec3(float(i) + aOffset.x, 0.0f, float(j) + aOffset.y));
+            aRegistry.emplace<SceneObject>(tile, "grass_tile"_hs);
+            aRegistry.emplace<Tile>(tile);
+        }
+    }
+
+    auto spawner = aRegistry.create();
+    aRegistry.emplace<Transform3D>(spawner, glm::vec3(float(aOffset.x), 0.0f, float(aOffset.y)));
+    aRegistry.emplace<Spawner>(spawner);
+
+    aRegistry.emplace<RigidBody>(
+        first,
+        RigidBody{
+            .Params =
+                RigidBodyParams{
+                    .Type           = rp3d::BodyType::STATIC,
+                    .Velocity       = 0.0f,
+                    .Direction      = glm::vec3(0.0f),
+                    .GravityEnabled = false,
+                },
+        });
+    aRegistry.emplace<Collider>(
+        first,
+        Collider{
+            .Params =
+                ColliderParams{
+                    .CollisionCategoryBits = Category::Terrain,
+                    .CollideWithMaskBits   = Category::Entities | Category::Projectiles,
+                    .IsTrigger             = false,
+                    .Offset =
+                        Transform3D{
+                            .Position = glm::vec3(aSize.x + 1, 1.004f, aSize.y + 1) / 2.0f - 0.5f,
+                        },
+                    .ShapeParams =
+                        HeightFieldShapeParams{
+                            .Data    = std::vector<float>((aSize.x + 1) * (aSize.y + 1), 0.0f),
+                            .Rows    = SafeI32(aSize.y + 1),
+                            .Columns = SafeI32(aSize.x + 1),
+                        },
+                },
+        });
 }

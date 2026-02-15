@@ -91,14 +91,6 @@ void UISystem::onLoginResult(const LoginResultEvent& aEvent)
         auto& netClient = registry.ctx().get<ENetClient&>();
         netClient.Connect();
 
-        entt::entity player = registry.create();
-
-        registry.emplace<RecordID>(player, aEvent.ID);
-        registry.emplace<Player>(player, *playerID);
-        registry.emplace<Email>(player, aEvent.Email);
-        registry.emplace<AccountName>(player, aEvent.AccountName);
-        registry.ctx().emplace_as<entt::entity>("player"_hs, player);
-
         WATO_INFO(registry, "user {} logged in", aEvent.AccountName);
     } else {
         menu.LoginState = LoginState::Failed;
@@ -162,7 +154,6 @@ void UISystem::onJoinMatchmaking(const JoinMatchmakingEvent& aEvent)
     Registry* reg  = aEvent.Reg;
     auto&     pb   = reg->ctx().get<PocketBaseClient>();
     auto&     menu = reg->ctx().get<MenuContext>();
-    auto&     id   = reg->get<RecordID>(aEvent.Player);
 
     if (menu.Matchmaking.State != MatchmakingState::Idle
         && menu.Matchmaking.State != MatchmakingState::Failed) {

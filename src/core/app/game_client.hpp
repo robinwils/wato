@@ -10,6 +10,7 @@
 #include "core/menu/imgui_menu.hpp"
 #include "core/menu/menu.hpp"
 #include "core/net/enet_client.hpp"
+#include "core/net/net.hpp"
 #include "core/net/pocketbase.hpp"
 #include "core/physics/physics_event_listener.hpp"
 #include "imgui_hud.hpp"
@@ -92,7 +93,11 @@ class GameClient : public Application
     int  Run(tf::Executor& aExecutor) override;
 
    protected:
-    virtual void OnGameInstanceCreated(Registry& aRegistry) override;
+    void StartGameInstance(
+        Registry&                          aRegistry,
+        const GameInstanceID               aGameID,
+        PlayerID                           aLocalPlayerID,
+        const std::vector<PlayerInitData>& aPlayers);
 
    private:
     inline void initContext(int aWidth, int aHeight)
@@ -115,8 +120,8 @@ class GameClient : public Application
     }
     void networkThread();
     void consumeNetworkResponses();
-    void spawnPlayerAndCamera();
-    void prepareGridPreview();
+    void spawnCamera(glm::vec3 aPlayerPosition);
+    void prepareGridPreview(const glm::vec2& aOffset);
 
     Registry mRegistry;
 

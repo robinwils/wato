@@ -7,7 +7,6 @@
 #include "components/health.hpp"
 #include "components/imgui.hpp"
 #include "components/model_rotation_offset.hpp"
-#include "components/net.hpp"
 #include "components/projectile.hpp"
 #include "components/rigid_body.hpp"
 #include "components/scene_object.hpp"
@@ -27,7 +26,6 @@ void NetworkResponseSystem::ensureConnected(entt::dispatcher& aDispatcher)
         return;
     }
 
-    aDispatcher.sink<NewGameEvent>().connect<&NetworkResponseSystem::onNewGame>(*this);
     aDispatcher.sink<RigidBodyUpdateEvent>().connect<&NetworkResponseSystem::onRigidBodyUpdate>(
         *this);
     aDispatcher.sink<HealthUpdateEvent>().connect<&NetworkResponseSystem::onHealthUpdate>(*this);
@@ -43,56 +41,6 @@ void NetworkResponseSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::u
     ensureConnected(dispatcher);
     dispatcher.update();
 }
-void NetworkResponseSystem::onNewGame(const NewGameEvent& aEvent)
-{
-    Registry&   registry = *aEvent.Reg;
-    const auto& resp     = aEvent.Response;
-    auto&       syncMap  = registry.ctx().get<EntitySyncMap>();
-
-    if (syncMap.contains(resp.PlayerEntity)) {
-        WATO_WARN(registry, "player {} already exists", resp.PlayerEntity);
-    } else {
-        auto player = registry.create();
-        registry.emplace<Health>(player, 10.0f);
-        registry.emplace<Player>(player, 0u);
-        registry.emplace<::DisplayName>(player, "stion");
-
-        registry.emplace<Transform3D>(player, glm::vec3(2.0f, 0.004f, 2.0f));
-        registry.emplace<RigidBody>(
-            player,
-            RigidBody{
-                .Params =
-                    RigidBodyParams{
-                        .Type           = rp3d::BodyType::STATIC,
-                        .Velocity       = 0.0f,
-                        .Direction      = glm::vec3(0.0f),
-                        .GravityEnabled = false,
-                    },
-            });
-        registry.emplace<Collider>(
-            player,
-            Collider{
-                .Params =
-                    ColliderParams{
-                        .CollisionCategoryBits = Category::Base,
-                        .CollideWithMaskBits   = Category::Terrain | Category::Entities,
-                        .IsTrigger             = true,
-                        .ShapeParams =
-                            BoxShapeParams{
-                                .HalfExtents = GraphCell(1, 1).ToWorld() * 0.5f,
-                            },
-                    },
-            });
-
-        syncMap.insert_or_assign(resp.PlayerEntity, player);
-        WATO_INFO(
-            registry,
-            "created local player {} for server player {}",
-            player,
-            resp.PlayerEntity);
-    }
-}
-
 void NetworkResponseSystem::onRigidBodyUpdate(const RigidBodyUpdateEvent& aEvent)
 {
     Registry&   registry = *aEvent.Reg;
