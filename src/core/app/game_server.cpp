@@ -99,11 +99,17 @@ void GameServer::ConsumeNetworkRequests()
                 return;
             }
 
-            const ActionsType& incoming = aReq.State.Actions;
-            auto&              actions  = registry.ctx().get<GameStateBuffer&>().Latest().Actions;
+            const ActionsType& incoming      = aReq.State.Actions;
+            auto&              taggedActions = registry.ctx().get<TaggedActionsType>();
 
-            Log->debug("got {} actions: {}", incoming.size(), incoming);
-            actions.insert(actions.end(), incoming.begin(), incoming.end());
+            Log->debug(
+                "got {} actions from player {}: {}",
+                incoming.size(),
+                Event->PlayerID,
+                incoming);
+            for (const auto& action : incoming) {
+                taggedActions.push_back({Event->PlayerID, action});
+            }
         }
 
         void operator()(const AuthRequest&) const {}

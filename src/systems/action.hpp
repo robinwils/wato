@@ -41,6 +41,8 @@ class ServerContextHandler : public DefaultContextHandler
     void operator()(Registry& aRegistry, BuildTowerPayload& aPayload) override;
     void operator()(Registry&, const PlacementModePayload&) override {}
     void operator()(Registry&, const MovePayload&, const float) override {}
+
+    PlayerID CurrentPlayerID{0};
 };
 
 class ActionSystem
@@ -106,9 +108,5 @@ class ServerActionSystem : public FixedSystem, public ActionSystem
     using FixedSystem::FixedSystem;
 
    protected:
-    void Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t aTick) override
-    {
-        constexpr float kTimeStep = 1.0f / 60.0f;
-        ProcessActions(aRegistry, ActionTag::FixedTime, kTimeStep);
-    }
+    void Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t aTick) override;
 };

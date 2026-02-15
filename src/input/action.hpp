@@ -194,6 +194,13 @@ inline bool operator==(const Action& aLHS, const Action& aRHS)
 
 using ActionsType = std::vector<Action>;
 
+struct TaggedAction {
+    PlayerID PlayerID;
+    Action   Action;
+};
+
+using TaggedActionsType = std::vector<TaggedAction>;
+
 template <>
 struct fmt::formatter<Action::payload_type> : fmt::formatter<std::string> {
     auto format(Action::payload_type aObj, format_context& aCtx) const -> decltype(aCtx.out())

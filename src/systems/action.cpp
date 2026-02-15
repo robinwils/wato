@@ -223,6 +223,7 @@ void ServerContextHandler::operator()(Registry& aRegistry, BuildTowerPayload& aP
         });
 
     // TODO: Add Health component here (check it's not added elsewhere to avoid double-add crash)
+    aRegistry.emplace<Owner>(tower, CurrentPlayerID);
 
     // Broadcast tower creation to all clients
     aRegistry.ctx().get<ENetServer&>().EnqueueResponse(new NetworkResponse{
@@ -289,6 +290,8 @@ void ServerContextHandler::operator()(Registry& aRegistry, SendCreepPayload& aPa
                             },
                     },
             });
+
+        aRegistry.emplace<Owner>(creep, CurrentPlayerID);
 
         // Broadcast creep creation to all clients
         auto& rigidBody = aRegistry.get<RigidBody>(creep);
@@ -374,4 +377,22 @@ void ActionSystem::HandleContext(
     const float           aDeltaTime)
 {
     std::visit(ActionPayloadVisitor{&aRegistry, &aCtxHandler, aDeltaTime}, aAction.Payload);
+}
+
+void ServerActionSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t aTick)
+{
+    constexpr float kTimeStep = 1.0f / 60.0f;
+
+    auto& taggedActions = aRegistry.ctx().get<TaggedActionsType>();
+
+    ServerContextHandler handler;
+
+    for (auto& [playerID, action] : taggedActions) {
+        if (action.Tag != ActionTag::FixedTime) {
+            continue;
+        }
+        handler.CurrentPlayerID = playerID;
+        HandleContext(aRegistry, action, handler, kTimeStep);
+    }
+    taggedActions.clear();
 }
