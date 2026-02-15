@@ -169,8 +169,9 @@ struct Action {
             void operator()(SendCreepPayload&) const {}
             void operator()(BuildTowerPayload& aPayload) const
             {
-                BX_ASSERT(In->MouseWorldIntersect().has_value(), "input has no mouse intersection");
-                aPayload.Position = *In->MouseWorldIntersect();
+                if (In->MouseWorldIntersect().has_value()) {
+                    aPayload.Position = *In->MouseWorldIntersect();
+                }
             }
             void operator()(PlacementModePayload&) const {}
         };
