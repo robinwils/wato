@@ -226,22 +226,20 @@ void ServerContextHandler::operator()(Registry& aRegistry, BuildTowerPayload& aP
     aRegistry.emplace<Owner>(tower, CurrentPlayerID);
 
     // Broadcast tower creation to all clients
-    aRegistry.ctx().get<ENetServer&>().EnqueueResponse(new NetworkResponse{
-        .Type     = PacketType::Ack,
-        .PlayerID = 0,
-        .Tick     = aRegistry.ctx().get<GameInstance&>().Tick,
-        .Payload =
-            RigidBodyUpdateResponse{
-                .Params = body.Params,
-                .Entity = tower,
-                .Event  = RigidBodyEvent::Create,
-                .InitData =
-                    TowerInitData{
-                        .Type     = aPayload.Tower,
-                        .Position = aPayload.Position,
-                    },
-            },
-    });
+    aRegistry.ctx().get<ENetServer&>().BroadcastResponse(
+        GetPlayerIDs(aRegistry),
+        PacketType::Ack,
+        aRegistry.ctx().get<GameInstance&>().Tick,
+        RigidBodyUpdateResponse{
+            .Params = body.Params,
+            .Entity = tower,
+            .Event  = RigidBodyEvent::Create,
+            .InitData =
+                TowerInitData{
+                    .Type     = aPayload.Tower,
+                    .Position = aPayload.Position,
+                },
+        });
 }
 
 void ServerContextHandler::operator()(Registry& aRegistry, SendCreepPayload& aPayload)
@@ -296,22 +294,20 @@ void ServerContextHandler::operator()(Registry& aRegistry, SendCreepPayload& aPa
         // Broadcast creep creation to all clients
         auto& rigidBody = aRegistry.get<RigidBody>(creep);
         auto& transform = aRegistry.get<Transform3D>(creep);
-        aRegistry.ctx().get<ENetServer&>().EnqueueResponse(new NetworkResponse{
-            .Type     = PacketType::Ack,
-            .PlayerID = 0,
-            .Tick     = aRegistry.ctx().get<GameInstance&>().Tick,
-            .Payload =
-                RigidBodyUpdateResponse{
-                    .Params = rigidBody.Params,
-                    .Entity = creep,
-                    .Event  = RigidBodyEvent::Create,
-                    .InitData =
-                        CreepInitData{
-                            .Type     = aPayload.Type,
-                            .Position = transform.Position,
-                        },
-                },
-        });
+        aRegistry.ctx().get<ENetServer&>().BroadcastResponse(
+            GetPlayerIDs(aRegistry),
+            PacketType::Ack,
+            aRegistry.ctx().get<GameInstance&>().Tick,
+            RigidBodyUpdateResponse{
+                .Params = rigidBody.Params,
+                .Entity = creep,
+                .Event  = RigidBodyEvent::Create,
+                .InitData =
+                    CreepInitData{
+                        .Type     = aPayload.Type,
+                        .Position = transform.Position,
+                    },
+            });
 
         break;
     }

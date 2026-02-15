@@ -18,6 +18,7 @@
 #include "core/net/net.hpp"
 #include "core/physics/physics.hpp"
 #include "core/sys/log.hpp"
+#include "registry/registry.hpp"
 
 // Callback for collecting colliders within range using sphere overlap query
 class ColliderCollectorCallback : public rp3d::OverlapCallback
@@ -170,24 +171,22 @@ void TowerAttackSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint3
                 });
 
             if (auto* server = aRegistry.ctx().find<ENetServer>()) {
-                server->EnqueueResponse(new NetworkResponse{
-                    .Type     = PacketType::Ack,
-                    .PlayerID = 0,
-                    .Tick     = aRegistry.ctx().get<GameInstance&>().Tick,
-                    .Payload =
-                        RigidBodyUpdateResponse{
-                            .Params = rigidBody.Params,
-                            .Entity = projectile,
-                            .Event  = RigidBodyEvent::Create,
-                            .InitData =
-                                ProjectileInitData{
-                                    .SourceTower = towerEntity,
-                                    .Damage      = 10.0f,
-                                    .Speed       = 5.0f,
-                                    .Target      = attack.CurrentTarget,
-                                },
-                        },
-                });
+                server->BroadcastResponse(
+                    GetPlayerIDs(aRegistry),
+                    PacketType::Ack,
+                    aRegistry.ctx().get<GameInstance&>().Tick,
+                    RigidBodyUpdateResponse{
+                        .Params = rigidBody.Params,
+                        .Entity = projectile,
+                        .Event  = RigidBodyEvent::Create,
+                        .InitData =
+                            ProjectileInitData{
+                                .SourceTower = towerEntity,
+                                .Damage      = 10.0f,
+                                .Speed       = 5.0f,
+                                .Target      = attack.CurrentTarget,
+                            },
+                    });
             } else {
                 WATO_WARN(aRegistry, "enet server not instanciated");
             }

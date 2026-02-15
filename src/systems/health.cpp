@@ -38,16 +38,18 @@ void HealthSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t a
                     .Payload  = PlayerEliminatedResponse{.PlayerID = player.ID, .Ranking = ranking},
                 });
             }
+        }
+    }
 
-            if (group.size() <= 2) {
-                if (server) {
-                    server->EnqueueResponse(new NetworkResponse{
-                        .Type     = PacketType::Ack,
-                        .PlayerID = 0,
-                        .Tick     = aRegistry.ctx().get<GameInstance&>().Tick,
-                        .Payload  = GameEndResponse{.Ranking = ranking},
-                    });
-                }
+    if (group.size() <= 1) {
+        for (auto&& [entity, player] : aRegistry.view<Player>()->each()) {
+            if (server) {
+                server->EnqueueResponse(new NetworkResponse{
+                    .Type     = PacketType::Ack,
+                    .PlayerID = player.ID,
+                    .Tick     = aRegistry.ctx().get<GameInstance&>().Tick,
+                    .Payload  = GameEndResponse{.Ranking = ranking},
+                });
             }
         }
     }

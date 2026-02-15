@@ -82,34 +82,30 @@ void NetworkSyncSystem<ENetServer>::Execute(
     // });
 
     for (auto&& [entity, rigidBody] : rbStorage.view<RigidBody>().each()) {
-        net.EnqueueResponse(new NetworkResponse{
-            .Type     = PacketType::Ack,
-            .PlayerID = 0,
-            .Tick     = instance.Tick,
-            .Payload =
-                RigidBodyUpdateResponse{
-                    .Params   = rigidBody.Params,
-                    .Entity   = entity,
-                    .Event    = RigidBodyEvent::Update,
-                    .InitData = std::monostate{},
-                },
-        });
+        net.BroadcastResponse(
+            GetPlayerIDs(aRegistry),
+            PacketType::Ack,
+            instance.Tick,
+            RigidBodyUpdateResponse{
+                .Params   = rigidBody.Params,
+                .Entity   = entity,
+                .Event    = RigidBodyEvent::Update,
+                .InitData = std::monostate{},
+            });
     }
 
     for (auto& e : rbDestroyedStorage) {
         WATO_DBG(aRegistry, "rigid body destroyed for {}", e);
 
-        net.EnqueueResponse(new NetworkResponse{
-            .Type     = PacketType::Ack,
-            .PlayerID = 0,
-            .Tick     = aTick,
-            .Payload =
-                RigidBodyUpdateResponse{
-                    .Params   = RigidBodyParams{},
-                    .Entity   = e,
-                    .Event    = RigidBodyEvent::Destroy,
-                    .InitData = std::monostate{},
-                },
-        });
+        net.BroadcastResponse(
+            GetPlayerIDs(aRegistry),
+            PacketType::Ack,
+            aTick,
+            RigidBodyUpdateResponse{
+                .Params   = RigidBodyParams{},
+                .Entity   = e,
+                .Event    = RigidBodyEvent::Destroy,
+                .InitData = std::monostate{},
+            });
     }
 }
