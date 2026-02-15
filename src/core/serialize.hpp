@@ -589,6 +589,13 @@ bool ArchiveEntity(Archive& aR, entt::entity& aValue)
     return ArchiveValue(aR, aValue, entt::entity{0}, entt::entity{entt::null});
 }
 
+template <typename Archive>
+    requires(IsStreamEncoder<Archive> || IsStreamDecoder<Archive>)
+bool ArchivePlayerID(Archive& aR, PlayerID& aValue)
+{
+    return ArchiveValue(aR, aValue, 0u, std::numeric_limits<PlayerID>::max());
+}
+
 template <typename Archive, typename T>
     requires(IsStreamEncoder<Archive> || IsStreamDecoder<Archive>)
 bool ArchiveVector(Archive& aR, std::vector<T>& aVec, std::size_t aMaxSize)
