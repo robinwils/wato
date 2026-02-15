@@ -3,8 +3,10 @@
 #include <cstring>
 #include <ranges>
 
+#include "components/player.hpp"
 #include "core/menu/menu.hpp"
 #include "core/menu/menu_events.hpp"
+#include "core/net/pocketbase.hpp"
 #include "core/window.hpp"
 #include "imgui/imgui_helper.h"
 
@@ -181,33 +183,29 @@ void ImGuiMenu::renderStatusMsg(Registry& aRegistry)
 
 void ImGuiMenu::renderLobby(Registry& aRegistry)
 {
-    auto&        menu       = aRegistry.ctx().get<MenuContext>();
-    auto&        dispatcher = menu.Dispatcher;
-    entt::entity player     = aRegistry.ctx().get<entt::entity>("player"_hs);
+    auto& menu       = aRegistry.ctx().get<MenuContext>();
+    auto& dispatcher = menu.Dispatcher;
+    auto& pb         = aRegistry.ctx().get<PocketBaseClient>();
 
-    ImGui::Text("Hello %s!", aRegistry.get<AccountName>(player).Value.c_str());
+    ImGui::Text("Hello %s!", pb.LoggedUser.accountName.c_str());
     ImGui::Separator();
 
     switch (menu.Matchmaking.State) {
         case MatchmakingState::Failed:
         case MatchmakingState::Idle:
             if (ImGui::Button("Find Match")) {
-                dispatcher.enqueue(
-                    JoinMatchmakingEvent{
-                        .Reg    = &aRegistry,
-                        .Player = player,
-                    });
+                dispatcher.enqueue(JoinMatchmakingEvent{
+                    .Reg = &aRegistry,
+                });
             }
             break;
         case MatchmakingState::Joining:
         case MatchmakingState::Waiting:
             menu.Message = "Waiting for match...";
             if (ImGui::Button("Cancel")) {
-                dispatcher.enqueue(
-                    JoinMatchmakingEvent{
-                        .Reg    = &aRegistry,
-                        .Player = player,
-                    });
+                dispatcher.enqueue(JoinMatchmakingEvent{
+                    .Reg = &aRegistry,
+                });
             }
             break;
         case MatchmakingState::Matched:

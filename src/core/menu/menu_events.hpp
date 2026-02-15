@@ -35,13 +35,11 @@ struct RegisterResultEvent {
 };
 
 struct JoinMatchmakingEvent {
-    Registry*    Reg;
-    entt::entity Player;
+    Registry* Reg;
 };
 
 struct LeaveMatchmakingEvent {
-    Registry*    Reg;
-    entt::entity Player;
+    Registry* Reg;
 };
 
 struct JoinResultEvent {

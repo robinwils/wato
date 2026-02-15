@@ -80,6 +80,12 @@ void UISystem::onLoginResult(const LoginResultEvent& aEvent)
         menu.LoginState = LoginState::Success;
         menu.State      = MenuState::Lobby;
         pb.Token        = aEvent.Token;
+        pb.LoggedUser   = LoginRecord{
+              .id          = aEvent.ID,
+              .avatar      = aEvent.Avatar,
+              .email       = aEvent.Email,
+              .accountName = aEvent.AccountName,
+        };
         menu.ClearMsgs();
 
         auto& netClient = registry.ctx().get<ENetClient&>();
@@ -167,7 +173,7 @@ void UISystem::onJoinMatchmaking(const JoinMatchmakingEvent& aEvent)
     menu.ClearMsgs();
 
     pb.JoinQueue(
-        id.Value,
+        pb.LoggedUser.id,
         1,
         2,
         [reg](const std::optional<MatchmakingRecord>& aResult, const std::string& aError) {
@@ -195,7 +201,6 @@ void UISystem::onLeaveMatchmaking(const LeaveMatchmakingEvent& aEvent)
 
     auto& pb   = reg->ctx().get<PocketBaseClient>();
     auto& menu = reg->ctx().get<MenuContext>();
-    auto& id   = reg->get<RecordID>(aEvent.Player);
 
     if (menu.Matchmaking.State != MatchmakingState::Joining
         && menu.Matchmaking.State != MatchmakingState::Waiting) {
@@ -206,7 +211,7 @@ void UISystem::onLeaveMatchmaking(const LeaveMatchmakingEvent& aEvent)
         return;
     }
 
-    pb.LeaveQueue(id.Value, [](const std::optional<std::string>&, const std::string&) {
+    pb.LeaveQueue(pb.LoggedUser.id, [](const std::optional<std::string>&, const std::string&) {
         // Fire and forget
     });
 

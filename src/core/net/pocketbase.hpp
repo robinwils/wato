@@ -290,6 +290,7 @@ class PocketBaseClient
 
     HTTPClient  Client;
     std::string Token;
+    LoginRecord LoggedUser;
 
    private:
     struct SSEState {
@@ -304,8 +305,8 @@ class PocketBaseClient
         std::string topic = aSubscription;
         if (!aFields.empty()) {
             glz::generic opts;
-            opts["query"] = glz::generic{{"fields", aFields}};
-            topic        += "?options=" + glz::write_json(opts).value_or("{}");
+            opts["query"]  = glz::generic{{"fields", aFields}};
+            topic         += "?options=" + glz::write_json(opts).value_or("{}");
         }
 
         glz::generic payload;
