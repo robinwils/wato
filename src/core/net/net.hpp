@@ -114,7 +114,7 @@ struct TowerInitData {
     bool Archive(auto& aArchive)
     {
         if (!ArchiveValue(aArchive, Type, 0u, uint32_t(TowerType::Count))) return false;
-        if (!ArchiveVector(aArchive, Position, 0.0f, 20.0f)) return false;
+        if (!ArchiveVector(aArchive, Position, 0.0f, 100.0f)) return false;
         return true;
     }
 };
@@ -131,7 +131,7 @@ struct CreepInitData {
     bool Archive(auto& aArchive)
     {
         if (!ArchiveValue(aArchive, Type, 0u, uint32_t(CreepType::Count))) return false;
-        if (!ArchiveVector(aArchive, Position, 0.0f, 20.0f)) return false;
+        if (!ArchiveVector(aArchive, Position, 0.0f, 100.0f)) return false;
         return true;
     }
 };

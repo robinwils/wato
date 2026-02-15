@@ -46,7 +46,7 @@ struct Transform3D {
 
     bool Archive(auto& aArchive)
     {
-        if (!ArchiveVector(aArchive, Position, 0.0f, 20.0f)) return false;
+        if (!ArchiveVector(aArchive, Position, 0.0f, 100.0f)) return false;
         if (!ArchiveQuaternion(aArchive, Orientation)) return false;
         if (!ArchiveVector(aArchive, Scale, 0.0f, 20.0f)) return false;
         return true;

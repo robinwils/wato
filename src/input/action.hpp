@@ -126,7 +126,7 @@ struct BuildTowerPayload {
     bool Archive(auto& aArchive)
     {
         if (!ArchiveValue(aArchive, Tower, 0u, uint32_t(TowerType::Count))) return false;
-        if (!ArchiveVector(aArchive, Position, 0.0f, 20.0f)) return false;
+        if (!ArchiveVector(aArchive, Position, 0.0f, 100.0f)) return false;
         return true;
     }
 };
