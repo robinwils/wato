@@ -37,7 +37,7 @@ void TowerBuiltSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32
         auto& graphMap = aRegistry.ctx().get<PlayerGraphMap>();
 
         for (auto tower : *storage) {
-            auto& rb = aRegistry.get<RigidBody>(tower);
+            auto& rb    = aRegistry.get<RigidBody>(tower);
             auto* owner = aRegistry.try_get<Owner>(tower);
             if (owner) {
                 auto it = graphMap.find(owner->ID);
@@ -64,12 +64,22 @@ void TowerBuiltSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32
             graph.GridDirty = true;
         }
     } else if (aRegistry.ctx().contains<Graph>()) {
-        // Client path: single graph in context
-        auto& graph = aRegistry.ctx().get<Graph>();
+        // Client path: single graph for local player only
+        auto&    graph    = aRegistry.ctx().get<Graph>();
+        PlayerID localPID = aRegistry.ctx().get<Player>("player"_hs).ID;
+        bool     dirty    = false;
+
         for (auto tower : *storage) {
+            auto* owner = aRegistry.try_get<Owner>(tower);
+            if (!owner || owner->ID != localPID) {
+                continue;
+            }
             auto& rb = aRegistry.get<RigidBody>(tower);
             phy.ToggleObstacle(rb.Body->getCollider(0), graph, true);
+            dirty = true;
         }
-        graph.GridDirty = true;
+        if (dirty) {
+            graph.GridDirty = true;
+        }
     }
 }

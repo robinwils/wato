@@ -46,7 +46,11 @@ class Application
 
     void StartGameInstance(Registry& aRegistry, const GameInstanceID aGameID);
     void StopGameInstance(Registry& aRegistry);
-    void SpawnTerrain(Registry& aRegistry, const glm::uvec2& aSize, const glm::vec2& aOffset);
+    void SpawnTerrain(
+        Registry&           aRegistry,
+        const entt::entity& aPlayer,
+        const glm::uvec2&   aSize,
+        const glm::vec2&    aOffset);
 
     void SetupObservers(Registry& aRegistry);
 

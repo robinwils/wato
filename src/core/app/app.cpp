@@ -84,11 +84,13 @@ void Application::SetupObservers(Registry& aRegistry)
 }
 
 void Application::SpawnTerrain(
-    Registry&         aRegistry,
-    const glm::uvec2& aSize,
-    const glm::vec2&  aOffset)
+    Registry&           aRegistry,
+    const entt::entity& aPlayer,
+    const glm::uvec2&   aSize,
+    const glm::vec2&    aOffset)
 {
-    entt::entity first = entt::null;
+    const Player& p     = aRegistry.get<Player>(aPlayer);
+    entt::entity  first = entt::null;
 
     for (uint32_t i = 0; i < aSize.x; ++i) {
         for (uint32_t j = 0; j < aSize.y; ++j) {
@@ -107,6 +109,7 @@ void Application::SpawnTerrain(
     auto spawner = aRegistry.create();
     aRegistry.emplace<Transform3D>(spawner, glm::vec3(float(aOffset.x), 0.0f, float(aOffset.y)));
     aRegistry.emplace<Spawner>(spawner);
+    aRegistry.emplace<Owner>(spawner, p.ID);
 
     aRegistry.emplace<RigidBody>(
         first,

@@ -245,12 +245,12 @@ void GameClient::StartGameInstance(
     glm::vec3 localPlayerPos{2.0f, 0.004f, 2.0f};
     glm::vec2 offset{0.0f, 0.0f};
 
-    for (const auto& p : aPlayers) {
-        SpawnTerrain(aRegistry, p.MapSize, offset);
+    for (uint8_t idx = 0; idx < aPlayers.size(); ++idx) {
+        const PlayerInitData& p = aPlayers[idx];
 
         // Create player entity
         auto player = aRegistry.create();
-        aRegistry.emplace<Player>(player, p.ID);
+        aRegistry.emplace<Player>(player, p.ID, idx);
         aRegistry.emplace<DisplayName>(player, p.DisplayName);
         aRegistry.emplace<Health>(player, p.Health);
         aRegistry.emplace<Transform3D>(player, p.Position);

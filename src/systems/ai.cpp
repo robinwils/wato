@@ -21,9 +21,9 @@ void AiSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t aTick
 {
     auto& graphMap = aRegistry.ctx().get<PlayerGraphMap>();
 
-    for (auto&& [e, creep, owner, t, rb, p] :
-         aRegistry.view<Creep, Owner, Transform3D, RigidBody, Path>().each()) {
-        auto it = graphMap.find(owner.ID);
+    for (auto&& [e, creep, target, t, rb, p] :
+         aRegistry.view<Creep, Target, Transform3D, RigidBody, Path>().each()) {
+        auto it = graphMap.find(target.ID);
 
         if (it == graphMap.end()) {
             WATO_ERR(aRegistry, "cannot find player graph");

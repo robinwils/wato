@@ -144,35 +144,39 @@ inline bool operator==(const ProjectileInitData& aLHS, const ProjectileInitData&
 struct TowerInitData {
     TowerType Type;
     glm::vec3 Position;
+    PlayerID  OwnerID;
 
     bool Archive(auto& aArchive)
     {
         if (!ArchiveValue(aArchive, Type, 0u, uint32_t(TowerType::Count))) return false;
-        if (!ArchiveVector(aArchive, Position, 0.0f, 100.0f)) return false;
+        if (!ArchiveVector(aArchive, Position, 0.0f, 500.0f)) return false;
+        if (!ArchivePlayerID(aArchive, OwnerID)) return false;
         return true;
     }
 };
 
 inline bool operator==(const TowerInitData& aLHS, const TowerInitData& aRHS)
 {
-    return aLHS.Type == aRHS.Type && aLHS.Position == aRHS.Position;
+    return aLHS.Type == aRHS.Type && aLHS.Position == aRHS.Position && aLHS.OwnerID == aRHS.OwnerID;
 }
 
 struct CreepInitData {
     CreepType Type;
     glm::vec3 Position;
+    PlayerID  OwnerID;
 
     bool Archive(auto& aArchive)
     {
         if (!ArchiveValue(aArchive, Type, 0u, uint32_t(CreepType::Count))) return false;
-        if (!ArchiveVector(aArchive, Position, 0.0f, 100.0f)) return false;
+        if (!ArchiveVector(aArchive, Position, 0.0f, 500.0f)) return false;
+        if (!ArchivePlayerID(aArchive, OwnerID)) return false;
         return true;
     }
 };
 
 inline bool operator==(const CreepInitData& aLHS, const CreepInitData& aRHS)
 {
-    return aLHS.Type == aRHS.Type && aLHS.Position == aRHS.Position;
+    return aLHS.Type == aRHS.Type && aLHS.Position == aRHS.Position && aLHS.OwnerID == aRHS.OwnerID;
 }
 
 using EntityInitData =

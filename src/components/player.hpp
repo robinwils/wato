@@ -10,6 +10,7 @@
 
 struct Player {
     PlayerID ID;
+    uint8_t  Slot;  // 0 based index
 };
 
 struct RecordID {
@@ -29,6 +30,10 @@ struct Email {
 };
 
 struct Owner {
+    PlayerID ID;
+};
+
+struct Target {
     PlayerID ID;
 };
 

@@ -238,86 +238,94 @@ void ServerContextHandler::operator()(Registry& aRegistry, BuildTowerPayload& aP
                 TowerInitData{
                     .Type     = aPayload.Tower,
                     .Position = aPayload.Position,
+                    .OwnerID  = CurrentPlayerID,
                 },
         });
 }
 
 void ServerContextHandler::operator()(Registry& aRegistry, SendCreepPayload& aPayload)
 {
+    entt::entity nextSpawn = GetTargetSpawnFor(aRegistry, CurrentPlayerID);
+    if (nextSpawn == entt::null) {
+        WATO_ERR(aRegistry, "cannot find target spawn for player {}", CurrentPlayerID);
+        return;
+    }
+
+    auto& spawnTransform = aRegistry.get<Transform3D>(nextSpawn);
+    auto& spawnOwner     = aRegistry.get<Owner>(nextSpawn);
+
     auto& graphMap = aRegistry.ctx().get<PlayerGraphMap>();
-    auto  it       = graphMap.find(CurrentPlayerID);
+    auto  it       = graphMap.find(spawnOwner.ID);
 
     if (it == graphMap.end()) {
-        WATO_ERR(aRegistry, "cannot find player graph");
+        WATO_ERR(aRegistry, "cannot find graph for target player {}", spawnOwner.ID);
         return;
     }
     const auto& graph = it->second;
 
-    for (auto&& [entity, spawnTransform] : aRegistry.view<Spawner, Transform3D>().each()) {
-        auto creep = aRegistry.create();
-        aRegistry.emplace<Transform3D>(
-            creep,
-            spawnTransform.Position,
-            glm::identity<glm::quat>(),
-            glm::vec3(0.5f));
-        aRegistry.emplace<Health>(creep, 100.0f);
-        aRegistry.emplace<Creep>(creep, aPayload.Type, 1.0f);
-        aRegistry.emplace<Path>(
-            creep,
-            GraphCell::FromWorldPoint(spawnTransform.Position),
-            graph.GetNextCell(GraphCell::FromWorldPoint(spawnTransform.Position)));
+    auto creep = aRegistry.create();
+    aRegistry.emplace<Transform3D>(
+        creep,
+        spawnTransform.Position,
+        glm::identity<glm::quat>(),
+        glm::vec3(0.5f));
+    aRegistry.emplace<Health>(creep, 100.0f);
+    aRegistry.emplace<Creep>(creep, aPayload.Type, 1.0f);
+    aRegistry.emplace<Path>(
+        creep,
+        graph.CellFromWorld(spawnTransform.Position),
+        graph.GetNextCell(spawnTransform.Position));
 
-        aRegistry.emplace<RigidBody>(
-            creep,
-            RigidBody{
-                .Params =
-                    RigidBodyParams{
-                        .Type           = rp3d::BodyType::KINEMATIC,
-                        .Velocity       = 0.4f,
-                        .Direction      = glm::vec3(0.0f),
-                        .GravityEnabled = false,
-                    },
-            });
-        aRegistry.emplace<Collider>(
-            creep,
-            Collider{
-                .Params =
-                    ColliderParams{
-                        .CollisionCategoryBits = Category::Entities,
-                        .CollideWithMaskBits =
-                            Category::Projectiles | Category::Entities | Category::Base,
-                        .IsTrigger = false,
-                        .Offset    = Transform3D{},
-                        .ShapeParams =
-                            CapsuleShapeParams{
-                                .Radius = 0.1f,
-                                .Height = 0.05f,
-                            },
-                    },
-            });
+    aRegistry.emplace<RigidBody>(
+        creep,
+        RigidBody{
+            .Params =
+                RigidBodyParams{
+                    .Type           = rp3d::BodyType::KINEMATIC,
+                    .Velocity       = 0.4f,
+                    .Direction      = glm::vec3(0.0f),
+                    .GravityEnabled = false,
+                },
+        });
+    aRegistry.emplace<Collider>(
+        creep,
+        Collider{
+            .Params =
+                ColliderParams{
+                    .CollisionCategoryBits = Category::PlayerEntities,
+                    .CollideWithMaskBits =
+                        Category::Projectiles | Category::PlayerEntities | Category::Base,
+                    .IsTrigger = false,
+                    .Offset    = Transform3D{},
+                    .ShapeParams =
+                        CapsuleShapeParams{
+                            .Radius = 0.1f,
+                            .Height = 0.05f,
+                        },
+                },
+        });
 
-        aRegistry.emplace<Owner>(creep, CurrentPlayerID);
+    aRegistry.emplace<Owner>(creep, CurrentPlayerID);
+    aRegistry.emplace<Target>(creep, spawnOwner.ID);
 
-        // Broadcast creep creation to all clients
-        auto& rigidBody = aRegistry.get<RigidBody>(creep);
-        auto& transform = aRegistry.get<Transform3D>(creep);
-        aRegistry.ctx().get<ENetServer&>().BroadcastResponse(
-            GetPlayerIDs(aRegistry),
-            PacketType::Ack,
-            aRegistry.ctx().get<GameInstance&>().Tick,
-            RigidBodyUpdateResponse{
-                .Params = rigidBody.Params,
-                .Entity = creep,
-                .Event  = RigidBodyEvent::Create,
-                .InitData =
-                    CreepInitData{
-                        .Type     = aPayload.Type,
-                        .Position = transform.Position,
-                    },
-            });
-
-        break;
-    }
+    // Broadcast creep creation to all clients
+    auto& rigidBody = aRegistry.get<RigidBody>(creep);
+    auto& transform = aRegistry.get<Transform3D>(creep);
+    aRegistry.ctx().get<ENetServer&>().BroadcastResponse(
+        GetPlayerIDs(aRegistry),
+        PacketType::Ack,
+        aRegistry.ctx().get<GameInstance&>().Tick,
+        RigidBodyUpdateResponse{
+            .Params = rigidBody.Params,
+            .Entity = creep,
+            .Event  = RigidBodyEvent::Create,
+            .InitData =
+                CreepInitData{
+                    .Type     = aPayload.Type,
+                    .Position = transform.Position,
+                    .OwnerID  = CurrentPlayerID,
+                },
+        });
 }
 
 void ActionSystem::HandleAction(Registry& aRegistry, Action& aAction, const float aDeltaTime)
