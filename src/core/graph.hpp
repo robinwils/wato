@@ -32,12 +32,12 @@ struct GraphCell {
     }
     static GraphCell FromWorldPoint(glm::vec3 aPoint) { return FromWorldPoint(aPoint.x, aPoint.z); }
 
-    constexpr glm::vec3 ToWorld() const
+    constexpr glm::vec3 ToWorld(const glm::vec2& aOffset = {0, 0}) const
     {
         return glm::vec3(
-            Location.x / static_cast<float>(GraphCell::kCellsPerAxis),
+            Location.x / static_cast<float>(GraphCell::kCellsPerAxis) + aOffset.x,
             0.001f,
-            Location.y / static_cast<float>(GraphCell::kCellsPerAxis));
+            Location.y / static_cast<float>(GraphCell::kCellsPerAxis) + aOffset.y);
     }
 
     bool operator==(const GraphCell&) const = default;
