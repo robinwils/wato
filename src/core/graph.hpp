@@ -6,6 +6,7 @@
 
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
+#include <map>
 #include <optional>
 #include <unordered_map>
 #include <unordered_set>
@@ -203,3 +204,5 @@ struct fmt::formatter<Graph> : fmt::formatter<std::string> {
         return fmt::format_to(o, "obstacles: {}", fmt::join(aObj.mObstacles, ", "));
     }
 };
+
+using PlayerGraphMap = std::map<PlayerID, Graph>;
