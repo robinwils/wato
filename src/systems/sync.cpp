@@ -33,7 +33,7 @@ void NetworkSyncSystem<ENetClient>::Execute(
     if (!filteredState.Actions.empty() || !filteredState.Snapshot.empty()) {
         net.EnqueueRequest(new NetworkRequest{
             .Type     = PacketType::ClientSync,
-            .PlayerID = 0,
+            .PlayerID = aRegistry.ctx().get<Player>("player"_hs).ID,
             .Tick     = instance.Tick,
             .Payload  = SyncPayload{.GameID = instance.GameID, .State = filteredState},
         });

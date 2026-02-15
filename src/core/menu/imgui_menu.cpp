@@ -238,7 +238,7 @@ void ImGuiMenu::renderEndGame(const Registry& aRegistry)
     for (auto i = 0U; i < rv.size(); ++i) {
         auto         rank   = i + 1;
         ImVec4       color  = ImColor(IM_COL32_WHITE);
-        entt::entity player = FindPlayerEntity(aRegistry, rv[i]);
+        entt::entity player = aRegistry.ctx().get<entt::entity>("player"_hs);
 
         switch (i) {
             case 0:

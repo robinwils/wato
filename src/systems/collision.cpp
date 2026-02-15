@@ -101,7 +101,7 @@ void CollisionSystem::projectileHits(
                 if (auto* server = aRegistry.ctx().find<ENetServer>()) {
                     server->EnqueueResponse(new NetworkResponse{
                         .Type     = PacketType::Ack,
-                        .PlayerID = 0,
+                        .PlayerID = aRegistry.ctx().get<Player>("player"_hs).ID,
                         .Tick     = aRegistry.ctx().get<GameInstance&>().Tick,
                         .Payload =
                             HealthUpdateResponse{
@@ -166,7 +166,7 @@ void CollisionSystem::creepHitsPlayerBase(Registry& aRegistry, const TriggerEven
         if (auto* server = aRegistry.ctx().find<ENetServer>()) {
             server->EnqueueResponse(new NetworkResponse{
                 .Type     = PacketType::Ack,
-                .PlayerID = 0,
+                .PlayerID = aRegistry.ctx().get<Player>("player"_hs).ID,
                 .Tick     = aRegistry.ctx().get<GameInstance&>().Tick,
                 .Payload =
                     HealthUpdateResponse{
