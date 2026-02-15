@@ -1,6 +1,6 @@
 #pragma once
 
-#include "components/player.hpp"
+#include "core/types.hpp"
 #include "entt/entity/registry.hpp"
 
 using Registry = entt::basic_registry<entt::entity>;
@@ -14,3 +14,5 @@ using namespace entt::literals;
 bool IsPlayerEliminated(const Registry& aRegistry, PlayerID aID);
 
 entt::entity FindPlayerEntity(const Registry& aRegistry, PlayerID aID);
+
+std::vector<PlayerID> GetPlayerIDs(const Registry& aReg);

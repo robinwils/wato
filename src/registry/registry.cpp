@@ -23,3 +23,14 @@ entt::entity FindPlayerEntity(const Registry& aRegistry, PlayerID aID)
     }
     return entt::null;
 }
+
+std::vector<PlayerID> GetPlayerIDs(const Registry& aReg)
+{
+    std::vector<PlayerID> pIDS;
+
+    for (const auto&& [e, p] : aReg.view<Player>()->each()) {
+        pIDS.push_back(p.ID);
+    }
+
+    return pIDS;
+}
