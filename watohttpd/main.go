@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
@@ -28,6 +29,20 @@ func main() {
 		se.Router.GET("/{path...}", apis.Static(os.DirFS("./pb_public"), false))
 
 		return se.Next()
+	})
+
+	app.OnRecordCreateRequest("matchmaking_queue").BindFunc(func(e *core.RecordRequestEvent) error {
+		playerId := e.Record.GetString("accountName")
+		existing, _ := e.App.FindFirstRecordByFilter(MatchmakingCollection,
+			"accountName = {:player}",
+			dbx.Params{"player": playerId},
+		)
+		if existing != nil {
+			if err := e.App.Delete(existing); err != nil {
+				return err
+			}
+		}
+		return e.Next()
 	})
 
 	app.OnRecordAfterCreateSuccess("matchmaking_queue").BindFunc(func(e *core.RecordEvent) error {
