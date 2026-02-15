@@ -25,6 +25,9 @@ class GameServer : public Application
           mPBClient(mOptions.BackendAddr(), mLogger, aAdminToken),
           mServer(mOptions.ServerAddr, mLogger, mPBClient)
     {
+        if (aAdminToken.empty()) {
+            mLogger->warn("empty admin token, will not be able to use pocketbase");
+        }
     }
     virtual ~GameServer();
 
