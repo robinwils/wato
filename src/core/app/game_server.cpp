@@ -60,7 +60,7 @@ GameServer::~GameServer()
     }
 }
 
-void GameServer::StartGameInstance(
+std::vector<PlayerInitData> GameServer::StartGameInstance(
     Registry&             aRegistry,
     const GameInstanceID  aGameID,
     std::vector<PlayerID> aPlayerIDs)
@@ -72,7 +72,7 @@ void GameServer::StartGameInstance(
     // init groups when registry is empty to get the most performance
     aRegistry.group<Player>(entt::get<Health>, entt::exclude<Eliminated>);
 
-    spawnPlayers(aRegistry, aPlayerIDs);
+    auto playerInitData = spawnPlayers(aRegistry, aPlayerIDs);
 
     auto& fixedExec = aRegistry.ctx().get<FixedSystemExecutor>();
 
@@ -86,6 +86,8 @@ void GameServer::StartGameInstance(
     fixedExec.Register<TowerAttackSystem>();
     fixedExec.Register<AiSystem>();
     fixedExec.Register<ServerActionSystem>();
+
+    return playerInitData;
 }
 
 void GameServer::ConsumeNetworkRequests()
@@ -150,24 +152,7 @@ void GameServer::ConsumeNetworkRequests()
 
                 playerIDs.push_back(*pID);
             }
-            createGameInstance(*gameID, playerIDs);
-
-            Registry&                   reg = mGameInstances[*gameID];
-            std::vector<PlayerInitData> playerInitData;
-
-            for (auto&& [entity, player, health, displayName, transform] :
-                 reg.view<Player, Health, DisplayName, Transform3D>().each()) {
-                auto idx = playerInitData.size();
-                playerInitData.push_back(PlayerInitData{
-                    .ID           = player.ID,
-                    .ServerEntity = entity,
-                    .Health       = health.Health,
-                    .DisplayName  = displayName.Value,
-                    .Position     = transform.Position,
-                    .MapSize      = {20, 20},
-                    .MapOffset    = 5.0f,
-                });
-            }
+            auto playerInitData = createGameInstance(*gameID, playerIDs);
 
             for (const auto& p : playerInitData) {
                 mLogger->debug("Sending network response for game {}, player {}", *gameID, p.ID);
@@ -234,32 +219,20 @@ int GameServer::Run(tf::Executor& aExecutor)
 
 void GameServer::Stop() { mRunning = false; }
 
-void GameServer::spawnMap(
-    Registry&         aRegistry,
-    PlayerID          aID,
-    const glm::uvec2& aSize,
-    const glm::vec2&  aOffset)
+std::vector<PlayerInitData> GameServer::spawnPlayers(
+    Registry&                 aRegistry,
+    std::span<const PlayerID> aPlayerIDs)
 {
-    SpawnTerrain(aRegistry, aSize, aOffset);
+    auto&                       colliderToEntity = aRegistry.ctx().get<ColliderEntityMap>();
+    std::vector<PlayerInitData> result;
+    glm::uvec2                  size{20, 20};
+    glm::vec2                   offset{0, 0};
 
-    auto [it, inserted] = aRegistry.ctx().get<PlayerGraphMap&>().try_emplace(
-        aID,
-        aSize.x * GraphCell::kCellsPerAxis,
-        aSize.y * GraphCell::kCellsPerAxis);
+    for (uint8_t idx = 0; idx < aPlayerIDs.size(); ++idx) {
+        PlayerID id     = aPlayerIDs[idx];
+        auto     player = aRegistry.create();
 
-    WATO_DBG(aRegistry, "{}", it->second);
-}
-
-void GameServer::spawnPlayers(Registry& aRegistry, std::span<const PlayerID> aPlayerIDs)
-{
-    auto&      colliderToEntity = aRegistry.ctx().get<ColliderEntityMap>();
-    glm::uvec2 size{20, 20};
-    glm::vec2  offset{0, 0};
-
-    for (const PlayerID id : aPlayerIDs) {
-        auto player = aRegistry.create();
-        // TODO: ID should be something coming from outside (menu, DB, etc...)
-        aRegistry.emplace<Player>(player, id);
+        aRegistry.emplace<Player>(player, id, idx);
         aRegistry.emplace<DisplayName>(player, mServer.GetAccountName(id));
         aRegistry.emplace<Health>(player, 10.0f);
         WATO_INFO(aRegistry, "server player {} created", player);
@@ -294,15 +267,36 @@ void GameServer::spawnPlayers(Registry& aRegistry, std::span<const PlayerID> aPl
             });
         colliderToEntity[c.Handle] = player;
 
-        spawnMap(aRegistry, id, size, offset);
-        auto& graph = aRegistry.ctx().get<PlayerGraphMap>().at(id);
+        SpawnTerrain(aRegistry, player, size, offset);
 
-        graph.ComputePaths(GraphCell::FromWorldPoint(pTransform.Position));
-        offset.x += size.x + 5;
+        auto [it, inserted] = aRegistry.ctx().get<PlayerGraphMap&>().try_emplace(
+            id,
+            size.x * GraphCell::kCellsPerAxis,
+            size.y * GraphCell::kCellsPerAxis,
+            offset);
+
+        it->second.ComputePaths(pTransform.Position);
+        WATO_DBG(aRegistry, "{}", it->second);
+
+        result.push_back(PlayerInitData{
+            .ID             = id,
+            .ServerEntity   = player,
+            .Health         = 10.0f,
+            .DisplayName    = mServer.GetAccountName(id),
+            .Position       = pTransform.Position,
+            .MapSize        = size,
+            .MapWorldOffset = offset,
+        });
+
+        offset.x += float(size.x) + 5.0f;
     }
+
+    return result;
 }
 
-void GameServer::createGameInstance(GameInstanceID aGameID, std::vector<PlayerID> aPlayerIDs)
+std::vector<PlayerInitData> GameServer::createGameInstance(
+    GameInstanceID        aGameID,
+    std::vector<PlayerID> aPlayerIDs)
 {
     Registry& registry = mGameInstances[aGameID];
 
@@ -311,5 +305,5 @@ void GameServer::createGameInstance(GameInstanceID aGameID, std::vector<PlayerID
     registry.ctx().emplace_as<std::vector<PlayerID>>("ranking"_hs);
     registry.ctx().emplace<TaggedActionsType>();
 
-    StartGameInstance(registry, aGameID, aPlayerIDs);
+    return StartGameInstance(registry, aGameID, aPlayerIDs);
 }

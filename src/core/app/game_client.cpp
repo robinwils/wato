@@ -243,7 +243,6 @@ void GameClient::StartGameInstance(
 
     auto&     syncMap = aRegistry.ctx().get<EntitySyncMap>();
     glm::vec3 localPlayerPos{2.0f, 0.004f, 2.0f};
-    glm::vec2 offset{0.0f, 0.0f};
 
     for (uint8_t idx = 0; idx < aPlayers.size(); ++idx) {
         const PlayerInitData& p = aPlayers[idx];
@@ -279,6 +278,7 @@ void GameClient::StartGameInstance(
                             },
                     },
             });
+        SpawnTerrain(aRegistry, player, p.MapSize, p.MapWorldOffset);
 
         syncMap.insert_or_assign(p.ServerEntity, player);
         WATO_INFO(
@@ -295,11 +295,11 @@ void GameClient::StartGameInstance(
             // Create graph for local player (used for grid preview)
             aRegistry.ctx().emplace<Graph>(
                 p.MapSize.x * GraphCell::kCellsPerAxis,
-                p.MapSize.y * GraphCell::kCellsPerAxis);
+                p.MapSize.y * GraphCell::kCellsPerAxis,
+                p.MapWorldOffset);
 
-            prepareGridPreview(offset);
+            prepareGridPreview(p.MapWorldOffset);
         }
-        offset.x += float(p.MapSize.x) + p.MapOffset;
     }
 
     spawnCamera(localPlayerPos);

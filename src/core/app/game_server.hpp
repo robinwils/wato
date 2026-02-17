@@ -8,6 +8,7 @@
 
 #include "core/app/app.hpp"
 #include "core/net/enet_server.hpp"
+#include "core/net/net.hpp"
 #include "core/net/pocketbase.hpp"
 #include "core/types.hpp"
 
@@ -50,16 +51,18 @@ class GameServer : public Application
     }
 
    protected:
-    virtual void StartGameInstance(
+    virtual std::vector<PlayerInitData> StartGameInstance(
         Registry&             aRegistry,
         const GameInstanceID  aGameID,
         std::vector<PlayerID> aPlayers);
 
    private:
-    void spawnPlayers(Registry& aRegistry, std::span<const PlayerID> aPlayerIDs);
-    void
-    spawnMap(Registry& aRegistry, PlayerID aID, const glm::uvec2& aSize, const glm::vec2& aOffset);
-    void         createGameInstance(GameInstanceID aGameID, std::vector<PlayerID> aPlayerIDs);
+    std::vector<PlayerInitData> spawnPlayers(
+        Registry&                    aRegistry,
+        std::span<const PlayerID>    aPlayerIDs);
+    std::vector<PlayerInitData> createGameInstance(
+        GameInstanceID        aGameID,
+        std::vector<PlayerID> aPlayerIDs);
     tf::Taskflow mNetTaskflow;
 
     PocketBaseClient                             mPBClient;

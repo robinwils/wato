@@ -47,7 +47,7 @@ struct PlayerInitData {
     std::string  DisplayName;
     glm::vec3    Position;
     glm::uvec2   MapSize;
-    float        MapOffset;
+    glm::vec2    MapWorldOffset;
 
     bool Archive(auto& aArchive)
     {
@@ -57,7 +57,7 @@ struct PlayerInitData {
         if (!ArchiveString(aArchive, DisplayName, 5000)) return false;
         if (!ArchiveVector(aArchive, Position, 0.0f, 500.0f)) return false;
         if (!ArchiveVector(aArchive, MapSize, 0u, 100u)) return false;
-        if (!ArchiveValue(aArchive, MapOffset, 0.0f, 20.0f)) return false;
+        if (!ArchiveVector(aArchive, MapWorldOffset, 0.0f, 500.0f)) return false;
         return true;
     }
 };
@@ -67,7 +67,7 @@ inline bool operator==(const PlayerInitData& aLHS, const PlayerInitData& aRHS)
     return aLHS.ID == aRHS.ID && aLHS.ServerEntity == aRHS.ServerEntity
            && aLHS.Health == aRHS.Health && aLHS.DisplayName == aRHS.DisplayName
            && aLHS.Position == aRHS.Position && aLHS.MapSize == aRHS.MapSize
-           && aLHS.MapOffset == aRHS.MapOffset;
+           && aLHS.MapWorldOffset == aRHS.MapWorldOffset;
 }
 
 struct NewGameResponse {
