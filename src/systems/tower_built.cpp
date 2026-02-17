@@ -55,7 +55,8 @@ void TowerBuiltSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32
 
             for (auto&& [e, player, transform] : aRegistry.view<Player, Transform3D>().each()) {
                 if (player.ID == pid) {
-                    graph.ComputePaths(GraphCell::FromWorldPoint(transform.Position));
+                    graph.ComputePaths(transform.Position);
+                    WATO_DBG(aRegistry, "{}", graph);
                     WATO_TRACE(aRegistry, "paths updated for player {}", pid);
                     break;
                 }

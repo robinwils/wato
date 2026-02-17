@@ -31,7 +31,8 @@ void AiSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t aTick
         }
         const auto& graph = it->second;
 
-        auto c = GraphCell::FromWorldPoint(t.Position);
+        GraphCell c = graph.CellFromWorld(t.Position);
+
         if (!p.NextCell || c == p.NextCell) {
             p.NextCell = graph.GetNextCell(c);
             p.LastFrom = c;

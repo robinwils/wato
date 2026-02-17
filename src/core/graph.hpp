@@ -23,15 +23,6 @@ struct GraphCell {
 
     constexpr static size_type kCellsPerAxis = 3;
 
-    static GraphCell FromWorldPoint(float aX, float aZ)
-    {
-        return GraphCell{
-            static_cast<size_type>(aX * kCellsPerAxis),
-            static_cast<size_type>(aZ * kCellsPerAxis),
-        };
-    }
-    static GraphCell FromWorldPoint(glm::vec3 aPoint) { return FromWorldPoint(aPoint.x, aPoint.z); }
-
     constexpr glm::vec3 ToWorld(const glm::vec2& aOffset = {0, 0}) const
     {
         return glm::vec3(
@@ -64,7 +55,10 @@ class Graph
 
    public:
     enum class Direction { Left, Right, Up, Down, UpRight, UpLeft, DownRight, DownLeft };
-    Graph(const size_type aW, const size_type aH) : mWidth(aW), mHeight(aH) {}
+    Graph(const size_type aW, const size_type aH, const glm::vec2& aWorldOffset)
+        : mWidth(aW), mHeight(aH), mWorldOffset(aWorldOffset)
+    {
+    }
 
     constexpr size_type Width() const { return mWidth; }
     constexpr size_type Height() const { return mHeight; }
@@ -82,6 +76,19 @@ class Graph
     constexpr size_type Index(const GraphCell& aCell) const
     {
         return SafeU16(aCell.Location.y) * mWidth + aCell.Location.x;
+    }
+
+    constexpr GraphCell CellFromWorld(float aX, float aZ) const
+    {
+        return GraphCell{
+            static_cast<size_type>((aX - mWorldOffset.x) * GraphCell::kCellsPerAxis),
+            static_cast<size_type>((aZ - mWorldOffset.y) * GraphCell::kCellsPerAxis),
+        };
+    }
+
+    constexpr GraphCell CellFromWorld(const glm::vec3& aPoint) const
+    {
+        return CellFromWorld(aPoint.x, aPoint.z);
     }
 
     constexpr std::optional<Graph::Direction> Direction(
@@ -110,6 +117,7 @@ class Graph
      * destination, result is stored internally.
      */
     void ComputePaths(const GraphCell& aDest);
+    void ComputePaths(const glm::vec3 aWorldPosition);
 
     std::optional<GraphCell> GetNextCell(const GraphCell& aFrom) const
     {
@@ -117,6 +125,10 @@ class Graph
             return std::nullopt;
         }
         return std::make_optional(mPaths.at(aFrom));
+    }
+    std::optional<GraphCell> GetNextCell(const glm::vec3& aWorldPos) const
+    {
+        return GetNextCell(CellFromWorld(aWorldPos));
     }
 
     void AddObstacle(const GraphCell& aCell) { mObstacles.emplace(aCell); }
@@ -131,6 +143,8 @@ class Graph
     std::unordered_set<GraphCell> mObstacles;
     paths_type                    mPaths;
     std::optional<GraphCell>      mDest;
+
+    glm::vec2 mWorldOffset;
 
     friend struct fmt::formatter<Graph>;
 };

@@ -243,7 +243,7 @@ void RenderImguiSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDel
     if (auto* graph = aRegistry.ctx().find<Graph>()) {
         for (auto&& [entity, imgui, t] : aRegistry.view<ImguiDrawable, Transform3D>().each()) {
             if (imgui.PosOnUnit) {
-                GraphCell   c      = GraphCell::FromWorldPoint(t.Position);
+                GraphCell   c      = graph->CellFromWorld(t.Position);
                 glm::vec3   screen = window.ProjectPosition(t.Position, cam, camT.Position);
                 std::string s      = "";
 
@@ -259,7 +259,7 @@ void RenderImguiSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDel
                     fmt::format("graph_pos_{}", entt::id_type(entity)),
                     s);
 
-                if (auto next = graph->GetNextCell(GraphCell::FromWorldPoint(t.Position))) {
+                if (auto next = graph->GetNextCell(t.Position)) {
                     screen = window.ProjectPosition(next->ToWorld(), cam, camT.Position);
 
                     text(
