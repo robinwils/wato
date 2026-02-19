@@ -222,8 +222,7 @@ void ServerContextHandler::operator()(Registry& aRegistry, BuildTowerPayload& aP
             .FireRate = 1.0f,
         });
 
-    // TODO: Add Health component here (check it's not added elsewhere to avoid double-add crash)
-    aRegistry.emplace<Owner>(tower, CurrentPlayerID);
+    aRegistry.emplace<Owner>(tower, CurrentPlayerID, player.Slot);
 
     // Broadcast tower creation to all clients
     aRegistry.ctx().get<ENetServer&>().BroadcastResponse(
@@ -305,8 +304,8 @@ void ServerContextHandler::operator()(Registry& aRegistry, SendCreepPayload& aPa
                 },
         });
 
-    aRegistry.emplace<Owner>(creep, CurrentPlayerID);
-    aRegistry.emplace<Target>(creep, spawnOwner.ID);
+    aRegistry.emplace<Owner>(creep, CurrentPlayerID, player.Slot);
+    aRegistry.emplace<Target>(creep, spawnOwner.ID, spawnOwner.Slot);
 
     // Broadcast creep creation to all clients
     auto& rigidBody = aRegistry.get<RigidBody>(creep);

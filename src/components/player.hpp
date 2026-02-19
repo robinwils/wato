@@ -31,10 +31,12 @@ struct Email {
 
 struct Owner {
     PlayerID ID;
+    uint8_t  Slot;
 };
 
 struct Target {
     PlayerID ID;
+    uint8_t  Slot;
 };
 
 struct Eliminated {

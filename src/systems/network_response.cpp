@@ -250,7 +250,7 @@ void NetworkResponseSystem::createTower(
     aRegistry.emplace<Collider>(tower, collider.Params, c);
     aRegistry.emplace<Health>(tower, 100.0f);
     aRegistry.emplace<SceneObject>(tower, "tower_model"_hs);
-    aRegistry.emplace<Owner>(tower, aInit.OwnerID);
+    aRegistry.emplace<Owner>(tower, aInit.OwnerID, player.Slot);
     aRegistry.emplace<TowerAttack>(
         tower,
         TowerAttack{
@@ -305,7 +305,7 @@ void NetworkResponseSystem::createCreep(
     aRegistry.emplace<RigidBody>(creep, body);
     aRegistry.emplace<Collider>(creep, collider);
     aRegistry.emplace<Health>(creep, 100.0f);
-    aRegistry.emplace<Owner>(creep, aInit.OwnerID);
+    aRegistry.emplace<Owner>(creep, aInit.OwnerID, player.Slot);
     aRegistry.emplace<SceneObject>(creep, "phoenix"_hs);
     aRegistry.emplace<ImguiDrawable>(creep, "phoenix", true);
     aRegistry.emplace<Animator>(creep, 0.0f, "Take 001");

@@ -109,7 +109,7 @@ void Application::SpawnTerrain(
     auto spawner = aRegistry.create();
     aRegistry.emplace<Transform3D>(spawner, glm::vec3(float(aOffset.x), 0.0f, float(aOffset.y)));
     aRegistry.emplace<Spawner>(spawner);
-    aRegistry.emplace<Owner>(spawner, p.ID);
+    aRegistry.emplace<Owner>(spawner, p.ID, p.Slot);
 
     aRegistry.emplace<RigidBody>(
         first,
