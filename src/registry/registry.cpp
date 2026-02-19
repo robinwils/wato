@@ -65,3 +65,29 @@ entt::entity GetTargetSpawnFor(Registry& aRegistry, PlayerID aID)
 
     return entt::null;
 }
+
+entt::entity GetSenderFor(Registry& aRegistry, PlayerID aID)
+{
+    auto eliminated = aRegistry.view<Eliminated>();
+
+    std::map<uint8_t, entt::entity> alive;
+    for (const auto&& [entity, p] : aRegistry.view<Player>().each()) {
+        if (!eliminated.contains(entity)) {
+            alive.emplace(p.Slot, entity);
+        }
+    }
+
+    for (auto& [slot, id] : alive) {
+        auto it = alive.upper_bound(slot);
+
+        if (it == alive.end()) {
+            it = alive.begin();
+        }
+
+        if (aRegistry.get<Player>(it->second).ID == aID) {
+            return id;
+        }
+    }
+
+    return entt::null;
+}

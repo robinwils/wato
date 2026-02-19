@@ -18,3 +18,5 @@ entt::entity FindPlayerEntity(const Registry& aRegistry, PlayerID aID);
 std::vector<PlayerID> GetPlayerIDs(const Registry& aReg);
 
 entt::entity GetTargetSpawnFor(Registry& aRegistry, PlayerID aID);
+
+entt::entity GetSenderFor(Registry& aRegistry, PlayerID aID);
