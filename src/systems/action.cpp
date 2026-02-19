@@ -85,11 +85,14 @@ void DefaultContextHandler::operator()(Registry& aRegistry, const PlacementModeP
     auto ghostTower = aRegistry.create();
     WATO_DBG(aRegistry, "created ghost tower {}", ghostTower);
     aRegistry.emplace<SceneObject>(ghostTower, "tower_model"_hs);
-    aRegistry.emplace<Transform3D>(
-        ghostTower,
-        glm::vec3(0.0f),
-        glm::identity<glm::quat>(),
-        glm::vec3(0.1f));
+    glm::vec3 startPos{0.0f};
+    if (auto** ip = aRegistry.ctx().find<const Input*>()) {
+        if (const auto& hit = (*ip)->MouseWorldIntersect()) {
+            startPos = *hit;
+        }
+    }
+    aRegistry
+        .emplace<Transform3D>(ghostTower, startPos, glm::identity<glm::quat>(), glm::vec3(0.1f));
     aRegistry.emplace<PlacementMode>(ghostTower);
     aRegistry.emplace<ImguiDrawable>(ghostTower, "Placement ghost tower", true);
 }

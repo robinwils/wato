@@ -307,6 +307,8 @@ void GameClient::StartGameInstance(
 
     spawnCamera(localPlayerPos);
 
+    aRegistry.ctx().emplace<const Input*>(&mRegistry.ctx().get<WatoWindow>().GetInput());
+
     auto& fixedExec = aRegistry.ctx().get<FixedSystemExecutor>();
 
     fixedExec.Register<NetworkSyncSystem<ENetClient>>();
