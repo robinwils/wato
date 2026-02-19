@@ -128,7 +128,7 @@ void Application::SpawnTerrain(
             .Params =
                 ColliderParams{
                     .CollisionCategoryBits = Category::Terrain,
-                    .CollideWithMaskBits   = Category::Entities | Category::Projectiles,
+                    .CollideWithMaskBits   = Category::Projectiles,
                     .IsTrigger             = false,
                     .Offset =
                         Transform3D{

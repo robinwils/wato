@@ -21,6 +21,7 @@
 #include "core/net/net.hpp"
 #include "core/net/network_events.hpp"
 #include "core/net/pocketbase.hpp"
+#include "core/physics/physics.hpp"
 #include "core/snapshot.hpp"
 #include "core/sys/log.hpp"
 #include "core/types.hpp"
@@ -245,6 +246,8 @@ void GameClient::StartGameInstance(
     glm::vec3 localPlayerPos{2.0f, 0.004f, 2.0f};
 
     for (uint8_t idx = 0; idx < aPlayers.size(); ++idx) {
+        uint8_t sender = idx == 0 ? uint8_t(aPlayers.size()) - 1 : idx - 1;
+
         const PlayerInitData& p = aPlayers[idx];
 
         // Create player entity
@@ -270,7 +273,7 @@ void GameClient::StartGameInstance(
                 .Params =
                     ColliderParams{
                         .CollisionCategoryBits = Category::Base,
-                        .CollideWithMaskBits   = Category::Terrain | Category::Entities,
+                        .CollideWithMaskBits   = PlayerEntitiesCategory(sender),
                         .IsTrigger             = true,
                         .ShapeParams =
                             BoxShapeParams{

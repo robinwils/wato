@@ -12,6 +12,7 @@
 #include "components/transform3d.hpp"
 #include "core/net/net.hpp"
 #include "core/net/pocketbase.hpp"
+#include "core/physics/physics.hpp"
 #include "core/snapshot.hpp"
 #include "core/sys/log.hpp"
 #include "core/types.hpp"
@@ -229,6 +230,7 @@ std::vector<PlayerInitData> GameServer::spawnPlayers(
     glm::vec2                   offset{0, 0};
 
     for (uint8_t idx = 0; idx < aPlayerIDs.size(); ++idx) {
+        uint8_t  sender = idx == 0 ? uint8_t(aPlayerIDs.size()) - 1 : idx - 1;
         PlayerID id     = aPlayerIDs[idx];
         auto     player = aRegistry.create();
 
@@ -257,8 +259,9 @@ std::vector<PlayerInitData> GameServer::spawnPlayers(
                 .Params =
                     ColliderParams{
                         .CollisionCategoryBits = Category::Base,
-                        .CollideWithMaskBits   = Category::Terrain | Category::Entities,
-                        .IsTrigger             = true,
+                        .CollideWithMaskBits =
+                            CollidesWith(PlayerEntitiesCategory(sender), Category::Terrain),
+                        .IsTrigger = true,
                         .ShapeParams =
                             BoxShapeParams{
                                 .HalfExtents = GraphCell(1, 1).ToWorld() * 0.5f,

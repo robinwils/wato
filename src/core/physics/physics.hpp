@@ -110,12 +110,12 @@ class Physics
    public:
     // Enumeration for categories
     enum Category {
-        Terrain     = 0x0001,
-        Base        = 0x0002,
-        Spawn       = 0x0004,
-        Entities    = 0x0008,
-        Projectiles = 0x0010,
-        Count       = (Projectiles << 1) - 1
+        Terrain        = 0x0001,
+        Base           = 0x0002,
+        Projectiles    = 0x0004,
+        // bits 0x0008 - 0x0080 free for future use
+        // high bits for players: shift 0x0100 << playerIndex
+        PlayerEntities = 0x0100,
     };
 
     Physics(const Logger& aLogger) : mLogger(aLogger) {}
@@ -153,6 +153,16 @@ class Physics
 };
 
 using Category = Physics::Category;
+
+constexpr unsigned short PlayerEntitiesCategory(uint8_t aIdx)
+{
+    return SafeU16(Category::PlayerEntities) << aIdx;
+}
+
+constexpr unsigned short CollidesWith(auto... aCategories)
+{
+    return static_cast<unsigned short>((aCategories | ...));
+}
 
 inline rp3d::Vector3 ToRP3D(const glm::vec3 aVector)
 {

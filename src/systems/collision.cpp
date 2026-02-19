@@ -58,8 +58,7 @@ void CollisionSystem::projectileHits(
     const rp3d::Collider* targetCollider  = nullptr;
     const rp3d::Collider* terrainCollider = nullptr;
 
-    std::tie(projCollider, targetCollider) =
-        aEvent.Matches(Category::Projectiles, Category::Entities);
+    std::tie(projCollider, targetCollider) = aEvent.CreepCollision(Category::Projectiles);
 
     if (!projCollider) {
         std::tie(projCollider, terrainCollider) =
@@ -140,7 +139,7 @@ void CollisionSystem::creepHitsPlayerBase(Registry& aRegistry, const TriggerEven
 {
     const auto& colliderMap = aRegistry.ctx().get<ColliderEntityMap>();
 
-    auto [creepCollider, playerCollider] = aEvent.Matches(Category::Entities, Category::Base);
+    auto [playerCollider, creepCollider] = aEvent.CreepCollision(Category::Base);
 
     if (creepCollider && playerCollider) {
         entt::entity creepEntity  = colliderMap.at(creepCollider);

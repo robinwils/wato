@@ -6,8 +6,8 @@
 #include "components/creep.hpp"
 #include "components/health.hpp"
 #include "components/imgui.hpp"
-#include "components/player.hpp"
 #include "components/model_rotation_offset.hpp"
+#include "components/player.hpp"
 #include "components/projectile.hpp"
 #include "components/rigid_body.hpp"
 #include "components/scene_object.hpp"
@@ -18,6 +18,7 @@
 #include "core/snapshot.hpp"
 #include "core/sys/log.hpp"
 #include "core/types.hpp"
+#include "registry/registry.hpp"
 
 using namespace entt::literals;
 
@@ -183,7 +184,11 @@ void NetworkResponseSystem::createProjectile(
     auto         targetIt     = syncMap.find(aInit.Target);
     if (targetIt != syncMap.end()) {
         clientTarget = targetIt->second;
+    } else {
+        WATO_ERR(aRegistry, "projectile server target {} unknown", aInit.Target);
     }
+
+    auto& targetOwner = aRegistry.get<Owner>(clientTarget);
 
     aRegistry.emplace<Projectile>(projectile, aInit.Damage, aInit.Speed, clientTarget);
 
@@ -195,7 +200,7 @@ void NetworkResponseSystem::createProjectile(
             .Params =
                 ColliderParams{
                     .CollisionCategoryBits = Category::Projectiles,
-                    .CollideWithMaskBits   = Category::Entities,
+                    .CollideWithMaskBits   = PlayerEntitiesCategory(targetOwner.Slot),
                     .IsTrigger             = true,
                     .Offset                = Transform3D{},
                     .ShapeParams =
@@ -220,6 +225,8 @@ void NetworkResponseSystem::createTower(
 {
     auto& syncMap = aRegistry.ctx().get<EntitySyncMap>();
     auto& phy     = aRegistry.ctx().get<Physics>();
+    auto& player  = aRegistry.get<Player>(FindPlayerEntity(aRegistry, aInit.OwnerID));
+    auto& sender  = aRegistry.get<Player>(GetSenderFor(aRegistry, aInit.OwnerID));
 
     auto tower = aRegistry.create();
 
@@ -232,10 +239,11 @@ void NetworkResponseSystem::createTower(
     Collider collider{
         .Params =
             ColliderParams{
-                .CollisionCategoryBits = Category::Entities,
-                .CollideWithMaskBits   = Category::Terrain | Category::Entities,
-                .IsTrigger             = false,
-                .Offset                = Transform3D{},
+                .CollisionCategoryBits = PlayerEntitiesCategory(player.Slot),
+                .CollideWithMaskBits =
+                    CollidesWith(Category::Terrain, PlayerEntitiesCategory(sender.Slot)),
+                .IsTrigger = false,
+                .Offset    = Transform3D{},
                 .ShapeParams =
                     BoxShapeParams{
                         .HalfExtents = glm::vec3(0.35f, 0.65f, 0.35f),
@@ -270,6 +278,7 @@ void NetworkResponseSystem::createCreep(
 {
     auto& syncMap = aRegistry.ctx().get<EntitySyncMap>();
     auto& phy     = aRegistry.ctx().get<Physics>();
+    auto& player  = aRegistry.get<Player>(FindPlayerEntity(aRegistry, aInit.OwnerID));
 
     auto creep = aRegistry.create();
 
@@ -287,10 +296,11 @@ void NetworkResponseSystem::createCreep(
     Collider  collider{
          .Params =
             ColliderParams{
-                 .CollisionCategoryBits = Category::Entities,
-                 .CollideWithMaskBits   = Category::Projectiles | Category::Entities,
-                 .IsTrigger             = false,
-                 .Offset                = Transform3D{},
+                 .CollisionCategoryBits = PlayerEntitiesCategory(player.Slot),
+                 .CollideWithMaskBits =
+                    CollidesWith(Category::Projectiles, PlayerEntitiesCategory(player.Slot)),
+                 .IsTrigger = false,
+                 .Offset    = Transform3D{},
                  .ShapeParams =
                     CapsuleShapeParams{
                          .Radius = 0.1f,

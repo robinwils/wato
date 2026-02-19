@@ -232,7 +232,7 @@ TEST_CASE("serialize.collider.box")
     BitOutputArchive outAr(true);
 
     Collider c;
-    c.Params.CollisionCategoryBits = Category::Entities;
+    c.Params.CollisionCategoryBits = Category::PlayerEntities;
     c.Params.CollideWithMaskBits   = Category::Terrain;
     c.Params.IsTrigger             = false;
     c.Params.Offset.Position       = glm::vec3(1.0f, 2.0f, 3.0f);
@@ -304,8 +304,8 @@ TEST_CASE("snapshot.full")
     rbParams.Direction      = glm::vec3(0.0f, 1.0f, 0.0f);
     src.emplace<RigidBody>(e1, RigidBody{rbParams, nullptr});
     ColliderParams boxParams;
-    boxParams.CollisionCategoryBits = Category::Entities | Category::Terrain;
-    boxParams.CollideWithMaskBits   = Category::Entities;
+    boxParams.CollisionCategoryBits = Category::PlayerEntities | Category::Terrain;
+    boxParams.CollideWithMaskBits   = Category::PlayerEntities;
     boxParams.IsTrigger             = false;
     boxParams.Offset.Position       = glm::vec3(1.0f, 2.0f, 3.0f);
     boxParams.Offset.Orientation    = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
@@ -318,7 +318,7 @@ TEST_CASE("snapshot.full")
     auto           e2 = src.create();
     ColliderParams capsuleParams;
     capsuleParams.CollisionCategoryBits = Category::Terrain;
-    capsuleParams.CollideWithMaskBits   = Category::Entities;
+    capsuleParams.CollideWithMaskBits   = Category::PlayerEntities;
     capsuleParams.IsTrigger             = true;
     capsuleParams.Offset.Position       = glm::vec3(2.0f, 3.0f, 4.0f);
     capsuleParams.Offset.Orientation    = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
@@ -332,7 +332,7 @@ TEST_CASE("snapshot.full")
     auto           e3 = src.create();
     ColliderParams heightfieldParams;
     heightfieldParams.CollisionCategoryBits = Category::Terrain;
-    heightfieldParams.CollideWithMaskBits   = Category::Terrain | Category::Entities;
+    heightfieldParams.CollideWithMaskBits   = Category::Terrain | Category::PlayerEntities;
     heightfieldParams.IsTrigger             = false;
     heightfieldParams.Offset.Position       = glm::vec3(3.0f, 4.0f, 5.0f);
     heightfieldParams.Offset.Orientation    = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
@@ -377,7 +377,7 @@ TEST_CASE("snapshot.full")
 
     const auto& colCapsule = dest.get<Collider>(e2);
     CHECK_EQ(colCapsule.Params.CollisionCategoryBits, Category::Terrain);
-    CHECK_EQ(colCapsule.Params.CollideWithMaskBits, Category::Entities);
+    CHECK_EQ(colCapsule.Params.CollideWithMaskBits, Category::PlayerEntities);
     CHECK(colCapsule.Params.IsTrigger == true);
     CHECK_VEC3_EPSILON(colCapsule.Params.Offset.Position, capsuleParams.Offset.Position, 0.0001f);
     CHECK(std::holds_alternative<CapsuleShapeParams>(colCapsule.Params.ShapeParams));
@@ -387,7 +387,9 @@ TEST_CASE("snapshot.full")
 
     const auto& colHeightfield = dest.get<Collider>(e3);
     CHECK_EQ(colHeightfield.Params.CollisionCategoryBits, Category::Terrain);
-    CHECK_EQ(colHeightfield.Params.CollideWithMaskBits, Category::Terrain | Category::Entities);
+    CHECK_EQ(
+        colHeightfield.Params.CollideWithMaskBits,
+        Category::Terrain | Category::PlayerEntities);
     CHECK(colHeightfield.Params.IsTrigger == false);
     CHECK_VEC3_EPSILON_VALUES(colHeightfield.Params.Offset.Position, 3.0f, 4.0f, 5.0f, 0.0001f);
     CHECK(std::holds_alternative<HeightFieldShapeParams>(colHeightfield.Params.ShapeParams));

@@ -27,15 +27,7 @@ class ColliderCollectorCallback : public rp3d::OverlapCallback
     void onOverlap(CallbackData& aData) override
     {
         for (uint32_t i = 0; i < aData.getNbOverlappingPairs(); ++i) {
-            auto pair = aData.getOverlappingPair(i);
-
-            // Get the collider from the overlap (skip collider1 as it's our query sphere)
-            auto* collider = pair.getCollider2();
-
-            // Only collect entities with the Entities category
-            if (collider->getCollisionCategoryBits() == Category::Entities) {
-                mColliders.push_back(collider);
-            }
+            mColliders.push_back(aData.getOverlappingPair(i).getCollider2());
         }
     }
 
@@ -50,8 +42,10 @@ void TowerAttackSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint3
     constexpr float kTimeStep = 1.0f / 60.0f;
     auto&           phy       = aRegistry.ctx().get<Physics>();
 
-    for (auto&& [towerEntity, tower, towerTransform, attack] :
-         aRegistry.view<Tower, Transform3D, TowerAttack>().each()) {
+    for (auto&& [towerEntity, tower, owner, towerTransform, attack] :
+         aRegistry.view<Tower, Owner, Transform3D, TowerAttack>().each()) {
+        auto& sender = aRegistry.get<Player>(GetSenderFor(aRegistry, owner.ID));
+
         attack.TimeSinceLastShot += kTimeStep;
 
         bool needNewTarget = true;
@@ -84,7 +78,7 @@ void TowerAttackSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint3
             rp3d::Collider* queryCollider =
                 queryBody->addCollider(sphereShape, rp3d::Transform::identity());
             queryCollider->setCollisionCategoryBits(Category::Projectiles);
-            queryCollider->setCollideWithMaskBits(Category::Entities);
+            queryCollider->setCollideWithMaskBits(PlayerEntitiesCategory(sender.Slot));
             queryCollider->setIsTrigger(true);
 
             ColliderCollectorCallback callback;
@@ -159,9 +153,11 @@ void TowerAttackSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint3
                     .Params =
                         ColliderParams{
                             .CollisionCategoryBits = Category::Projectiles,
-                            .CollideWithMaskBits   = Category::Entities | Category::Terrain,
-                            .IsTrigger             = true,
-                            .Offset                = Transform3D{},
+                            .CollideWithMaskBits   = CollidesWith(
+                                PlayerEntitiesCategory(sender.Slot),
+                                Category::Terrain),
+                            .IsTrigger = true,
+                            .Offset    = Transform3D{},
                             .ShapeParams =
                                 CapsuleShapeParams{
                                     .Radius = 0.05f,

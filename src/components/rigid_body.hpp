@@ -3,6 +3,7 @@
 #include <reactphysics3d/reactphysics3d.h>
 
 #include <glm/ext/vector_float3.hpp>
+#include <limits>
 
 #include "core/physics/physics.hpp"
 #include "core/serialize.hpp"
@@ -25,10 +26,18 @@ struct Collider {
 
     bool Archive(auto& aArchive)
     {
-        uint32_t maxCategoryValue = SafeI32(Category::Count);
-        if (!ArchiveValue(aArchive, Params.CollisionCategoryBits, 0u, maxCategoryValue))
+        if (!ArchiveValue(
+                aArchive,
+                Params.CollisionCategoryBits,
+                uint16_t(0),
+                std::numeric_limits<uint16_t>::max()))
             return false;
-        if (!ArchiveValue(aArchive, Params.CollideWithMaskBits, 0u, maxCategoryValue)) return false;
+        if (!ArchiveValue(
+                aArchive,
+                Params.CollideWithMaskBits,
+                uint16_t(0),
+                std::numeric_limits<uint16_t>::max()))
+            return false;
         if (!ArchiveBool(aArchive, Params.IsTrigger)) return false;
         if (!Params.Offset.Archive(aArchive)) return false;
 

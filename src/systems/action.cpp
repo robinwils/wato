@@ -111,7 +111,9 @@ void DefaultContextHandler::ExitPlacement(Registry& aRegistry)
 
 void PlacementModeContextHandler::operator()(Registry& aRegistry, BuildTowerPayload& aPayload)
 {
-    auto& phy = aRegistry.ctx().get<Physics>();
+    auto& phy    = aRegistry.ctx().get<Physics>();
+    auto& player = aRegistry.ctx().get<Player>("player"_hs);
+    auto& sender = aRegistry.get<Player>(GetSenderFor(aRegistry, player.ID));
 
     for (const auto&& [tower, pm, t] : aRegistry.view<PlacementMode, Transform3D>().each()) {
         // Client-side validation - create temporary body for collision test
@@ -129,10 +131,11 @@ void PlacementModeContextHandler::operator()(Registry& aRegistry, BuildTowerPayl
         Collider collider = Collider{
             .Params =
                 ColliderParams{
-                    .CollisionCategoryBits = Category::Entities,
-                    .CollideWithMaskBits = Category::Terrain | Category::Entities | Category::Base,
-                    .IsTrigger           = false,
-                    .Offset              = Transform3D{},
+                    .CollisionCategoryBits = PlayerEntitiesCategory(player.Slot),
+                    .CollideWithMaskBits =
+                        CollidesWith(PlayerEntitiesCategory(sender.Slot) | Category::Base),
+                    .IsTrigger = false,
+                    .Offset    = Transform3D{},
                     .ShapeParams =
                         BoxShapeParams{
                             .HalfExtents = glm::vec3(0.35f, 0.65f, 0.35f),
@@ -169,8 +172,10 @@ void PlacementModeContextHandler::operator()(Registry& aRegistry, const Placemen
 
 void ServerContextHandler::operator()(Registry& aRegistry, BuildTowerPayload& aPayload)
 {
-    auto  tower = aRegistry.create();
-    auto& phy   = aRegistry.ctx().get<Physics>();
+    auto& player = aRegistry.get<Player>(FindPlayerEntity(aRegistry, CurrentPlayerID));
+    auto  tower  = aRegistry.create();
+    auto& phy    = aRegistry.ctx().get<Physics>();
+    auto& sender = aRegistry.get<Player>(GetSenderFor(aRegistry, player.ID));
 
     auto& t = aRegistry.emplace<Transform3D>(tower, aPayload.Position);
 
@@ -186,10 +191,11 @@ void ServerContextHandler::operator()(Registry& aRegistry, BuildTowerPayload& aP
     Collider collider = Collider{
         .Params =
             ColliderParams{
-                .CollisionCategoryBits = Category::Entities,
-                .CollideWithMaskBits   = Category::Terrain | Category::Entities | Category::Base,
-                .IsTrigger             = false,
-                .Offset                = Transform3D{},
+                .CollisionCategoryBits = PlayerEntitiesCategory(player.Slot),
+                .CollideWithMaskBits =
+                    CollidesWith(PlayerEntitiesCategory(sender.Slot) | Category::Base),
+                .IsTrigger = false,
+                .Offset    = Transform3D{},
                 .ShapeParams =
                     BoxShapeParams{
                         .HalfExtents = glm::vec3(0.35f, 0.65f, 0.35f),
@@ -249,6 +255,7 @@ void ServerContextHandler::operator()(Registry& aRegistry, SendCreepPayload& aPa
         WATO_ERR(aRegistry, "cannot find target spawn for player {}", CurrentPlayerID);
         return;
     }
+    auto& player = aRegistry.get<Player>(FindPlayerEntity(aRegistry, CurrentPlayerID));
 
     auto& spawnTransform = aRegistry.get<Transform3D>(nextSpawn);
     auto& spawnOwner     = aRegistry.get<Owner>(nextSpawn);
@@ -291,9 +298,11 @@ void ServerContextHandler::operator()(Registry& aRegistry, SendCreepPayload& aPa
         Collider{
             .Params =
                 ColliderParams{
-                    .CollisionCategoryBits = Category::PlayerEntities,
-                    .CollideWithMaskBits =
-                        Category::Projectiles | Category::PlayerEntities | Category::Base,
+                    .CollisionCategoryBits = PlayerEntitiesCategory(player.Slot),
+                    .CollideWithMaskBits   = CollidesWith(
+                        Category::Projectiles,
+                        PlayerEntitiesCategory(player.Slot),
+                        Category::Base),
                     .IsTrigger = false,
                     .Offset    = Transform3D{},
                     .ShapeParams =
