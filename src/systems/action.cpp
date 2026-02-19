@@ -241,9 +241,10 @@ void ServerContextHandler::operator()(Registry& aRegistry, BuildTowerPayload& aP
             .Event  = RigidBodyEvent::Create,
             .InitData =
                 TowerInitData{
-                    .Type     = aPayload.Tower,
-                    .Position = aPayload.Position,
-                    .OwnerID  = CurrentPlayerID,
+                    .Type           = aPayload.Tower,
+                    .Position       = aPayload.Position,
+                    .OwnerID        = CurrentPlayerID,
+                    .ColliderParams = collider.Params,
                 },
         });
 }
@@ -293,7 +294,7 @@ void ServerContextHandler::operator()(Registry& aRegistry, SendCreepPayload& aPa
                     .GravityEnabled = false,
                 },
         });
-    aRegistry.emplace<Collider>(
+    auto& collider = aRegistry.emplace<Collider>(
         creep,
         Collider{
             .Params =
@@ -329,9 +330,10 @@ void ServerContextHandler::operator()(Registry& aRegistry, SendCreepPayload& aPa
             .Event  = RigidBodyEvent::Create,
             .InitData =
                 CreepInitData{
-                    .Type     = aPayload.Type,
-                    .Position = transform.Position,
-                    .OwnerID  = CurrentPlayerID,
+                    .Type           = aPayload.Type,
+                    .Position       = transform.Position,
+                    .OwnerID        = CurrentPlayerID,
+                    .ColliderParams = collider.Params,
                 },
         });
 }

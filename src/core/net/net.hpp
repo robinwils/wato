@@ -120,10 +120,11 @@ struct fmt::formatter<RigidBodyEvent> : fmt::formatter<std::string> {
 };
 
 struct ProjectileInitData {
-    entt::entity SourceTower;
-    float        Damage;
-    float        Speed;
-    entt::entity Target;
+    entt::entity   SourceTower;
+    float          Damage;
+    float          Speed;
+    entt::entity   Target;
+    ColliderParams ColliderParams;
 
     bool Archive(auto& aArchive)
     {
@@ -131,27 +132,29 @@ struct ProjectileInitData {
         if (!ArchiveValue(aArchive, Damage, 0.0f, 100.0f)) return false;
         if (!ArchiveValue(aArchive, Speed, 0.0f, 10.0f)) return false;
         if (!ArchiveEntity(aArchive, Target)) return false;
-        return true;
+        return ColliderParams.Archive(aArchive);
     }
 };
 
 inline bool operator==(const ProjectileInitData& aLHS, const ProjectileInitData& aRHS)
 {
     return aLHS.SourceTower == aRHS.SourceTower && aLHS.Damage == aRHS.Damage
-           && aLHS.Speed == aRHS.Speed && aLHS.Target == aRHS.Target;
+           && aLHS.Speed == aRHS.Speed && aLHS.Target == aRHS.Target
+           && aLHS.ColliderParams == aRHS.ColliderParams;
 }
 
 struct TowerInitData {
-    TowerType Type;
-    glm::vec3 Position;
-    PlayerID  OwnerID;
+    TowerType      Type;
+    glm::vec3      Position;
+    PlayerID       OwnerID;
+    ColliderParams ColliderParams;
 
     bool Archive(auto& aArchive)
     {
         if (!ArchiveValue(aArchive, Type, 0u, uint32_t(TowerType::Count))) return false;
         if (!ArchiveVector(aArchive, Position, 0.0f, 500.0f)) return false;
         if (!ArchivePlayerID(aArchive, OwnerID)) return false;
-        return true;
+        return ColliderParams.Archive(aArchive);
     }
 };
 
@@ -161,16 +164,17 @@ inline bool operator==(const TowerInitData& aLHS, const TowerInitData& aRHS)
 }
 
 struct CreepInitData {
-    CreepType Type;
-    glm::vec3 Position;
-    PlayerID  OwnerID;
+    CreepType      Type;
+    glm::vec3      Position;
+    PlayerID       OwnerID;
+    ColliderParams ColliderParams;
 
     bool Archive(auto& aArchive)
     {
         if (!ArchiveValue(aArchive, Type, 0u, uint32_t(CreepType::Count))) return false;
         if (!ArchiveVector(aArchive, Position, 0.0f, 500.0f)) return false;
         if (!ArchivePlayerID(aArchive, OwnerID)) return false;
-        return true;
+        return ColliderParams.Archive(aArchive);
     }
 };
 

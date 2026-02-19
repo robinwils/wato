@@ -83,6 +83,26 @@ struct ColliderParams {
     bool                IsTrigger{false};
     Transform3D         Offset{};
     ColliderShapeParams ShapeParams;
+
+    bool Archive(auto& aArchive)
+    {
+        if (!ArchiveValue(
+                aArchive,
+                CollisionCategoryBits,
+                uint16_t(0),
+                std::numeric_limits<uint16_t>::max()))
+            return false;
+        if (!ArchiveValue(
+                aArchive,
+                CollideWithMaskBits,
+                uint16_t(0),
+                std::numeric_limits<uint16_t>::max()))
+            return false;
+        if (!ArchiveBool(aArchive, IsTrigger)) return false;
+        if (!Offset.Archive(aArchive)) return false;
+
+        return ArchiveVariant(aArchive, ShapeParams);
+    }
 };
 
 inline bool operator==(const ColliderParams& aLHS, const ColliderParams& aRHS)

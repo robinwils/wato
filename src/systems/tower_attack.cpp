@@ -147,7 +147,7 @@ void TowerAttackSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint3
                         },
                 });
 
-            aRegistry.emplace<Collider>(
+            auto& collider = aRegistry.emplace<Collider>(
                 projectile,
                 Collider{
                     .Params =
@@ -177,10 +177,11 @@ void TowerAttackSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint3
                         .Event  = RigidBodyEvent::Create,
                         .InitData =
                             ProjectileInitData{
-                                .SourceTower = towerEntity,
-                                .Damage      = 10.0f,
-                                .Speed       = 5.0f,
-                                .Target      = attack.CurrentTarget,
+                                .SourceTower    = towerEntity,
+                                .Damage         = 10.0f,
+                                .Speed          = 5.0f,
+                                .Target         = attack.CurrentTarget,
+                                .ColliderParams = collider.Params,
                             },
                     });
             } else {

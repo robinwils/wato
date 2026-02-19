@@ -24,25 +24,7 @@ struct Collider {
         collider.Handle = nullptr;
     }
 
-    bool Archive(auto& aArchive)
-    {
-        if (!ArchiveValue(
-                aArchive,
-                Params.CollisionCategoryBits,
-                uint16_t(0),
-                std::numeric_limits<uint16_t>::max()))
-            return false;
-        if (!ArchiveValue(
-                aArchive,
-                Params.CollideWithMaskBits,
-                uint16_t(0),
-                std::numeric_limits<uint16_t>::max()))
-            return false;
-        if (!ArchiveBool(aArchive, Params.IsTrigger)) return false;
-        if (!Params.Offset.Archive(aArchive)) return false;
-
-        return ArchiveVariant(aArchive, Params.ShapeParams);
-    }
+    bool Archive(auto& aArchive) { return Params.Archive(aArchive); }
 };
 
 struct RigidBody {

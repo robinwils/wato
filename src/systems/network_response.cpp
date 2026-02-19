@@ -194,22 +194,7 @@ void NetworkResponseSystem::createProjectile(
 
     aRegistry.emplace<RigidBody>(projectile, RigidBody{.Params = aUpdate.Params});
 
-    aRegistry.emplace<Collider>(
-        projectile,
-        Collider{
-            .Params =
-                ColliderParams{
-                    .CollisionCategoryBits = Category::Projectiles,
-                    .CollideWithMaskBits   = PlayerEntitiesCategory(targetOwner.Slot),
-                    .IsTrigger             = true,
-                    .Offset                = Transform3D{},
-                    .ShapeParams =
-                        CapsuleShapeParams{
-                            .Radius = 0.05f,
-                            .Height = 0.1f,
-                        },
-                },
-        });
+    aRegistry.emplace<Collider>(projectile, aInit.ColliderParams);
 
     aRegistry.emplace<SceneObject>(projectile, "arrow"_hs);
 
@@ -237,18 +222,7 @@ void NetworkResponseSystem::createTower(
         glm::vec3(0.1f));
 
     Collider collider{
-        .Params =
-            ColliderParams{
-                .CollisionCategoryBits = PlayerEntitiesCategory(player.Slot),
-                .CollideWithMaskBits =
-                    CollidesWith(Category::Terrain, PlayerEntitiesCategory(sender.Slot)),
-                .IsTrigger = false,
-                .Offset    = Transform3D{},
-                .ShapeParams =
-                    BoxShapeParams{
-                        .HalfExtents = glm::vec3(0.35f, 0.65f, 0.35f),
-                    },
-            },
+        .Params = aInit.ColliderParams,
     };
     rp3d::RigidBody* body = phy.CreateRigidBody(aUpdate.Params, transform);
     rp3d::Collider*  c    = phy.AddCollider(body, collider.Params);
@@ -294,19 +268,7 @@ void NetworkResponseSystem::createCreep(
 
     RigidBody body{.Params = aUpdate.Params};
     Collider  collider{
-         .Params =
-            ColliderParams{
-                 .CollisionCategoryBits = PlayerEntitiesCategory(player.Slot),
-                 .CollideWithMaskBits =
-                    CollidesWith(Category::Projectiles, PlayerEntitiesCategory(player.Slot)),
-                 .IsTrigger = false,
-                 .Offset    = Transform3D{},
-                 .ShapeParams =
-                    CapsuleShapeParams{
-                         .Radius = 0.1f,
-                         .Height = 0.05f,
-                    },
-            },
+         .Params = aInit.ColliderParams,
     };
     body.Body       = phy.CreateRigidBody(body.Params, transform);
     collider.Handle = phy.AddCollider(body.Body, collider.Params);
