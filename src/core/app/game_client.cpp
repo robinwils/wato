@@ -251,8 +251,8 @@ void GameClient::StartGameInstance(
         const PlayerInitData& p = aPlayers[idx];
 
         // Create player entity
-        auto player = aRegistry.create();
-        aRegistry.emplace<Player>(player, p.ID, idx);
+        auto  player    = aRegistry.create();
+        auto& playerCmp = aRegistry.emplace<Player>(player, p.ID, idx);
         aRegistry.emplace<DisplayName>(player, p.DisplayName);
         aRegistry.emplace<Health>(player, p.Health);
         aRegistry.emplace<Transform3D>(player, p.Position);
@@ -293,7 +293,7 @@ void GameClient::StartGameInstance(
 
         if (p.ID == aLocalPlayerID) {
             localPlayerPos = p.Position;
-            aRegistry.ctx().emplace_as<Player>("player"_hs, p.ID);
+            aRegistry.ctx().emplace_as<Player>("player"_hs, playerCmp);
 
             // Create graph for local player (used for grid preview)
             aRegistry.ctx().emplace<Graph>(
