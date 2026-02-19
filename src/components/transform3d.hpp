@@ -53,6 +53,12 @@ struct Transform3D {
     }
 };
 
+inline bool operator==(const Transform3D& aLHS, const Transform3D& aRHS)
+{
+    return aLHS.Position == aRHS.Position && aLHS.Orientation == aRHS.Orientation
+           && aLHS.Scale == aRHS.Scale;
+}
+
 template <>
 struct fmt::formatter<Transform3D> : fmt::formatter<std::string> {
     auto format(const Transform3D& aObj, format_context& aCtx) const -> decltype(aCtx.out())

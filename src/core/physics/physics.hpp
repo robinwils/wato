@@ -85,6 +85,15 @@ struct ColliderParams {
     ColliderShapeParams ShapeParams;
 };
 
+inline bool operator==(const ColliderParams& aLHS, const ColliderParams& aRHS)
+{
+    // TODO: implement variant operator==
+    return aLHS.CollisionCategoryBits == aRHS.CollisionCategoryBits
+           && aLHS.CollideWithMaskBits == aRHS.CollideWithMaskBits
+           && aLHS.IsTrigger == aRHS.IsTrigger && aLHS.Offset == aRHS.Offset
+           && aLHS.ShapeParams.index() == aRHS.ShapeParams.index();
+}
+
 using ColliderEntityMap = std::unordered_map<const rp3d::Collider*, entt::entity>;
 
 struct PhysicsParams {
