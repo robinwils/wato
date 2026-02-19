@@ -268,7 +268,6 @@ std::vector<PlayerInitData> GameServer::spawnPlayers(
                             },
                     },
             });
-        colliderToEntity[c.Handle] = player;
 
         SpawnTerrain(aRegistry, player, size, offset);
 
