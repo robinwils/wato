@@ -9,6 +9,7 @@
 #include "core/net/pocketbase.hpp"
 #include "core/window.hpp"
 #include "imgui/imgui_helper.h"
+#include "registry/registry.hpp"
 
 void ImGuiMenu::Render(Registry& aReg)
 {
@@ -238,7 +239,7 @@ void ImGuiMenu::renderEndGame(const Registry& aRegistry)
     for (auto i = 0U; i < rv.size(); ++i) {
         auto         rank   = i + 1;
         ImVec4       color  = ImColor(IM_COL32_WHITE);
-        entt::entity player = aRegistry.ctx().get<entt::entity>("player"_hs);
+        entt::entity player = FindPlayerEntity(aRegistry, rv[i]);
 
         switch (i) {
             case 0:
