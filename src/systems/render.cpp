@@ -242,7 +242,7 @@ void RenderImguiSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDel
 
     if (auto* graph = aRegistry.ctx().find<Graph>()) {
         for (auto&& [entity, imgui, t] : aRegistry.view<ImguiDrawable, Transform3D>().each()) {
-            if (imgui.PosOnUnit) {
+            if (imgui.PosOnUnit && graph->IsInside(t.Position)) {
                 GraphCell   c      = graph->CellFromWorld(t.Position);
                 glm::vec3   screen = window.ProjectPosition(t.Position, cam, camT.Position);
                 std::string s      = "";

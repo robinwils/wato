@@ -63,6 +63,17 @@ class Graph
     constexpr size_type Width() const { return mWidth; }
     constexpr size_type Height() const { return mHeight; }
 
+    /// World-space bounds check. Safe to call with any float — no UB cast.
+    constexpr bool IsInside(float aX, float aZ) const
+    {
+        float relX = (aX - mWorldOffset.x) * GraphCell::kCellsPerAxis;
+        float relZ = (aZ - mWorldOffset.y) * GraphCell::kCellsPerAxis;
+        return relX >= 0.0f && relX < float(mWidth) && relZ >= 0.0f && relZ < float(mHeight);
+    }
+
+    constexpr bool IsInside(const glm::vec3& aPos) const { return IsInside(aPos.x, aPos.z); }
+
+    // Graph-space bounds check.
     constexpr bool IsInside(GraphCell::size_type aX, GraphCell::size_type aY)
     {
         return aX < mWidth && aY < mHeight;

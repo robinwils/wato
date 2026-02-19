@@ -114,11 +114,18 @@ void DefaultContextHandler::ExitPlacement(Registry& aRegistry)
 
 void PlacementModeContextHandler::operator()(Registry& aRegistry, BuildTowerPayload& aPayload)
 {
-    auto& phy    = aRegistry.ctx().get<Physics>();
-    auto& player = aRegistry.ctx().get<Player>("player"_hs);
-    auto& sender = aRegistry.get<Player>(GetSenderFor(aRegistry, player.ID));
+    auto&       phy    = aRegistry.ctx().get<Physics>();
+    auto&       player = aRegistry.ctx().get<Player>("player"_hs);
+    auto&       sender = aRegistry.get<Player>(GetSenderFor(aRegistry, player.ID));
+    const auto& graph  = aRegistry.ctx().get<Graph>();
 
     for (const auto&& [tower, pm, t] : aRegistry.view<PlacementMode, Transform3D>().each()) {
+        // first check if the tower is in bounds of player's map.
+        if (!graph.IsInside(t.Position)) {
+            WATO_ERR(aRegistry, "trying to place tower outside map bounds.");
+            continue;
+        }
+
         // Client-side validation - create temporary body for collision test
         TowerBuildingHandler handler(WATO_REG_LOGGER(aRegistry));
 
@@ -175,6 +182,19 @@ void PlacementModeContextHandler::operator()(Registry& aRegistry, const Placemen
 
 void ServerContextHandler::operator()(Registry& aRegistry, BuildTowerPayload& aPayload)
 {
+    auto& graphMap = aRegistry.ctx().get<PlayerGraphMap>();
+    auto  it       = graphMap.find(CurrentPlayerID);
+
+    if (it == graphMap.end()) {
+        WATO_ERR(aRegistry, "cannot find graph for target player {}", CurrentPlayerID);
+        return;
+    }
+    const auto& graph = it->second;
+    if (!graph.IsInside(aPayload.Position)) {
+        WATO_ERR(aRegistry, "trying to place tower outside map bounds.");
+        return;
+    }
+
     auto& player = aRegistry.get<Player>(FindPlayerEntity(aRegistry, CurrentPlayerID));
     auto  tower  = aRegistry.create();
     auto& phy    = aRegistry.ctx().get<Physics>();
