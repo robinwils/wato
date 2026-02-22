@@ -30,15 +30,18 @@ void HealthSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t a
         if (health.Health <= 0.0f) {
             WATO_INFO(aRegistry, "player {} lost (health: {})", entity, health.Health);
 
+            // capture before emplace invalidates the reference
+            const PlayerID pid = player.ID;
             aRegistry.emplace<Eliminated>(entity);
+
             if (server) {
-                ranking.push_back(player.ID);
+                ranking.push_back(pid);
 
                 server->BroadcastResponse(
                     GetPlayerIDs(aRegistry),
                     PacketType::Ack,
                     instance.Tick,
-                    PlayerEliminatedResponse{.PlayerID = player.ID, .Ranking = ranking});
+                    PlayerEliminatedResponse{.PlayerID = pid, .Ranking = ranking});
             }
         }
     }
