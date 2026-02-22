@@ -8,6 +8,7 @@
 #include "components/player.hpp"
 #include "core/net/enet_server.hpp"
 #include "core/net/net.hpp"
+#include "core/net/pocketbase.hpp"
 #include "core/sys/log.hpp"
 #include "registry/registry.hpp"
 
@@ -23,6 +24,7 @@ void HealthSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t a
     auto  group   = aRegistry.group<Player>(entt::get<Health>, entt::exclude<Eliminated>);
     auto& ranking = aRegistry.ctx().get<std::vector<PlayerID>>("ranking"_hs);
     auto* server  = aRegistry.ctx().find<ENetServer>();
+    auto* pb      = aRegistry.ctx().find<PocketBaseClient>();
 
     auto& instance = aRegistry.ctx().get<GameInstance&>();
 
@@ -61,6 +63,13 @@ void HealthSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t a
                 PacketType::Ack,
                 instance.Tick,
                 GameEndResponse{.Ranking = ranking});
+        }
+
+        if (pb && !instance.Record.empty()) {
+            pb->UpdateGame(
+                instance.Record,
+                "ended",
+                [](const std::optional<GameRecord>&, const std::string&) {});
         }
     }
 }

@@ -7,4 +7,5 @@ struct GameInstance {
     float          Accumulator;
     std::uint32_t  Tick;
     bool           IsOver = false;
+    std::string    Record{};
 };

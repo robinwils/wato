@@ -6,6 +6,7 @@
 
 #include <thread>
 
+#include "components/game.hpp"
 #include "components/health.hpp"
 #include "components/player.hpp"
 #include "components/spawner.hpp"
@@ -76,6 +77,7 @@ std::vector<PlayerInitData> GameServer::StartGameInstance(
 
     aRegistry.ctx().emplace<PlayerGraphMap>();
     aRegistry.ctx().emplace<ActionContextStack>().back().State = ActionContext::State::Server;
+    aRegistry.ctx().emplace<PocketBaseClient&>(mPBClient);
     // init groups when registry is empty to get the most performance
     aRegistry.group<Player>(entt::get<Health>, entt::exclude<Eliminated>);
 
@@ -161,6 +163,8 @@ void GameServer::ConsumeNetworkRequests()
                 playerIDs.push_back(*pID);
             }
             auto playerInitData = createGameInstance(*gameID, playerIDs);
+
+            mGameInstances[*gameID].ctx().get<GameInstance&>().Record = aEvent->record.id;
 
             for (const auto& p : playerInitData) {
                 mLogger->debug("Sending network response for game {}, player {}", *gameID, p.ID);

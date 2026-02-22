@@ -56,6 +56,17 @@ class HTTPClient
     }
 
     template <typename T, typename ErrT, typename... Args>
+    auto PatchAsync(const std::string& aEndpoint, AsyncCallback<T> aCallback, Args&&... aArgs)
+    {
+        return cpr::PatchCallback(
+            [callback = std::move(aCallback), this](const cpr::Response& aResp) {
+                decodeResp<T, ErrT>(aResp, callback);
+            },
+            cpr::Url(mURL + aEndpoint),
+            std::forward<Args>(aArgs)...);
+    }
+
+    template <typename T, typename ErrT, typename... Args>
     auto DeleteAsync(const std::string& aEndpoint, AsyncCallback<T> aCallback, Args&&... aArgs)
     {
         return cpr::DeleteCallback(

@@ -237,6 +237,20 @@ class PocketBaseClient
                 {"fields", "id,players,status,created"}}));
     }
 
+    void UpdateGame(
+        const std::string&        aRecord,
+        const std::string&        aStatus,
+        AsyncCallback<GameRecord> aCallback)
+    {
+        std::lock_guard lock(mAsyncMutex);
+        mAsyncResponses.emplace_back(Client.PatchAsync<GameRecord, PocketBaseErrorResponse>(
+            "/api/collections/game/records/" + aRecord,
+            std::move(aCallback),
+            AuthHeader(),
+            cpr::Payload{{"status", aStatus}},
+            cpr::Parameters{{"fields", "id,players,status,created"}}));
+    }
+
     void Unsubscribe(const std::string& aSubscription)
     {
         if (auto it = mSubscriptions.find(aSubscription); it != mSubscriptions.end()) {
