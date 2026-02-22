@@ -59,7 +59,8 @@ class ENetServer : public ENetBase
     const std::string& GetAccountName(PlayerID aID) const
     {
         static const std::string empty;
-        auto                     it = mAccountNames.find(aID);
+
+        auto it = mAccountNames.find(aID);
         return it != mAccountNames.end() ? it->second : empty;
     }
 

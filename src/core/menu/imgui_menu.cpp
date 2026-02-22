@@ -243,12 +243,15 @@ void ImGuiMenu::renderEndGame(const Registry& aRegistry)
 
         switch (i) {
             case 0:
+                // gold
                 color = ImColor(255, 215, 0);
                 break;
             case 1:
+                // silver
                 color = ImColor(192, 192, 192);
                 break;
             case 2:
+                // bronze
                 color = ImColor(205, 127, 50);
                 break;
             default:
