@@ -188,7 +188,7 @@ class PocketBaseClient
             "/api/collections/matchmaking_queue/records",
             std::move(aCallback),
             cpr::Header{{"Authorization", Token}, {"Content-Type", "application/json"}},
-            cpr::Parameters{{"fields", "id,accountName,ceated,status"}},
+            cpr::Parameters{{"fields", "id,accountName,created,status"}},
             cpr::Body{glz::write_json(glz::generic{
                                           {"accountName", aID},
                                           {"status", "waiting"},
