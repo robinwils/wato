@@ -20,6 +20,17 @@ inline std::expected<GameInstanceID, std::errc> GameIDFromHexString(const std::s
     return std::unexpected(ec);
 }
 
+inline std::expected<std::string, std::errc> GameIDToHexString(GameInstanceID aID)
+{
+    char buf[8]{};
+
+    auto [ptr, ec] = std::to_chars(buf, buf + 8, aID, 16);
+    if (ec == std::errc{}) {
+        return std::string(ptr);
+    }
+    return std::unexpected(ec);
+}
+
 using PlayerID = uint32_t;
 
 inline std::expected<PlayerID, std::errc> PlayerIDFromHexString(const std::string& aHexStr)
