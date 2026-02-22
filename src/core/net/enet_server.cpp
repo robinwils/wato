@@ -86,12 +86,28 @@ void ENetServer::OnReceive(ENetEvent& aEvent)
         return;
     }
 
+    auto* state = static_cast<PeerState*>(aEvent.peer->data);
+    if (!state) {
+        mLogger->warn("dropping packet from unauthenticated peer");
+        delete ev;
+        return;
+    }
+    ev->PlayerID = state->ID;
     mReqChannel.Send(ev);
 }
 
 void ENetServer::ProcessAuthResults()
 {
     mAuthResultChan.Drain([this](AuthResult* aResult) {
+        if (aResult->Peer->state != ENET_PEER_STATE_CONNECTED) {
+            mLogger->warn(
+                "peer disconnected before auth completed for player {}", aResult->ID);
+            return;
+        }
+
+        auto* state      = new PeerState{.ID = aResult->ID};
+        aResult->Peer->data = state;
+
         mConnectedPeers[aResult->ID] = aResult->Peer;
         mAccountNames[aResult->ID]   = aResult->AccountName;
         mLogger->info(
@@ -108,8 +124,30 @@ void ENetServer::ProcessAuthResults()
     });
 }
 
-void ENetServer::OnDisconnect(ENetEvent&) {}
+void ENetServer::OnDisconnect(ENetEvent& aEvent)
+{
+    if (auto* state = static_cast<PeerState*>(aEvent.peer->data)) {
+        mLogger->info("player {} disconnected", state->ID);
+        mConnectedPeers.erase(state->ID);
+        mAccountNames.erase(state->ID);
+        delete state;
+        aEvent.peer->data = nullptr;
+    } else {
+        mLogger->info("unauthenticated peer disconnected");
+    }
+}
 
-void ENetServer::OnDisconnectTimeout(ENetEvent&) {}
+void ENetServer::OnDisconnectTimeout(ENetEvent& aEvent)
+{
+    if (auto* state = static_cast<PeerState*>(aEvent.peer->data)) {
+        mLogger->warn("player {} timed out", state->ID);
+        mConnectedPeers.erase(state->ID);
+        mAccountNames.erase(state->ID);
+        delete state;
+        aEvent.peer->data = nullptr;
+    } else {
+        mLogger->warn("unauthenticated peer timed out");
+    }
+}
 
 void ENetServer::OnNone(ENetEvent&) {}

@@ -11,6 +11,11 @@
 #include "core/sys/log.hpp"
 #include "registry/registry.hpp"
 
+struct PeerState {
+    PlayerID ID{0};
+    // future: per-peer encryption state (e.g. libsodium session keys)
+};
+
 class ENetBase
 {
    public:
