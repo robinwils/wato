@@ -77,6 +77,10 @@ void SimulationSystem::Execute(Registry& aRegistry, const float aDelta)
     auto& observers = aRegistry.ctx().get<Observers>();
     auto& fixedExec = aRegistry.ctx().get<FixedSystemExecutor>();
 
+    if (instance.IsOver) {
+        return;
+    }
+
     instance.Accumulator += aDelta;
 
     // While there is enough accumulated time to take

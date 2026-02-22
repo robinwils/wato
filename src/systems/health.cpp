@@ -9,6 +9,7 @@
 #include "core/net/enet_server.hpp"
 #include "core/net/net.hpp"
 #include "core/sys/log.hpp"
+#include "registry/registry.hpp"
 
 void HealthSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t aTick)
 {
@@ -23,6 +24,8 @@ void HealthSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t a
     auto& ranking = aRegistry.ctx().get<std::vector<PlayerID>>("ranking"_hs);
     auto* server  = aRegistry.ctx().find<ENetServer>();
 
+    auto& instance = aRegistry.ctx().get<GameInstance&>();
+
     for (auto [entity, player, health] : group.each()) {
         if (health.Health <= 0.0f) {
             WATO_INFO(aRegistry, "player {} lost (health: {})", entity, health.Health);
@@ -31,26 +34,30 @@ void HealthSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t a
             if (server) {
                 ranking.push_back(player.ID);
 
-                server->EnqueueResponse(new NetworkResponse{
-                    .Type     = PacketType::Ack,
-                    .PlayerID = player.ID,
-                    .Tick     = aRegistry.ctx().get<GameInstance&>().Tick,
-                    .Payload  = PlayerEliminatedResponse{.PlayerID = player.ID, .Ranking = ranking},
-                });
+                server->BroadcastResponse(
+                    GetPlayerIDs(aRegistry),
+                    PacketType::Ack,
+                    instance.Tick,
+                    PlayerEliminatedResponse{.PlayerID = player.ID, .Ranking = ranking});
             }
         }
     }
 
-    if (group.size() <= 1) {
-        for (auto&& [entity, player] : aRegistry.view<Player>()->each()) {
-            if (server) {
-                server->EnqueueResponse(new NetworkResponse{
-                    .Type     = PacketType::Ack,
-                    .PlayerID = player.ID,
-                    .Tick     = aRegistry.ctx().get<GameInstance&>().Tick,
-                    .Payload  = GameEndResponse{.Ranking = ranking},
-                });
-            }
+    if (group.size() <= 1 && !instance.IsOver) {
+        instance.IsOver = true;
+
+        // Append survivors so ranking = [first_out, ..., winner]
+        // reverse_view on the client gives rank 1 = winner
+        for (auto [entity, player, health] : group.each()) {
+            ranking.push_back(player.ID);
+        }
+
+        if (server) {
+            server->BroadcastResponse(
+                GetPlayerIDs(aRegistry),
+                PacketType::Ack,
+                instance.Tick,
+                GameEndResponse{.Ranking = ranking});
         }
     }
 }
