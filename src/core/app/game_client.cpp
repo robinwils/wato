@@ -76,6 +76,11 @@ void GameClient::Init()
     mMenuExecutor.Register<RenderSystem>();
     mMenuExecutor.Register<RenderImguiSystem>();
     mMenuExecutor.Register<UISystem>();
+
+    // End-game: render world + rankings board, no simulation or input
+    mEndGameExecutor.Register<RenderSystem>();
+    mEndGameExecutor.Register<RenderImguiSystem>();
+    mEndGameExecutor.Register<AnimationSystem>();
 }
 
 int GameClient::Run(tf::Executor& aExecutor)
@@ -114,6 +119,7 @@ int GameClient::Run(tf::Executor& aExecutor)
                 }
                 break;
             case MenuState::EndGame:
+                mEndGameExecutor.Update(frameTime.count(), &mRegistry);
                 break;
         }
 

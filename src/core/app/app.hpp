@@ -59,6 +59,7 @@ class Application
     // Time-based (variable frame rate)
     FrameSystemExecutor mFrameExecutor;
     FrameSystemExecutor mMenuExecutor;
+    FrameSystemExecutor mEndGameExecutor;
 
     std::atomic_bool mRunning;
 
