@@ -70,4 +70,5 @@ class GameServer : public Application
     std::unordered_map<GameInstanceID, Registry> mGameInstances;
 
     Channel<PBSSE<GameRecord>> mPBGameChan;
+    std::string                mLastGameTimestamp{};
 };

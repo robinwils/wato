@@ -45,8 +45,7 @@ class HTTPClient
     }
 
     template <typename T, typename ErrT, typename... Args>
-    cpr::AsyncResponse
-    GetAsync(const std::string& aEndpoint, AsyncCallback<T> aCallback, Args&&... aArgs)
+    auto GetAsync(const std::string& aEndpoint, AsyncCallback<T> aCallback, Args&&... aArgs)
     {
         return cpr::GetCallback(
             [callback = std::move(aCallback), this](const cpr::Response& aResp) {

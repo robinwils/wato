@@ -3,6 +3,7 @@
 #include <fmt/format.h>
 
 #include <atomic>
+#include <chrono>
 #include <functional>
 #include <glaze/glaze.hpp>
 #include <glaze/json/write.hpp>
@@ -77,6 +78,7 @@ struct ServerMatchRequest {
 struct GameRecord {
     std::string              id{};
     std::vector<std::string> players;
+    std::string              created{};
 };
 
 template <>
@@ -89,6 +91,10 @@ struct fmt::formatter<GameRecord> : fmt::formatter<std::string> {
             aObj.id,
             aObj.players);
     }
+};
+
+struct GameRecordList {
+    std::vector<GameRecord> items;
 };
 
 template <typename T>
@@ -200,56 +206,35 @@ class PocketBaseClient
             AuthHeader()));
     }
 
-    /**
-     * @brief Subscribe to a record via SSE
-     *
-     * @param aRecordId The record ID to subscribe to
-     * @param aCallback Callback invoked when record is updated (from SSE thread, must be
-     * thread-safe)
-     */
     template <typename T>
     void Subscribe(
-        const std::string&      aSubscription,
-        AsyncCallback<PBSSE<T>> aCallback,
-        const std::string&      aFields = "")
+        const std::string&    aSubscription,
+        Channel<PBSSE<T>>&    aChan,
+        const std::string&    aFields      = "",
+        std::function<void()> aOnReconnect = nullptr)
     {
         Unsubscribe(aSubscription);
 
         mSubscriptions.try_emplace(aSubscription);
         auto& sub = mSubscriptions.at(aSubscription);
 
-        sub.SSEResponse = Client.ConnectSSE(
-            "/api/realtime",
-            [this, &sub, aSubscription, aFields, cb = std::move(aCallback)](
-                const SSEEvent& aEvent) {
-                mLogger->debug("got SSEEvent {}: {}", aEvent.Event, aEvent.Data);
-                if (sub.StopSource.stop_requested()) {
-                    mLogger->info("Stop requested for subscription {}", aSubscription);
-                    return false;
-                }
+        sub.OnReconnect = std::move(aOnReconnect);
+        sub.Factory     = [this, aSubscription, aFields, &aChan](std::stop_source aStop) {
+            return startSSE<T>(aSubscription, aFields, aChan, aStop);
+        };
+        sub.SSEResponse = sub.Factory(sub.StopSource);
+    }
 
-                if (aEvent.Event == "PB_CONNECT") {
-                    auto connect = glz::read_json<PBConnectEvent>(aEvent.Data);
-                    if (connect) {
-                        mLogger->info("SSE: Connected with clientId {}", connect->clientId);
-                        sendSubscription(connect->clientId, aSubscription, aFields);
-                    } else {
-                        mLogger->error("SSE: Failed to parse PB_CONNECT event");
-                    }
-                    return true;
-                }
-
-                auto record = glz::read_json<PBSSE<T>>(aEvent.Data);
-                if (record) {
-                    mLogger->info("got SSE: {}", *record);
-                    cb(std::move(*record), "");
-                } else {
-                    mLogger->error("cannot decode sse record: {}", aEvent.Data);
-                    cb(std::nullopt, "cannot decode server event");
-                }
-                return true;
-            },
-            AuthHeader());
+    void GetGamesSince(const std::string& aTimestamp, AsyncCallback<GameRecordList> aCallback)
+    {
+        std::lock_guard lock(mAsyncMutex);
+        mAsyncResponses.emplace_back(Client.GetAsync<GameRecordList, PocketBaseErrorResponse>(
+            "/api/collections/game/records",
+            std::move(aCallback),
+            AuthHeader(),
+            cpr::Parameters{
+                {"filter", fmt::format("created>\"{}\"", aTimestamp)},
+                {"fields", "id,players,created"}}));
     }
 
     void Unsubscribe(const std::string& aSubscription)
@@ -268,19 +253,57 @@ class PocketBaseClient
 
     void Update()
     {
-        std::lock_guard lock(mAsyncMutex);
-        std::erase_if(mAsyncResponses, [](const AsyncRespCB& aRes) {
-            return aRes.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready;
-        });
-        std::erase_if(mSubscriptions, [this](const auto& aPair) {
-            auto& [name, state] = aPair;
-            if (state.SSEResponse.wait_for(std::chrono::milliseconds(0))
-                == std::future_status::ready) {
-                mLogger->warn("SSE connection closed for subscription '{}'", name);
-                return true;
+        {
+            std::lock_guard lock(mAsyncMutex);
+            std::erase_if(mAsyncResponses, [](const AsyncRespCB& aRes) {
+                return aRes.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready;
+            });
+        }
+
+        auto now = std::chrono::steady_clock::now();
+
+        std::vector<std::function<void()>> toReconnect;
+
+        for (auto& [name, state] : mSubscriptions) {
+            if (!state.ShouldReconnect && state.SSEResponse.valid()
+                && state.SSEResponse.wait_for(std::chrono::milliseconds(0))
+                       == std::future_status::ready) {
+                auto resp = state.SSEResponse.get();
+
+                if (state.StopSource.stop_requested()) {
+                    continue;
+                }
+
+                state.ShouldReconnect = true;
+                if (resp.status_code >= 400) {
+                    mLogger->warn(
+                        "SSE '{}' closed with HTTP {}, backoff {}ms",
+                        name,
+                        resp.status_code,
+                        state.BackoffMs.count());
+                    state.NextReconnect = now + state.BackoffMs;
+                    state.BackoffMs =
+                        std::min(state.BackoffMs * 2, std::chrono::milliseconds(30000));
+                } else {
+                    mLogger->warn(
+                        "SSE '{}' closed (status {}), reconnecting in 1s",
+                        name,
+                        resp.status_code);
+                    state.NextReconnect = now + std::chrono::milliseconds(1000);
+                    state.BackoffMs     = std::chrono::milliseconds(1000);
+                }
             }
-            return false;
-        });
+
+            if (state.ShouldReconnect && now >= state.NextReconnect) {
+                mLogger->info("reconnecting SSE '{}'", name);
+                state.StopSource      = std::stop_source{};
+                state.SSEResponse     = state.Factory(state.StopSource);
+                state.ShouldReconnect = false;
+                if (state.OnReconnect) toReconnect.push_back(state.OnReconnect);
+            }
+        }
+
+        for (auto& cb : toReconnect) cb();
     }
 
     cpr::Header AuthHeader(const std::string& aToken = "") const
@@ -296,7 +319,64 @@ class PocketBaseClient
     struct SSEState {
         std::stop_source   StopSource;
         cpr::AsyncResponse SSEResponse{};
+
+        bool                                                ShouldReconnect{false};
+        std::chrono::steady_clock::time_point               NextReconnect{};
+        std::chrono::milliseconds                           BackoffMs{1000};
+        std::function<void()>                               OnReconnect;
+        std::function<cpr::AsyncResponse(std::stop_source)> Factory;
     };
+    template <typename T>
+    bool handleSSEEvent(
+        const SSEEvent&    aEvent,
+        Channel<PBSSE<T>>& aChan,
+        std::stop_source   aStop,
+        const std::string& aSubscription,
+        const std::string& aFields)
+    {
+        mLogger->debug("got SSEEvent {}: {}", aEvent.Event, aEvent.Data);
+        if (aStop.stop_requested()) {
+            mLogger->info("Stop requested for subscription {}", aSubscription);
+            return false;
+        }
+
+        if (aEvent.Event == "PB_CONNECT") {
+            auto connect = glz::read_json<PBConnectEvent>(aEvent.Data);
+            if (connect) {
+                mLogger->info("SSE: Connected with clientId {}", connect->clientId);
+                sendSubscription(connect->clientId, aSubscription, aFields);
+            } else {
+                mLogger->error("SSE: Failed to parse PB_CONNECT event");
+            }
+            return true;
+        }
+
+        auto record = glz::read_json<PBSSE<T>>(aEvent.Data);
+        if (record) {
+            mLogger->info("got SSE: {}", *record);
+            aChan.Send(new PBSSE<T>(std::move(*record)));
+        } else {
+            mLogger->error("cannot decode sse record: {}", aEvent.Data);
+        }
+        return true;
+    }
+
+    template <typename T>
+    cpr::AsyncResponse startSSE(
+        const std::string& aSubscription,
+        const std::string& aFields,
+        Channel<PBSSE<T>>& aChan,
+        std::stop_source   aStop)
+    {
+        return Client.ConnectSSE(
+            "/api/realtime",
+            [this, stopSource = aStop, aSubscription, aFields, &aChan](
+                const SSEEvent& aEvent) mutable {
+                return handleSSEEvent<T>(aEvent, aChan, stopSource, aSubscription, aFields);
+            },
+            AuthHeader());
+    }
+
     void sendSubscription(
         const std::string& aClientId,
         const std::string& aSubscription,

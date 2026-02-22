@@ -41,14 +41,20 @@ void GameServer::Init()
 
     mFrameExecutor.Register<SimulationSystem>();
 
-    mPBClient.Subscribe<GameRecord>(
-        "game/*",
-        [this](const std::optional<PBSSE<GameRecord>>& aRecord, const std::string& aError) {
-            if (aRecord) {
-                mPBGameChan.Send(new PBSSE<GameRecord>(*aRecord));
-            }
-        },
-        "id,players");
+    mPBClient.Subscribe<GameRecord>("game/*", mPBGameChan, "id,players,created", [this]() {
+        if (mLastGameTimestamp.empty()) return;
+        mPBClient.GetGamesSince(
+            mLastGameTimestamp,
+            [this](const std::optional<GameRecordList>& aResult, const std::string& aError) {
+                if (!aResult) {
+                    mLogger->error("GetGamesSince failed: {}", aError);
+                    return;
+                }
+                for (const auto& r : aResult->items) {
+                    mPBGameChan.Send(new PBSSE<GameRecord>{.action = "create", .record = r});
+                }
+            });
+    });
 }
 
 GameServer::~GameServer()
@@ -134,6 +140,7 @@ void GameServer::ConsumeNetworkRequests()
 
     mPBGameChan.Drain([&](PBSSE<GameRecord>* aEvent) {
         if (aEvent->action == "create") {
+            mLastGameTimestamp = aEvent->record.created;
             mLogger->info("Created game {}", aEvent->record.id);
 
             auto gameID = GameIDFromHexString(aEvent->record.id);
@@ -300,6 +307,11 @@ std::vector<PlayerInitData> GameServer::createGameInstance(
     GameInstanceID        aGameID,
     std::vector<PlayerID> aPlayerIDs)
 {
+    if (mGameInstances.contains(aGameID)) {
+        mLogger->warn("game {} already exists, skipping duplicate", aGameID);
+        return {};
+    }
+
     Registry& registry = mGameInstances[aGameID];
 
     registry.ctx().emplace<Logger>(mLogger);
