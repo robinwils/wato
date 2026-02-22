@@ -375,7 +375,9 @@ void GameClient::consumeNetworkResponses()
         void operator()(const PlayerEliminatedResponse& aResp) const
         {
             Reg->ctx().insert_or_assign("ranking"_hs, aResp.Ranking);
-            Reg->ctx().get<MenuContext&>().State = MenuState::EndGame;
+            if (aResp.PlayerID == Reg->ctx().get<Player>("player"_hs).ID) {
+                Reg->ctx().get<MenuContext&>().State = MenuState::EndGame;
+            }
         }
 
         void operator()(const GameEndResponse& aResp) const
