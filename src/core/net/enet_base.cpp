@@ -68,9 +68,9 @@ void ENetBase::Poll()
                         event.packet->dataLength);
                     packetSize = event.packet->dataLength;
                 }
-                std::string peerData = "(null)";
+                std::string peerData = "(unauthenticated)";
                 if (event.peer && event.peer->data) {
-                    peerData = std::string(reinterpret_cast<char*>(event.peer->data));
+                    peerData = "player " + std::to_string(static_cast<PeerState*>(event.peer->data)->ID);
                 }
 
                 mLogger->trace(
