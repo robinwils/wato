@@ -234,7 +234,7 @@ class PocketBaseClient
             AuthHeader(),
             cpr::Parameters{
                 {"filter", fmt::format("created>\"{}\"", aTimestamp)},
-                {"fields", "id,players,created"}}));
+                {"fields", "id,players,status,created"}}));
     }
 
     void Unsubscribe(const std::string& aSubscription)

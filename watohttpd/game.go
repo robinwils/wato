@@ -23,6 +23,7 @@ func CreateGameRecord(app core.App, playerRecords []*core.Record) (*core.Record,
 	game.Set("players", lo.Map(playerRecords, func(p *core.Record, idx int) string {
 		return p.GetString("accountName")
 	}))
+	game.Set("status", "running")
 
 	return game, nil
 }
