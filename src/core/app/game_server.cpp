@@ -215,6 +215,7 @@ int GameServer::Run(tf::Executor& aExecutor)
         std::chrono::duration<float> dt = (t - prevTime);
         prevTime                        = t;
 
+        mPBClient.Update();
         ConsumeNetworkRequests();
         // Update each game instance independently
         for (auto& [gameId, registry] : mGameInstances) {
