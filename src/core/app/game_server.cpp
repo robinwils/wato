@@ -210,6 +210,8 @@ int GameServer::Run(tf::Executor& aExecutor)
         }
     });
 
+    constexpr auto kTargetFrameTime = std::chrono::duration<double>(kTimeStep);
+
     while (mRunning) {
         auto                         t  = clock_type::now();
         std::chrono::duration<float> dt = (t - prevTime);
@@ -220,6 +222,12 @@ int GameServer::Run(tf::Executor& aExecutor)
         // Update each game instance independently
         for (auto& [gameId, registry] : mGameInstances) {
             mFrameExecutor.Update(dt.count(), &registry);
+        }
+
+        auto elapsed   = clock_type::now() - t;
+        auto remaining = kTargetFrameTime - elapsed;
+        if (remaining > std::chrono::duration<double>(0)) {
+            std::this_thread::sleep_for(remaining);
         }
     }
 

@@ -44,6 +44,8 @@ class Application
    protected:
     using clock_type = std::chrono::steady_clock;
 
+    static constexpr float kTimeStep = 1.0f / 60.0f;
+
     void StartGameInstance(Registry& aRegistry, const GameInstanceID aGameID);
     void StopGameInstance(Registry& aRegistry);
     void SpawnTerrain(
