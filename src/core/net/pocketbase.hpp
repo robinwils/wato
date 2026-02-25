@@ -93,9 +93,30 @@ struct fmt::formatter<GameRecord> : fmt::formatter<std::string> {
     }
 };
 
-struct GameRecordList {
-    std::vector<GameRecord> items;
+template <typename T>
+struct PBList {
+    std::vector<T> items;
+    int            page{};
+    int            perPage{};
+    int            totalItems{};
+    int            totalPages{};
 };
+
+using GameRecordList = PBList<GameRecord>;
+
+struct GameServerRecord {
+    static constexpr const char* kFields = "id,ip,port,publicKey,hasAESNI,created,updated";
+
+    std::string id{};
+    std::string ip{};
+    int         port{};
+    std::string publicKey{};
+    bool        hasAESNI{};
+    std::string created{};
+    std::string updated{};
+};
+
+using GameServerRecordList = PBList<GameServerRecord>;
 
 template <typename T>
 struct PBSSE {
