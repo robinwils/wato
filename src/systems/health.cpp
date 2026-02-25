@@ -1,6 +1,7 @@
 #include "systems/health.hpp"
 
 #include <entt/entity/fwd.hpp>
+#include <expected>
 
 #include "components/creep.hpp"
 #include "components/game.hpp"
@@ -69,7 +70,7 @@ void HealthSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t a
             pb->UpdateGame(
                 instance.Record,
                 "ended",
-                [](const std::optional<GameRecord>&, const std::string&) {});
+                [](std::expected<GameRecord, PBError>) {});
         }
     }
 }

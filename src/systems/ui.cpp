@@ -1,5 +1,7 @@
 #include "ui.hpp"
 
+#include <expected>
+
 #include "core/menu/menu.hpp"
 #include "core/net/enet_client.hpp"
 #include "core/net/pocketbase.hpp"
@@ -44,7 +46,7 @@ void UISystem::onLogin(const LoginEvent& aEvent)
     pb.Login(
         aEvent.Account,
         aEvent.Password,
-        [reg](const std::optional<LoginResult>& aResult, const std::string& aError) {
+        [reg](std::expected<LoginResult, PBError> aResult) {
             auto& dispatcher = reg->ctx().get<MenuContext>().Dispatcher;
             if (aResult) {
                 dispatcher.enqueue<LoginResultEvent>(LoginResultEvent{
@@ -56,7 +58,8 @@ void UISystem::onLogin(const LoginEvent& aEvent)
                     .Token       = aResult->token,
                     .Error       = ""});
             } else {
-                dispatcher.enqueue<LoginResultEvent>(LoginResultEvent{.Reg = reg, .Error = aError});
+                dispatcher.enqueue<LoginResultEvent>(
+                    LoginResultEvent{.Reg = reg, .Error = aResult.error().Message});
             }
         });
 
@@ -112,7 +115,7 @@ void UISystem::onRegister(const RegisterEvent& aEvent)
     pb.Register(
         aEvent.AccountName,
         aEvent.Password,
-        [reg](const std::optional<RegisterResult>& aResult, const std::string& aError) {
+        [reg](std::expected<RegisterResult, PBError> aResult) {
             auto& dispatcher = reg->ctx().get<MenuContext>().Dispatcher;
             if (aResult) {
                 dispatcher.enqueue<RegisterResultEvent>(RegisterResultEvent{
@@ -122,7 +125,7 @@ void UISystem::onRegister(const RegisterEvent& aEvent)
                     .Error       = ""});
             } else {
                 dispatcher.enqueue<RegisterResultEvent>(
-                    RegisterResultEvent{.Reg = reg, .Error = aError});
+                    RegisterResultEvent{.Reg = reg, .Error = aResult.error().Message});
             }
         });
 }
@@ -167,7 +170,7 @@ void UISystem::onJoinMatchmaking(const JoinMatchmakingEvent& aEvent)
         pb.LoggedUser.id,
         1,
         2,
-        [reg](const std::optional<MatchmakingRecord>& aResult, const std::string& aError) {
+        [reg](std::expected<MatchmakingRecord, PBError> aResult) {
             auto& dispatcher = reg->ctx().get<MenuContext>().Dispatcher;
             if (aResult) {
                 dispatcher.enqueue(JoinResultEvent{
@@ -181,7 +184,7 @@ void UISystem::onJoinMatchmaking(const JoinMatchmakingEvent& aEvent)
                 });
             } else {
                 dispatcher.enqueue<MatchmakingErrorEvent>(
-                    MatchmakingErrorEvent{.Reg = reg, .Error = aError});
+                    MatchmakingErrorEvent{.Reg = reg, .Error = aResult.error().Message});
             }
         });
 }
@@ -202,7 +205,7 @@ void UISystem::onLeaveMatchmaking(const LeaveMatchmakingEvent& aEvent)
         return;
     }
 
-    pb.LeaveQueue(pb.LoggedUser.id, [](const std::optional<std::string>&, const std::string&) {
+    pb.LeaveQueue(pb.LoggedUser.id, [](std::expected<std::string, PBError>) {
         // Fire and forget
     });
 

@@ -4,11 +4,11 @@
 
 #include <atomic>
 #include <chrono>
+#include <expected>
 #include <functional>
 #include <glaze/glaze.hpp>
 #include <glaze/json/write.hpp>
 #include <mutex>
-#include <optional>
 #include <string>
 #include <vector>
 
@@ -117,6 +117,14 @@ struct PocketBaseErrorResponse {
     long         status{};
 };
 
+struct PBError {
+    long        StatusCode{};
+    std::string Message;
+};
+
+template <typename T>
+using PBCallback = std::function<void(std::expected<T, PBError>)>;
+
 /**
  * @brief Unified client for all PocketBase/backend operations
  *
@@ -138,53 +146,49 @@ class PocketBaseClient
     }
 
     void Login(
-        const std::string&         aAccount,
-        const std::string&         aPassword,
-        AsyncCallback<LoginResult> aCallback)
+        const std::string&      aAccount,
+        const std::string&      aPassword,
+        PBCallback<LoginResult> aCallback)
     {
-        std::lock_guard lock(mAsyncMutex);
-        mAsyncResponses.emplace_back(Client.PostAsync<LoginResult, PocketBaseErrorResponse>(
+        postAsync<LoginResult>(
             "/api/collections/users/auth-with-password",
             std::move(aCallback),
             cpr::Parameters{
                 {"fields", "record.id,record.avatar,record.email,record.accountName,token"}},
-            cpr::Payload{{"identity", aAccount}, {"password", aPassword}}));
+            cpr::Payload{{"identity", aAccount}, {"password", aPassword}});
     }
 
     void Register(
-        const std::string&            aAccount,
-        const std::string&            aPassword,
-        AsyncCallback<RegisterResult> aCallback)
+        const std::string&         aAccount,
+        const std::string&         aPassword,
+        PBCallback<RegisterResult> aCallback)
     {
-        std::lock_guard lock(mAsyncMutex);
-        mAsyncResponses.emplace_back(Client.PostAsync<RegisterResult, PocketBaseErrorResponse>(
+        postAsync<RegisterResult>(
             "/api/collections/users/records",
             std::move(aCallback),
             cpr::Parameters{{"fields", "id,accountName"}},
             cpr::Payload{
                 {"accountName", aAccount},
                 {"password", aPassword},
-                {"passwordConfirm", aPassword}}));
+                {"passwordConfirm", aPassword}});
     }
 
-    void RefreshToken(AsyncCallback<LoginResult> aCallback, const std::string& aToken = "")
+    void RefreshToken(PBCallback<LoginResult> aCallback, const std::string& aToken = "")
     {
-        std::lock_guard lock(mAsyncMutex);
-        mAsyncResponses.emplace_back(Client.PostAsync<LoginResult, PocketBaseErrorResponse>(
+        postAsync<LoginResult>(
             "/api/collections/users/auth-refresh",
             std::move(aCallback),
             AuthHeader(aToken),
-            cpr::Parameters{{"fields", "record.id,record.accountName,token"}}));
+            cpr::Parameters{{"fields", "record.id,record.accountName,token"}});
     }
 
     void JoinQueue(
-        const std::string&               aID,
-        int                              aTeamSize,
-        int                              aTeamCount,
-        AsyncCallback<MatchmakingRecord> aCallback)
+        const std::string&            aID,
+        int                           aTeamSize,
+        int                           aTeamCount,
+        PBCallback<MatchmakingRecord> aCallback)
     {
-        std::lock_guard lock(mAsyncMutex);
-        mAsyncResponses.emplace_back(Client.PostAsync<MatchmakingRecord, PocketBaseErrorResponse>(
+        postAsync<MatchmakingRecord>(
             "/api/collections/matchmaking_queue/records",
             std::move(aCallback),
             cpr::Header{{"Authorization", Token}, {"Content-Type", "application/json"}},
@@ -194,16 +198,15 @@ class PocketBaseClient
                                           {"status", "waiting"},
                                           {"teamSize", aTeamSize},
                                           {"teamCount", aTeamCount}})
-                          .value_or("{}")}));
+                          .value_or("{}")});
     }
 
-    void LeaveQueue(const std::string& aRecordId, AsyncCallback<std::string> aCallback)
+    void LeaveQueue(const std::string& aRecordId, PBCallback<std::string> aCallback)
     {
-        std::lock_guard lock(mAsyncMutex);
-        mAsyncResponses.emplace_back(Client.DeleteAsync<std::string, PocketBaseErrorResponse>(
+        deleteAsync<std::string>(
             "/api/collections/matchmaking_queue/records/" + aRecordId,
             std::move(aCallback),
-            AuthHeader()));
+            AuthHeader());
     }
 
     template <typename T>
@@ -225,30 +228,28 @@ class PocketBaseClient
         sub.SSEResponse = sub.Factory(sub.StopSource);
     }
 
-    void GetGamesSince(const std::string& aTimestamp, AsyncCallback<GameRecordList> aCallback)
+    void GetGamesSince(const std::string& aTimestamp, PBCallback<GameRecordList> aCallback)
     {
-        std::lock_guard lock(mAsyncMutex);
-        mAsyncResponses.emplace_back(Client.GetAsync<GameRecordList, PocketBaseErrorResponse>(
+        getAsync<GameRecordList>(
             "/api/collections/game/records",
             std::move(aCallback),
             AuthHeader(),
             cpr::Parameters{
                 {"filter", fmt::format("created>\"{}\"", aTimestamp)},
-                {"fields", "id,players,status,created"}}));
+                {"fields", "id,players,status,created"}});
     }
 
     void UpdateGame(
-        const std::string&        aRecord,
-        const std::string&        aStatus,
-        AsyncCallback<GameRecord> aCallback)
+        const std::string&     aRecord,
+        const std::string&     aStatus,
+        PBCallback<GameRecord> aCallback)
     {
-        std::lock_guard lock(mAsyncMutex);
-        mAsyncResponses.emplace_back(Client.PatchAsync<GameRecord, PocketBaseErrorResponse>(
+        patchAsync<GameRecord>(
             "/api/collections/game/records/" + aRecord,
             std::move(aCallback),
             AuthHeader(),
             cpr::Payload{{"status", aStatus}},
-            cpr::Parameters{{"fields", "id,players,status,created"}}));
+            cpr::Parameters{{"fields", "id,players,status,created"}});
     }
 
     void Unsubscribe(const std::string& aSubscription)
@@ -330,6 +331,89 @@ class PocketBaseClient
     LoginRecord LoggedUser;
 
    private:
+    template <typename T>
+    std::expected<T, PBError> decodePBResponse(const cpr::Response& aResp)
+    {
+        if (aResp.status_code == 0) {
+            return std::unexpected(PBError{.StatusCode = 0, .Message = aResp.error.message});
+        }
+        if (aResp.status_code >= 400) {
+            auto errorJSON = glz::read_json<PocketBaseErrorResponse>(aResp.text);
+            auto codeStr   = std::to_string(aResp.status_code);
+
+            if (!errorJSON) {
+                mLogger->error("failed to decode error json {}", aResp.text);
+                return std::unexpected(PBError{
+                    .StatusCode = aResp.status_code,
+                    .Message    = fmt::format("Failed to parse {} error response", codeStr)});
+            }
+            return std::unexpected(PBError{
+                .StatusCode = aResp.status_code,
+                .Message    = fmt::format("HTTP {}: {}", codeStr, errorJSON->message)});
+        }
+
+        auto res = glz::read_json<T>(aResp.text);
+        if (!res) {
+            mLogger->error("failed to decode json {}", aResp.text);
+            return std::unexpected(
+                PBError{.StatusCode = aResp.status_code, .Message = "Failed to parse response"});
+        }
+
+        return std::move(res.value());
+    }
+
+    template <typename T, typename... Args>
+    void postAsync(const std::string& aEndpoint, PBCallback<T> aCallback, Args&&... aArgs)
+    {
+        auto future = Client.PostAsync(
+            aEndpoint,
+            [cb = std::move(aCallback), this](cpr::Response aResp) {
+                cb(decodePBResponse<T>(aResp));
+            },
+            std::forward<Args>(aArgs)...);
+        std::lock_guard lock(mAsyncMutex);
+        mAsyncResponses.emplace_back(std::move(future));
+    }
+
+    template <typename T, typename... Args>
+    void getAsync(const std::string& aEndpoint, PBCallback<T> aCallback, Args&&... aArgs)
+    {
+        auto future = Client.GetAsync(
+            aEndpoint,
+            [cb = std::move(aCallback), this](cpr::Response aResp) {
+                cb(decodePBResponse<T>(aResp));
+            },
+            std::forward<Args>(aArgs)...);
+        std::lock_guard lock(mAsyncMutex);
+        mAsyncResponses.emplace_back(std::move(future));
+    }
+
+    template <typename T, typename... Args>
+    void patchAsync(const std::string& aEndpoint, PBCallback<T> aCallback, Args&&... aArgs)
+    {
+        auto future = Client.PatchAsync(
+            aEndpoint,
+            [cb = std::move(aCallback), this](cpr::Response aResp) {
+                cb(decodePBResponse<T>(aResp));
+            },
+            std::forward<Args>(aArgs)...);
+        std::lock_guard lock(mAsyncMutex);
+        mAsyncResponses.emplace_back(std::move(future));
+    }
+
+    template <typename T, typename... Args>
+    void deleteAsync(const std::string& aEndpoint, PBCallback<T> aCallback, Args&&... aArgs)
+    {
+        auto future = Client.DeleteAsync(
+            aEndpoint,
+            [cb = std::move(aCallback), this](cpr::Response aResp) {
+                cb(decodePBResponse<T>(aResp));
+            },
+            std::forward<Args>(aArgs)...);
+        std::lock_guard lock(mAsyncMutex);
+        mAsyncResponses.emplace_back(std::move(future));
+    }
+
     struct SSEState {
         std::stop_source   StopSource;
         cpr::AsyncResponse SSEResponse{};
@@ -407,7 +491,7 @@ class PocketBaseClient
         payload["clientId"]      = aClientId;
         payload["subscriptions"] = std::vector<std::string>{topic};
 
-        Client.Post<std::string>(
+        Client.Post(
             "/api/realtime",
             cpr::Header{{"Content-Type", "application/json"}, {"Authorization", Token}},
             cpr::Body{glz::write_json(payload).value_or("{}")});

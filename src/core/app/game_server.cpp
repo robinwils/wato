@@ -46,9 +46,9 @@ void GameServer::Init()
         if (mLastGameTimestamp.empty()) return;
         mPBClient.GetGamesSince(
             mLastGameTimestamp,
-            [this](const std::optional<GameRecordList>& aResult, const std::string& aError) {
+            [this](std::expected<GameRecordList, PBError> aResult) {
                 if (!aResult) {
-                    mLogger->error("GetGamesSince failed: {}", aError);
+                    mLogger->error("GetGamesSince failed: {}", aResult.error().Message);
                     return;
                 }
                 for (const auto& r : aResult->items) {

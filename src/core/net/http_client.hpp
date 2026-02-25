@@ -3,14 +3,9 @@
 #include <cpr/cpr.h>
 
 #include <functional>
-#include <optional>
 #include <string>
 
 #include "core/sys/log.hpp"
-
-template <typename T>
-using AsyncCallback =
-    std::function<void(const std::optional<T>& aResult, const std::string& aError)>;
 
 struct SSEEvent {
     std::string Id;
@@ -19,6 +14,7 @@ struct SSEEvent {
 };
 
 using SSECallback = std::function<bool(const SSEEvent&)>;
+using RawCallback = std::function<void(cpr::Response)>;
 
 class HTTPClient
 {
@@ -27,52 +23,56 @@ class HTTPClient
 
     const std::string& URL() const { return mURL; }
 
-    template <typename T, typename... Args>
-    void Post(const std::string& aEndpoint, Args&&... aArgs)
+    template <typename... Args>
+    cpr::Response Get(const std::string& aEndpoint, Args&&... aArgs)
     {
-        cpr::Post(cpr::Url(mURL + aEndpoint), std::forward<Args>(aArgs)...);
+        return cpr::Get(cpr::Url(mURL + aEndpoint), std::forward<Args>(aArgs)...);
     }
 
-    template <typename T, typename ErrT, typename... Args>
-    auto PostAsync(const std::string& aEndpoint, AsyncCallback<T> aCallback, Args&&... aArgs)
+    template <typename... Args>
+    cpr::Response Post(const std::string& aEndpoint, Args&&... aArgs)
+    {
+        return cpr::Post(cpr::Url(mURL + aEndpoint), std::forward<Args>(aArgs)...);
+    }
+
+    template <typename... Args>
+    cpr::Response Patch(const std::string& aEndpoint, Args&&... aArgs)
+    {
+        return cpr::Patch(cpr::Url(mURL + aEndpoint), std::forward<Args>(aArgs)...);
+    }
+
+    template <typename... Args>
+    auto PostAsync(const std::string& aEndpoint, RawCallback aCallback, Args&&... aArgs)
     {
         return cpr::PostCallback(
-            [callback = std::move(aCallback), this](const cpr::Response& aResp) {
-                decodeResp<T, ErrT>(aResp, callback);
-            },
+            [callback = std::move(aCallback)](const cpr::Response& aResp) { callback(aResp); },
             cpr::Url(mURL + aEndpoint),
             std::forward<Args>(aArgs)...);
     }
 
-    template <typename T, typename ErrT, typename... Args>
-    auto GetAsync(const std::string& aEndpoint, AsyncCallback<T> aCallback, Args&&... aArgs)
+    template <typename... Args>
+    auto GetAsync(const std::string& aEndpoint, RawCallback aCallback, Args&&... aArgs)
     {
         return cpr::GetCallback(
-            [callback = std::move(aCallback), this](const cpr::Response& aResp) {
-                decodeResp<T, ErrT>(aResp, callback);
-            },
+            [callback = std::move(aCallback)](const cpr::Response& aResp) { callback(aResp); },
             cpr::Url(mURL + aEndpoint),
             std::forward<Args>(aArgs)...);
     }
 
-    template <typename T, typename ErrT, typename... Args>
-    auto PatchAsync(const std::string& aEndpoint, AsyncCallback<T> aCallback, Args&&... aArgs)
+    template <typename... Args>
+    auto PatchAsync(const std::string& aEndpoint, RawCallback aCallback, Args&&... aArgs)
     {
         return cpr::PatchCallback(
-            [callback = std::move(aCallback), this](const cpr::Response& aResp) {
-                decodeResp<T, ErrT>(aResp, callback);
-            },
+            [callback = std::move(aCallback)](const cpr::Response& aResp) { callback(aResp); },
             cpr::Url(mURL + aEndpoint),
             std::forward<Args>(aArgs)...);
     }
 
-    template <typename T, typename ErrT, typename... Args>
-    auto DeleteAsync(const std::string& aEndpoint, AsyncCallback<T> aCallback, Args&&... aArgs)
+    template <typename... Args>
+    auto DeleteAsync(const std::string& aEndpoint, RawCallback aCallback, Args&&... aArgs)
     {
         return cpr::DeleteCallback(
-            [callback = std::move(aCallback), this](const cpr::Response& aResp) {
-                decodeResp<T, ErrT>(aResp, callback);
-            },
+            [callback = std::move(aCallback)](const cpr::Response& aResp) { callback(aResp); },
             cpr::Url(mURL + aEndpoint),
             std::forward<Args>(aArgs)...);
     }
@@ -94,11 +94,6 @@ class HTTPClient
     }
 
    private:
-    template <typename T, typename ErrT>
-    void decodeResp(const cpr::Response& aResp, const AsyncCallback<T>& aCallback);
-
     std::string mURL;
     Logger      mLogger;
 };
-
-#include "core/net/http_client.hxx"
