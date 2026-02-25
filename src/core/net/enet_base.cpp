@@ -9,6 +9,16 @@
 #include "core/net/net.hpp"
 #include "core/sys/log.hpp"
 
+inline constexpr const std::string peerDataStr(const ENetEvent& aEvent)
+{
+    std::string peerData = "(unauthenticated)";
+    if (aEvent.peer && aEvent.peer->data) {
+        peerData = "player " + std::to_string(static_cast<PeerState*>(aEvent.peer->data)->ID);
+    }
+
+    return peerData;
+}
+
 ENetBase::~ENetBase() { enet_deinitialize(); }
 
 void ENetBase::Init()
@@ -68,10 +78,6 @@ void ENetBase::Poll()
                         event.packet->dataLength);
                     packetSize = event.packet->dataLength;
                 }
-                std::string peerData = "(unauthenticated)";
-                if (event.peer && event.peer->data) {
-                    peerData = "player " + std::to_string(static_cast<PeerState*>(event.peer->data)->ID);
-                }
 
                 mLogger->trace(
                     "A packet of length {} was received from {} with data "
@@ -79,7 +85,7 @@ void ENetBase::Poll()
                     "channel {}.",
                     packetSize,
                     *event.peer,
-                    peerData,
+                    peerDataStr(event),
                     event.channelID);
                 OnReceive(event);
 
@@ -88,24 +94,17 @@ void ENetBase::Poll()
                 break;
             }
 
-            case ENET_EVENT_TYPE_DISCONNECT:
-                if (event.peer) {
-                    mLogger->info("{} disconnected.\n", *event.peer);
-                }
+            case ENET_EVENT_TYPE_DISCONNECT: {
+                mLogger->info("{} disconnected.\n", peerDataStr(event));
                 OnDisconnect(event);
-                /* Reset the peer's client information. */
-                event.peer->data = NULL;
                 break;
+            }
 
-            case ENET_EVENT_TYPE_DISCONNECT_TIMEOUT:
-                mLogger->info(
-                    "{} disconnected due to timeout.\n",
-                    static_cast<char*>(event.peer->data));
-                /* Reset the peer's client information. */
+            case ENET_EVENT_TYPE_DISCONNECT_TIMEOUT: {
+                mLogger->info("{} disconnected due to timeout.\n", peerDataStr(event));
                 OnDisconnectTimeout(event);
-                event.peer->data = NULL;
                 break;
-
+            }
             case ENET_EVENT_TYPE_NONE:
                 OnNone(event);
                 break;

@@ -132,8 +132,6 @@ void ENetServer::OnDisconnect(ENetEvent& aEvent)
         mAccountNames.erase(state->ID);
         delete state;
         aEvent.peer->data = nullptr;
-    } else {
-        mLogger->info("unauthenticated peer disconnected");
     }
 }
 
@@ -145,8 +143,6 @@ void ENetServer::OnDisconnectTimeout(ENetEvent& aEvent)
         mAccountNames.erase(state->ID);
         delete state;
         aEvent.peer->data = nullptr;
-    } else {
-        mLogger->warn("unauthenticated peer timed out");
     }
 }
 
