@@ -273,6 +273,46 @@ class PocketBaseClient
             cpr::Parameters{{"fields", "id,players,status,created"}});
     }
 
+    std::expected<GameServerRecord, PBError> RegisterGameServerSync(
+        const std::string& aIp,
+        int                aPort,
+        const std::string& aPubKey,
+        bool               aHasAESNI)
+    {
+        auto r = decodePBResponse<GameServerRecordList>(Client.Get(
+            "/api/collections/game_servers/records",
+            AuthHeader(),
+            cpr::Parameters{
+                {"filter", fmt::format("(ip='{}' && port={})", aIp, aPort)},
+                {"fields", GameServerRecord::kFields},
+            }));
+
+        glz::generic payload;
+        payload["ip"]        = aIp;
+        payload["port"]      = std::to_string(aPort);
+        payload["publicKey"] = aPubKey;
+        payload["hasAESNI"]  = aHasAESNI;
+        auto json            = glz::write_json(payload).value_or("{}");
+        auto body            = cpr::Body{glz::write_json(payload).value_or("{}")};
+
+        cpr::Header headers     = AuthHeader();
+        headers["Content-Type"] = "application/json";
+
+        if (r && !r->items.empty()) {
+            mLogger->debug("server already registered, patching.");
+            return decodePBResponse<GameServerRecord>(Client.Patch(
+                "/api/collections/game_servers/records/" + r->items[0].id,
+                headers,
+                body));
+        } else if (r->items.empty()) {
+            mLogger->debug("server unregistered, adding.");
+            return decodePBResponse<GameServerRecord>(
+                Client.Post("/api/collections/game_servers/records", headers, body));
+        } else {
+            return std::unexpected{r.error()};
+        }
+    }
+
     void Unsubscribe(const std::string& aSubscription)
     {
         if (auto it = mSubscriptions.find(aSubscription); it != mSubscriptions.end()) {
