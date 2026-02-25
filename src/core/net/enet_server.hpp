@@ -64,6 +64,21 @@ class ENetServer : public ENetBase
         return it != mAccountNames.end() ? it->second : empty;
     }
 
+    const std::pair<std::string, int> IPAndPort() const
+    {
+        std::pair<std::string, int> res{mServerAddr, 0};
+
+        const size_t pos = mServerAddr.rfind(":");
+
+        if (pos != std::string::npos) {
+            res.first  = mServerAddr.substr(0, pos);
+            res.second = std::stoi(mServerAddr.substr(pos + 1));
+        }
+
+        if (res.first == "any") res.first = "0.0.0.0";
+        return res;
+    }
+
    protected:
     virtual void OnConnect(ENetEvent& aEvent) override;
     virtual void OnReceive(ENetEvent& aEvent) override;
