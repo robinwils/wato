@@ -649,6 +649,15 @@ bool ArchiveVector(
     return false;
 }
 
+template <typename Archive, typename T, typename MinMaxT, size_t N>
+bool ArchiveArray(Archive& aArchive, std::array<T, N>& aArray, MinMaxT aMin, MinMaxT aMax)
+{
+    for (auto& elem : aArray) {
+        if (!ArchiveValue(aArchive, elem, aMin, aMax)) return false;
+    }
+    return true;
+}
+
 template <typename Archive, typename T, typename MinMaxT>
     requires(IsStreamEncoder<Archive> || IsStreamDecoder<Archive>) && IsTriviallyArchivable<T>
 bool ArchiveOptionalVal(Archive& aR, std::optional<T>& aOpt, MinMaxT aMin, MinMaxT aMax)
