@@ -1,3 +1,5 @@
+#include <sodium/core.h>
+#include <spdlog/spdlog.h>
 #define ENET_IMPLEMENTATION
 #define ENET_FEATURE_ADDRESS_MAPPING
 #include <signal.h>
@@ -26,6 +28,11 @@ int main(int, char** argv)
 
     char*       tokenEnv = getenv("PB_TOKEN");
     std::string token    = tokenEnv ? tokenEnv : "";
+
+    if (sodium_init() == -1) {
+        spdlog::error("cannot initialize lib sodium");
+        return 1;
+    }
 
     if (opts.ServerAddr == "") {
         opts.ServerAddr = "any:7777";

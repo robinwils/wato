@@ -1,4 +1,5 @@
 
+#include <sodium/core.h>
 #define ENET_IMPLEMENTATION
 #define ENET_FEATURE_ADDRESS_MAPPING
 #include <signal.h>
@@ -11,6 +12,11 @@ int main(int, char** argv)
 #if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
     signal(SIGSEGV, signalHandler);
 #endif
+
+    if (sodium_init() == -1) {
+        spdlog::error("cannot initialize lib sodium");
+        return 1;
+    }
 
     tf::Executor exec;
     Options      opts(argv);

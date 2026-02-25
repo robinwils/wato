@@ -26,10 +26,6 @@ void ENetBase::Init()
     if (enet_initialize() != 0) {
         throw std::runtime_error("failed to initialize Enet");
     }
-
-    if (sodium_init() == -1) {
-        throw std::runtime_error("failed to initialize Sodium");
-    }
 }
 
 bool ENetBase::Send(ENetPeer* aPeer, const std::span<const uint8_t> aData)
