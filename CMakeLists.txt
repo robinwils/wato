@@ -447,6 +447,9 @@ target_sources(watolib
     src/components/velocity.hpp
     src/core/app/app.hpp
     src/core/app/game_server.hpp
+    src/core/crypto/aead.hpp
+    src/core/crypto/key.hpp
+    src/core/crypto/session.hpp
     src/core/graph.hpp
     src/core/net/enet_base.hpp
     src/core/net/enet_client.hpp
@@ -475,6 +478,9 @@ target_sources(watolib
   PRIVATE
     src/core/app/app.cpp
     src/core/app/game_server.cpp
+    src/core/crypto/aead.cpp
+    src/core/crypto/key.cpp
+    src/core/crypto/session.cpp
     src/core/graph.cpp
     src/core/net/enet_base.cpp
     src/core/net/enet_client.cpp
