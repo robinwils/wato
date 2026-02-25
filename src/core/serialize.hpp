@@ -106,11 +106,11 @@ class BitWriter
         return mBuf;
     }
 
-    const std::span<uint8_t> Bytes()
+    const std::span<const uint8_t> Bytes()
     {
-        uint8_t* byteView = std::bit_cast<uint8_t*>(Data().data());
+        const uint8_t* byteView = std::bit_cast<uint8_t*>(Data().data());
 
-        return std::span<uint8_t>(byteView, Data().size() * sizeof(word));
+        return std::span<const uint8_t>(byteView, Data().size() * sizeof(word));
     }
 
     const std::vector<uint8_t> ByteVector()

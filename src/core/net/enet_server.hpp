@@ -47,7 +47,7 @@ class ENetServer : public ENetBase
             });
         }
     }
-    bool Send(PlayerID aID, const std::span<uint8_t> aData)
+    bool Send(PlayerID aID, const std::span<const uint8_t> aData)
     {
         if (!mConnectedPeers.contains(aID)) {
             return false;
