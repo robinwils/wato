@@ -454,7 +454,8 @@ target_sources(watolib
     src/core/net/enet_base.hpp
     src/core/net/enet_client.hpp
     src/core/net/enet_server.hpp
-    src/core/net/http_client.cpp
+    src/core/net/http_client.hpp
+    src/core/net/pocketbase.hpp
     src/core/physics/physics.hpp
     src/core/physics/physics_event_listener.hpp
     src/core/queue/channel.hpp
@@ -486,6 +487,7 @@ target_sources(watolib
     src/core/net/enet_client.cpp
     src/core/net/enet_server.cpp
     src/core/net/http_client.cpp
+    src/core/net/pocketbase.cpp
     src/core/physics/physics.cpp
     src/core/physics/physics_event_listener.cpp
     src/core/sys/backtrace.cpp
