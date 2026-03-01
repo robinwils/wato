@@ -123,11 +123,22 @@ void ENetClient::OnReceive(ENetEvent& aEvent, byte_view aData)
 
 void ENetClient::OnDisconnect(ENetEvent& aEvent)
 {
-    BX_UNUSED(aEvent);
+    if (auto* state = static_cast<PeerState*>(aEvent.peer->data)) {
+        delete state;
+        aEvent.peer->data = nullptr;
+    }
     mConnected = false;
     mRunning   = false;
 }
 
-void ENetClient::OnDisconnectTimeout(ENetEvent& aEvent) { BX_UNUSED(aEvent); }
+void ENetClient::OnDisconnectTimeout(ENetEvent& aEvent)
+{
+    if (auto* state = static_cast<PeerState*>(aEvent.peer->data)) {
+        delete state;
+        aEvent.peer->data = nullptr;
+    }
+    mConnected = false;
+    mRunning   = false;
+}
 
 void ENetClient::OnNone(ENetEvent& aEvent) { BX_UNUSED(aEvent); }
