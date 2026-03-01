@@ -3,7 +3,9 @@
 #include <SafeInt.hpp>
 #include <charconv>
 #include <expected>
+#include <span>
 #include <string>
+#include <vector>
 
 using GameInstanceID = std::uint64_t;
 
@@ -64,3 +66,6 @@ struct std::hash<SafeInt<T>> {
         return std::hash<T>()(static_cast<const T>(aS));
     }
 };
+
+using byte_view   = std::span<const uint8_t>;
+using byte_buffer = std::vector<uint8_t>;
