@@ -54,3 +54,92 @@ class CryptoSession
 
     std::vector<uint8_t> mBuffer{};
 };
+
+#ifndef DOCTEST_CONFIG_DISABLE
+#include <doctest.h>
+
+TEST_CASE("crypto.session_aead_round_trip")
+{
+    CryptoKeys clientKeys;
+    CryptoKeys serverKeys;
+
+    CryptoSession clientSession;
+    CryptoSession serverSession;
+
+    serverSession.Init(serverKeys, clientKeys.PublicKey(), false, true);
+    clientSession.Init(clientKeys, serverKeys.PublicKey(), false, false);
+
+    REQUIRE(serverSession.Valid());
+    REQUIRE(clientSession.Valid());
+
+    SUBCASE("client to server")
+    {
+        std::vector<uint8_t> plaintext = {0xDE, 0xAD, 0xBE, 0xEF};
+
+        byte_view encrypted = clientSession.Encrypt(plaintext);
+        REQUIRE_FALSE(encrypted.empty());
+        CHECK(encrypted.size() > plaintext.size());
+
+        byte_view decrypted = serverSession.Decrypt(encrypted);
+        REQUIRE_FALSE(decrypted.empty());
+        CHECK(std::vector<uint8_t>(decrypted.begin(), decrypted.end()) == plaintext);
+    }
+
+    SUBCASE("server to client")
+    {
+        std::vector<uint8_t> plaintext = {0xCA, 0xFE, 0xBA, 0xBE};
+
+        byte_view encrypted = serverSession.Encrypt(plaintext);
+        REQUIRE_FALSE(encrypted.empty());
+
+        byte_view decrypted = clientSession.Decrypt(encrypted);
+        REQUIRE_FALSE(decrypted.empty());
+        CHECK(std::vector<uint8_t>(decrypted.begin(), decrypted.end()) == plaintext);
+    }
+}
+
+TEST_CASE("crypto.session_aead_tampered")
+{
+    CryptoKeys clientKeys;
+    CryptoKeys serverKeys;
+
+    CryptoSession clientSession;
+    CryptoSession serverSession;
+
+    serverSession.Init(serverKeys, clientKeys.PublicKey(), false, true);
+    clientSession.Init(clientKeys, serverKeys.PublicKey(), false, false);
+
+    std::vector<uint8_t> plaintext = {1, 2, 3, 4, 5};
+
+    byte_view encrypted = clientSession.Encrypt(plaintext);
+    REQUIRE_FALSE(encrypted.empty());
+
+    std::vector<uint8_t> tampered(encrypted.begin(), encrypted.end());
+    tampered[tampered.size() / 2] ^= 0xFF;
+
+    byte_view decrypted = serverSession.Decrypt(tampered);
+    CHECK(decrypted.empty());
+}
+
+TEST_CASE("crypto.session_aead_wrong_session")
+{
+    CryptoKeys clientKeys;
+    CryptoKeys serverKeys;
+    CryptoKeys rogueKeys;
+
+    CryptoSession clientSession;
+    CryptoSession rogueSession;
+
+    clientSession.Init(clientKeys, serverKeys.PublicKey(), false, false);
+    rogueSession.Init(rogueKeys, serverKeys.PublicKey(), false, true);
+
+    std::vector<uint8_t> plaintext = {42};
+
+    byte_view encrypted = clientSession.Encrypt(plaintext);
+    REQUIRE_FALSE(encrypted.empty());
+
+    // Wrong session keys should fail
+    byte_view decrypted = rogueSession.Decrypt(encrypted);
+    CHECK(decrypted.empty());
+}
+#endif

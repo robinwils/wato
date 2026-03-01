@@ -22,11 +22,17 @@ target_sources(wato_tests
     ${CMAKE_SOURCE_DIR}/src/core/physics/physics.hpp
     ${CMAKE_SOURCE_DIR}/src/core/snapshot.hpp
     ${CMAKE_SOURCE_DIR}/src/core/net/net.hpp
+    ${CMAKE_SOURCE_DIR}/src/core/crypto/key.hpp
+    ${CMAKE_SOURCE_DIR}/src/core/crypto/session.hpp
+    ${CMAKE_SOURCE_DIR}/src/core/crypto/aead.hpp
     ${CMAKE_SOURCE_DIR}/src/core/queue/ring_buffer.hpp
     ${CMAKE_SOURCE_DIR}/src/input/action.hpp
     test.hpp
   PRIVATE
     ${CMAKE_SOURCE_DIR}/src/core/physics/physics.cpp
+    ${CMAKE_SOURCE_DIR}/src/core/crypto/key.cpp
+    ${CMAKE_SOURCE_DIR}/src/core/crypto/session.cpp
+    ${CMAKE_SOURCE_DIR}/src/core/crypto/aead.cpp
     main.cpp
 )
 
@@ -37,6 +43,7 @@ target_link_libraries(wato_tests
     spdlog::spdlog
     ReactPhysics3D::ReactPhysics3D
     doctest
+    sodium
 )
 
 if(ENABLE_FUZZING)
