@@ -150,6 +150,10 @@ class BitReader
         : mBuf(std::move(aBits)), mScratch(0), mCurBit(0), mNext(mBuf.data())
     {
     }
+    BitReader(const_bit_stream aBits)
+        : mBuf(aBits), mScratch(0), mCurBit(0), mNext(mBuf.data())
+    {
+    }
     BitReader(const bit_buffer& aBits)
         : mBuf(std::span(aBits)), mScratch(0), mCurBit(0), mNext(mBuf.data())
     {
@@ -379,6 +383,10 @@ class StreamDecoder
     StreamDecoder(const bit_buffer& aBits) : mBits(aBits) {}
     StreamDecoder(uint8_t* aBytes, std::size_t aSize)
         : mBits(bit_stream(std::bit_cast<word*>(aBytes), aSize))
+    {
+    }
+    StreamDecoder(const uint8_t* aBytes, std::size_t aSize)
+        : mBits(const_bit_stream(std::bit_cast<const word*>(aBytes), aSize))
     {
     }
 

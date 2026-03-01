@@ -47,6 +47,14 @@ class BitInputArchive : public StreamDecoder
         }
     }
 
+    BitInputArchive(byte_view aData, bool aEnableLogger = true)
+        : StreamDecoder(aData.data(), aData.size())
+    {
+        if (!aEnableLogger) {
+            WATO_SER_LOGGER->set_level(spdlog::level::off);
+        }
+    }
+
     void operator()(entt::entity& aEntity)
     {
         ENTT_ID_TYPE entityV;
