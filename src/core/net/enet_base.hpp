@@ -6,6 +6,7 @@
 #include <entt/signal/dispatcher.hpp>
 #include <entt/signal/emitter.hpp>
 
+#include "core/crypto/session.hpp"
 #include "core/net/net.hpp"
 #include "core/queue/channel.hpp"
 #include "core/sys/log.hpp"
@@ -13,7 +14,9 @@
 
 struct PeerState {
     PlayerID ID{0};
-    // future: per-peer encryption state (e.g. libsodium session keys)
+
+    CryptoSession SecureSession{};
+    PublicKey     PeerPK{};
 };
 
 class ENetBase

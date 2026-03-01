@@ -48,7 +48,8 @@ void ENetServer::Init()
 
 void ENetServer::OnConnect(ENetEvent& aEvent)
 {
-    BX_UNUSED(aEvent);
+    auto* state       = new PeerState{.ID = 0};
+    aEvent.peer->data = state;
     mLogger->info("peer connected, awaiting auth");
 }
 
@@ -105,8 +106,8 @@ void ENetServer::ProcessAuthResults()
             return;
         }
 
-        auto* state      = new PeerState{.ID = aResult->ID};
-        aResult->Peer->data = state;
+        auto* state    = static_cast<PeerState*>(aResult->Peer->data);
+        state->ID      = aResult->ID;
 
         mConnectedPeers[aResult->ID] = aResult->Peer;
         mAccountNames[aResult->ID]   = aResult->AccountName;

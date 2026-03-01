@@ -35,7 +35,13 @@ bool ENetClient::Connect()
 
     /* Initiate the connection, allocating the two channels 0 and 1. */
     mPeer = enet_host_connect(mHost.get(), &address, 2, 0);
-    return mPeer != nullptr;
+
+    if (mPeer == nullptr) return false;
+
+    auto* state = new PeerState{.ID = 0, .PeerPK = std::move(mServerPK)};
+    mPeer->data = state;
+
+    return mPeer;
 }
 
 void ENetClient::Disconnect()
