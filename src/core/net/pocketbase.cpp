@@ -98,6 +98,27 @@ void PocketBaseClient::UpdateGame(
         cpr::Parameters{{"fields", "id,players,status,created"}});
 }
 
+std::expected<GameServerRecord, PBError> PocketBaseClient::GetGameServer(
+    const std::string& aIp,
+    int                aPort)
+{
+    auto r = decodePBResponse<GameServerRecordList>(Client.Get(
+        "/api/collections/game_servers/records",
+        AuthHeader(),
+        cpr::Parameters{
+            {"filter", fmt::format("(ip='{}' && port={})", aIp, aPort)},
+            {"fields", GameServerRecord::kFields},
+        }));
+
+    if (!r) {
+        return std::unexpected(r.error());
+    }
+    if (r->items.empty()) {
+        return std::unexpected(PBError{.StatusCode = 404, .Message = "Game server not found"});
+    }
+    return std::move(r->items[0]);
+}
+
 std::expected<GameServerRecord, PBError> PocketBaseClient::RegisterGameServerSync(
     const std::string& aIp,
     int                aPort,

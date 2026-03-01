@@ -207,6 +207,8 @@ class PocketBaseClient
 
     void GetGamesSince(const std::string& aTimestamp, PBCallback<GameRecordList> aCallback);
 
+    std::expected<GameServerRecord, PBError> GetGameServer(const std::string& aIp, int aPort);
+
     void UpdateGame(
         const std::string&     aRecord,
         const std::string&     aStatus,
