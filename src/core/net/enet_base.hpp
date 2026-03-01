@@ -58,11 +58,11 @@ class ENetBase
    protected:
     bool Send(ENetPeer* aPeer, const std::span<const uint8_t> aData);
 
-    virtual void OnConnect(ENetEvent& aEvent)           = 0;
-    virtual void OnReceive(ENetEvent& aEvent)           = 0;
-    virtual void OnDisconnect(ENetEvent& aEvent)        = 0;
-    virtual void OnDisconnectTimeout(ENetEvent& aEvent) = 0;
-    virtual void OnNone(ENetEvent& aEvent)              = 0;
+    virtual void OnConnect(ENetEvent& aEvent)                  = 0;
+    virtual void OnReceive(ENetEvent& aEvent, byte_view aData) = 0;
+    virtual void OnDisconnect(ENetEvent& aEvent)               = 0;
+    virtual void OnDisconnectTimeout(ENetEvent& aEvent)        = 0;
+    virtual void OnNone(ENetEvent& aEvent)                     = 0;
 
     std::atomic_bool     mRunning{false};
     enet_host_ptr        mHost;
@@ -72,4 +72,6 @@ class ENetBase
     channel_response_t mRespChannel;
 
     Logger mLogger;
+
+    CryptoKeys mKeys;
 };

@@ -2,6 +2,7 @@
 
 #include <unordered_map>
 
+#include "core/crypto/session.hpp"
 #include "core/net/enet_base.hpp"
 #include "core/net/net.hpp"
 #include "core/sys/log.hpp"
@@ -9,9 +10,11 @@
 class PocketBaseClient;
 
 struct AuthResult {
-    ENetPeer*   Peer;
-    PlayerID    ID;
-    std::string AccountName;
+    ENetPeer*          Peer;
+    PlayerID           ID;
+    std::string        AccountName;
+    bool               HasAESNI;
+    CryptoKeys::Public PublicKey;
 };
 
 class ENetServer : public ENetBase
@@ -79,9 +82,11 @@ class ENetServer : public ENetBase
         return res;
     }
 
+    const std::string PublicKey() const { return mKeys.ExportPublicKey(); }
+
    protected:
     virtual void OnConnect(ENetEvent& aEvent) override;
-    virtual void OnReceive(ENetEvent& aEvent) override;
+    virtual void OnReceive(ENetEvent& aEvent, byte_view aData) override;
     virtual void OnDisconnect(ENetEvent& aEvent) override;
     virtual void OnDisconnectTimeout(ENetEvent& aEvent) override;
     virtual void OnNone(ENetEvent& aEvent) override;

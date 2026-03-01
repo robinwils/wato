@@ -1,6 +1,7 @@
 #include "core/app/game_client.hpp"
 
 #include <bx/bx.h>
+#include <sodium/runtime.h>
 #include <spdlog/spdlog.h>
 
 #include <chrono>
@@ -15,6 +16,7 @@
 #include "components/player.hpp"
 #include "components/rigid_body.hpp"
 #include "components/transform3d.hpp"
+#include "core/crypto/key.hpp"
 #include "core/graph.hpp"
 #include "core/menu/menu.hpp"
 #include "core/net/enet_client.hpp"
@@ -81,6 +83,16 @@ void GameClient::Init()
     mEndGameExecutor.Register<RenderSystem>();
     mEndGameExecutor.Register<RenderImguiSystem>();
     mEndGameExecutor.Register<AnimationSystem>();
+
+    // fetch ENet server public key from pocketbase which is a secure channel if TLS enabled
+    auto r = mRegistry.ctx().get<PocketBaseClient&>().GetGameServer("0.0.0.0", 7777);
+    if (!r) {
+        mLogger->error("cannot get game server");
+        return;
+    }
+
+    mLogger->debug("got server public key = {}", r->publicKey);
+    mRegistry.ctx().get<ENetClient&>().SetServerPK(KeyFromB64<32>(r->publicKey));
 }
 
 int GameClient::Run(tf::Executor& aExecutor)
@@ -343,7 +355,10 @@ void GameClient::consumeNetworkResponses()
             req->Type     = PacketType::Auth;
             req->PlayerID = 0;
             req->Tick     = 0;
-            req->Payload  = AuthRequest{.Token = pb.Token};
+            req->Payload  = AuthRequest{
+                 .Token     = pb.Token,
+                 .HasAESNI  = sodium_runtime_has_aesni() != 0,
+                 .PublicKey = netClient.PublicKey()};
             netClient.EnqueueRequest(req);
         }
 

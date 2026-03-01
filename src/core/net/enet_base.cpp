@@ -6,6 +6,7 @@
 
 #include <stdexcept>
 
+#include "core/crypto/key.hpp"
 #include "core/net/net.hpp"
 #include "core/sys/log.hpp"
 
@@ -35,7 +36,21 @@ bool ENetBase::Send(ENetPeer* aPeer, const std::span<const uint8_t> aData)
         return false;
     }
 
-    ENetPacket* packet = enet_packet_create(aData.data(), aData.size(), ENET_PACKET_FLAG_RELIABLE);
+    auto* state = static_cast<PeerState*>(aPeer->data);
+    if (!state || !state->SecureSession.Valid()) {
+        mLogger->error("Peer not initialized or session not established");
+        return false;
+    }
+
+    byte_view enc = state->SecureSession.Encrypt(aData);
+    if (enc.empty()) {
+        mLogger->error("Could not encrypt peer data");
+        return false;
+    }
+
+    auto data = byte_buffer(enc.begin(), enc.end());
+
+    ENetPacket* packet = enet_packet_create(data.data(), data.size(), ENET_PACKET_FLAG_RELIABLE);
 
     if (-1 == enet_peer_send(aPeer, 0, packet)) {
         enet_packet_destroy(packet);
@@ -83,7 +98,27 @@ void ENetBase::Poll()
                     *event.peer,
                     peerDataStr(event),
                     event.channelID);
-                OnReceive(event);
+
+                auto* state = static_cast<PeerState*>(event.peer->data);
+                if (!state) {
+                    mLogger->error("Peer not initialized");
+                    enet_packet_destroy(event.packet);
+                    break;
+                }
+
+                if (state->SecureSession.Valid()) {
+                    byte_view decrypted = state->SecureSession.Decrypt(
+                        {event.packet->data, event.packet->dataLength});
+                    if (decrypted.empty()) {
+                        mLogger->error("Could not decrypt data");
+                        enet_packet_destroy(event.packet);
+                        break;
+                    }
+
+                    OnReceive(event, decrypted);
+                } else {
+                    OnReceive(event, {event.packet->data, event.packet->dataLength});
+                }
 
                 /* Clean up the packet now that we're done using it. */
                 enet_packet_destroy(event.packet);

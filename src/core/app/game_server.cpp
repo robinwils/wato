@@ -2,6 +2,7 @@
 
 #include <bx/bx.h>
 #include <fmt/ranges.h>
+#include <sodium/runtime.h>
 #include <spdlog/spdlog.h>
 
 #include <thread>
@@ -56,6 +57,18 @@ void GameServer::Init()
                 }
             });
     });
+
+    // We are taking advantage of TLS here. Publishing the server's public key in PocketBase
+    // game_servers collection allows the client to GET it securely through HTTP + TLS (if
+    // configured), keeping the ENet handshake minimal.
+    auto [ip, port]    = mServer.IPAndPort();
+    std::string pubKey = mServer.PublicKey();
+
+    if (pubKey.empty()) {
+        mLogger->warn("could not encode server public key");
+    }
+
+    mPBClient.RegisterGameServerSync(ip, port, pubKey, sodium_runtime_has_aesni());
 }
 
 GameServer::~GameServer()

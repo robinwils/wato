@@ -6,6 +6,7 @@
 #include <variant>
 
 #include "components/player.hpp"
+#include "core/crypto/key.hpp"
 #include "core/physics/physics.hpp"
 #include "core/serialize.hpp"
 #include "core/state.hpp"
@@ -296,27 +297,34 @@ inline bool operator==(const GameEndResponse& aLHS, const GameEndResponse& aRHS)
 }
 
 struct AuthRequest {
-    std::string Token;
-    bool        Archive(auto& aArchive) { return ArchiveString(aArchive, Token, 1024); }
-};
+    std::string        Token;
+    bool               HasAESNI;
+    CryptoKeys::Public PublicKey;
 
-inline bool operator==(const AuthRequest& a, const AuthRequest& b) { return a.Token == b.Token; }
+    bool Archive(auto& aArchive)
+    {
+        if (!ArchiveString(aArchive, Token, 1024)) return false;
+        if (!ArchiveBool(aArchive, HasAESNI)) return false;
+        return ArchiveArray(aArchive, PublicKey, uint8_t(0), std::numeric_limits<uint8_t>::max());
+    }
+
+    auto operator<=>(const AuthRequest&) const = default;
+};
 
 struct AuthResponse {
     PlayerID ID;
+    bool     HasAESNI;
     bool     Success;
 
     bool Archive(auto& aArchive)
     {
         if (!ArchivePlayerID(aArchive, ID)) return false;
+        if (!ArchiveBool(aArchive, HasAESNI)) return false;
         return ArchiveBool(aArchive, Success);
     }
-};
 
-inline bool operator==(const AuthResponse& a, const AuthResponse& b)
-{
-    return a.ID == b.ID && a.Success == b.Success;
-}
+    auto operator<=>(const AuthResponse&) const = default;
+};
 
 enum class PacketType : std::uint16_t {
     ClientSync,

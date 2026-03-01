@@ -2,8 +2,10 @@
 
 #include <bx/spscqueue.h>
 #include <enet.h>
+#include <sodium/runtime.h>
 #include <spdlog/spdlog.h>
 
+#include <expected>
 #include <span>
 #include <stdexcept>
 
@@ -53,42 +55,63 @@ void ENetServer::OnConnect(ENetEvent& aEvent)
     mLogger->info("peer connected, awaiting auth");
 }
 
-void ENetServer::OnReceive(ENetEvent& aEvent)
+void ENetServer::OnReceive(ENetEvent& aEvent, byte_view aData)
 {
-    BitInputArchive archive(aEvent.packet->data, aEvent.packet->dataLength);
+    if (aData.empty()) {
+        return;
+    }
+
+    auto* state = static_cast<PeerState*>(aEvent.peer->data);
+
+    // Pre-session: sealed box from client handshake
+    if (state && !state->SecureSession.Valid()) {
+        byte_view decrypted = mKeys.Decrypt(aData);
+        if (decrypted.empty()) {
+            mLogger->error("Could not open sealed handshake");
+            return;
+        }
+        aData = decrypted;
+    }
+
+    BitInputArchive archive(aData);
     auto*           ev = new NetworkRequest;
 
     if (!ev->Archive(archive)) {
-        spdlog::critical("cannot decode packet");
+        mLogger->critical("cannot decode packet");
         delete ev;
         return;
     }
 
     if (ev->Type == PacketType::Auth) {
-        auto  token = std::get<AuthRequest>(ev->Payload).Token;
-        auto* peer  = aEvent.peer;
+        auto  auth = std::get<AuthRequest>(ev->Payload);
+        auto* peer = aEvent.peer;
 
         mPBClient.RefreshToken(
-            [peer, &chan = mAuthResultChan, logger = mLogger](
-                const std::optional<LoginResult>& aResult,
-                const std::string&                aError) {
+            [peer,
+             &chan    = mAuthResultChan,
+             logger   = mLogger,
+             hasAESNI = auth.HasAESNI,
+             pub      = auth.PublicKey](std::expected<LoginResult, PBError> aResult) {
                 if (aResult) {
                     auto playerID = PlayerIDFromHexString(aResult->record.id);
                     if (playerID) {
                         chan.Send(new AuthResult{
-                            peer, *playerID, aResult->record.accountName});
+                            peer,
+                            *playerID,
+                            aResult->record.accountName,
+                            hasAESNI,
+                            pub});
                         return;
                     }
                 }
-                logger->warn("auth verification failed: {}", aError);
+                logger->warn("auth verification failed: {}", aResult.error().Message);
             },
-            token);
+            auth.Token);
         delete ev;
         return;
     }
 
-    auto* state = static_cast<PeerState*>(aEvent.peer->data);
-    if (!state) {
+    if (!state || state->ID == 0) {
         mLogger->warn("dropping packet from unauthenticated peer");
         delete ev;
         return;
@@ -101,24 +124,32 @@ void ENetServer::ProcessAuthResults()
 {
     mAuthResultChan.Drain([this](AuthResult* aResult) {
         if (aResult->Peer->state != ENET_PEER_STATE_CONNECTED) {
-            mLogger->warn(
-                "peer disconnected before auth completed for player {}", aResult->ID);
+            mLogger->warn("peer disconnected before auth completed for player {}", aResult->ID);
             return;
         }
 
         auto* state    = static_cast<PeerState*>(aResult->Peer->data);
         state->ID      = aResult->ID;
+        bool  canAEGIS = aResult->HasAESNI && (sodium_runtime_has_aesni() != 0);
+
+        state->SecureSession.Init(mKeys, aResult->PublicKey, canAEGIS, true);
+        if (!state->SecureSession.Valid()) {
+            mLogger->error("cannot compute server session keys");
+            return;
+        }
 
         mConnectedPeers[aResult->ID] = aResult->Peer;
         mAccountNames[aResult->ID]   = aResult->AccountName;
         mLogger->info(
-            "player {} ({}) authenticated and registered", aResult->ID, aResult->AccountName);
+            "player {} ({}) authenticated and registered",
+            aResult->ID,
+            aResult->AccountName);
 
         auto resp = NetworkResponse{
             .Type     = PacketType::Auth,
             .PlayerID = aResult->ID,
             .Tick     = 0,
-            .Payload  = AuthResponse{.ID = aResult->ID, .Success = true}};
+            .Payload  = AuthResponse{.ID = aResult->ID, .HasAESNI = canAEGIS, .Success = true}};
         BitOutputArchive archive;
         resp.Archive(archive);
         ENetBase::Send(aResult->Peer, archive.Bytes());

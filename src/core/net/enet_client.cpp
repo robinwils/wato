@@ -2,6 +2,7 @@
 
 #include <enet.h>
 #include <fmt/core.h>
+#include <sodium/runtime.h>
 #include <spdlog/spdlog.h>
 
 #include <stdexcept>
@@ -61,6 +62,35 @@ void ENetClient::ForceDisconnect()
     mRunning   = false;
 }
 
+void ENetClient::Send(std::span<const uint8_t> aData)
+{
+    if (!mPeer || !mPeer->data) return;
+
+    auto* state = static_cast<PeerState*>(mPeer->data);
+
+    if (!state->SecureSession.Valid()) {
+        // Handshake: sealed box with server's public key
+        byte_view enc = state->PeerPK.Encrypt(aData);
+        if (enc.empty()) {
+            mLogger->error("Could not seal handshake data");
+            return;
+        }
+
+        ENetPacket* packet = enet_packet_create(enc.data(), enc.size(), ENET_PACKET_FLAG_RELIABLE);
+        if (-1 == enet_peer_send(mPeer, 0, packet)) {
+            enet_packet_destroy(packet);
+            return;
+        }
+        enet_host_flush(mHost.get());
+
+        // Init session keys for subsequent AEAD traffic
+        bool hasAESNI = sodium_runtime_has_aesni() != 0;
+        state->SecureSession.Init(mKeys, state->PeerPK.Raw(), hasAESNI, false);
+    } else {
+        ENetBase::Send(mPeer, aData);
+    }
+}
+
 void ENetClient::OnConnect(ENetEvent& aEvent)
 {
     BX_UNUSED(aEvent);
@@ -74,9 +104,9 @@ void ENetClient::OnConnect(ENetEvent& aEvent)
     mConnected = true;
 }
 
-void ENetClient::OnReceive(ENetEvent& aEvent)
+void ENetClient::OnReceive(ENetEvent& aEvent, byte_view aData)
 {
-    BitInputArchive archive(aEvent.packet->data, aEvent.packet->dataLength, true);
+    BitInputArchive archive(aData, true);
     auto*           ev = new NetworkResponse;
 
     if (!ev->Archive(archive)) {
