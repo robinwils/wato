@@ -325,3 +325,8 @@ shaders/*.bin
 
 # logs
 logs
+
+# binaries
+/wato
+/watod
+/wato_tests

@@ -115,4 +115,4 @@ jobs:
 
       - name: Test
         run: |
-          ./out/build/${{ env.CMAKE_PRESET }}/test/wato_tests
+          ./wato_tests

@@ -8,7 +8,7 @@ cmake --preset tests-unixlike-clang-debug -G "Ninja" -B tmp\
     -DLIB_FUZZING_ENGINE=$LIB_FUZZING_ENGINE
 cmake --build tmp --parallel --target wato_fuzz
 
-cp $SRC/wato/tmp/test/wato_fuzz $OUT/
+cp $SRC/wato/wato_fuzz $OUT/
 if [ -d "$SRC/wato/corpus" ]; then
     zip -j $OUT/wato_fuzz_seed_corpus.zip $SRC/wato/corpus/*
 fi
