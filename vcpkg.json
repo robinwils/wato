@@ -7,7 +7,12 @@
     "reactphysics3d",
     "safeint",
     "glaze",
-    "cpr"
+    "cpr",
+    {
+      "name": "bgfx",
+      "default-features": false,
+      "$reason": "watolib uses bx (spsc queue, ring buffer, platform macros)"
+    }
   ],
   "features": {
     "client": {
