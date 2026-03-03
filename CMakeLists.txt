@@ -92,8 +92,11 @@ set(FETCHED_DEPS_NAMES
   enet
   argh
   taskflow
-  doctest
 )
+
+if (ENABLE_TESTS)
+  list(APPEND FETCHED_DEPS_NAMES doctest)
+endif()
 
 FetchContent_MakeAvailable(${FETCHED_DEPS_NAMES})
 set(OTHER_DEPS
