@@ -21,7 +21,7 @@ func main() {
 	migratecmd.MustRegister(app, app.RootCmd, migratecmd.Config{
 		// enable auto creation of migration files when making collection changes in the Dashboard
 		// (the isGoRun check is to enable it only during development)
-		Automigrate: autoMigrate != "",
+		Automigrate: autoMigrate != "1",
 	})
 
 	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
