@@ -201,7 +201,7 @@ class PocketBaseClient
         auto& sub = mSubscriptions.at(aSubscription);
 
         sub.OnReconnect = std::move(aOnReconnect);
-        sub.Factory     = [this, aSubscription, aFields, &aChan](std::stop_source aStop) {
+        sub.Factory     = [this, aSubscription, aFields, &aChan](StopFlag aStop) {
             return startSSE<T>(aSubscription, aFields, aChan, aStop);
         };
         sub.SSEResponse = sub.Factory(sub.StopSource);
@@ -321,27 +321,29 @@ class PocketBaseClient
         mAsyncResponses.emplace_back(std::move(future));
     }
 
+    using StopFlag = std::shared_ptr<std::atomic<bool>>;
+
     struct SSEState {
-        std::stop_source   StopSource;
+        StopFlag           StopSource{std::make_shared<std::atomic<bool>>(false)};
         cpr::AsyncResponse SSEResponse{};
 
-        bool                                                ShouldReconnect{false};
-        std::chrono::steady_clock::time_point               NextReconnect{};
-        std::chrono::milliseconds                           BackoffMs{1000};
-        std::function<void()>                               OnReconnect;
-        std::function<cpr::AsyncResponse(std::stop_source)> Factory;
+        bool                                              ShouldReconnect{false};
+        std::chrono::steady_clock::time_point             NextReconnect{};
+        std::chrono::milliseconds                         BackoffMs{1000};
+        std::function<void()>                             OnReconnect;
+        std::function<cpr::AsyncResponse(StopFlag)>       Factory;
     };
 
     template <typename T>
     bool handleSSEEvent(
         const SSEEvent&    aEvent,
         Channel<PBSSE<T>>& aChan,
-        std::stop_source   aStop,
+        const StopFlag&    aStop,
         const std::string& aSubscription,
         const std::string& aFields)
     {
         mLogger->debug("got SSEEvent {}: {}", aEvent.Event, aEvent.Data);
-        if (aStop.stop_requested()) {
+        if (aStop->load()) {
             mLogger->info("Stop requested for subscription {}", aSubscription);
             return false;
         }
@@ -372,13 +374,13 @@ class PocketBaseClient
         const std::string& aSubscription,
         const std::string& aFields,
         Channel<PBSSE<T>>& aChan,
-        std::stop_source   aStop)
+        StopFlag           aStop)
     {
         return Client.ConnectSSE(
             "/api/realtime",
-            [this, stopSource = aStop, aSubscription, aFields, &aChan](
+            [this, stopFlag = std::move(aStop), aSubscription, aFields, &aChan](
                 const SSEEvent& aEvent) mutable {
-                return handleSSEEvent<T>(aEvent, aChan, stopSource, aSubscription, aFields);
+                return handleSSEEvent<T>(aEvent, aChan, stopFlag, aSubscription, aFields);
             },
             AuthHeader());
     }

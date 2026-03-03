@@ -185,7 +185,7 @@ std::expected<GameServerRecord, PBError> PocketBaseClient::RegisterGameServerSyn
 void PocketBaseClient::Unsubscribe(const std::string& aSubscription)
 {
     if (auto it = mSubscriptions.find(aSubscription); it != mSubscriptions.end()) {
-        it->second.StopSource.request_stop();
+        it->second.StopSource->store(true);
         mSubscriptions.erase(it);
         mLogger->debug("unsubscribed");
     }
@@ -215,7 +215,7 @@ void PocketBaseClient::Update()
                    == std::future_status::ready) {
             auto resp = state.SSEResponse.get();
 
-            if (state.StopSource.stop_requested()) {
+            if (state.StopSource->load()) {
                 continue;
             }
 
@@ -240,7 +240,7 @@ void PocketBaseClient::Update()
 
         if (state.ShouldReconnect && now >= state.NextReconnect) {
             mLogger->info("reconnecting SSE '{}'", name);
-            state.StopSource      = std::stop_source{};
+            state.StopSource      = std::make_shared<std::atomic<bool>>(false);
             state.SSEResponse     = state.Factory(state.StopSource);
             state.ShouldReconnect = false;
             if (state.OnReconnect) toReconnect.push_back(state.OnReconnect);
