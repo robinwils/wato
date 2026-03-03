@@ -196,8 +196,8 @@ inline bool operator==(const Action& aLHS, const Action& aRHS)
 using ActionsType = std::vector<Action>;
 
 struct TaggedAction {
-    PlayerID PlayerID;
-    Action   Action;
+    ::PlayerID PlayerID;
+    ::Action   Action;
 };
 
 using TaggedActionsType = std::vector<TaggedAction>;

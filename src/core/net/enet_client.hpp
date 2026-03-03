@@ -26,9 +26,9 @@ class ENetClient : public ENetBase
 
     [[nodiscard]] bool Connected() const noexcept { return mConnected; }
 
-    const CryptoKeys::Public PublicKey() const { return mKeys.PublicKey(); }
+    const CryptoKeys::Public RawPublicKey() const { return mKeys.RawPublicKey(); }
 
-    void SetServerPK(const CryptoKeys::Public& aPubKey) { mServerPK = ::PublicKey(aPubKey); }
+    void SetServerPK(const CryptoKeys::Public& aPubKey) { mServerPK = PublicKey(aPubKey); }
 
    protected:
     void OnConnect(ENetEvent& aEvent) override;

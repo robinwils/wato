@@ -121,11 +121,11 @@ struct fmt::formatter<RigidBodyEvent> : fmt::formatter<std::string> {
 };
 
 struct ProjectileInitData {
-    entt::entity   SourceTower;
-    float          Damage;
-    float          Speed;
-    entt::entity   Target;
-    ColliderParams ColliderParams;
+    entt::entity     SourceTower;
+    float            Damage;
+    float            Speed;
+    entt::entity     Target;
+    ::ColliderParams ColliderParams;
 
     bool Archive(auto& aArchive)
     {
@@ -145,10 +145,10 @@ inline bool operator==(const ProjectileInitData& aLHS, const ProjectileInitData&
 }
 
 struct TowerInitData {
-    TowerType      Type;
-    glm::vec3      Position;
-    PlayerID       OwnerID;
-    ColliderParams ColliderParams;
+    TowerType        Type;
+    glm::vec3        Position;
+    PlayerID         OwnerID;
+    ::ColliderParams ColliderParams;
 
     bool Archive(auto& aArchive)
     {
@@ -165,10 +165,10 @@ inline bool operator==(const TowerInitData& aLHS, const TowerInitData& aRHS)
 }
 
 struct CreepInitData {
-    CreepType      Type;
-    glm::vec3      Position;
-    PlayerID       OwnerID;
-    ColliderParams ColliderParams;
+    CreepType        Type;
+    glm::vec3        Position;
+    PlayerID         OwnerID;
+    ::ColliderParams ColliderParams;
 
     bool Archive(auto& aArchive)
     {

@@ -358,7 +358,7 @@ void GameClient::consumeNetworkResponses()
             req->Payload  = AuthRequest{
                  .Token     = pb.Token,
                  .HasAESNI  = sodium_runtime_has_aesni() != 0,
-                 .PublicKey = netClient.PublicKey()};
+                 .PublicKey = netClient.RawPublicKey()};
             netClient.EnqueueRequest(req);
         }
 

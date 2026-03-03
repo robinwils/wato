@@ -56,8 +56,8 @@ class CryptoKeys
         return b64;
     }
 
-    const Public PublicKey() const { return mPublic; }
-    const Secret SecretKey() const { return mSecret; }
+    const Public RawPublicKey() const { return mPublic; }
+    const Secret RawSecretKey() const { return mSecret; }
 
     byte_view Decrypt(byte_view aBytes);
 
@@ -96,7 +96,7 @@ std::array<unsigned char, N> KeyFromB64(const std::string& aB64Key)
 TEST_CASE("crypto.sealed_box_round_trip")
 {
     CryptoKeys keys;
-    PublicKey  pub(keys.PublicKey());
+    PublicKey  pub(keys.RawPublicKey());
 
     std::vector<uint8_t> plaintext = {0x48, 0x65, 0x6C, 0x6C, 0x6F};  // "Hello"
 
@@ -113,7 +113,7 @@ TEST_CASE("crypto.sealed_box_wrong_key")
 {
     CryptoKeys keysA;
     CryptoKeys keysB;
-    PublicKey   pub(keysA.PublicKey());
+    PublicKey  pub(keysA.RawPublicKey());
 
     std::vector<uint8_t> plaintext = {1, 2, 3, 4};
 
@@ -128,7 +128,7 @@ TEST_CASE("crypto.sealed_box_wrong_key")
 TEST_CASE("crypto.sealed_box_tampered")
 {
     CryptoKeys keys;
-    PublicKey  pub(keys.PublicKey());
+    PublicKey  pub(keys.RawPublicKey());
 
     std::vector<uint8_t> plaintext = {10, 20, 30};
 
@@ -152,19 +152,19 @@ TEST_CASE("crypto.base64_round_trip")
     CHECK(b64.size() == CryptoKeys::kPublicBase64Len - 1);
 
     auto decoded = KeyFromB64<crypto_kx_PUBLICKEYBYTES>(b64);
-    CHECK(decoded == keys.PublicKey());
+    CHECK(decoded == keys.RawPublicKey());
 }
 
 TEST_CASE("crypto.base64_invalid_input")
 {
-    auto decoded = KeyFromB64<crypto_kx_PUBLICKEYBYTES>("not_valid_base64!!!");
+    auto               decoded = KeyFromB64<crypto_kx_PUBLICKEYBYTES>("not_valid_base64!!!");
     CryptoKeys::Public zeroed{};
     CHECK(decoded == zeroed);
 }
 
 TEST_CASE("crypto.base64_empty_input")
 {
-    auto decoded = KeyFromB64<crypto_kx_PUBLICKEYBYTES>("");
+    auto               decoded = KeyFromB64<crypto_kx_PUBLICKEYBYTES>("");
     CryptoKeys::Public zeroed{};
     CHECK(decoded == zeroed);
 }
@@ -177,8 +177,8 @@ TEST_CASE("crypto.base64_sealed_box_integration")
     std::string b64 = serverKeys.ExportPublicKey();
     REQUIRE_FALSE(b64.empty());
 
-    auto       serverPKRaw = KeyFromB64<crypto_kx_PUBLICKEYBYTES>(b64);
-    PublicKey   serverPK(serverPKRaw);
+    auto      serverPKRaw = KeyFromB64<crypto_kx_PUBLICKEYBYTES>(b64);
+    PublicKey serverPK(serverPKRaw);
 
     std::vector<uint8_t> plaintext = {0xAB, 0xCD, 0xEF};
 

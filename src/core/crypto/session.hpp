@@ -25,8 +25,8 @@ class CryptoSession
                 (crypto_kx_server_session_keys(
                      mRX,
                      mTX,
-                     aSelf.PublicKey().data(),
-                     aSelf.SecretKey().data(),
+                     aSelf.RawPublicKey().data(),
+                     aSelf.RawSecretKey().data(),
                      aPub.data())
                  == 0);
         } else {
@@ -34,8 +34,8 @@ class CryptoSession
                 (crypto_kx_client_session_keys(
                      mRX,
                      mTX,
-                     aSelf.PublicKey().data(),
-                     aSelf.SecretKey().data(),
+                     aSelf.RawPublicKey().data(),
+                     aSelf.RawSecretKey().data(),
                      aPub.data())
                  == 0);
         }
@@ -66,8 +66,8 @@ TEST_CASE("crypto.session_aead_round_trip")
     CryptoSession clientSession;
     CryptoSession serverSession;
 
-    serverSession.Init(serverKeys, clientKeys.PublicKey(), false, true);
-    clientSession.Init(clientKeys, serverKeys.PublicKey(), false, false);
+    serverSession.Init(serverKeys, clientKeys.RawPublicKey(), false, true);
+    clientSession.Init(clientKeys, serverKeys.RawPublicKey(), false, false);
 
     REQUIRE(serverSession.Valid());
     REQUIRE(clientSession.Valid());
@@ -106,8 +106,8 @@ TEST_CASE("crypto.session_aead_tampered")
     CryptoSession clientSession;
     CryptoSession serverSession;
 
-    serverSession.Init(serverKeys, clientKeys.PublicKey(), false, true);
-    clientSession.Init(clientKeys, serverKeys.PublicKey(), false, false);
+    serverSession.Init(serverKeys, clientKeys.RawPublicKey(), false, true);
+    clientSession.Init(clientKeys, serverKeys.RawPublicKey(), false, false);
 
     std::vector<uint8_t> plaintext = {1, 2, 3, 4, 5};
 
@@ -130,8 +130,8 @@ TEST_CASE("crypto.session_aead_wrong_session")
     CryptoSession clientSession;
     CryptoSession rogueSession;
 
-    clientSession.Init(clientKeys, serverKeys.PublicKey(), false, false);
-    rogueSession.Init(rogueKeys, serverKeys.PublicKey(), false, true);
+    clientSession.Init(clientKeys, serverKeys.RawPublicKey(), false, false);
+    rogueSession.Init(rogueKeys, serverKeys.RawPublicKey(), false, true);
 
     std::vector<uint8_t> plaintext = {42};
 
