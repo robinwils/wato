@@ -1,0 +1,15 @@
+*
+!vcpkg_overlay/
+!vcpkg/
+vcpkg/buildtrees/
+vcpkg/downloads/
+vcpkg/packages/
+vcpkg/installed/
+!vcpkg.json
+!vcpkg-configuration.json
+!CMakeLists.txt
+!CMakePresets.json
+!cmake/
+!src/
+!test/
+!.clusterfuzzlite/

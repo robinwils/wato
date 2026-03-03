@@ -1,0 +1,46 @@
+services:
+  watohttpd:
+    build: ./watohttpd
+    restart: unless-stopped
+    environment:
+      - AUTOMIGRATE=${AUTOMIGRATE}
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+    volumes:
+      - pb_data:/app/pb_data
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      - DOMAIN=${DOMAIN}
+    ports:
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ${CADDYFILE}:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - watohttpd
+
+  watod:
+    build:
+      context: .
+      dockerfile: src/watod/Dockerfile
+    restart: unless-stopped
+    environment:
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+    command: ["--server-addr=0.0.0.0:7777", "--backend-addr=https://caddy"]
+    ports:
+      - "7777:7777/udp"
+    volumes:
+      - caddy_data:/caddy_data:ro
+    depends_on:
+      - caddy
+
+volumes:
+  pb_data:
+  caddy_data:
+  caddy_config:

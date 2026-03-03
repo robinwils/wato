@@ -1,0 +1,11 @@
+{$DOMAIN} {
+	tls internal
+
+	reverse_proxy watohttpd:8090
+}
+
+caddy {
+	tls internal
+
+	reverse_proxy watohttpd:8090
+}
