@@ -17,6 +17,7 @@
 #include "core/physics/physics.hpp"
 #include "core/snapshot.hpp"
 #include "core/sys/log.hpp"
+#include "core/sys/signal.hpp"
 #include "core/types.hpp"
 #include "input/action.hpp"
 #include "registry/registry.hpp"
@@ -240,6 +241,11 @@ int GameServer::Run(tf::Executor& aExecutor)
     constexpr auto kTargetFrameTime = std::chrono::duration<double>(kTimeStep);
 
     while (mRunning) {
+        if (gShutdownRequested.load()) {
+            Stop();
+            break;
+        }
+
         auto                         t  = clock_type::now();
         std::chrono::duration<float> dt = (t - prevTime);
         prevTime                        = t;

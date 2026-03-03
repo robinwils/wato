@@ -462,7 +462,7 @@ target_sources(watolib
     src/core/queue/ring_buffer.hpp
     src/core/snapshot.hpp
     src/core/state.hpp
-    src/core/sys/backtrace.hpp
+    src/core/sys/signal.hpp
     src/core/sys/log.hpp
     src/core/tower_building_handler.hpp
     src/registry/registry.hpp
@@ -490,7 +490,7 @@ target_sources(watolib
     src/core/net/pocketbase.cpp
     src/core/physics/physics.cpp
     src/core/physics/physics_event_listener.cpp
-    src/core/sys/backtrace.cpp
+    src/core/sys/signal.cpp
     src/core/tower_building_handler.cpp
     src/registry/registry.cpp
     src/systems/ai.cpp
