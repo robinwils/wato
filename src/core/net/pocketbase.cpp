@@ -16,8 +16,7 @@ void PocketBaseClient::Login(
     postAsync<LoginResult>(
         "/api/collections/users/auth-with-password",
         std::move(aCallback),
-        cpr::Parameters{
-            {"fields", "record.id,record.avatar,record.email,record.accountName,token"}},
+        cpr::Parameters{{"fields", LoginResult::kFields}},
         cpr::Payload{{"identity", aAccount}, {"password", aPassword}});
 }
 
@@ -96,6 +95,24 @@ void PocketBaseClient::UpdateGame(
         AuthHeader(),
         cpr::Payload{{"status", aStatus}},
         cpr::Parameters{{"fields", "id,players,status,created"}});
+}
+
+std::expected<std::string, PBError> PocketBaseClient::LoginSuperuserSync(
+    const std::string& aEmail,
+    const std::string& aPassword)
+{
+    auto resp = Client.Post(
+        "/api/collections/_superusers/auth-with-password",
+        cpr::Parameters{{"fields", LoginResult::kFields}},
+        cpr::Payload{{"identity", aEmail}, {"password", aPassword}});
+
+    auto result = decodePBResponse<LoginResult>(resp);
+    if (!result) {
+        return std::unexpected(result.error());
+    }
+
+    Token = result->token;
+    return Token;
 }
 
 std::expected<GameServerRecord, PBError> PocketBaseClient::GetGameServer(

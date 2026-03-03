@@ -21,14 +21,16 @@ class GameServer : public Application
           mServer(mOptions.ServerAddr, mLogger, mPBClient)
     {
     }
-    explicit GameServer(const Options& aOptions, const std::string& aAdminToken)
+    explicit GameServer(
+        const Options&     aOptions,
+        const std::string& aAdminEmail,
+        const std::string& aAdminPassword)
         : Application("server", aOptions),
-          mPBClient(mOptions.BackendAddr(), mLogger, aAdminToken),
+          mPBClient(mOptions.BackendAddr(), mLogger),
           mServer(mOptions.ServerAddr, mLogger, mPBClient)
     {
-        if (aAdminToken.empty()) {
-            mLogger->warn("empty admin token, will not be able to use pocketbase");
-        }
+        mAdminEmail    = aAdminEmail;
+        mAdminPassword = aAdminPassword;
     }
     virtual ~GameServer();
 
@@ -67,6 +69,8 @@ class GameServer : public Application
 
     PocketBaseClient                             mPBClient;
     ENetServer                                   mServer;
+    std::string                                  mAdminEmail;
+    std::string                                  mAdminPassword;
     std::unordered_map<GameInstanceID, Registry> mGameInstances;
 
     Channel<PBSSE<GameRecord>> mPBGameChan;

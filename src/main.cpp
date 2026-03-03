@@ -26,8 +26,10 @@ int main(int, char** argv)
     tf::Future<void>            future;
     std::unique_ptr<GameServer> server;
 
-    char*       tokenEnv = getenv("PB_TOKEN");
-    std::string token    = tokenEnv ? tokenEnv : "";
+    char*       emailEnv = getenv("ADMIN_EMAIL");
+    char*       passEnv  = getenv("ADMIN_PASSWORD");
+    std::string email    = emailEnv ? emailEnv : "";
+    std::string password = passEnv ? passEnv : "";
 
     if (sodium_init() == -1) {
         spdlog::error("cannot initialize lib sodium");
@@ -36,7 +38,7 @@ int main(int, char** argv)
 
     if (opts.ServerAddr == "") {
         opts.ServerAddr = "any:7777";
-        server          = std::make_unique<GameServer>(opts, token);
+        server          = std::make_unique<GameServer>(opts, email, password);
 
         flow.emplace([&]() {
             server->Init();

@@ -41,6 +41,17 @@ void GameServer::Init()
         return;
     }
 
+    if (!mAdminEmail.empty() && !mAdminPassword.empty()) {
+        auto loginResult = mPBClient.LoginSuperuserSync(mAdminEmail, mAdminPassword);
+        if (!loginResult) {
+            mLogger->error("superuser login failed: {}", loginResult.error().Message);
+            return;
+        }
+        mLogger->info("superuser login successful");
+    } else {
+        mLogger->warn("no admin credentials, will not be able to use pocketbase");
+    }
+
     mFrameExecutor.Register<SimulationSystem>();
 
     mPBClient.Subscribe<GameRecord>("game/*", mPBGameChan, "id,players,created", [this]() {
@@ -68,7 +79,10 @@ void GameServer::Init()
         mLogger->warn("could not encode server public key");
     }
 
-    mPBClient.RegisterGameServerSync(ip, port, pubKey, sodium_runtime_has_aesni());
+    auto r = mPBClient.RegisterGameServerSync(ip, port, pubKey, sodium_runtime_has_aesni());
+    if (!r) {
+        mLogger->error("could not register game server: {}", r.error().Message);
+    }
 }
 
 GameServer::~GameServer()

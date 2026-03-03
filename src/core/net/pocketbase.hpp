@@ -25,6 +25,8 @@ struct LoginRecord {
 };
 
 struct LoginResult {
+    static constexpr const char* kFields =
+        "record.id,record.avatar,record.email,record.accountName,token";
     LoginRecord record{};
     std::string token{};
 };
@@ -213,6 +215,10 @@ class PocketBaseClient
         const std::string&     aRecord,
         const std::string&     aStatus,
         PBCallback<GameRecord> aCallback);
+
+    std::expected<std::string, PBError> LoginSuperuserSync(
+        const std::string& aEmail,
+        const std::string& aPassword);
 
     std::expected<GameServerRecord, PBError> RegisterGameServerSync(
         const std::string& aIp,

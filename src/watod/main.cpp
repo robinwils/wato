@@ -25,10 +25,12 @@ int main(int, char** argv)
         opts.ServerAddr = "127.0.0.1:7777";
     }
 
-    char*       tokenEnv = getenv("PB_TOKEN");
-    std::string token    = tokenEnv ? tokenEnv : "";
+    char*       emailEnv = getenv("ADMIN_EMAIL");
+    char*       passEnv  = getenv("ADMIN_PASSWORD");
+    std::string email    = emailEnv ? emailEnv : "";
+    std::string password = passEnv ? passEnv : "";
 
-    GameServer s(opts, token);
+    GameServer s(opts, email, password);
     s.Init();
     return s.Run(exec);
 }
