@@ -142,12 +142,14 @@ std::expected<GameServerRecord, PBError> PocketBaseClient::RegisterGameServerSyn
     const std::string& aPubKey,
     bool               aHasAESNI)
 {
+    auto fields = cpr::Parameter{"fields", GameServerRecord::kFields};
+
     auto r = decodePBResponse<GameServerRecordList>(Client.Get(
         "/api/collections/game_servers/records",
         AuthHeader(),
         cpr::Parameters{
             {"filter", fmt::format("(ip='{}' && port={})", aIp, aPort)},
-            {"fields", GameServerRecord::kFields},
+            fields,
         }));
 
     glz::generic payload;
@@ -163,12 +165,18 @@ std::expected<GameServerRecord, PBError> PocketBaseClient::RegisterGameServerSyn
 
     if (r && !r->items.empty()) {
         mLogger->debug("server already registered, patching.");
-        return decodePBResponse<GameServerRecord>(
-            Client.Patch("/api/collections/game_servers/records/" + r->items[0].id, headers, body));
+        return decodePBResponse<GameServerRecord>(Client.Patch(
+            "/api/collections/game_servers/records/" + r->items[0].id,
+            headers,
+            body,
+            cpr::Parameters{fields}));
     } else if (r->items.empty()) {
         mLogger->debug("server unregistered, adding.");
-        return decodePBResponse<GameServerRecord>(
-            Client.Post("/api/collections/game_servers/records", headers, body));
+        return decodePBResponse<GameServerRecord>(Client.Post(
+            "/api/collections/game_servers/records",
+            headers,
+            body,
+            cpr::Parameters{fields}));
     } else {
         return std::unexpected{r.error()};
     }
