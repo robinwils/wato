@@ -89,7 +89,7 @@ class Graph
         return SafeU16(aCell.Location.y) * mWidth + aCell.Location.x;
     }
 
-    constexpr GraphCell CellFromWorld(float aX, float aZ) const
+    GraphCell CellFromWorld(float aX, float aZ) const
     {
         return GraphCell{
             static_cast<size_type>((aX - mWorldOffset.x) * GraphCell::kCellsPerAxis),
@@ -97,7 +97,7 @@ class Graph
         };
     }
 
-    constexpr GraphCell CellFromWorld(const glm::vec3& aPoint) const
+    GraphCell CellFromWorld(const glm::vec3& aPoint) const
     {
         return CellFromWorld(aPoint.x, aPoint.z);
     }
