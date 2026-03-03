@@ -17,7 +17,8 @@
         "ASSIMP_BUILD_USE_CCACHE": "OFF",
         "BUILD_SHARED_LIBS": "OFF",
         "VCPKG_MANIFEST_FEATURES": "client",
-        "VCPKG_INSTALL_OPTIONS": "--x-abi-tools-use-exact-versions"
+        "VCPKG_INSTALL_OPTIONS": "--x-abi-tools-use-exact-versions",
+        "VCPKG_OVERLAY_TRIPLETS": "${sourceDir}/cmake/triplets"
       }
     },
     {
@@ -80,7 +81,22 @@
       },
       "cacheVariables": {
         "ENABLE_CPPCHECK_DEFAULT": "FALSE",
-        "ENABLE_CLANG_TIDY_DEFAULT": "FALSE",
+        "ENABLE_CLANG_TIDY_DEFAULT": "FALSE"
+      }
+    },
+    {
+      "name": "conf-windows-debug",
+      "hidden": true,
+      "inherits": ["conf-windows-common", "debug-common"],
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": "x64-windows-static-md"
+      }
+    },
+    {
+      "name": "conf-windows-release",
+      "hidden": true,
+      "inherits": ["conf-windows-common", "release-common"],
+      "cacheVariables": {
         "VCPKG_TARGET_TRIPLET": "x64-windows-static-md"
       }
     },
@@ -98,21 +114,59 @@
       "name": "conf-unixlike-common",
       "description": "Unix-like OS settings for gcc and clang toolchains",
       "hidden": true,
-      "generator": "Unix Makefiles",
+      "generator": "Unix Makefiles"
+    },
+    {
+      "name": "conf-linux-common",
+      "hidden": true,
+      "inherits": "conf-unixlike-common",
       "condition": {
-        "type": "inList",
-        "string": "${hostSystemName}",
-        "list": [
-          "Linux",
-          "Darwin"
-        ]
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
       }
+    },
+    {
+      "name": "conf-linux-debug",
+      "hidden": true,
+      "inherits": ["conf-linux-common", "debug-common"],
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": "x64-linux"
+      }
+    },
+    {
+      "name": "conf-linux-release",
+      "hidden": true,
+      "inherits": ["conf-linux-common", "release-common"],
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": "x64-linux"
+      }
+    },
+    {
+      "name": "conf-macos-common",
+      "hidden": true,
+      "inherits": "conf-unixlike-common",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Darwin"
+      }
+    },
+    {
+      "name": "conf-macos-debug",
+      "hidden": true,
+      "inherits": ["conf-macos-common", "debug-common"]
+    },
+    {
+      "name": "conf-macos-release",
+      "hidden": true,
+      "inherits": ["conf-macos-common", "release-common"]
     },
     {
       "name": "windows-msvc-debug",
       "displayName": "msvc Debug ",
       "description": "Target Windows with the msvc compiler, debug build type",
-      "inherits": ["conf-windows-common", "debug-common" ],
+      "inherits": ["conf-windows-debug"],
       "cacheVariables": {
         "CMAKE_C_COMPILER": "cl",
         "CMAKE_CXX_COMPILER": "cl"
@@ -122,47 +176,47 @@
       "name": "windows-msvc-release",
       "displayName": "msvc Release ",
       "description": "Target Windows with the msvc compiler, release build type",
-      "inherits": ["conf-windows-common", "release-common" ],
+      "inherits": ["conf-windows-release"],
       "cacheVariables": {
         "CMAKE_C_COMPILER": "cl",
         "CMAKE_CXX_COMPILER": "cl"
       }
     },
     {
-      "name": "unixlike-gcc-debug",
+      "name": "linux-gcc-debug",
       "displayName": "gcc Debug",
-      "description": "Target Unix-like OS with the gcc compiler, debug build type",
-      "inherits": [ "conf-unixlike-common", "debug-common" ],
+      "description": "Target Linux with the gcc compiler, debug build type",
+      "inherits": ["conf-linux-debug"],
       "cacheVariables": {
         "CMAKE_C_COMPILER": "gcc",
         "CMAKE_CXX_COMPILER": "g++"
       }
     },
     {
-      "name": "unixlike-gcc-release",
+      "name": "linux-gcc-release",
       "displayName": "gcc Release",
-      "description": "Target Unix-like OS with the gcc compiler, release build type",
-      "inherits": [ "conf-unixlike-common", "release-common" ],
+      "description": "Target Linux with the gcc compiler, release build type",
+      "inherits": ["conf-linux-release"],
       "cacheVariables": {
         "CMAKE_C_COMPILER": "gcc",
         "CMAKE_CXX_COMPILER": "g++"
       }
     },
     {
-      "name": "unixlike-clang-debug",
+      "name": "linux-clang-debug",
       "displayName": "clang Debug",
-      "description": "Target Unix-like OS with the clang compiler, debug build type",
-      "inherits": [ "conf-unixlike-common", "debug-common" ],
+      "description": "Target Linux with the clang compiler, debug build type",
+      "inherits": ["conf-linux-debug"],
       "cacheVariables": {
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++"
       }
     },
     {
-      "name": "tests-unixlike-clang-debug",
+      "name": "tests-linux-clang-debug",
       "displayName": "clang Debug tests only",
-      "description": "Target Unix-like OS with the clang compiler, debug build type",
-      "inherits": [ "tests-common", "conf-unixlike-common", "debug-common" ],
+      "description": "Target Linux with the clang compiler, debug build type",
+      "inherits": ["tests-common", "conf-linux-debug"],
       "cacheVariables": {
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++",
@@ -170,10 +224,30 @@
       }
     },
     {
-      "name": "unixlike-clang-release",
+      "name": "linux-clang-release",
       "displayName": "clang Release",
-      "description": "Target Unix-like OS with the clang compiler, release build type",
-      "inherits": [ "conf-unixlike-common", "release-common" ],
+      "description": "Target Linux with the clang compiler, release build type",
+      "inherits": ["conf-linux-release"],
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++"
+      }
+    },
+    {
+      "name": "macos-clang-debug",
+      "displayName": "macOS Debug",
+      "description": "Target macOS with clang, debug build type",
+      "inherits": ["conf-macos-debug"],
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++"
+      }
+    },
+    {
+      "name": "macos-clang-release",
+      "displayName": "macOS Release",
+      "description": "Target macOS with clang, release build type",
+      "inherits": ["conf-macos-release"],
       "cacheVariables": {
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++"
@@ -183,7 +257,7 @@
       "name": "windows-msvc-debug-sccache",
       "displayName": "msvc Debug sccache",
       "description": "Target Windows with the msvc compiler + sccache, debug build type",
-      "inherits": [ "conf-windows-sccache-common", "debug-common" ],
+      "inherits": ["conf-windows-sccache-common", "conf-windows-debug"],
       "cacheVariables": {
         "CMAKE_C_COMPILER": "cl",
         "CMAKE_CXX_COMPILER": "cl"
@@ -193,17 +267,17 @@
       "name": "windows-msvc-release-sccache",
       "displayName": "msvc Release sccache",
       "description": "Target Windows with the msvc compiler + sccache, release build type",
-      "inherits": [ "conf-windows-sccache-common", "release-common" ],
+      "inherits": ["conf-windows-sccache-common", "conf-windows-release"],
       "cacheVariables": {
         "CMAKE_C_COMPILER": "cl",
         "CMAKE_CXX_COMPILER": "cl"
       }
     },
     {
-      "name": "unixlike-gcc-debug-sccache",
+      "name": "linux-gcc-debug-sccache",
       "displayName": "gcc Debug sccache",
-      "description": "Target Unix-like OS with the gcc compiler + sccache, debug build type",
-      "inherits": ["conf-sccache-common", "conf-unixlike-common", "debug-common" ],
+      "description": "Target Linux with the gcc compiler + sccache, debug build type",
+      "inherits": ["conf-sccache-common", "conf-linux-debug"],
       "cacheVariables": {
         "CMAKE_C_COMPILER": "gcc",
         "CMAKE_CXX_COMPILER": "g++",
@@ -211,20 +285,20 @@
       }
     },
     {
-      "name": "unixlike-gcc-release-sccache",
+      "name": "linux-gcc-release-sccache",
       "displayName": "gcc Release sccache",
-      "description": "Target Unix-like OS with the gcc compiler + sccache, release build type",
-      "inherits": ["conf-sccache-common", "conf-unixlike-common", "release-common" ],
+      "description": "Target Linux with the gcc compiler + sccache, release build type",
+      "inherits": ["conf-sccache-common", "conf-linux-release"],
       "cacheVariables": {
         "CMAKE_C_COMPILER": "gcc",
         "CMAKE_CXX_COMPILER": "g++"
       }
     },
     {
-      "name": "unixlike-clang-debug-sccache",
+      "name": "linux-clang-debug-sccache",
       "displayName": "clang Debug sccache",
-      "description": "Target Unix-like OS with the clang compiler + sccache, debug build type",
-      "inherits": ["conf-sccache-common", "conf-unixlike-common", "debug-common" ],
+      "description": "Target Linux with the clang compiler + sccache, debug build type",
+      "inherits": ["conf-sccache-common", "conf-linux-debug"],
       "cacheVariables": {
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++",
@@ -232,10 +306,10 @@
       }
     },
     {
-      "name": "tests-unixlike-clang-debug-sccache",
+      "name": "tests-linux-clang-debug-sccache",
       "displayName": "clang Debug sccache",
-      "description": "Target Unix-like OS with the clang compiler + sccache, debug build type",
-      "inherits": [ "tests-common", "conf-sccache-common", "conf-unixlike-common", "debug-common" ],
+      "description": "Target Linux with the clang compiler + sccache, debug build type",
+      "inherits": ["tests-common", "conf-sccache-common", "conf-linux-debug"],
       "cacheVariables": {
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++",
@@ -243,14 +317,34 @@
       }
     },
     {
-      "name": "unixlike-clang-release-sccache",
+      "name": "linux-clang-release-sccache",
       "displayName": "clang Release sccache",
-      "description": "Target Unix-like OS with the clang compiler + sccache, release build type",
-      "inherits": ["conf-sccache-common", "conf-unixlike-common", "release-common" ],
+      "description": "Target Linux with the clang compiler + sccache, release build type",
+      "inherits": ["conf-sccache-common", "conf-linux-release"],
       "cacheVariables": {
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++",
         "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+      }
+    },
+    {
+      "name": "macos-clang-debug-sccache",
+      "displayName": "macOS Debug sccache",
+      "description": "Target macOS with clang + sccache, debug build type",
+      "inherits": ["conf-sccache-common", "conf-macos-debug"],
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++"
+      }
+    },
+    {
+      "name": "macos-clang-release-sccache",
+      "displayName": "macOS Release sccache",
+      "description": "Target macOS with clang + sccache, release build type",
+      "inherits": ["conf-sccache-common", "conf-macos-release"],
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++"
       }
     }
   ],
@@ -268,28 +362,28 @@
       "configurePreset": "windows-msvc-release"
     },
     {
-      "name": "unixlike-gcc-debug",
+      "name": "linux-gcc-debug",
       "displayName": "gcc Debug",
       "description": "Target Unix-like OS with the gcc compiler, debug build type",
-      "configurePreset": "unixlike-gcc-debug"
+      "configurePreset": "linux-gcc-debug"
     },
     {
-      "name": "unixlike-gcc-release",
+      "name": "linux-gcc-release",
       "displayName": "gcc Release",
       "description": "Target Unix-like OS with the gcc compiler, release build type",
-      "configurePreset": "unixlike-gcc-release"
+      "configurePreset": "linux-gcc-release"
     },
     {
-      "name": "unixlike-clang-debug",
+      "name": "linux-clang-debug",
       "displayName": "clang Debug",
       "description": "Target Unix-like OS with the clang compiler, debug build type",
-      "configurePreset": "unixlike-clang-debug"
+      "configurePreset": "linux-clang-debug"
     },
     {
-      "name": "unixlike-clang-release",
+      "name": "linux-clang-release",
       "displayName": "clang Release",
       "description": "Target Unix-like OS with the clang compiler, release build type",
-      "configurePreset": "unixlike-clang-release"
+      "configurePreset": "linux-clang-release"
     },
     {
       "name": "windows-msvc-debug-sccache",
@@ -304,34 +398,58 @@
       "configurePreset": "windows-msvc-release-sccache"
     },
     {
-      "name": "unixlike-gcc-debug-sccache",
+      "name": "linux-gcc-debug-sccache",
       "displayName": "gcc Debug sccache",
       "description": "Target Unix-like OS with the gcc compiler + sccache, debug build type",
-      "configurePreset": "unixlike-gcc-debug-sccache"
+      "configurePreset": "linux-gcc-debug-sccache"
     },
     {
-      "name": "unixlike-gcc-release-sccache",
+      "name": "linux-gcc-release-sccache",
       "displayName": "gcc Release sccache",
       "description": "Target Unix-like OS with the gcc compiler + sccache, release build type",
-      "configurePreset": "unixlike-gcc-release-sccache"
+      "configurePreset": "linux-gcc-release-sccache"
     },
     {
-      "name": "unixlike-clang-debug-sccache",
+      "name": "linux-clang-debug-sccache",
       "displayName": "clang Debug sccache",
       "description": "Target Unix-like OS with the clang compiler + sccache, debug build type",
-      "configurePreset": "unixlike-clang-debug-sccache"
+      "configurePreset": "linux-clang-debug-sccache"
     },
     {
-      "name": "tests-unixlike-clang-debug-sccache",
+      "name": "tests-linux-clang-debug-sccache",
       "displayName": "clang Debug sccache",
       "description": "Target Unix-like OS with the clang compiler + sccache, debug build type",
-      "configurePreset": "tests-unixlike-clang-debug-sccache"
+      "configurePreset": "tests-linux-clang-debug-sccache"
     },
     {
-      "name": "unixlike-clang-release-sccache",
+      "name": "linux-clang-release-sccache",
       "displayName": "clang Release sccache",
       "description": "Target Unix-like OS with the clang compiler + sccache, release build type",
-      "configurePreset": "unixlike-clang-release-sccache"
+      "configurePreset": "linux-clang-release-sccache"
+    },
+    {
+      "name": "macos-clang-debug",
+      "displayName": "macOS Debug",
+      "description": "Target macOS with clang, debug build type",
+      "configurePreset": "macos-clang-debug"
+    },
+    {
+      "name": "macos-clang-release",
+      "displayName": "macOS Release",
+      "description": "Target macOS with clang, release build type",
+      "configurePreset": "macos-clang-release"
+    },
+    {
+      "name": "macos-clang-debug-sccache",
+      "displayName": "macOS Debug sccache",
+      "description": "Target macOS with clang + sccache, debug build type",
+      "configurePreset": "macos-clang-debug-sccache"
+    },
+    {
+      "name": "macos-clang-release-sccache",
+      "displayName": "macOS Release sccache",
+      "description": "Target macOS with clang + sccache, release build type",
+      "configurePreset": "macos-clang-release-sccache"
     }
   ],
   "testPresets": [
@@ -360,28 +478,28 @@
       "configurePreset": "windows-msvc-release"
     },
     {
-      "name": "test-unixlike-gcc-debug",
+      "name": "test-linux-gcc-debug",
       "displayName": "GCC test binaries (debug)",
       "inherits": "test-common",
-      "configurePreset": "unixlike-gcc-debug"
+      "configurePreset": "linux-gcc-debug"
     },
     {
-      "name": "test-unixlike-gcc-release",
+      "name": "test-linux-gcc-release",
       "displayName": "GCC test binaries (rel)",
       "inherits": "test-common",
-      "configurePreset": "unixlike-gcc-release"
+      "configurePreset": "linux-gcc-release"
     },
     {
-      "name": "test-unixlike-clang-debug",
+      "name": "test-linux-clang-debug",
       "displayName": "Clang test binaries (debug)",
       "inherits": "test-common",
-      "configurePreset": "unixlike-clang-debug"
+      "configurePreset": "linux-clang-debug"
     },
     {
-      "name": "test-unixlike-clang-release",
+      "name": "test-linux-clang-release",
       "displayName": "Clang test binaries (rel)",
       "inherits": "test-common",
-      "configurePreset": "unixlike-clang-release"
+      "configurePreset": "linux-clang-release"
     }
   ]
 }
