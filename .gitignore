@@ -330,3 +330,10 @@ logs
 /wato
 /watod
 /wato_tests
+
+# certificates
+*.crt
+
+# watohttpd
+watohttpd/pb_data/
+watohttpd/watohttpd
