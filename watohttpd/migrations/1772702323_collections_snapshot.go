@@ -599,13 +599,13 @@ func init() {
 				},
 				"fields": [
 					{
-						"autogeneratePattern": "[a-z0-9]{15}",
+						"autogeneratePattern": "[a-f0-9]{8}",
 						"hidden": false,
 						"id": "text3208210256",
-						"max": 15,
-						"min": 15,
+						"max": 8,
+						"min": 8,
 						"name": "id",
-						"pattern": "^[a-z0-9]+$",
+						"pattern": "^[a-f0-9]+$",
 						"presentable": false,
 						"primaryKey": true,
 						"required": true,
@@ -646,7 +646,7 @@ func init() {
 						"name": "email",
 						"onlyDomains": null,
 						"presentable": false,
-						"required": true,
+						"required": false,
 						"system": true,
 						"type": "email"
 					},
@@ -673,9 +673,9 @@ func init() {
 						"hidden": false,
 						"id": "text1579384326",
 						"max": 255,
-						"min": 0,
+						"min": 3,
 						"name": "accountName",
-						"pattern": "",
+						"pattern": "^[a-zA-Z0-9_-]+#[A-Z0-9]{3}$",
 						"presentable": true,
 						"primaryKey": false,
 						"required": true,
@@ -715,6 +715,18 @@ func init() {
 						"required": false,
 						"system": false,
 						"type": "text"
+					},
+					{
+						"hidden": false,
+						"id": "number2769848507",
+						"max": null,
+						"min": null,
+						"name": "elo",
+						"onlyInt": false,
+						"presentable": false,
+						"required": false,
+						"system": false,
+						"type": "number"
 					},
 					{
 						"hidden": false,
@@ -803,13 +815,13 @@ func init() {
 				"deleteRule": "@request.auth.id != ''",
 				"fields": [
 					{
-						"autogeneratePattern": "[a-z0-9]{15}",
+						"autogeneratePattern": "[a-f0-9]{16}",
 						"hidden": false,
 						"id": "text3208210256",
-						"max": 15,
-						"min": 15,
+						"max": 16,
+						"min": 16,
 						"name": "id",
-						"pattern": "^[a-z0-9]+$",
+						"pattern": "^[a-f0-9]+$",
 						"presentable": false,
 						"primaryKey": true,
 						"required": true,
@@ -830,26 +842,225 @@ func init() {
 						"type": "relation"
 					},
 					{
+						"hidden": false,
+						"id": "select2063623452",
+						"maxSelect": 1,
+						"name": "status",
+						"presentable": false,
+						"required": true,
+						"system": false,
+						"type": "select",
+						"values": [
+							"waiting",
+							"matched"
+						]
+					},
+					{
+						"hidden": false,
+						"id": "number1074403338",
+						"max": 2,
+						"min": 1,
+						"name": "teamSize",
+						"onlyInt": true,
+						"presentable": false,
+						"required": true,
+						"system": false,
+						"type": "number"
+					},
+					{
+						"hidden": false,
+						"id": "number3369922310",
+						"max": 5,
+						"min": 2,
+						"name": "teamCount",
+						"onlyInt": true,
+						"presentable": false,
+						"required": true,
+						"system": false,
+						"type": "number"
+					},
+					{
+						"cascadeDelete": false,
+						"collectionId": "pbc_69621308",
+						"hidden": false,
+						"id": "relation1542800728",
+						"maxSelect": 1,
+						"minSelect": 0,
+						"name": "game",
+						"presentable": false,
+						"required": false,
+						"system": false,
+						"type": "relation"
+					},
+					{
+						"hidden": false,
+						"id": "autodate2990389176",
+						"name": "created",
+						"onCreate": true,
+						"onUpdate": false,
+						"presentable": false,
+						"system": false,
+						"type": "autodate"
+					},
+					{
+						"hidden": false,
+						"id": "autodate3332085495",
+						"name": "updated",
+						"onCreate": true,
+						"onUpdate": true,
+						"presentable": false,
+						"system": false,
+						"type": "autodate"
+					}
+				],
+				"id": "pbc_3140092784",
+				"indexes": [
+					"CREATE UNIQUE INDEX ` + "`" + `idx_HS4MixyI37` + "`" + ` ON ` + "`" + `matchmaking_queue` + "`" + ` (` + "`" + `accountName` + "`" + `)"
+				],
+				"listRule": "@request.auth.id != ''",
+				"name": "matchmaking_queue",
+				"system": false,
+				"type": "base",
+				"updateRule": null,
+				"viewRule": "@request.auth.id != ''"
+			},
+			{
+				"createRule": null,
+				"deleteRule": null,
+				"fields": [
+					{
+						"autogeneratePattern": "[0-9a-f]{16}",
+						"hidden": false,
+						"id": "text3208210256",
+						"max": 16,
+						"min": 16,
+						"name": "id",
+						"pattern": "^[0-9a-f]+$",
+						"presentable": true,
+						"primaryKey": true,
+						"required": true,
+						"system": true,
+						"type": "text"
+					},
+					{
+						"cascadeDelete": true,
+						"collectionId": "_pb_users_auth_",
+						"hidden": false,
+						"id": "relation642663334",
+						"maxSelect": 10,
+						"minSelect": 2,
+						"name": "players",
+						"presentable": false,
+						"required": true,
+						"system": false,
+						"type": "relation"
+					},
+					{
+						"hidden": false,
+						"id": "select2063623452",
+						"maxSelect": 1,
+						"name": "status",
+						"presentable": false,
+						"required": true,
+						"system": false,
+						"type": "select",
+						"values": [
+							"running",
+							"ended"
+						]
+					},
+					{
+						"hidden": false,
+						"id": "autodate2990389176",
+						"name": "created",
+						"onCreate": true,
+						"onUpdate": false,
+						"presentable": false,
+						"system": false,
+						"type": "autodate"
+					},
+					{
+						"hidden": false,
+						"id": "autodate3332085495",
+						"name": "updated",
+						"onCreate": true,
+						"onUpdate": true,
+						"presentable": false,
+						"system": false,
+						"type": "autodate"
+					}
+				],
+				"id": "pbc_69621308",
+				"indexes": [],
+				"listRule": "@request.auth.id != ''",
+				"name": "game",
+				"system": false,
+				"type": "base",
+				"updateRule": null,
+				"viewRule": "@request.auth.id != ''"
+			},
+			{
+				"createRule": null,
+				"deleteRule": null,
+				"fields": [
+					{
+						"autogeneratePattern": "[a-f0-9]{4}",
+						"hidden": false,
+						"id": "text3208210256",
+						"max": 4,
+						"min": 4,
+						"name": "id",
+						"pattern": "^[a-z0-9]+$",
+						"presentable": false,
+						"primaryKey": true,
+						"required": true,
+						"system": true,
+						"type": "text"
+					},
+					{
 						"autogeneratePattern": "",
 						"hidden": false,
-						"id": "text2063623452",
-						"max": 0,
+						"id": "text2783163181",
+						"max": 15,
 						"min": 0,
-						"name": "status",
-						"pattern": "",
+						"name": "ip",
+						"pattern": "^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}$",
 						"presentable": false,
 						"primaryKey": false,
-						"required": false,
+						"required": true,
+						"system": false,
+						"type": "text"
+					},
+					{
+						"autogeneratePattern": "",
+						"hidden": false,
+						"id": "text1630053352",
+						"max": 44,
+						"min": 44,
+						"name": "publicKey",
+						"pattern": "^[A-Za-z0-9+/]{43}=$",
+						"presentable": false,
+						"primaryKey": false,
+						"required": true,
 						"system": false,
 						"type": "text"
 					},
 					{
 						"hidden": false,
-						"id": "number3965040548",
-						"max": null,
-						"min": null,
-						"name": "gameId",
-						"onlyInt": false,
+						"id": "bool167673",
+						"name": "hasAESNI",
+						"presentable": false,
+						"required": false,
+						"system": false,
+						"type": "bool"
+					},
+					{
+						"hidden": false,
+						"id": "number1133600204",
+						"max": 65535,
+						"min": 0,
+						"name": "port",
+						"onlyInt": true,
 						"presentable": false,
 						"required": false,
 						"system": false,
@@ -876,18 +1087,20 @@ func init() {
 						"type": "autodate"
 					}
 				],
-				"id": "pbc_3140092784",
-				"indexes": [],
-				"listRule": "@request.auth.id != ''",
-				"name": "matchmaking_queue",
+				"id": "pbc_2379271902",
+				"indexes": [
+					"CREATE UNIQUE INDEX ` + "`" + `idx_TdEXhG3L6p` + "`" + ` ON ` + "`" + `game_servers` + "`" + ` (\n  ` + "`" + `ip` + "`" + `,\n  ` + "`" + `port` + "`" + `\n)"
+				],
+				"listRule": "",
+				"name": "game_servers",
 				"system": false,
 				"type": "base",
 				"updateRule": null,
-				"viewRule": "@request.auth.id != ''"
+				"viewRule": ""
 			}
 		]`
 
-		return app.ImportCollectionsByMarshaledJSON([]byte(jsonData), true)
+		return app.ImportCollectionsByMarshaledJSON([]byte(jsonData), false)
 	}, func(app core.App) error {
 		return nil
 	})
