@@ -18,6 +18,20 @@ struct TriggerEvent {
     {
         return MatchColliderPair(Collider1, Collider2, aFirstCategory, aSecondCategory);
     }
+
+    inline std::pair<const rp3d::Collider*, const rp3d::Collider*> CreepCollision(
+        Category aCategory) const
+    {
+        if (Collider1->getCollisionCategoryBits() == aCategory
+            && Collider2->getCollisionCategoryBits() >= Category::PlayerEntities) {
+            return {Collider1, Collider2};
+        } else if (
+            Collider2->getCollisionCategoryBits() == aCategory
+            && Collider1->getCollisionCategoryBits() >= Category::PlayerEntities) {
+            return {Collider2, Collider1};
+        }
+        return {nullptr, nullptr};
+    }
 };
 
 class PhysicsEventListener : public rp3d::EventListener

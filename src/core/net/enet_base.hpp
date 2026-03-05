@@ -6,10 +6,18 @@
 #include <entt/signal/dispatcher.hpp>
 #include <entt/signal/emitter.hpp>
 
+#include "core/crypto/session.hpp"
 #include "core/net/net.hpp"
 #include "core/queue/channel.hpp"
 #include "core/sys/log.hpp"
 #include "registry/registry.hpp"
+
+struct PeerState {
+    PlayerID ID{0};
+
+    CryptoSession SecureSession{};
+    PublicKey     PeerPK{};
+};
 
 class ENetBase
 {
@@ -30,6 +38,7 @@ class ENetBase
     // blocking: meant to be called in a dedicated thread
     virtual void Poll();
 
+    [[nodiscard]] bool IsInit() const noexcept { return bool(mHost); }
     [[nodiscard]] bool Running() const noexcept { return mRunning; }
 
     template <typename Func>
@@ -47,15 +56,15 @@ class ENetBase
     void EnqueueRequest(NetworkRequest* aEvent) { mReqChannel.Send(aEvent); }
 
    protected:
-    bool Send(ENetPeer* aPeer, const std::span<uint8_t> aData);
+    bool Send(ENetPeer* aPeer, const std::span<const uint8_t> aData);
 
-    virtual void OnConnect(ENetEvent& aEvent)           = 0;
-    virtual void OnReceive(ENetEvent& aEvent)           = 0;
-    virtual void OnDisconnect(ENetEvent& aEvent)        = 0;
-    virtual void OnDisconnectTimeout(ENetEvent& aEvent) = 0;
-    virtual void OnNone(ENetEvent& aEvent)              = 0;
+    virtual void OnConnect(ENetEvent& aEvent)                  = 0;
+    virtual void OnReceive(ENetEvent& aEvent, byte_view aData) = 0;
+    virtual void OnDisconnect(ENetEvent& aEvent)               = 0;
+    virtual void OnDisconnectTimeout(ENetEvent& aEvent)        = 0;
+    virtual void OnNone(ENetEvent& aEvent)                     = 0;
 
-    std::atomic_bool     mRunning;
+    std::atomic_bool     mRunning{false};
     enet_host_ptr        mHost;
     bx::DefaultAllocator mAlloc;
 
@@ -63,4 +72,6 @@ class ENetBase
     channel_response_t mRespChannel;
 
     Logger mLogger;
+
+    CryptoKeys mKeys;
 };

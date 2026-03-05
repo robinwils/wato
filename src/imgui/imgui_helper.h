@@ -35,12 +35,7 @@ struct AllocatorI;
 void imguiCreate(float aFontSize = 18.0f, bx::AllocatorI* aAllocator = NULL);
 void imguiDestroy();
 
-void imguiBeginFrame(
-    const Input& aInput,
-    int          aWidth,
-    int          aHeight,
-    int          aInputChar = -1,
-    bgfx::ViewId aView      = 255);
+void imguiBeginFrame(const Input& aInput, int aWidth, int aHeight, bgfx::ViewId aView = 255);
 
 void imguiEndFrame();
 
@@ -127,6 +122,18 @@ inline bool ImageButton(
     const ImVec4&       aTintCol = ImVec4(1.0f, 1.0f, 1.0f, 1.0f))
 {
     return ImageButton(aHandle, IMGUI_FLAGS_ALPHA_BLEND, 0, aSize, aUv0, aUv1, aBgCol, aTintCol);
+}
+
+// Helper to display a little (?) mark which shows a tooltip when hovered.
+static void HelpMarker(const char* aDesc)
+{
+    ImGui::TextDisabled("(?)");
+    if (ImGui::BeginItemTooltip()) {
+        ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+        ImGui::TextUnformatted(aDesc);
+        ImGui::PopTextWrapPos();
+        ImGui::EndTooltip();
+    }
 }
 
 ///

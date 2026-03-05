@@ -7,7 +7,7 @@
 #include "components/health.hpp"
 #include "components/imgui.hpp"
 #include "components/model_rotation_offset.hpp"
-#include "components/net.hpp"
+#include "components/player.hpp"
 #include "components/projectile.hpp"
 #include "components/rigid_body.hpp"
 #include "components/scene_object.hpp"
@@ -18,6 +18,7 @@
 #include "core/snapshot.hpp"
 #include "core/sys/log.hpp"
 #include "core/types.hpp"
+#include "registry/registry.hpp"
 
 using namespace entt::literals;
 
@@ -27,7 +28,6 @@ void NetworkResponseSystem::ensureConnected(entt::dispatcher& aDispatcher)
         return;
     }
 
-    aDispatcher.sink<NewGameEvent>().connect<&NetworkResponseSystem::onNewGame>(*this);
     aDispatcher.sink<RigidBodyUpdateEvent>().connect<&NetworkResponseSystem::onRigidBodyUpdate>(
         *this);
     aDispatcher.sink<HealthUpdateEvent>().connect<&NetworkResponseSystem::onHealthUpdate>(*this);
@@ -38,87 +38,43 @@ void NetworkResponseSystem::ensureConnected(entt::dispatcher& aDispatcher)
 
 void NetworkResponseSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t aTick)
 {
-    auto* dispatcher = aRegistry.ctx().find<entt::dispatcher>();
-    if (!dispatcher) {
-        return;
-    }
+    auto& dispatcher = aRegistry.ctx().get<entt::dispatcher>("net_dispatcher"_hs);
 
-    ensureConnected(*dispatcher);
-    dispatcher->update();
+    ensureConnected(dispatcher);
+    dispatcher.update();
 }
-void NetworkResponseSystem::onNewGame(const NewGameEvent& aEvent)
-{
-    Registry&   registry = *aEvent.Reg;
-    const auto& resp     = aEvent.Response;
-    auto&       syncMap  = registry.ctx().get<EntitySyncMap>();
-
-    if (syncMap.contains(resp.PlayerEntity)) {
-        WATO_WARN(registry, "player {} already exists", resp.PlayerEntity);
-    } else {
-        auto player = registry.create();
-        registry.emplace<Health>(player, 10.0f);
-        registry.emplace<Player>(player, 0u);
-        registry.emplace<::Name>(player, "stion");
-
-        registry.emplace<Transform3D>(player, glm::vec3(2.0f, 0.004f, 2.0f));
-        registry.emplace<RigidBody>(
-            player,
-            RigidBody{
-                .Params =
-                    RigidBodyParams{
-                        .Type           = rp3d::BodyType::STATIC,
-                        .Velocity       = 0.0f,
-                        .Direction      = glm::vec3(0.0f),
-                        .GravityEnabled = false,
-                    },
-            });
-        registry.emplace<Collider>(
-            player,
-            Collider{
-                .Params =
-                    ColliderParams{
-                        .CollisionCategoryBits = Category::Base,
-                        .CollideWithMaskBits   = Category::Terrain | Category::Entities,
-                        .IsTrigger             = true,
-                        .ShapeParams =
-                            BoxShapeParams{
-                                .HalfExtents = GraphCell(1, 1).ToWorld() * 0.5f,
-                            },
-                    },
-            });
-
-        syncMap.insert_or_assign(resp.PlayerEntity, player);
-        WATO_INFO(
-            registry,
-            "created local player {} for server player {}",
-            player,
-            resp.PlayerEntity);
-    }
-}
-
 void NetworkResponseSystem::onRigidBodyUpdate(const RigidBodyUpdateEvent& aEvent)
 {
     Registry&   registry = *aEvent.Reg;
     const auto& update   = aEvent.Response;
     auto&       syncMap  = registry.ctx().get<EntitySyncMap>();
 
+    struct EntityCreateVisitor {
+        NetworkResponseSystem*         Self;
+        Registry*                      Reg;
+        const RigidBodyUpdateResponse* Update;
+
+        void operator()(const ProjectileInitData& aInit) const
+        {
+            Self->createProjectile(*Reg, *Update, aInit);
+        }
+        void operator()(const TowerInitData& aInit) const
+        {
+            Self->createTower(*Reg, *Update, aInit);
+        }
+        void operator()(const CreepInitData& aInit) const
+        {
+            Self->createCreep(*Reg, *Update, aInit);
+        }
+        void operator()(const std::monostate&) const
+        {
+            WATO_INFO(*Reg, "created entity {} (no specific init data)", Update->Entity);
+        }
+    };
+
     switch (update.Event) {
         case RigidBodyEvent::Create: {
-            std::visit(
-                VariantVisitor{
-                    [&](const ProjectileInitData& aInit) {
-                        createProjectile(registry, update, aInit);
-                    },
-                    [&](const TowerInitData& aInit) { createTower(registry, update, aInit); },
-                    [&](const CreepInitData& aInit) { createCreep(registry, update, aInit); },
-                    [&](const std::monostate&) {
-                        WATO_INFO(
-                            registry,
-                            "created entity {} (no specific init data)",
-                            update.Entity);
-                    },
-                },
-                update.InitData);
+            std::visit(EntityCreateVisitor{this, &registry, &update}, update.InitData);
             break;
         }
         case RigidBodyEvent::Update: {
@@ -228,29 +184,13 @@ void NetworkResponseSystem::createProjectile(
     auto         targetIt     = syncMap.find(aInit.Target);
     if (targetIt != syncMap.end()) {
         clientTarget = targetIt->second;
+    } else {
+        WATO_ERR(aRegistry, "projectile server target {} unknown", aInit.Target);
     }
 
     aRegistry.emplace<Projectile>(projectile, aInit.Damage, aInit.Speed, clientTarget);
-
     aRegistry.emplace<RigidBody>(projectile, RigidBody{.Params = aUpdate.Params});
-
-    aRegistry.emplace<Collider>(
-        projectile,
-        Collider{
-            .Params =
-                ColliderParams{
-                    .CollisionCategoryBits = Category::Projectiles,
-                    .CollideWithMaskBits   = Category::Entities,
-                    .IsTrigger             = true,
-                    .Offset                = Transform3D{},
-                    .ShapeParams =
-                        CapsuleShapeParams{
-                            .Radius = 0.05f,
-                            .Height = 0.1f,
-                        },
-                },
-        });
-
+    aRegistry.emplace<Collider>(projectile, aInit.ColliderParams);
     aRegistry.emplace<SceneObject>(projectile, "arrow"_hs);
 
     syncMap.insert_or_assign(aUpdate.Entity, projectile);
@@ -265,6 +205,8 @@ void NetworkResponseSystem::createTower(
 {
     auto& syncMap = aRegistry.ctx().get<EntitySyncMap>();
     auto& phy     = aRegistry.ctx().get<Physics>();
+    auto& player  = aRegistry.get<Player>(FindPlayerEntity(aRegistry, aInit.OwnerID));
+    auto& sender  = aRegistry.get<Player>(GetSenderFor(aRegistry, aInit.OwnerID));
 
     auto tower = aRegistry.create();
 
@@ -275,17 +217,7 @@ void NetworkResponseSystem::createTower(
         glm::vec3(0.1f));
 
     Collider collider{
-        .Params =
-            ColliderParams{
-                .CollisionCategoryBits = Category::Entities,
-                .CollideWithMaskBits   = Category::Terrain | Category::Entities,
-                .IsTrigger             = false,
-                .Offset                = Transform3D{},
-                .ShapeParams =
-                    BoxShapeParams{
-                        .HalfExtents = glm::vec3(0.35f, 0.65f, 0.35f),
-                    },
-            },
+        .Params = aInit.ColliderParams,
     };
     rp3d::RigidBody* body = phy.CreateRigidBody(aUpdate.Params, transform);
     rp3d::Collider*  c    = phy.AddCollider(body, collider.Params);
@@ -295,6 +227,7 @@ void NetworkResponseSystem::createTower(
     aRegistry.emplace<Collider>(tower, collider.Params, c);
     aRegistry.emplace<Health>(tower, 100.0f);
     aRegistry.emplace<SceneObject>(tower, "tower_model"_hs);
+    aRegistry.emplace<Owner>(tower, aInit.OwnerID, player.Slot);
     aRegistry.emplace<TowerAttack>(
         tower,
         TowerAttack{
@@ -314,6 +247,7 @@ void NetworkResponseSystem::createCreep(
 {
     auto& syncMap = aRegistry.ctx().get<EntitySyncMap>();
     auto& phy     = aRegistry.ctx().get<Physics>();
+    auto& player  = aRegistry.get<Player>(FindPlayerEntity(aRegistry, aInit.OwnerID));
 
     auto creep = aRegistry.create();
 
@@ -329,18 +263,7 @@ void NetworkResponseSystem::createCreep(
 
     RigidBody body{.Params = aUpdate.Params};
     Collider  collider{
-         .Params =
-            ColliderParams{
-                 .CollisionCategoryBits = Category::Entities,
-                 .CollideWithMaskBits   = Category::Projectiles | Category::Entities,
-                 .IsTrigger             = false,
-                 .Offset                = Transform3D{},
-                 .ShapeParams =
-                    CapsuleShapeParams{
-                         .Radius = 0.1f,
-                         .Height = 0.05f,
-                    },
-            },
+         .Params = aInit.ColliderParams,
     };
     body.Body       = phy.CreateRigidBody(body.Params, transform);
     collider.Handle = phy.AddCollider(body.Body, collider.Params);
@@ -349,6 +272,7 @@ void NetworkResponseSystem::createCreep(
     aRegistry.emplace<RigidBody>(creep, body);
     aRegistry.emplace<Collider>(creep, collider);
     aRegistry.emplace<Health>(creep, 100.0f);
+    aRegistry.emplace<Owner>(creep, aInit.OwnerID, player.Slot);
     aRegistry.emplace<SceneObject>(creep, "phoenix"_hs);
     aRegistry.emplace<ImguiDrawable>(creep, "phoenix", true);
     aRegistry.emplace<Animator>(creep, 0.0f, "Take 001");

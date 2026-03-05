@@ -3,10 +3,12 @@
 #include <bgfx/bgfx.h>
 #include <bx/bx.h>
 
+#include <set>
 #include <stdexcept>
 
 #include "components/health.hpp"
 #include "components/imgui.hpp"
+#include "components/player.hpp"
 #include "components/rigid_body.hpp"
 #include "components/spawner.hpp"
 #include "core/graph.hpp"
@@ -16,7 +18,6 @@ using namespace entt::literals;
 
 void TowerBuiltSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t aTick)
 {
-    auto& graph   = aRegistry.ctx().get<Graph>();
     auto& phy     = aRegistry.ctx().get<Physics>();
     auto* storage = aRegistry.storage("tower_built_observer"_hs);
 
@@ -29,21 +30,56 @@ void TowerBuiltSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32
     }
     WATO_TRACE(aRegistry, "got {} towers built", storage->size());
 
-    for (auto tower : *storage) {
-        auto& rb = aRegistry.get<RigidBody>(tower);
+    // Collect which player graphs need path recomputation
+    std::set<PlayerID> dirtyPlayers;
 
-        phy.ToggleObstacle(rb.Body->getCollider(0), aRegistry.ctx().get<Graph>(), true);
-    }
+    if (aRegistry.ctx().contains<PlayerGraphMap>()) {
+        auto& graphMap = aRegistry.ctx().get<PlayerGraphMap>();
 
-    // FIXME: need to think about player ownership and how to handle only updating the correct
-    // player's grid
-    if (aRegistry.ctx().contains<ENetServer>()) {
-        for (auto&& [e, player, transform] : aRegistry.view<Player, Transform3D>().each()) {
-            graph.ComputePaths(GraphCell::FromWorldPoint(transform.Position));
-            WATO_TRACE(aRegistry, "paths updated");
-            WATO_DBG(aRegistry, "{}", aRegistry.ctx().get<Graph>());
-            break;
+        for (auto tower : *storage) {
+            auto& rb    = aRegistry.get<RigidBody>(tower);
+            auto* owner = aRegistry.try_get<Owner>(tower);
+            if (owner) {
+                auto it = graphMap.find(owner->ID);
+                if (it != graphMap.end()) {
+                    phy.ToggleObstacle(rb.Body->getCollider(0), it->second, true);
+                    dirtyPlayers.insert(owner->ID);
+                }
+            }
         }
-        graph.GridDirty = true;
+
+        for (PlayerID pid : dirtyPlayers) {
+            auto it = graphMap.find(pid);
+            if (it == graphMap.end()) continue;
+            auto& graph = it->second;
+
+            for (auto&& [e, player, transform] : aRegistry.view<Player, Transform3D>().each()) {
+                if (player.ID == pid) {
+                    graph.ComputePaths(transform.Position);
+                    WATO_DBG(aRegistry, "{}", graph);
+                    WATO_TRACE(aRegistry, "paths updated for player {}", pid);
+                    break;
+                }
+            }
+            graph.GridDirty = true;
+        }
+    } else if (aRegistry.ctx().contains<Graph>()) {
+        // Client path: single graph for local player only
+        auto&    graph    = aRegistry.ctx().get<Graph>();
+        PlayerID localPID = aRegistry.ctx().get<Player>("player"_hs).ID;
+        bool     dirty    = false;
+
+        for (auto tower : *storage) {
+            auto* owner = aRegistry.try_get<Owner>(tower);
+            if (!owner || owner->ID != localPID) {
+                continue;
+            }
+            auto& rb = aRegistry.get<RigidBody>(tower);
+            phy.ToggleObstacle(rb.Body->getCollider(0), graph, true);
+            dirty = true;
+        }
+        if (dirty) {
+            graph.GridDirty = true;
+        }
     }
 }

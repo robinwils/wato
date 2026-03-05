@@ -1,6 +1,7 @@
 #include "core/app/game_client.hpp"
 
 #include <bx/bx.h>
+#include <sodium/runtime.h>
 #include <spdlog/spdlog.h>
 
 #include <chrono>
@@ -10,10 +11,19 @@
 #include <span>
 
 #include "components/game.hpp"
+#include "components/health.hpp"
 #include "components/imgui.hpp"
+#include "components/player.hpp"
+#include "components/rigid_body.hpp"
+#include "components/transform3d.hpp"
+#include "core/crypto/key.hpp"
+#include "core/graph.hpp"
+#include "core/menu/menu.hpp"
 #include "core/net/enet_client.hpp"
 #include "core/net/net.hpp"
 #include "core/net/network_events.hpp"
+#include "core/net/pocketbase.hpp"
+#include "core/physics/physics.hpp"
 #include "core/snapshot.hpp"
 #include "core/sys/log.hpp"
 #include "core/types.hpp"
@@ -33,6 +43,7 @@
 #include "systems/sync.hpp"
 #include "systems/system.hpp"
 #include "systems/tower_built.hpp"
+#include "systems/ui.hpp"
 
 using namespace std::literals::chrono_literals;
 using namespace entt::literals;
@@ -51,8 +62,6 @@ void GameClient::Init()
     renderer.Init(window);
     netClient.Init();
 
-    LoadResources(mRegistry);
-
     // Register frame-time systems (variable delta)
     // in reversed order, entt::scheduler executes processes starting from the end
 #if WATO_DEBUG
@@ -65,6 +74,25 @@ void GameClient::Init()
     mFrameExecutor.Register<AnimationSystem>();
     mFrameExecutor.Register<RealTimeActionSystem>();
     mFrameExecutor.Register<InputSystem>();
+
+    mMenuExecutor.Register<RenderSystem>();
+    mMenuExecutor.Register<RenderImguiSystem>();
+    mMenuExecutor.Register<UISystem>();
+
+    // End-game: render world + rankings board, no simulation or input
+    mEndGameExecutor.Register<RenderSystem>();
+    mEndGameExecutor.Register<RenderImguiSystem>();
+    mEndGameExecutor.Register<AnimationSystem>();
+
+    // fetch ENet server public key from pocketbase which is a secure channel if TLS enabled
+    auto r = mRegistry.ctx().get<PocketBaseClient&>().GetGameServer("0.0.0.0", 7777);
+    if (!r) {
+        mLogger->error("cannot get game server");
+        return;
+    }
+
+    mLogger->debug("got server public key = {}", r->publicKey);
+    mRegistry.ctx().get<ENetClient&>().SetServerPK(KeyFromB64<32>(r->publicKey));
 }
 
 int GameClient::Run(tf::Executor& aExecutor)
@@ -74,13 +102,7 @@ int GameClient::Run(tf::Executor& aExecutor)
     auto& netClient = mRegistry.ctx().get<ENetClient&>();
     auto  prevTime  = clock_type::now();
 
-    std::thread networkThreadHandle([this]() { networkThread(); });
-    networkThreadHandle.detach();
-
-    if (!netClient.Connect()) {
-        throw std::runtime_error("No available peers for initiating an ENet connection.");
-    }
-    WATO_DBG(mRegistry, "connected to server");
+    mNetworkThread = std::thread([this]() { networkThread(); });
 
     while (!window.ShouldClose()) {
         window.PollEvents();
@@ -97,14 +119,26 @@ int GameClient::Run(tf::Executor& aExecutor)
 
         consumeNetworkResponses();
 
-        if (mRegistry.ctx().contains<GameInstance>()) {
-            mFrameExecutor.Update(frameTime.count(), &mRegistry);
+        switch (mRegistry.ctx().get<MenuContext>().State) {
+            case MenuState::Login:
+            case MenuState::Register:
+            case MenuState::Lobby:
+                mMenuExecutor.Update(frameTime.count(), &mRegistry);
+                break;
+            case MenuState::InGame:
+                if (mRegistry.ctx().contains<GameInstance>()) {
+                    mFrameExecutor.Update(frameTime.count(), &mRegistry);
+                }
+                break;
+            case MenuState::EndGame:
+                mEndGameExecutor.Update(frameTime.count(), &mRegistry);
+                break;
         }
 
         renderer.Render();
-        input.PrevKeyboardState   = input.KeyboardState;
-        input.PrevMouseState      = input.MouseState;
-        input.MouseState.Scroll.y = 0;
+        input.PrevKeyboardState = input.KeyboardState;
+        input.PrevMouseState    = input.MouseState;
+        input.MouseState.Scroll = glm::dvec2(0.0);
     }
 
     StopGameInstance(mRegistry);
@@ -136,7 +170,7 @@ void GameClient::networkThread()
     }
 }
 
-void GameClient::spawnPlayerAndCamera()
+void GameClient::spawnCamera(glm::vec3 aPlayerPosition)
 {
     auto camera = mRegistry.create();
     mRegistry.emplace<Camera>(
@@ -153,13 +187,13 @@ void GameClient::spawnPlayerAndCamera()
     // pos, orientation, scale
     mRegistry.emplace<Transform3D>(
         camera,
-        glm::vec3(3.0f, 2.0f, 3.0f),
+        aPlayerPosition + glm::vec3(1.0f, 2.0f, 1.0f),
         glm::identity<glm::quat>(),
         glm::vec3(1.0f));
     mRegistry.emplace<ImguiDrawable>(camera, "Camera");
 }
 
-void GameClient::prepareGridPreview()
+void GameClient::prepareGridPreview(const glm::vec2& aOffset)
 {
     const auto& graph = mRegistry.ctx().get<Graph>();
 
@@ -172,7 +206,7 @@ void GameClient::prepareGridPreview()
     for (GraphCell::size_type i = 0; i < numVertsY; ++i) {
         for (GraphCell::size_type j = 0; j < numVertsX; ++j) {
             GraphCell cell(j, i);
-            vertices.emplace_back(cell.ToWorld());
+            vertices.emplace_back(cell.ToWorld(aOffset));
             if (i != 0) {
                 indices.push_back(SafeU16(i) * numVertsX + j);
                 indices.push_back((SafeU16(i) - 1) * numVertsX + j);
@@ -217,12 +251,83 @@ void GameClient::prepareGridPreview()
         std::span<const uint8_t>(graph.GridLayout().data(), graph.Width() * graph.Height()));
 }
 
-void GameClient::OnGameInstanceCreated(Registry& aRegistry)
+void GameClient::StartGameInstance(
+    Registry&                          aRegistry,
+    const GameInstanceID               aGameID,
+    PlayerID                           aLocalPlayerID,
+    const std::vector<PlayerInitData>& aPlayers)
 {
-    auto& fixedExec = aRegistry.ctx().get<FixedSystemExecutor>();
+    Application::StartGameInstance(aRegistry, aGameID);
+    LoadResources(aRegistry);
 
-    spawnPlayerAndCamera();
-    prepareGridPreview();
+    auto&     syncMap = aRegistry.ctx().get<EntitySyncMap>();
+    glm::vec3 localPlayerPos{2.0f, 0.004f, 2.0f};
+
+    for (uint8_t idx = 0; idx < aPlayers.size(); ++idx) {
+        uint8_t sender = idx == 0 ? uint8_t(aPlayers.size()) - 1 : idx - 1;
+
+        const PlayerInitData& p = aPlayers[idx];
+
+        // Create player entity
+        auto  player    = aRegistry.create();
+        auto& playerCmp = aRegistry.emplace<Player>(player, p.ID, idx);
+        aRegistry.emplace<DisplayName>(player, p.DisplayName);
+        aRegistry.emplace<Health>(player, p.Health);
+        aRegistry.emplace<Transform3D>(player, p.Position);
+        aRegistry.emplace<RigidBody>(
+            player,
+            RigidBody{
+                .Params =
+                    RigidBodyParams{
+                        .Type           = rp3d::BodyType::STATIC,
+                        .Velocity       = 0.0f,
+                        .Direction      = glm::vec3(0.0f),
+                        .GravityEnabled = false,
+                    },
+            });
+        aRegistry.emplace<Collider>(
+            player,
+            Collider{
+                .Params =
+                    ColliderParams{
+                        .CollisionCategoryBits = Category::Base,
+                        .CollideWithMaskBits   = PlayerEntitiesCategory(sender),
+                        .IsTrigger             = true,
+                        .ShapeParams =
+                            BoxShapeParams{
+                                .HalfExtents = GraphCell(1, 1).ToWorld() * 0.5f,
+                            },
+                    },
+            });
+        SpawnTerrain(aRegistry, player, p.MapSize, p.MapWorldOffset);
+
+        syncMap.insert_or_assign(p.ServerEntity, player);
+        WATO_INFO(
+            aRegistry,
+            "created player {} (server {}) for player ID {}",
+            player,
+            p.ServerEntity,
+            p.ID);
+
+        if (p.ID == aLocalPlayerID) {
+            localPlayerPos = p.Position;
+            aRegistry.ctx().emplace_as<Player>("player"_hs, playerCmp);
+
+            // Create graph for local player (used for grid preview)
+            aRegistry.ctx().emplace<Graph>(
+                p.MapSize.x * GraphCell::kCellsPerAxis,
+                p.MapSize.y * GraphCell::kCellsPerAxis,
+                p.MapWorldOffset);
+
+            prepareGridPreview(p.MapWorldOffset);
+        }
+    }
+
+    spawnCamera(localPlayerPos);
+
+    aRegistry.ctx().emplace<const Input*>(&mRegistry.ctx().get<WatoWindow>().GetInput());
+
+    auto& fixedExec = aRegistry.ctx().get<FixedSystemExecutor>();
 
     fixedExec.Register<NetworkSyncSystem<ENetClient>>();
     fixedExec.Register<PhysicsSystem>();
@@ -234,63 +339,89 @@ void GameClient::OnGameInstanceCreated(Registry& aRegistry)
 
 void GameClient::consumeNetworkResponses()
 {
-    auto& netClient = mRegistry.ctx().get<ENetClient>();
+    struct NetworkResponseVisitor {
+        Registry*         Reg;
+        entt::dispatcher* Dispatcher;
+        GameClient*       Client;
 
-    auto* dispatcher = mRegistry.ctx().find<entt::dispatcher>();
+        void operator()(const ConnectedResponse&) const
+        {
+            WATO_INFO(*Reg, "got connected response");
 
-    netClient.ConsumeNetworkResponses([&](NetworkResponse* aEvent) {
-        std::visit(
-            VariantVisitor{
-                [&](const ConnectedResponse&) {
-                    WATO_INFO(mRegistry, "got connected response");
+            auto& pb        = Reg->ctx().get<PocketBaseClient>();
+            auto& netClient = Reg->ctx().get<ENetClient&>();
 
-                    // TODO: should be triggered by player input (menu, matchmaking,...)
-                    netClient.EnqueueRequest(new NetworkRequest{
-                        .Type     = PacketType::NewGame,
-                        .PlayerID = 0,
-                        .Tick     = 0,
-                        .Payload  = NewGameRequest{.PlayerAID = 0},
-                    });
-                },
-                [&](const NewGameResponse& aResp) {
-                    StartGameInstance(mRegistry, aResp.GameID, false);
-                    WATO_INFO(mRegistry, "game {} created", aResp.GameID);
+            auto* req     = new NetworkRequest;
+            req->Type     = PacketType::Auth;
+            req->PlayerID = 0;
+            req->Tick     = 0;
+            req->Payload  = AuthRequest{
+                 .Token     = pb.Token,
+                 .HasAESNI  = sodium_runtime_has_aesni() != 0,
+                 .PublicKey = netClient.RawPublicKey()};
+            netClient.EnqueueRequest(req);
+        }
 
-                    if (dispatcher) {
-                        dispatcher->enqueue<NewGameEvent>(
-                            NewGameEvent{.Reg = &mRegistry, .Response = std::move(aResp)});
-                    }
-                },
-                [&](SyncPayload& aResp) {
-                    if (dispatcher) {
-                        dispatcher->enqueue<SyncPayloadEvent>(
-                            SyncPayloadEvent{.Reg = &mRegistry, .Payload = std::move(aResp)});
-                    }
-                },
-                [&](const RigidBodyUpdateResponse& aUpdate) {
-                    if (dispatcher) {
-                        dispatcher->enqueue<RigidBodyUpdateEvent>(
-                            RigidBodyUpdateEvent{.Reg = &mRegistry, .Response = aUpdate});
-                    }
-                },
-                [&](const HealthUpdateResponse& aUpdate) {
-                    if (dispatcher) {
-                        dispatcher->enqueue<HealthUpdateEvent>(
-                            HealthUpdateEvent{.Reg = &mRegistry, .Response = aUpdate});
-                    }
-                },
-                [&](const PlayerEliminatedResponse& aResp) {
-                    auto& menu = mRegistry.ctx().get<ImGuiGameMenu>();
-                    mRegistry.ctx().insert_or_assign("ranking"_hs, aResp.Ranking);
-                    menu.GoToEnd();
-                },
-                [&](const GameEndResponse& aResp) {
-                    auto& menu = mRegistry.ctx().get<ImGuiGameMenu>();
-                    mRegistry.ctx().insert_or_assign("ranking"_hs, aResp.Ranking);
-                    menu.GoToEnd();
-                },
-                [&](const std::monostate) {},
-            },
-            aEvent->Payload);
-    });
+        void operator()(const NewGameResponse& aResp) const
+        {
+            Client->StartGameInstance(*Reg, aResp.GameID, aResp.YourPlayerID, aResp.Players);
+            Reg->ctx().get<MenuContext&>().State = MenuState::InGame;
+            WATO_INFO(*Reg, "game {} created with {} players", aResp.GameID, aResp.Players.size());
+        }
+
+        void operator()(SyncPayload& aResp) const
+        {
+            Dispatcher->enqueue<SyncPayloadEvent>(
+                SyncPayloadEvent{.Reg = Reg, .Payload = std::move(aResp)});
+        }
+
+        void operator()(const RigidBodyUpdateResponse& aUpdate) const
+        {
+            Dispatcher->enqueue<RigidBodyUpdateEvent>(
+                RigidBodyUpdateEvent{.Reg = Reg, .Response = aUpdate});
+        }
+
+        void operator()(const HealthUpdateResponse& aUpdate) const
+        {
+            Dispatcher->enqueue<HealthUpdateEvent>(
+                HealthUpdateEvent{.Reg = Reg, .Response = aUpdate});
+        }
+
+        void operator()(const PlayerEliminatedResponse& aResp) const
+        {
+            Reg->ctx().insert_or_assign("ranking"_hs, aResp.Ranking);
+            WATO_DBG(*Reg, "got player eliminated response ranking {}", aResp.Ranking);
+            if (aResp.PlayerID == Reg->ctx().get<Player>("player"_hs).ID) {
+                Reg->ctx().get<MenuContext&>().State = MenuState::EndGame;
+            }
+        }
+
+        void operator()(const GameEndResponse& aResp) const
+        {
+            Reg->ctx().insert_or_assign("ranking"_hs, aResp.Ranking);
+            WATO_DBG(*Reg, "got game end response ranking {}", aResp.Ranking);
+            Reg->ctx().get<MenuContext&>().State = MenuState::EndGame;
+        }
+
+        void operator()(const AuthResponse& aResp) const
+        {
+            if (aResp.Success) {
+                WATO_INFO(*Reg, "authenticated as player {}", aResp.ID);
+            } else {
+                WATO_ERR(*Reg, "authentication failed");
+            }
+        }
+
+        void operator()(std::monostate) const {}
+    };
+
+    auto& netClient  = mRegistry.ctx().get<ENetClient>();
+    auto& dispatcher = mRegistry.ctx().get<entt::dispatcher>("net_dispatcher"_hs);
+
+    NetworkResponseVisitor visitor{&mRegistry, &dispatcher, this};
+
+    netClient.ConsumeNetworkResponses(
+        [&](NetworkResponse* aEvent) { std::visit(visitor, aEvent->Payload); });
+
+    mRegistry.ctx().get<PocketBaseClient>().Update();
 }

@@ -3,12 +3,17 @@
 #include <bgfx/bgfx.h>
 
 #include <entt/entity/fwd.hpp>
+#include <memory>
+#include <thread>
 
 #include "core/app/app.hpp"
+#include "core/menu/imgui_menu.hpp"
+#include "core/menu/menu.hpp"
 #include "core/net/enet_client.hpp"
+#include "core/net/net.hpp"
+#include "core/net/pocketbase.hpp"
 #include "core/physics/physics_event_listener.hpp"
 #include "imgui_hud.hpp"
-#include "imgui_menu.hpp"
 #include "input/action.hpp"
 #include "registry/registry.hpp"
 #include "renderer/renderer.hpp"
@@ -36,6 +41,13 @@ class GameClient : public Application
     virtual ~GameClient()
     {
         WATO_TRACE(mRegistry, "Destroying GameClient");
+
+        // Stop the network thread before destroying any resources it uses
+        auto& netClient = mRegistry.ctx().get<ENetClient&>();
+        netClient.ForceDisconnect();
+        if (mNetworkThread.joinable()) {
+            mNetworkThread.join();
+        }
 
         std::vector<entt::id_type> ids;
 
@@ -81,7 +93,11 @@ class GameClient : public Application
     int  Run(tf::Executor& aExecutor) override;
 
    protected:
-    virtual void OnGameInstanceCreated(Registry& aRegistry) override;
+    void StartGameInstance(
+        Registry&                          aRegistry,
+        const GameInstanceID               aGameID,
+        PlayerID                           aLocalPlayerID,
+        const std::vector<PlayerInitData>& aPlayers);
 
    private:
     inline void initContext(int aWidth, int aHeight)
@@ -90,23 +106,25 @@ class GameClient : public Application
         mRegistry.ctx().emplace<ActionContextStack>();
         mRegistry.ctx().emplace<WatoWindow>(aWidth, aHeight);
         mRegistry.ctx().emplace<BgfxRenderer>(mOptions.Renderer());
-        mRegistry.ctx().emplace<ImGuiGameMenu>();
+        mRegistry.ctx().emplace<MenuContext>(std::make_unique<ImGuiMenu>());
         mRegistry.ctx().emplace<ImGuiHUD>();
         mRegistry.ctx().emplace<ENetClient>(mLogger);
         mRegistry.ctx().emplace<TextureCache>();
         mRegistry.ctx().emplace<ShaderCache>();
         mRegistry.ctx().emplace<ModelCache>();
         mRegistry.ctx().emplace<EntitySyncMap>();
+        mRegistry.ctx().emplace<PocketBaseClient>(mOptions.BackendAddr(), mLogger);
 
         // Create dispatcher for network events
-        mRegistry.ctx().emplace<entt::dispatcher>();
+        mRegistry.ctx().emplace_as<entt::dispatcher>("net_dispatcher"_hs);
     }
     void networkThread();
     void consumeNetworkResponses();
-    void spawnPlayerAndCamera();
-    void prepareGridPreview();
+    void spawnCamera(glm::vec3 aPlayerPosition);
+    void prepareGridPreview(const glm::vec2& aOffset);
 
     Registry mRegistry;
 
+    std::thread                           mNetworkThread;
     std::optional<clock_type::time_point> mDiscTimerStart;
 };

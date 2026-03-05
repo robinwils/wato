@@ -9,7 +9,7 @@ project(
 )
 
 if (NOT DEFINED CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 20)
+  set(CMAKE_CXX_STANDARD 23)
 endif()
 
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -41,6 +41,7 @@ set(TF_BUILD_EXAMPLES OFF CACHE BOOL "Disable taskflow example builds" FORCE)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_COLOR_MAKEFILE ON)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
 
 include(FetchContent)
 FetchContent_Declare(
@@ -91,8 +92,11 @@ set(FETCHED_DEPS_NAMES
   enet
   argh
   taskflow
-  doctest
 )
+
+if (ENABLE_TESTS)
+  list(APPEND FETCHED_DEPS_NAMES doctest)
+endif()
 
 FetchContent_MakeAvailable(${FETCHED_DEPS_NAMES})
 set(OTHER_DEPS
@@ -100,6 +104,7 @@ set(OTHER_DEPS
   spdlog
   Sodium
   bgfx
+  cpr
 )
 
 if (ENABLE_CLIENT)
@@ -188,14 +193,14 @@ if (ENABLE_CLIENT)
     BASE_DIRS src
     FILES
     src/core/app/game_client.hpp
-    src/core/menu/menu_state.hpp
+    src/core/menu/menu.hpp
     src/core/menu/menu_backend.hpp
+    src/core/menu/imgui_menu.hpp
     src/core/tile.hpp
     src/core/window.hpp
     src/imgui/wato_imgui_config.h
     src/imgui/imgui_helper.h
     src/imgui/imgui_hud.hpp
-    src/imgui/imgui_menu.hpp
     src/input/action.hpp
     src/input/input.hpp
     src/registry/game_registry.hpp
@@ -221,15 +226,16 @@ if (ENABLE_CLIENT)
     src/systems/network_response.hpp
     src/systems/render.hpp
     src/systems/sync.hpp
+    src/systems/ui.hpp
 
     PRIVATE
     src/core/app/game_client.cpp
+    src/core/menu/imgui_menu.cpp
     src/core/physics/physics_event_listener.cpp
     src/core/sys/mem.cpp
     src/core/window.cpp
     src/imgui/imgui_helper.cpp
     src/imgui/imgui_hud.cpp
-    src/imgui/imgui_menu.cpp
     src/input/action.cpp
     src/input/input.cpp
     src/main.cpp
@@ -248,6 +254,7 @@ if (ENABLE_CLIENT)
     src/systems/network_response.cpp
     src/systems/render.cpp
     src/systems/sync.cpp
+    src/systems/ui.cpp
 
     shaders/fs_blinnphong.sc
     shaders/fs_grid.sc
@@ -267,6 +274,7 @@ if (ENABLE_CLIENT)
     bgfx::bimg_decode
     bgfx::bimg
     imgui::imgui
+    cpr::cpr
   )
 
   if(LINUX)
@@ -301,6 +309,7 @@ endif()
 # Preprocessor
 target_compile_definitions(wato_common
   INTERFACE
+    ENTT_MAYBE_ATOMIC
     SPDLOG_ACTIVE_LEVEL=$<IF:$<CONFIG:Debug>,SPDLOG_LEVEL_TRACE,SPDLOG_LEVEL_INFO>
     WATO_DEBUG=$<IF:$<CONFIG:Debug>,1,0>
     GLM_FORCE_SIZE_T_LENGTH
@@ -442,17 +451,22 @@ target_sources(watolib
     src/components/velocity.hpp
     src/core/app/app.hpp
     src/core/app/game_server.hpp
+    src/core/crypto/aead.hpp
+    src/core/crypto/key.hpp
+    src/core/crypto/session.hpp
     src/core/graph.hpp
     src/core/net/enet_base.hpp
     src/core/net/enet_client.hpp
     src/core/net/enet_server.hpp
+    src/core/net/http_client.hpp
+    src/core/net/pocketbase.hpp
     src/core/physics/physics.hpp
     src/core/physics/physics_event_listener.hpp
     src/core/queue/channel.hpp
     src/core/queue/ring_buffer.hpp
     src/core/snapshot.hpp
     src/core/state.hpp
-    src/core/sys/backtrace.hpp
+    src/core/sys/signal.hpp
     src/core/sys/log.hpp
     src/core/tower_building_handler.hpp
     src/registry/registry.hpp
@@ -469,13 +483,18 @@ target_sources(watolib
   PRIVATE
     src/core/app/app.cpp
     src/core/app/game_server.cpp
+    src/core/crypto/aead.cpp
+    src/core/crypto/key.cpp
+    src/core/crypto/session.cpp
     src/core/graph.cpp
     src/core/net/enet_base.cpp
     src/core/net/enet_client.cpp
     src/core/net/enet_server.cpp
+    src/core/net/http_client.cpp
+    src/core/net/pocketbase.cpp
     src/core/physics/physics.cpp
     src/core/physics/physics_event_listener.cpp
-    src/core/sys/backtrace.cpp
+    src/core/sys/signal.cpp
     src/core/tower_building_handler.cpp
     src/registry/registry.cpp
     src/systems/ai.cpp
@@ -498,4 +517,5 @@ target_link_libraries(watolib
     sodium
     spdlog::spdlog
     ReactPhysics3D::ReactPhysics3D
+    cpr::cpr
 )

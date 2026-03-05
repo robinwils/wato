@@ -196,9 +196,8 @@ struct OcornutImguiContext {
             Allocator = &allocator;
         }
 
-        ViewID     = 255;
-        LastScroll = 0;
-        Last       = bx::getHPCounter();
+        ViewID = 255;
+        Last   = bx::getHPCounter();
 
         ImGui::SetAllocatorFunctions(memAlloc, memFree, NULL);
 
@@ -313,14 +312,15 @@ struct OcornutImguiContext {
         style.WindowBorderSize = 0.0f;
     }
 
-    void
-    BeginFrame(const Input& aInput, int aWidth, int aHeight, int aInputChar, bgfx::ViewId aViewId)
+    void BeginFrame(const Input& aInput, int aWidth, int aHeight, bgfx::ViewId aViewId)
     {
         ViewID = aViewId;
 
         ImGuiIO& io = ImGui::GetIO();
-        if (aInputChar >= 0) {
-            io.AddInputCharacter(aInputChar);
+
+        // Add all queued input characters
+        for (uint32_t c : aInput.InputChars()) {
+            io.AddInputCharacter(c);
         }
 
         io.DisplaySize = ImVec2((float)aWidth, (float)aHeight);
@@ -342,8 +342,51 @@ struct OcornutImguiContext {
         io.AddMouseButtonEvent(
             ImGuiMouseButton_Middle,
             aInput.MouseState.IsKeyPressed(Mouse::Button::Middle));
-        io.AddMouseWheelEvent(0.0f, aInput.MouseState.Scroll.y - LastScroll);
-        LastScroll = aInput.MouseState.Scroll.y;
+        io.AddMouseWheelEvent(
+            static_cast<float>(aInput.MouseState.Scroll.x),
+            static_cast<float>(aInput.MouseState.Scroll.y));
+
+        // Modifier keys
+        const bool ctrl = aInput.KeyboardState.IsKeyPressed(Keyboard::LeftControl)
+                          || aInput.KeyboardState.IsKeyPressed(Keyboard::RightControl);
+        const bool shift = aInput.KeyboardState.IsKeyPressed(Keyboard::LeftShift)
+                           || aInput.KeyboardState.IsKeyPressed(Keyboard::RightShift);
+        const bool alt = aInput.KeyboardState.IsKeyPressed(Keyboard::LeftAlt)
+                         || aInput.KeyboardState.IsKeyPressed(Keyboard::RightAlt);
+        const bool super = aInput.KeyboardState.IsKeyPressed(Keyboard::LeftSuper)
+                           || aInput.KeyboardState.IsKeyPressed(Keyboard::RightSuper);
+
+        io.AddKeyEvent(ImGuiMod_Ctrl, ctrl);
+        io.AddKeyEvent(ImGuiMod_Shift, shift);
+        io.AddKeyEvent(ImGuiMod_Alt, alt);
+        io.AddKeyEvent(ImGuiMod_Super, super);
+
+#define ADD_KEY(imKey, key) io.AddKeyEvent(imKey, aInput.KeyboardState.IsKeyPressed(key))
+        ADD_KEY(ImGuiKey_Tab, Keyboard::Tab);
+        ADD_KEY(ImGuiKey_LeftArrow, Keyboard::Left);
+        ADD_KEY(ImGuiKey_RightArrow, Keyboard::Right);
+        ADD_KEY(ImGuiKey_UpArrow, Keyboard::Up);
+        ADD_KEY(ImGuiKey_DownArrow, Keyboard::Down);
+        ADD_KEY(ImGuiKey_PageUp, Keyboard::PageUp);
+        ADD_KEY(ImGuiKey_PageDown, Keyboard::PageDown);
+        ADD_KEY(ImGuiKey_Home, Keyboard::Home);
+        ADD_KEY(ImGuiKey_End, Keyboard::End);
+        ADD_KEY(ImGuiKey_Insert, Keyboard::Insert);
+        ADD_KEY(ImGuiKey_Delete, Keyboard::Delete);
+        ADD_KEY(ImGuiKey_Backspace, Keyboard::Backspace);
+        ADD_KEY(ImGuiKey_Space, Keyboard::Space);
+        ADD_KEY(ImGuiKey_Enter, Keyboard::Enter);
+        ADD_KEY(ImGuiKey_Escape, Keyboard::Escape);
+        ADD_KEY(ImGuiKey_KeypadEnter, Keyboard::KpEnter);
+
+        // Letters for shortcuts (Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X, Ctrl+Y, Ctrl+Z)
+        ADD_KEY(ImGuiKey_A, Keyboard::A);
+        ADD_KEY(ImGuiKey_C, Keyboard::C);
+        ADD_KEY(ImGuiKey_V, Keyboard::V);
+        ADD_KEY(ImGuiKey_X, Keyboard::X);
+        ADD_KEY(ImGuiKey_Y, Keyboard::Y);
+        ADD_KEY(ImGuiKey_Z, Keyboard::Z);
+#undef ADD_KEY
 
         ImGui::NewFrame();
     }
@@ -364,7 +407,6 @@ struct OcornutImguiContext {
     bgfx::UniformHandle UniformImageLodEnabled;
     ImFont*             Fonts[ImGui::Font::Count];
     int64_t             Last;
-    double              LastScroll;
     bgfx::ViewId        ViewID;
 #if USE_ENTRY
     ImGuiKey m_keyMap[(int)entry::Key::Count];
@@ -392,14 +434,9 @@ void imguiCreate(float aFontSize, bx::AllocatorI* aAllocator)
 
 void imguiDestroy() { sCtx.Destroy(); }
 
-void imguiBeginFrame(
-    const Input& aInput,
-    int          aWidth,
-    int          aHeight,
-    int          aInputChar,
-    bgfx::ViewId aViewId)
+void imguiBeginFrame(const Input& aInput, int aWidth, int aHeight, bgfx::ViewId aViewId)
 {
-    sCtx.BeginFrame(aInput, aWidth, aHeight, aInputChar, aViewId);
+    sCtx.BeginFrame(aInput, aWidth, aHeight, aViewId);
 }
 
 void imguiEndFrame() { sCtx.EndFrame(); }

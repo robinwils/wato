@@ -50,46 +50,62 @@ ActionsType ActionBindings::ActionsFromInput(const Input& aInput)
 {
     ActionsType actions;
 
+    struct InputBindingVisitor {
+        const Input*   In;
+        ActionBinding* Binding;
+        ActionsType*   Actions;
+
+        void operator()(const Keyboard::Key& aKey) const
+        {
+            if (In->UiWantsKeyboard) {
+                return;
+            }
+            if (Binding->KeyState.State == KeyState::State::Hold
+                && ((In->KeyboardState.IsKeyPressed(aKey)
+                     && In->PrevKeyboardState.IsKeyPressed(aKey))
+                    || In->KeyboardState.IsKeyRepeat(aKey))) {
+                Actions->push_back(Binding->Action);
+            } else if (
+                Binding->KeyState.State == KeyState::State::PressOnce
+                && In->KeyboardState.IsKeyPressed(aKey)
+                && (In->PrevKeyboardState.IsKeyReleased(aKey)
+                    || In->PrevKeyboardState.IsKeyUnknown(aKey))) {
+                Actions->push_back(Binding->Action);
+            }
+        }
+
+        void operator()(const Mouse::Button& aButton) const
+        {
+            if (In->UiWantsMouse) {
+                return;
+            }
+            if (Binding->KeyState.State == KeyState::State::Hold
+                && ((In->MouseState.IsKeyPressed(aButton)
+                     && In->PrevMouseState.IsKeyPressed(aButton))
+                    || In->MouseState.IsKeyRepeat(aButton))) {
+                Binding->Action.AddExtraInputInfo(*In);
+                Actions->push_back(Binding->Action);
+            } else if (
+                Binding->KeyState.State == KeyState::State::PressOnce
+                && In->MouseState.IsKeyPressed(aButton)
+                && (In->PrevMouseState.IsKeyReleased(aButton)
+                    || In->PrevMouseState.IsKeyUnknown(aButton))) {
+                Binding->Action.AddExtraInputInfo(*In);
+                Actions->push_back(Binding->Action);
+            }
+        }
+    };
+
     for (auto& [_, binding] : mBindings) {
-        std::visit(
-            VariantVisitor{// handle keyboard binding
-                           [&](const Keyboard::Key& aKey) {
-                               if (binding.KeyState.State == KeyState::State::Hold
-                                   && ((aInput.KeyboardState.IsKeyPressed(aKey)
-                                        && aInput.PrevKeyboardState.IsKeyPressed(aKey))
-                                       || aInput.KeyboardState.IsKeyRepeat(aKey))) {
-                                   actions.push_back(binding.Action);
-                               } else if (
-                                   binding.KeyState.State == KeyState::State::PressOnce
-                                   && aInput.KeyboardState.IsKeyPressed(aKey)
-                                   && (aInput.PrevKeyboardState.IsKeyReleased(aKey)
-                                       || aInput.PrevKeyboardState.IsKeyUnknown(aKey))) {
-                                   actions.push_back(binding.Action);
-                               }
-                           },
-                           [&](const Mouse::Button& aButton) {
-                               if (binding.KeyState.State == KeyState::State::Hold
-                                   && ((aInput.MouseState.IsKeyPressed(aButton)
-                                        && aInput.PrevMouseState.IsKeyPressed(aButton))
-                                       || aInput.MouseState.IsKeyRepeat(aButton))) {
-                                   binding.Action.AddExtraInputInfo(aInput);
-                                   actions.push_back(binding.Action);
-                               } else if (
-                                   binding.KeyState.State == KeyState::State::PressOnce
-                                   && aInput.MouseState.IsKeyPressed(aButton)
-                                   && (aInput.PrevMouseState.IsKeyReleased(aButton)
-                                       || aInput.PrevMouseState.IsKeyUnknown(aButton))) {
-                                   binding.Action.AddExtraInputInfo(aInput);
-                                   actions.push_back(binding.Action);
-                               }
-                           }},
-            binding.KeyState.Key);
+        std::visit(InputBindingVisitor{&aInput, &binding, &actions}, binding.KeyState.Key);
     }
 
-    if (aInput.MouseState.Scroll.y > 0) {
-        actions.push_back(kMoveDownAction);
-    } else if (aInput.MouseState.Scroll.y < 0) {
-        actions.push_back(kMoveUpAction);
+    if (!aInput.UiWantsMouse) {
+        if (aInput.MouseState.Scroll.y > 0) {
+            actions.push_back(kMoveDownAction);
+        } else if (aInput.MouseState.Scroll.y < 0) {
+            actions.push_back(kMoveUpAction);
+        }
     }
 
     return actions;

@@ -22,9 +22,13 @@ class ENetClient : public ENetBase
     void Disconnect();
     void ForceDisconnect();
 
-    void Send(std::span<uint8_t> aData) { ENetBase::Send(mPeer, aData); }
+    void Send(std::span<const uint8_t> aData);
 
     [[nodiscard]] bool Connected() const noexcept { return mConnected; }
+
+    const CryptoKeys::Public RawPublicKey() const { return mKeys.RawPublicKey(); }
+
+    void SetServerPK(const CryptoKeys::Public& aPubKey) { mServerPK = PublicKey(aPubKey); }
 
    protected:
     void OnConnect(ENetEvent& aEvent) override;
@@ -33,7 +37,7 @@ class ENetClient : public ENetBase
      *
      * @param aEvent enet structure encapsulating the packet received
      */
-    void OnReceive(ENetEvent& aEvent) override;
+    void OnReceive(ENetEvent& aEvent, byte_view aData) override;
     void OnDisconnect(ENetEvent& aEvent) override;
     void OnDisconnectTimeout(ENetEvent& aEvent) override;
     void OnNone(ENetEvent& aEvent) override;
@@ -42,4 +46,6 @@ class ENetClient : public ENetBase
 
    private:
     ENetPeer* mPeer;
+
+    ::PublicKey mServerPK{};
 };

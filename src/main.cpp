@@ -1,6 +1,7 @@
+#include <sodium/core.h>
+#include <spdlog/spdlog.h>
 #define ENET_IMPLEMENTATION
 #define ENET_FEATURE_ADDRESS_MAPPING
-#include <signal.h>
 
 #include <memory>
 #include <taskflow/core/taskflow.hpp>
@@ -8,14 +9,12 @@
 #include "core/app/game_client.hpp"
 #include "core/app/game_server.hpp"
 #include "core/options.hpp"
-#include "core/sys/backtrace.hpp"
+#include "core/sys/signal.hpp"
 #include "core/sys/log.hpp"
 
 int main(int, char** argv)
 {
-#if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
-    signal(SIGSEGV, signalHandler);
-#endif
+    installSignalHandlers();
 
     Options opts(argv);
 
@@ -24,9 +23,19 @@ int main(int, char** argv)
     tf::Future<void>            future;
     std::unique_ptr<GameServer> server;
 
+    char*       emailEnv = getenv("ADMIN_EMAIL");
+    char*       passEnv  = getenv("ADMIN_PASSWORD");
+    std::string email    = emailEnv ? emailEnv : "";
+    std::string password = passEnv ? passEnv : "";
+
+    if (sodium_init() == -1) {
+        spdlog::error("cannot initialize lib sodium");
+        return 1;
+    }
+
     if (opts.ServerAddr == "") {
         opts.ServerAddr = "any:7777";
-        server          = std::make_unique<GameServer>(opts);
+        server          = std::make_unique<GameServer>(opts, email, password);
 
         flow.emplace([&]() {
             server->Init();

@@ -46,12 +46,18 @@ struct Transform3D {
 
     bool Archive(auto& aArchive)
     {
-        if (!ArchiveVector(aArchive, Position, 0.0f, 20.0f)) return false;
+        if (!ArchiveVector(aArchive, Position, 0.0f, 100.0f)) return false;
         if (!ArchiveQuaternion(aArchive, Orientation)) return false;
         if (!ArchiveVector(aArchive, Scale, 0.0f, 20.0f)) return false;
         return true;
     }
 };
+
+inline bool operator==(const Transform3D& aLHS, const Transform3D& aRHS)
+{
+    return aLHS.Position == aRHS.Position && aLHS.Orientation == aRHS.Orientation
+           && aLHS.Scale == aRHS.Scale;
+}
 
 template <>
 struct fmt::formatter<Transform3D> : fmt::formatter<std::string> {

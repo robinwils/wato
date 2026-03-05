@@ -59,3 +59,8 @@ void Graph::ComputePaths(const GraphCell& aDest)
         }
     }
 }
+
+void Graph::ComputePaths(const glm::vec3 aWorldPosition)
+{
+    return ComputePaths(CellFromWorld(aWorldPosition));
+}

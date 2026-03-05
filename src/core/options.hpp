@@ -4,7 +4,8 @@
 
 struct Options {
     explicit Options() {}
-    explicit Options(char** aArgv) : mParser({"--loglevel", "--renderer", "--server-addr"})
+    explicit Options(char** aArgv)
+        : mParser({"--loglevel", "--renderer", "--server-addr", "--backend-addr"})
     {
         mParser.parse(aArgv);
         ServerAddr = mParser("server-addr", "").str();
@@ -19,6 +20,12 @@ struct Options {
     {
         return mParser("renderer", "vulkan").str();
     }
+
+    [[nodiscard]] std::string BackendAddr() const noexcept
+    {
+        return mParser("backend-addr", "http://localhost:8090").str();
+    }
+
     std::string ServerAddr;
 
    private:

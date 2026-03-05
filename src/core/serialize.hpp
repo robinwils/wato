@@ -106,11 +106,11 @@ class BitWriter
         return mBuf;
     }
 
-    const std::span<uint8_t> Bytes()
+    const std::span<const uint8_t> Bytes()
     {
-        uint8_t* byteView = std::bit_cast<uint8_t*>(Data().data());
+        const uint8_t* byteView = std::bit_cast<uint8_t*>(Data().data());
 
-        return std::span<uint8_t>(byteView, Data().size() * sizeof(word));
+        return std::span<const uint8_t>(byteView, Data().size() * sizeof(word));
     }
 
     const std::vector<uint8_t> ByteVector()
@@ -148,6 +148,10 @@ class BitReader
     BitReader() : mScratch(0), mCurBit(0) {}
     BitReader(bit_stream&& aBits)
         : mBuf(std::move(aBits)), mScratch(0), mCurBit(0), mNext(mBuf.data())
+    {
+    }
+    BitReader(const_bit_stream aBits)
+        : mBuf(aBits), mScratch(0), mCurBit(0), mNext(mBuf.data())
     {
     }
     BitReader(const bit_buffer& aBits)
@@ -381,6 +385,10 @@ class StreamDecoder
         : mBits(bit_stream(std::bit_cast<word*>(aBytes), aSize))
     {
     }
+    StreamDecoder(const uint8_t* aBytes, std::size_t aSize)
+        : mBits(const_bit_stream(std::bit_cast<const word*>(aBytes), aSize))
+    {
+    }
 
     bool DecodeBool(bool& aVal)
     {
@@ -589,6 +597,13 @@ bool ArchiveEntity(Archive& aR, entt::entity& aValue)
     return ArchiveValue(aR, aValue, entt::entity{0}, entt::entity{entt::null});
 }
 
+template <typename Archive>
+    requires(IsStreamEncoder<Archive> || IsStreamDecoder<Archive>)
+bool ArchivePlayerID(Archive& aR, PlayerID& aValue)
+{
+    return ArchiveValue(aR, aValue, 0u, std::numeric_limits<PlayerID>::max());
+}
+
 template <typename Archive, typename T>
     requires(IsStreamEncoder<Archive> || IsStreamDecoder<Archive>)
 bool ArchiveVector(Archive& aR, std::vector<T>& aVec, std::size_t aMaxSize)
@@ -640,6 +655,15 @@ bool ArchiveVector(
         return true;
     }
     return false;
+}
+
+template <typename Archive, typename T, typename MinMaxT, size_t N>
+bool ArchiveArray(Archive& aArchive, std::array<T, N>& aArray, MinMaxT aMin, MinMaxT aMax)
+{
+    for (auto& elem : aArray) {
+        if (!ArchiveValue(aArchive, elem, aMin, aMax)) return false;
+    }
+    return true;
 }
 
 template <typename Archive, typename T, typename MinMaxT>
@@ -735,6 +759,32 @@ constexpr bool ArchiveQuaternion(auto& aArchive, glm::qua<T, Q>& aObj)
     }
     return true;
 }
+
+template <typename Archive>
+    requires(IsStreamEncoder<Archive> || IsStreamDecoder<Archive>)
+bool ArchiveString(Archive& aR, std::string& aStr, std::size_t aMaxLen)
+{
+    if constexpr (IsStreamEncoder<Archive>) {
+        if (!ArchiveValue(aR, aStr.size(), std::size_t(0), aMaxLen)) return false;
+        for (std::size_t i = 0; i < aStr.size(); ++i) {
+            uint8_t byte = static_cast<uint8_t>(aStr[i]);
+            if (!ArchiveValue(aR, byte, uint8_t(0), uint8_t(255))) return false;
+        }
+        return true;
+    } else if constexpr (IsStreamDecoder<Archive>) {
+        std::size_t len = 0;
+        if (!ArchiveValue(aR, len, std::size_t(0), aMaxLen)) return false;
+        aStr.resize(len);
+        for (std::size_t i = 0; i < len; ++i) {
+            uint8_t byte = 0;
+            if (!ArchiveValue(aR, byte, uint8_t(0), uint8_t(255))) return false;
+            aStr[i] = static_cast<char>(byte);
+        }
+        return true;
+    }
+    return false;
+}
+
 #ifndef DOCTEST_CONFIG_DISABLE
 #include "test.hpp"
 

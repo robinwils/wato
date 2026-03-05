@@ -39,29 +39,37 @@ void Physics::InitLogger()
     mCommon.setLogger(Params.Logger);
 }
 
+struct ColliderShapeVisitor {
+    rp3d::PhysicsCommon*  Common;
+    rp3d::CollisionShape* Shape = nullptr;
+
+    void operator()(const BoxShapeParams& aParams)
+    {
+        Shape = Common->createBoxShape(ToRP3D(aParams.HalfExtents));
+    }
+
+    void operator()(const CapsuleShapeParams& aParams)
+    {
+        Shape = Common->createCapsuleShape(aParams.Radius, aParams.Height);
+    }
+
+    void operator()(const HeightFieldShapeParams& aParams)
+    {
+        std::vector<rp3d::Message> messages;
+        Shape = Common->createHeightFieldShape(Common->createHeightField(
+            aParams.Columns,
+            aParams.Rows,
+            aParams.Data.data(),
+            rp3d::HeightField::HeightDataType::HEIGHT_FLOAT_TYPE,
+            messages));
+    }
+};
+
 rp3d::CollisionShape* Physics::CreateCollisionShape(const ColliderShapeParams& aShapeParams)
 {
-    rp3d::CollisionShape* shape = nullptr;
-    std::visit(
-        VariantVisitor{
-            [&](const BoxShapeParams& aParams) {
-                shape = mCommon.createBoxShape(ToRP3D(aParams.HalfExtents));
-            },
-            [&](const CapsuleShapeParams& aParams) {
-                shape = mCommon.createCapsuleShape(aParams.Radius, aParams.Height);
-            },
-            [&](const HeightFieldShapeParams& aParams) {
-                std::vector<rp3d::Message> messages;
-                shape = mCommon.createHeightFieldShape(mCommon.createHeightField(
-                    aParams.Columns,
-                    aParams.Rows,
-                    aParams.Data.data(),
-                    rp3d::HeightField::HeightDataType::HEIGHT_FLOAT_TYPE,
-                    messages));
-            },
-        },
-        aShapeParams);
-    return shape;
+    ColliderShapeVisitor visitor{&mCommon};
+    std::visit(visitor, aShapeParams);
+    return visitor.Shape;
 }
 
 rp3d::Collider* Physics::AddCollider(rp3d::RigidBody* aBody, const ColliderParams& aParams)
@@ -113,8 +121,8 @@ std::optional<glm::vec3> Physics::RayTerrainIntersection(glm::vec3 aOrigin, glm:
 void Physics::ToggleObstacle(const rp3d::Collider* aCollider, Graph& aGraph, bool aAdd)
 {
     const rp3d::AABB& box = aCollider->getWorldAABB();
-    const GraphCell&  min = GraphCell::FromWorldPoint(box.getMin().x, box.getMin().z);
-    const GraphCell&  max = GraphCell::FromWorldPoint(box.getMax().x, box.getMax().z);
+    const GraphCell min = aGraph.CellFromWorld(box.getMin().x, box.getMin().z);
+    const GraphCell max = aGraph.CellFromWorld(box.getMax().x, box.getMax().z);
     mLogger->trace(
         "toggling obstacle from min {}|{} to max {}|{}",
         box.getMin(),

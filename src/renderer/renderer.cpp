@@ -12,13 +12,6 @@ void BgfxRenderer::Init(WatoWindow& aWin)
         throw std::runtime_error("window not initialized");
     }
 
-#ifdef BGFX_CONFIG_MULTITHREADED
-    // Call bgfx::renderFrame before bgfx::init to signal to bgfx not to create a render thread.
-    // Most graphics APIs must be used on the same thread that created the window.
-    // bgfx disables multithreaded config when configured with glfw (see scripts/bgfx.lua)
-    bgfx::renderFrame();
-#endif
-
     mInitParams.platformData.ndt = aWin.GetNativeDisplay();
     mInitParams.platformData.nwh = aWin.GetNativeWindow();
     if (aWin.UseWayland()) {

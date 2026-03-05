@@ -22,10 +22,10 @@ jobs:
         include:
           - os: ubuntu-24.04
             compiler: gcc
-            preset: unixlike
+            preset: linux
           - os: macos-15
             compiler: clang
-            preset: unixlike
+            preset: macos
           - os: windows-2022
             compiler: msvc
             preset: windows
@@ -82,7 +82,7 @@ jobs:
         id: cache-vcpkg-restore
         with:
           path: ${{ env.GITHUB_WORKSPACE }}/vcpkg_cache
-          key: vcpkg-${{ matrix.preset }}-${{ matrix.compiler }}-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', 'vcpkg_overlay/**') }}
+          key: vcpkg-${{ matrix.preset }}-${{ matrix.compiler }}-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', 'vcpkg_overlay/**', 'cmake/triplets/**') }}
           restore-keys: |
            vcpkg-${{ matrix.preset }}-${{ matrix.compiler }}-
 
@@ -115,4 +115,4 @@ jobs:
 
       - name: Test
         run: |
-          ./out/build/${{ env.CMAKE_PRESET }}/test/wato_tests
+          ./wato_tests

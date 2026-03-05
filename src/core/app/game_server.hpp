@@ -8,18 +8,29 @@
 
 #include "core/app/app.hpp"
 #include "core/net/enet_server.hpp"
+#include "core/net/net.hpp"
+#include "core/net/pocketbase.hpp"
 #include "core/types.hpp"
 
 class GameServer : public Application
 {
    public:
     explicit GameServer(char** aArgv)
-        : Application("server", aArgv), mServer(mOptions.ServerAddr, mLogger)
+        : Application("server", aArgv),
+          mPBClient(mOptions.BackendAddr(), mLogger, ""),
+          mServer(mOptions.ServerAddr, mLogger, mPBClient)
     {
     }
-    explicit GameServer(const Options& aOptions)
-        : Application("server", aOptions), mServer(mOptions.ServerAddr, mLogger)
+    explicit GameServer(
+        const Options&     aOptions,
+        const std::string& aAdminEmail,
+        const std::string& aAdminPassword)
+        : Application("server", aOptions),
+          mPBClient(mOptions.BackendAddr(), mLogger),
+          mServer(mOptions.ServerAddr, mLogger, mPBClient)
     {
+        mAdminEmail    = aAdminEmail;
+        mAdminPassword = aAdminPassword;
     }
     virtual ~GameServer();
 
@@ -42,13 +53,26 @@ class GameServer : public Application
     }
 
    protected:
-    virtual void OnGameInstanceCreated(Registry& aRegistry) override;
+    virtual std::vector<PlayerInitData> StartGameInstance(
+        Registry&             aRegistry,
+        const GameInstanceID  aGameID,
+        std::vector<PlayerID> aPlayers);
 
    private:
-    void           spawnPlayers(Registry& aRegistry);
-    GameInstanceID createGameInstance(const NewGameRequest& aNewGame);
-    tf::Taskflow   mNetTaskflow;
+    std::vector<PlayerInitData> spawnPlayers(
+        Registry&                    aRegistry,
+        std::span<const PlayerID>    aPlayerIDs);
+    std::vector<PlayerInitData> createGameInstance(
+        GameInstanceID        aGameID,
+        std::vector<PlayerID> aPlayerIDs);
+    tf::Taskflow mNetTaskflow;
 
+    PocketBaseClient                             mPBClient;
     ENetServer                                   mServer;
+    std::string                                  mAdminEmail;
+    std::string                                  mAdminPassword;
     std::unordered_map<GameInstanceID, Registry> mGameInstances;
+
+    Channel<PBSSE<GameRecord>> mPBGameChan;
+    std::string                mLastGameTimestamp{};
 };

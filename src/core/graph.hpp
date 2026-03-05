@@ -6,6 +6,7 @@
 
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
+#include <map>
 #include <optional>
 #include <unordered_map>
 #include <unordered_set>
@@ -22,21 +23,12 @@ struct GraphCell {
 
     constexpr static size_type kCellsPerAxis = 3;
 
-    static GraphCell FromWorldPoint(float aX, float aZ)
-    {
-        return GraphCell{
-            static_cast<size_type>(aX * kCellsPerAxis),
-            static_cast<size_type>(aZ * kCellsPerAxis),
-        };
-    }
-    static GraphCell FromWorldPoint(glm::vec3 aPoint) { return FromWorldPoint(aPoint.x, aPoint.z); }
-
-    constexpr glm::vec3 ToWorld() const
+    constexpr glm::vec3 ToWorld(const glm::vec2& aOffset = {0, 0}) const
     {
         return glm::vec3(
-            Location.x / static_cast<float>(GraphCell::kCellsPerAxis),
+            Location.x / static_cast<float>(GraphCell::kCellsPerAxis) + aOffset.x,
             0.001f,
-            Location.y / static_cast<float>(GraphCell::kCellsPerAxis));
+            Location.y / static_cast<float>(GraphCell::kCellsPerAxis) + aOffset.y);
     }
 
     bool operator==(const GraphCell&) const = default;
@@ -63,11 +55,25 @@ class Graph
 
    public:
     enum class Direction { Left, Right, Up, Down, UpRight, UpLeft, DownRight, DownLeft };
-    Graph(const size_type aW, const size_type aH) : mWidth(aW), mHeight(aH) {}
+    Graph(const size_type aW, const size_type aH, const glm::vec2& aWorldOffset)
+        : mWidth(aW), mHeight(aH), mWorldOffset(aWorldOffset)
+    {
+    }
 
     constexpr size_type Width() const { return mWidth; }
     constexpr size_type Height() const { return mHeight; }
 
+    /// World-space bounds check. Safe to call with any float — no UB cast.
+    constexpr bool IsInside(float aX, float aZ) const
+    {
+        float relX = (aX - mWorldOffset.x) * GraphCell::kCellsPerAxis;
+        float relZ = (aZ - mWorldOffset.y) * GraphCell::kCellsPerAxis;
+        return relX >= 0.0f && relX < float(mWidth) && relZ >= 0.0f && relZ < float(mHeight);
+    }
+
+    constexpr bool IsInside(const glm::vec3& aPos) const { return IsInside(aPos.x, aPos.z); }
+
+    // Graph-space bounds check.
     constexpr bool IsInside(GraphCell::size_type aX, GraphCell::size_type aY)
     {
         return aX < mWidth && aY < mHeight;
@@ -81,6 +87,19 @@ class Graph
     constexpr size_type Index(const GraphCell& aCell) const
     {
         return SafeU16(aCell.Location.y) * mWidth + aCell.Location.x;
+    }
+
+    GraphCell CellFromWorld(float aX, float aZ) const
+    {
+        return GraphCell{
+            static_cast<size_type>((aX - mWorldOffset.x) * GraphCell::kCellsPerAxis),
+            static_cast<size_type>((aZ - mWorldOffset.y) * GraphCell::kCellsPerAxis),
+        };
+    }
+
+    GraphCell CellFromWorld(const glm::vec3& aPoint) const
+    {
+        return CellFromWorld(aPoint.x, aPoint.z);
     }
 
     constexpr std::optional<Graph::Direction> Direction(
@@ -109,6 +128,7 @@ class Graph
      * destination, result is stored internally.
      */
     void ComputePaths(const GraphCell& aDest);
+    void ComputePaths(const glm::vec3 aWorldPosition);
 
     std::optional<GraphCell> GetNextCell(const GraphCell& aFrom) const
     {
@@ -116,6 +136,10 @@ class Graph
             return std::nullopt;
         }
         return std::make_optional(mPaths.at(aFrom));
+    }
+    std::optional<GraphCell> GetNextCell(const glm::vec3& aWorldPos) const
+    {
+        return GetNextCell(CellFromWorld(aWorldPos));
     }
 
     void AddObstacle(const GraphCell& aCell) { mObstacles.emplace(aCell); }
@@ -130,6 +154,8 @@ class Graph
     std::unordered_set<GraphCell> mObstacles;
     paths_type                    mPaths;
     std::optional<GraphCell>      mDest;
+
+    glm::vec2 mWorldOffset;
 
     friend struct fmt::formatter<Graph>;
 };
@@ -203,3 +229,5 @@ struct fmt::formatter<Graph> : fmt::formatter<std::string> {
         return fmt::format_to(o, "obstacles: {}", fmt::join(aObj.mObstacles, ", "));
     }
 };
+
+using PlayerGraphMap = std::map<PlayerID, Graph>;

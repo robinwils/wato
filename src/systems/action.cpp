@@ -85,11 +85,14 @@ void DefaultContextHandler::operator()(Registry& aRegistry, const PlacementModeP
     auto ghostTower = aRegistry.create();
     WATO_DBG(aRegistry, "created ghost tower {}", ghostTower);
     aRegistry.emplace<SceneObject>(ghostTower, "tower_model"_hs);
-    aRegistry.emplace<Transform3D>(
-        ghostTower,
-        glm::vec3(0.0f),
-        glm::identity<glm::quat>(),
-        glm::vec3(0.1f));
+    glm::vec3 startPos{0.0f};
+    if (auto** ip = aRegistry.ctx().find<const Input*>()) {
+        if (const auto& hit = (*ip)->MouseWorldIntersect()) {
+            startPos = *hit;
+        }
+    }
+    aRegistry
+        .emplace<Transform3D>(ghostTower, startPos, glm::identity<glm::quat>(), glm::vec3(0.1f));
     aRegistry.emplace<PlacementMode>(ghostTower);
     aRegistry.emplace<ImguiDrawable>(ghostTower, "Placement ghost tower", true);
 }
@@ -111,9 +114,18 @@ void DefaultContextHandler::ExitPlacement(Registry& aRegistry)
 
 void PlacementModeContextHandler::operator()(Registry& aRegistry, BuildTowerPayload& aPayload)
 {
-    auto& phy = aRegistry.ctx().get<Physics>();
+    auto&       phy    = aRegistry.ctx().get<Physics>();
+    auto&       player = aRegistry.ctx().get<Player>("player"_hs);
+    auto&       sender = aRegistry.get<Player>(GetSenderFor(aRegistry, player.ID));
+    const auto& graph  = aRegistry.ctx().get<Graph>();
 
     for (const auto&& [tower, pm, t] : aRegistry.view<PlacementMode, Transform3D>().each()) {
+        // first check if the tower is in bounds of player's map.
+        if (!graph.IsInside(t.Position)) {
+            WATO_ERR(aRegistry, "trying to place tower outside map bounds.");
+            continue;
+        }
+
         // Client-side validation - create temporary body for collision test
         TowerBuildingHandler handler(WATO_REG_LOGGER(aRegistry));
 
@@ -129,10 +141,11 @@ void PlacementModeContextHandler::operator()(Registry& aRegistry, BuildTowerPayl
         Collider collider = Collider{
             .Params =
                 ColliderParams{
-                    .CollisionCategoryBits = Category::Entities,
-                    .CollideWithMaskBits = Category::Terrain | Category::Entities | Category::Base,
-                    .IsTrigger           = false,
-                    .Offset              = Transform3D{},
+                    .CollisionCategoryBits = PlayerEntitiesCategory(player.Slot),
+                    .CollideWithMaskBits =
+                        CollidesWith(PlayerEntitiesCategory(sender.Slot) | Category::Base),
+                    .IsTrigger = false,
+                    .Offset    = Transform3D{},
                     .ShapeParams =
                         BoxShapeParams{
                             .HalfExtents = glm::vec3(0.35f, 0.65f, 0.35f),
@@ -169,8 +182,23 @@ void PlacementModeContextHandler::operator()(Registry& aRegistry, const Placemen
 
 void ServerContextHandler::operator()(Registry& aRegistry, BuildTowerPayload& aPayload)
 {
-    auto  tower = aRegistry.create();
-    auto& phy   = aRegistry.ctx().get<Physics>();
+    auto& graphMap = aRegistry.ctx().get<PlayerGraphMap>();
+    auto  it       = graphMap.find(CurrentPlayerID);
+
+    if (it == graphMap.end()) {
+        WATO_ERR(aRegistry, "cannot find graph for target player {}", CurrentPlayerID);
+        return;
+    }
+    const auto& graph = it->second;
+    if (!graph.IsInside(aPayload.Position)) {
+        WATO_ERR(aRegistry, "trying to place tower outside map bounds.");
+        return;
+    }
+
+    auto& player = aRegistry.get<Player>(FindPlayerEntity(aRegistry, CurrentPlayerID));
+    auto  tower  = aRegistry.create();
+    auto& phy    = aRegistry.ctx().get<Physics>();
+    auto& sender = aRegistry.get<Player>(GetSenderFor(aRegistry, player.ID));
 
     auto& t = aRegistry.emplace<Transform3D>(tower, aPayload.Position);
 
@@ -186,10 +214,11 @@ void ServerContextHandler::operator()(Registry& aRegistry, BuildTowerPayload& aP
     Collider collider = Collider{
         .Params =
             ColliderParams{
-                .CollisionCategoryBits = Category::Entities,
-                .CollideWithMaskBits   = Category::Terrain | Category::Entities | Category::Base,
-                .IsTrigger             = false,
-                .Offset                = Transform3D{},
+                .CollisionCategoryBits = PlayerEntitiesCategory(player.Slot),
+                .CollideWithMaskBits =
+                    CollidesWith(PlayerEntitiesCategory(sender.Slot) | Category::Base),
+                .IsTrigger = false,
+                .Offset    = Transform3D{},
                 .ShapeParams =
                     BoxShapeParams{
                         .HalfExtents = glm::vec3(0.35f, 0.65f, 0.35f),
@@ -222,96 +251,114 @@ void ServerContextHandler::operator()(Registry& aRegistry, BuildTowerPayload& aP
             .FireRate = 1.0f,
         });
 
-    // TODO: Add Health component here (check it's not added elsewhere to avoid double-add crash)
+    aRegistry.emplace<Owner>(tower, CurrentPlayerID, player.Slot);
 
     // Broadcast tower creation to all clients
-    aRegistry.ctx().get<ENetServer&>().EnqueueResponse(new NetworkResponse{
-        .Type     = PacketType::Ack,
-        .PlayerID = 0,
-        .Tick     = aRegistry.ctx().get<GameInstance&>().Tick,
-        .Payload =
-            RigidBodyUpdateResponse{
-                .Params = body.Params,
-                .Entity = tower,
-                .Event  = RigidBodyEvent::Create,
-                .InitData =
-                    TowerInitData{
-                        .Type     = aPayload.Tower,
-                        .Position = aPayload.Position,
-                    },
-            },
-    });
+    aRegistry.ctx().get<ENetServer&>().BroadcastResponse(
+        GetPlayerIDs(aRegistry),
+        PacketType::Ack,
+        aRegistry.ctx().get<GameInstance&>().Tick,
+        RigidBodyUpdateResponse{
+            .Params = body.Params,
+            .Entity = tower,
+            .Event  = RigidBodyEvent::Create,
+            .InitData =
+                TowerInitData{
+                    .Type           = aPayload.Tower,
+                    .Position       = aPayload.Position,
+                    .OwnerID        = CurrentPlayerID,
+                    .ColliderParams = collider.Params,
+                },
+        });
 }
 
 void ServerContextHandler::operator()(Registry& aRegistry, SendCreepPayload& aPayload)
 {
-    auto& graph = aRegistry.ctx().get<Graph&>();
+    entt::entity nextSpawn = GetTargetSpawnFor(aRegistry, CurrentPlayerID);
+    if (nextSpawn == entt::null) {
+        WATO_ERR(aRegistry, "cannot find target spawn for player {}", CurrentPlayerID);
+        return;
+    }
+    auto& player = aRegistry.get<Player>(FindPlayerEntity(aRegistry, CurrentPlayerID));
 
-    for (auto&& [entity, spawnTransform] : aRegistry.view<Spawner, Transform3D>().each()) {
-        auto creep = aRegistry.create();
-        aRegistry.emplace<Transform3D>(
-            creep,
-            spawnTransform.Position,
-            glm::identity<glm::quat>(),
-            glm::vec3(0.5f));
-        aRegistry.emplace<Health>(creep, 100.0f);
-        aRegistry.emplace<Creep>(creep, aPayload.Type, 1.0f);
-        aRegistry.emplace<Path>(
-            creep,
-            GraphCell::FromWorldPoint(spawnTransform.Position),
-            graph.GetNextCell(GraphCell::FromWorldPoint(spawnTransform.Position)));
+    auto& spawnTransform = aRegistry.get<Transform3D>(nextSpawn);
+    auto& spawnOwner     = aRegistry.get<Owner>(nextSpawn);
 
-        aRegistry.emplace<RigidBody>(
-            creep,
-            RigidBody{
-                .Params =
-                    RigidBodyParams{
-                        .Type           = rp3d::BodyType::KINEMATIC,
-                        .Velocity       = 0.4f,
-                        .Direction      = glm::vec3(0.0f),
-                        .GravityEnabled = false,
-                    },
-            });
-        aRegistry.emplace<Collider>(
-            creep,
-            Collider{
-                .Params =
-                    ColliderParams{
-                        .CollisionCategoryBits = Category::Entities,
-                        .CollideWithMaskBits =
-                            Category::Projectiles | Category::Entities | Category::Base,
-                        .IsTrigger = false,
-                        .Offset    = Transform3D{},
-                        .ShapeParams =
-                            CapsuleShapeParams{
-                                .Radius = 0.1f,
-                                .Height = 0.05f,
-                            },
-                    },
-            });
+    auto& graphMap = aRegistry.ctx().get<PlayerGraphMap>();
+    auto  it       = graphMap.find(spawnOwner.ID);
 
-        // Broadcast creep creation to all clients
-        auto& rigidBody = aRegistry.get<RigidBody>(creep);
-        auto& transform = aRegistry.get<Transform3D>(creep);
-        aRegistry.ctx().get<ENetServer&>().EnqueueResponse(new NetworkResponse{
-            .Type     = PacketType::Ack,
-            .PlayerID = 0,
-            .Tick     = aRegistry.ctx().get<GameInstance&>().Tick,
-            .Payload =
-                RigidBodyUpdateResponse{
-                    .Params = rigidBody.Params,
-                    .Entity = creep,
-                    .Event  = RigidBodyEvent::Create,
-                    .InitData =
-                        CreepInitData{
-                            .Type     = aPayload.Type,
-                            .Position = transform.Position,
+    if (it == graphMap.end()) {
+        WATO_ERR(aRegistry, "cannot find graph for target player {}", spawnOwner.ID);
+        return;
+    }
+    const auto& graph = it->second;
+
+    auto creep = aRegistry.create();
+    aRegistry.emplace<Transform3D>(
+        creep,
+        spawnTransform.Position,
+        glm::identity<glm::quat>(),
+        glm::vec3(0.5f));
+    aRegistry.emplace<Health>(creep, 100.0f);
+    aRegistry.emplace<Creep>(creep, aPayload.Type, 1.0f);
+    aRegistry.emplace<Path>(
+        creep,
+        graph.CellFromWorld(spawnTransform.Position),
+        graph.GetNextCell(spawnTransform.Position));
+
+    aRegistry.emplace<RigidBody>(
+        creep,
+        RigidBody{
+            .Params =
+                RigidBodyParams{
+                    .Type           = rp3d::BodyType::KINEMATIC,
+                    .Velocity       = 0.4f,
+                    .Direction      = glm::vec3(0.0f),
+                    .GravityEnabled = false,
+                },
+        });
+    auto& collider = aRegistry.emplace<Collider>(
+        creep,
+        Collider{
+            .Params =
+                ColliderParams{
+                    .CollisionCategoryBits = PlayerEntitiesCategory(player.Slot),
+                    .CollideWithMaskBits   = CollidesWith(
+                        Category::Projectiles,
+                        PlayerEntitiesCategory(player.Slot),
+                        Category::Base),
+                    .IsTrigger = false,
+                    .Offset    = Transform3D{},
+                    .ShapeParams =
+                        CapsuleShapeParams{
+                            .Radius = 0.1f,
+                            .Height = 0.05f,
                         },
                 },
         });
 
-        break;
-    }
+    aRegistry.emplace<Owner>(creep, CurrentPlayerID, player.Slot);
+    aRegistry.emplace<Target>(creep, spawnOwner.ID, spawnOwner.Slot);
+
+    // Broadcast creep creation to all clients
+    auto& rigidBody = aRegistry.get<RigidBody>(creep);
+    auto& transform = aRegistry.get<Transform3D>(creep);
+    aRegistry.ctx().get<ENetServer&>().BroadcastResponse(
+        GetPlayerIDs(aRegistry),
+        PacketType::Ack,
+        aRegistry.ctx().get<GameInstance&>().Tick,
+        RigidBodyUpdateResponse{
+            .Params = rigidBody.Params,
+            .Entity = creep,
+            .Event  = RigidBodyEvent::Create,
+            .InitData =
+                CreepInitData{
+                    .Type           = aPayload.Type,
+                    .Position       = transform.Position,
+                    .OwnerID        = CurrentPlayerID,
+                    .ColliderParams = collider.Params,
+                },
+        });
 }
 
 void ActionSystem::HandleAction(Registry& aRegistry, Action& aAction, const float aDeltaTime)
@@ -356,18 +403,40 @@ void ActionSystem::ProcessActions(Registry& aRegistry, ActionTag aFilterTag, con
     }
 }
 
+struct ActionPayloadVisitor {
+    Registry*             Reg;
+    ActionContextHandler* Handler;
+    float                 DeltaTime;
+
+    void operator()(const PlacementModePayload& aPayload) const { (*Handler)(*Reg, aPayload); }
+    void operator()(const MovePayload& aPayload) const { (*Handler)(*Reg, aPayload, DeltaTime); }
+    void operator()(BuildTowerPayload& aPayload) const { (*Handler)(*Reg, aPayload); }
+    void operator()(SendCreepPayload& aPayload) const { (*Handler)(*Reg, aPayload); }
+};
+
 void ActionSystem::HandleContext(
     Registry&             aRegistry,
     Action&               aAction,
     ActionContextHandler& aCtxHandler,
     const float           aDeltaTime)
 {
-    std::visit(
-        VariantVisitor{
-            [&](const PlacementModePayload& aPayload) { aCtxHandler(aRegistry, aPayload); },
-            [&](const MovePayload& aPayload) { aCtxHandler(aRegistry, aPayload, aDeltaTime); },
-            [&](BuildTowerPayload& aPayload) { aCtxHandler(aRegistry, aPayload); },
-            [&](SendCreepPayload& aPayload) { aCtxHandler(aRegistry, aPayload); },
-        },
-        aAction.Payload);
+    std::visit(ActionPayloadVisitor{&aRegistry, &aCtxHandler, aDeltaTime}, aAction.Payload);
+}
+
+void ServerActionSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t aTick)
+{
+    constexpr float kTimeStep = 1.0f / 60.0f;
+
+    auto& taggedActions = aRegistry.ctx().get<TaggedActionsType>();
+
+    ServerContextHandler handler;
+
+    for (auto& [playerID, action] : taggedActions) {
+        if (action.Tag != ActionTag::FixedTime) {
+            continue;
+        }
+        handler.CurrentPlayerID = playerID;
+        HandleContext(aRegistry, action, handler, kTimeStep);
+    }
+    taggedActions.clear();
 }

@@ -2,10 +2,12 @@
 
 #include <bgfx/bgfx.h>
 #include <bgfx/defines.h>
+#include <imgui.h>
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
 #include <cstdint>
+#include <entt/entity/fwd.hpp>
 #include <glm/ext/matrix_float4x4.hpp>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -18,14 +20,18 @@
 #include "components/camera.hpp"
 #include "components/health.hpp"
 #include "components/imgui.hpp"
+#include "components/player.hpp"
 #include "components/scene_object.hpp"
+#include "core/menu/menu.hpp"
+#include "core/menu/menu_events.hpp"
+#include "core/net/pocketbase.hpp"
 #include "core/physics/physics.hpp"
+#include "core/sys/log.hpp"
 #include "core/tile.hpp"
 #include "core/types.hpp"
 #include "core/window.hpp"
 #include "imgui_helper.h"
 #include "imgui_hud.hpp"
-#include "imgui_menu.hpp"
 #include "input/action.hpp"
 #include "renderer/instance_buffer.hpp"
 #include "renderer/renderer.hpp"
@@ -34,6 +40,9 @@
 void RenderSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDelta)
 {
     auto& renderer = aRegistry.ctx().get<BgfxRenderer&>();
+    auto& window   = aRegistry.ctx().get<WatoWindow&>();
+
+    renderer.SetViewRect(0, 0, 0, window.Width<uint16_t>(), window.Height<uint16_t>());
     // This dummy draw call is here to make sure that view 0 is cleared
     // if no other draw calls are submitted to view 0.
     renderer.Touch(0);
@@ -58,7 +67,7 @@ void RenderSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDelta)
             glm::vec4(source.color, 0.0f));
     }
 
-    if (aRegistry.ctx().get<Graph>().GridDirty) {
+    if (auto* graph = aRegistry.ctx().find<Graph>(); graph && graph->GridDirty) {
         updateGridTexture(aRegistry);
     }
 
@@ -143,13 +152,14 @@ void RenderImguiSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDel
 {
     auto& window = aRegistry.ctx().get<WatoWindow&>();
     auto& hud    = aRegistry.ctx().get<ImGuiHUD>();
-    auto& menu   = aRegistry.ctx().get<ImGuiGameMenu>();
+    auto& menu   = aRegistry.ctx().get<MenuContext>();
 
     imguiBeginFrame(window.GetInput(), window.Width<int>(), window.Height<int>());
     showImguiDialogs(window.Width<float>(), window.Height<float>());
 
     hud.Render(aRegistry, window);
-    menu.Render(aRegistry, window);
+
+    menu.Backend->Render(aRegistry);
 
     for (auto&& [entity, imgui] : aRegistry.view<ImguiDrawable>().each()) {
         auto [camera, transform] = aRegistry.try_get<Camera, Transform3D>(entity);
@@ -183,38 +193,39 @@ void RenderImguiSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDel
         }
     }
 
-    auto& phy = aRegistry.ctx().get<Physics&>();
-
 #if WATO_DEBUG
-    ImGui::Text("Physics info");
-    if (ImGui::Checkbox("Information Logs", &phy.Params.InfoLogs)
-        || ImGui::Checkbox("Warning Logs", &phy.Params.WarningLogs)
-        || ImGui::Checkbox("Error logs", &phy.Params.ErrorLogs)) {
-        phy.InitLogger();
+    if (auto* phyp = aRegistry.ctx().find<Physics>()) {
+        Physics& phy = *phyp;
+        ImGui::Text("Physics info");
+        if (ImGui::Checkbox("Information Logs", &phy.Params.InfoLogs)
+            || ImGui::Checkbox("Warning Logs", &phy.Params.WarningLogs)
+            || ImGui::Checkbox("Error logs", &phy.Params.ErrorLogs)) {
+            phy.InitLogger();
+        }
+
+        rp3d::DebugRenderer& debugRenderer = phy.World()->getDebugRenderer();
+        auto                 nTri          = debugRenderer.getNbTriangles();
+        auto                 nLines        = debugRenderer.getNbLines();
+
+        ImGui::Text("%d debug lines and %d debug triangles", nLines, nTri);
+        ImGui::Checkbox("Collider Shapes", &phy.Params.RenderShapes);
+        ImGui::Checkbox("Collider AABB", &phy.Params.RenderAabb);
+        ImGui::Checkbox("Contact Points", &phy.Params.RenderContactPoints);
+        ImGui::Checkbox("Contact Normals", &phy.Params.RenderContactNormals);
+
+        debugRenderer.setIsDebugItemDisplayed(
+            rp3d::DebugRenderer::DebugItem::COLLISION_SHAPE,
+            phy.Params.RenderShapes);
+        debugRenderer.setIsDebugItemDisplayed(
+            rp3d::DebugRenderer::DebugItem::COLLIDER_AABB,
+            phy.Params.RenderAabb);
+        debugRenderer.setIsDebugItemDisplayed(
+            rp3d::DebugRenderer::DebugItem::CONTACT_POINT,
+            phy.Params.RenderContactPoints);
+        debugRenderer.setIsDebugItemDisplayed(
+            rp3d::DebugRenderer::DebugItem::CONTACT_NORMAL,
+            phy.Params.RenderContactNormals);
     }
-
-    rp3d::DebugRenderer& debugRenderer = phy.World()->getDebugRenderer();
-    auto                 nTri          = debugRenderer.getNbTriangles();
-    auto                 nLines        = debugRenderer.getNbLines();
-
-    ImGui::Text("%d debug lines and %d debug triangles", nLines, nTri);
-    ImGui::Checkbox("Collider Shapes", &phy.Params.RenderShapes);
-    ImGui::Checkbox("Collider AABB", &phy.Params.RenderAabb);
-    ImGui::Checkbox("Contact Points", &phy.Params.RenderContactPoints);
-    ImGui::Checkbox("Contact Normals", &phy.Params.RenderContactNormals);
-
-    debugRenderer.setIsDebugItemDisplayed(
-        rp3d::DebugRenderer::DebugItem::COLLISION_SHAPE,
-        phy.Params.RenderShapes);
-    debugRenderer.setIsDebugItemDisplayed(
-        rp3d::DebugRenderer::DebugItem::COLLIDER_AABB,
-        phy.Params.RenderAabb);
-    debugRenderer.setIsDebugItemDisplayed(
-        rp3d::DebugRenderer::DebugItem::CONTACT_POINT,
-        phy.Params.RenderContactPoints);
-    debugRenderer.setIsDebugItemDisplayed(
-        rp3d::DebugRenderer::DebugItem::CONTACT_NORMAL,
-        phy.Params.RenderContactNormals);
 #endif
 
     ImGui::End();
@@ -229,40 +240,47 @@ void RenderImguiSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDel
         break;
     }
 
-    auto& graph = aRegistry.ctx().get<Graph>();
-    for (auto&& [entity, imgui, t] : aRegistry.view<ImguiDrawable, Transform3D>().each()) {
-        if (imgui.PosOnUnit) {
-            GraphCell   c      = GraphCell::FromWorldPoint(t.Position);
-            glm::vec3   screen = window.ProjectPosition(t.Position, cam, camT.Position);
-            std::string s      = "";
+    if (auto* graph = aRegistry.ctx().find<Graph>()) {
+        for (auto&& [entity, imgui, t] : aRegistry.view<ImguiDrawable, Transform3D>().each()) {
+            if (imgui.PosOnUnit && graph->IsInside(t.Position)) {
+                GraphCell   c      = graph->CellFromWorld(t.Position);
+                glm::vec3   screen = window.ProjectPosition(t.Position, cam, camT.Position);
+                std::string s      = "";
 
-            if (auto* health = aRegistry.try_get<Health>(entity); health) {
-                s = fmt::format("{} {}, {} health", c.Location.x, c.Location.y, health->Health);
-            } else {
-                s = fmt::format("{} {}", c.Location.x, c.Location.y);
-            }
-
-            text(
-                screen.x,
-                window.Height<float>() - screen.y,
-                fmt::format("graph_pos_{}", entt::id_type(entity)),
-                s);
-
-            if (auto next = graph.GetNextCell(GraphCell::FromWorldPoint(t.Position))) {
-                screen = window.ProjectPosition(next->ToWorld(), cam, camT.Position);
+                if (auto* health = aRegistry.try_get<Health>(entity); health) {
+                    s = fmt::format("{} {}, {} health", c.Location.x, c.Location.y, health->Health);
+                } else {
+                    s = fmt::format("{} {}", c.Location.x, c.Location.y);
+                }
 
                 text(
                     screen.x,
-                    window.Height<float>() - screen.y - 20.0f,
-                    fmt::format("next_graph_pos_{}", entt::id_type(entity)),
-                    fmt::format("{} {}", next->Location.x, next->Location.y),
-                    imguiRGBA(255, 0, 0));
+                    window.Height<float>() - screen.y,
+                    fmt::format("graph_pos_{}", entt::id_type(entity)),
+                    s);
+
+                if (auto next = graph->GetNextCell(t.Position)) {
+                    screen = window.ProjectPosition(next->ToWorld(), cam, camT.Position);
+
+                    text(
+                        screen.x,
+                        window.Height<float>() - screen.y - 20.0f,
+                        fmt::format("next_graph_pos_{}", entt::id_type(entity)),
+                        fmt::format("{} {}", next->Location.x, next->Location.y),
+                        imguiRGBA(255, 0, 0));
+                }
             }
         }
     }
 #endif
 
     imguiEndFrame();
+
+    // Set UI capture flags for next frame's input processing
+    ImGuiIO& io                       = ImGui::GetIO();
+    window.GetInput().UiWantsMouse    = io.WantCaptureMouse;
+    window.GetInput().UiWantsKeyboard = io.WantCaptureKeyboard;
+    window.GetInput().ClearInputChars();
 }
 
 void CameraSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDelta)
@@ -273,7 +291,6 @@ void CameraSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDelta)
         const auto& viewMat = camera.View(transform.Position);
         const auto& proj    = camera.Projection(window.Width<float>(), window.Height<float>());
         renderer.SetViewTransform(0, viewMat, proj);
-        renderer.SetViewRect(0, 0, 0, window.Width<uint16_t>(), window.Height<uint16_t>());
 
         // just because I know there is only 1 camera (for now)
         // TODO: put in registry context var as singleton ?

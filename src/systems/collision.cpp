@@ -12,6 +12,7 @@
 #include "core/physics/physics.hpp"
 #include "core/physics/physics_event_listener.hpp"
 #include "core/sys/log.hpp"
+#include "registry/registry.hpp"
 
 void CollisionSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t aTick)
 {
@@ -57,8 +58,7 @@ void CollisionSystem::projectileHits(
     const rp3d::Collider* targetCollider  = nullptr;
     const rp3d::Collider* terrainCollider = nullptr;
 
-    std::tie(projCollider, targetCollider) =
-        aEvent.Matches(Category::Projectiles, Category::Entities);
+    std::tie(projCollider, targetCollider) = aEvent.CreepCollision(Category::Projectiles);
 
     if (!projCollider) {
         std::tie(projCollider, terrainCollider) =
@@ -99,16 +99,15 @@ void CollisionSystem::projectileHits(
                     health->Health);
 
                 if (auto* server = aRegistry.ctx().find<ENetServer>()) {
-                    server->EnqueueResponse(new NetworkResponse{
-                        .Type     = PacketType::Ack,
-                        .PlayerID = 0,
-                        .Tick     = aRegistry.ctx().get<GameInstance&>().Tick,
-                        .Payload =
-                            HealthUpdateResponse{
-                                .Entity = targetEntity,
-                                .Health = health->Health,
-                            },
-                    });
+                    server->BroadcastResponse(
+                        GetPlayerIDs(aRegistry),
+                        PacketType::Ack,
+                        aRegistry.ctx().get<GameInstance&>().Tick,
+
+                        HealthUpdateResponse{
+                            .Entity = targetEntity,
+                            .Health = health->Health,
+                        });
                 }
             }
         }
@@ -140,7 +139,7 @@ void CollisionSystem::creepHitsPlayerBase(Registry& aRegistry, const TriggerEven
 {
     const auto& colliderMap = aRegistry.ctx().get<ColliderEntityMap>();
 
-    auto [creepCollider, playerCollider] = aEvent.Matches(Category::Entities, Category::Base);
+    auto [playerCollider, creepCollider] = aEvent.CreepCollision(Category::Base);
 
     if (creepCollider && playerCollider) {
         entt::entity creepEntity  = colliderMap.at(creepCollider);
@@ -164,16 +163,14 @@ void CollisionSystem::creepHitsPlayerBase(Registry& aRegistry, const TriggerEven
 
         aRegistry.patch<Health>(creepEntity, [](Health& aHealth) { aHealth.Health = 0.0f; });
         if (auto* server = aRegistry.ctx().find<ENetServer>()) {
-            server->EnqueueResponse(new NetworkResponse{
-                .Type     = PacketType::Ack,
-                .PlayerID = 0,
-                .Tick     = aRegistry.ctx().get<GameInstance&>().Tick,
-                .Payload =
-                    HealthUpdateResponse{
-                        .Entity = playerEntity,
-                        .Health = health.Health,
-                    },
-            });
+            server->BroadcastResponse(
+                GetPlayerIDs(aRegistry),
+                PacketType::Ack,
+                aRegistry.ctx().get<GameInstance&>().Tick,
+                HealthUpdateResponse{
+                    .Entity = playerEntity,
+                    .Health = health.Health,
+                });
         }
     }
 }

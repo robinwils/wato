@@ -83,7 +83,36 @@ struct ColliderParams {
     bool                IsTrigger{false};
     Transform3D         Offset{};
     ColliderShapeParams ShapeParams;
+
+    bool Archive(auto& aArchive)
+    {
+        if (!ArchiveValue(
+                aArchive,
+                CollisionCategoryBits,
+                uint16_t(0),
+                std::numeric_limits<uint16_t>::max()))
+            return false;
+        if (!ArchiveValue(
+                aArchive,
+                CollideWithMaskBits,
+                uint16_t(0),
+                std::numeric_limits<uint16_t>::max()))
+            return false;
+        if (!ArchiveBool(aArchive, IsTrigger)) return false;
+        if (!Offset.Archive(aArchive)) return false;
+
+        return ArchiveVariant(aArchive, ShapeParams);
+    }
 };
+
+inline bool operator==(const ColliderParams& aLHS, const ColliderParams& aRHS)
+{
+    // TODO: implement variant operator==
+    return aLHS.CollisionCategoryBits == aRHS.CollisionCategoryBits
+           && aLHS.CollideWithMaskBits == aRHS.CollideWithMaskBits
+           && aLHS.IsTrigger == aRHS.IsTrigger && aLHS.Offset == aRHS.Offset
+           && aLHS.ShapeParams.index() == aRHS.ShapeParams.index();
+}
 
 using ColliderEntityMap = std::unordered_map<const rp3d::Collider*, entt::entity>;
 
@@ -110,12 +139,12 @@ class Physics
    public:
     // Enumeration for categories
     enum Category {
-        Terrain     = 0x0001,
-        Base        = 0x0002,
-        Spawn       = 0x0004,
-        Entities    = 0x0008,
-        Projectiles = 0x0010,
-        Count       = (Projectiles << 1) - 1
+        Terrain        = 0x0001,
+        Base           = 0x0002,
+        Projectiles    = 0x0004,
+        // bits 0x0008 - 0x0080 free for future use
+        // high bits for players: shift 0x0100 << playerIndex
+        PlayerEntities = 0x0100,
     };
 
     Physics(const Logger& aLogger) : mLogger(aLogger) {}
@@ -153,6 +182,16 @@ class Physics
 };
 
 using Category = Physics::Category;
+
+constexpr unsigned short PlayerEntitiesCategory(uint8_t aIdx)
+{
+    return SafeU16(Category::PlayerEntities) << aIdx;
+}
+
+constexpr unsigned short CollidesWith(auto... aCategories)
+{
+    return static_cast<unsigned short>((aCategories | ...));
+}
 
 inline rp3d::Vector3 ToRP3D(const glm::vec3 aVector)
 {
