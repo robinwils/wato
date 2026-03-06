@@ -104,6 +104,7 @@ class GameClient : public Application
     {
         mRegistry.ctx().emplace<Logger&>(mLogger);
         mRegistry.ctx().emplace<ActionContextStack>();
+        mRegistry.ctx().emplace<FrameActionBuffer>();
         mRegistry.ctx().emplace<WatoWindow>(aWidth, aHeight);
         mRegistry.ctx().emplace<BgfxRenderer>(mOptions.Renderer());
         mRegistry.ctx().emplace<MenuContext>(std::make_unique<ImGuiMenu>());

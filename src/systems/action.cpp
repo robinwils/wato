@@ -2,22 +2,17 @@
 
 #include <variant>
 
-#include "components/animator.hpp"
 #include "components/camera.hpp"
 #include "components/creep.hpp"
 #include "components/game.hpp"
 #include "components/health.hpp"
-#include "components/imgui.hpp"
-#include "components/model_rotation_offset.hpp"
 #include "components/net.hpp"
 #include "components/path.hpp"
 #include "components/placement_mode.hpp"
 #include "components/rigid_body.hpp"
-#include "components/scene_object.hpp"
 #include "components/spawner.hpp"
 #include "components/tower_attack.hpp"
 #include "components/transform3d.hpp"
-#include "components/velocity.hpp"
 #include "core/graph.hpp"
 #include "core/net/enet_server.hpp"
 #include "core/physics/physics.hpp"
@@ -27,11 +22,9 @@
 #include "input/action.hpp"
 #include "registry/registry.hpp"
 
-void DefaultContextHandler::operator()(
-    Registry&          aRegistry,
-    const MovePayload& aPayload,
-    const float        aDeltaTime)
+void moveCamera(Registry& aRegistry, const MovePayload& aPayload, float aDeltaTime)
 {
+    WATO_TRACE(aRegistry, "moving camera {}", aDeltaTime);
     for (auto&& [entity, camera, transform] : aRegistry.view<Camera, Transform3D>().each()) {
         float const speed = camera.Speed * aDeltaTime;
 
@@ -64,55 +57,7 @@ void DefaultContextHandler::operator()(
     }
 }
 
-void DefaultContextHandler::operator()(Registry& aRegistry, SendCreepPayload& aPayload)
-{
-    // No client-side prediction - server will create and broadcast creep to all clients
-    // Client just sends the request
-}
-
-void DefaultContextHandler::operator()(Registry& aRegistry, const PlacementModePayload& aPayload)
-{
-    WATO_TRACE(aRegistry, "entering placement mode");
-    auto& contextStack = aRegistry.ctx().get<ActionContextStack&>();
-
-    ActionContext placementCtx{
-        .State    = ActionContext::State::Placement,
-        .Bindings = ActionBindings::PlacementDefaults(),
-        .Payload  = PlacementModePayload{.CanBuild = true, .Tower = aPayload.Tower}};
-
-    contextStack.push_front(std::move(placementCtx));
-
-    auto ghostTower = aRegistry.create();
-    WATO_DBG(aRegistry, "created ghost tower {}", ghostTower);
-    aRegistry.emplace<SceneObject>(ghostTower, "tower_model"_hs);
-    glm::vec3 startPos{0.0f};
-    if (auto** ip = aRegistry.ctx().find<const Input*>()) {
-        if (const auto& hit = (*ip)->MouseWorldIntersect()) {
-            startPos = *hit;
-        }
-    }
-    aRegistry
-        .emplace<Transform3D>(ghostTower, startPos, glm::identity<glm::quat>(), glm::vec3(0.1f));
-    aRegistry.emplace<PlacementMode>(ghostTower);
-    aRegistry.emplace<ImguiDrawable>(ghostTower, "Placement ghost tower", true);
-}
-
-void DefaultContextHandler::ExitPlacement(Registry& aRegistry)
-{
-    auto& contextStack = aRegistry.ctx().get<ActionContextStack&>();
-    if (contextStack.size() > 1) {
-        if (contextStack.front().State == ActionContext::State::Placement) {
-            auto view = aRegistry.view<PlacementMode>();
-            for (auto entity : view) {
-                aRegistry.destroy(entity);
-                WATO_DBG(aRegistry, "destroyed ghost tower {}", entity);
-            }
-        }
-        contextStack.pop_front();
-    }
-}
-
-void PlacementModeContextHandler::operator()(Registry& aRegistry, BuildTowerPayload& aPayload)
+bool clientValidateTower(Registry& aRegistry, const BuildTowerPayload& aPayload)
 {
     auto&       phy    = aRegistry.ctx().get<Physics>();
     auto&       player = aRegistry.ctx().get<Player>("player"_hs);
@@ -120,13 +65,11 @@ void PlacementModeContextHandler::operator()(Registry& aRegistry, BuildTowerPayl
     const auto& graph  = aRegistry.ctx().get<Graph>();
 
     for (const auto&& [tower, pm, t] : aRegistry.view<PlacementMode, Transform3D>().each()) {
-        // first check if the tower is in bounds of player's map.
         if (!graph.IsInside(t.Position)) {
             WATO_ERR(aRegistry, "trying to place tower outside map bounds.");
             continue;
         }
 
-        // Client-side validation - create temporary body for collision test
         TowerBuildingHandler handler(WATO_REG_LOGGER(aRegistry));
 
         RigidBody body = RigidBody{
@@ -152,41 +95,35 @@ void PlacementModeContextHandler::operator()(Registry& aRegistry, BuildTowerPayl
                         },
                 },
         };
-        body.Body       = phy.CreateRigidBody(body.Params, t);
-        collider.Handle = phy.AddCollider(body.Body, collider.Params);
+        // Include own category so we detect same-player tower collisions
+        ColliderParams testParams  = collider.Params;
+        testParams.CollideWithMaskBits |= PlayerEntitiesCategory(player.Slot);
+
+        body.Body = phy.CreateRigidBody(body.Params, t);
+        phy.AddCollider(body.Body, collider.Params);
 
         phy.World()->testOverlap(body.Body, handler);
-
-        // Clean up temporary test body
         phy.World()->destroyRigidBody(body.Body);
 
         if (!handler.CanBuildTower) {
             WATO_ERR(aRegistry, "Cannot build tower at {}", t.Position);
-            return;  // Ghost tower stays for repositioning
+            return false;
         }
 
-        // Valid placement - server will create tower and broadcast to all clients
-        // Ghost tower will be destroyed by ExitPlacement
+        aRegistry.destroy(tower);
         SPDLOG_INFO("Validated tower placement at {}", t.Position);
     }
 
-    SPDLOG_DEBUG("exiting placement mode");
-    ExitPlacement(aRegistry);
+    return true;
 }
 
-void PlacementModeContextHandler::operator()(Registry& aRegistry, const PlacementModePayload&)
-{
-    SPDLOG_DEBUG("exiting placement mode");
-    ExitPlacement(aRegistry);
-}
-
-void ServerContextHandler::operator()(Registry& aRegistry, BuildTowerPayload& aPayload)
+void serverBuildTower(Registry& aRegistry, BuildTowerPayload& aPayload, PlayerID aPlayerID)
 {
     auto& graphMap = aRegistry.ctx().get<PlayerGraphMap>();
-    auto  it       = graphMap.find(CurrentPlayerID);
+    auto  it       = graphMap.find(aPlayerID);
 
     if (it == graphMap.end()) {
-        WATO_ERR(aRegistry, "cannot find graph for target player {}", CurrentPlayerID);
+        WATO_ERR(aRegistry, "cannot find graph for target player {}", aPlayerID);
         return;
     }
     const auto& graph = it->second;
@@ -195,7 +132,7 @@ void ServerContextHandler::operator()(Registry& aRegistry, BuildTowerPayload& aP
         return;
     }
 
-    auto& player = aRegistry.get<Player>(FindPlayerEntity(aRegistry, CurrentPlayerID));
+    auto& player = aRegistry.get<Player>(FindPlayerEntity(aRegistry, aPlayerID));
     auto  tower  = aRegistry.create();
     auto& phy    = aRegistry.ctx().get<Physics>();
     auto& sender = aRegistry.get<Player>(GetSenderFor(aRegistry, player.ID));
@@ -226,15 +163,14 @@ void ServerContextHandler::operator()(Registry& aRegistry, BuildTowerPayload& aP
             },
     };
 
-    rp3d::RigidBody* rpb = phy.CreateRigidBody(body.Params, t);
-    rp3d::Collider*  rpc = phy.AddCollider(rpb, collider.Params);
+    body.Body       = phy.CreateRigidBody(body.Params, t);
+    collider.Handle = phy.AddCollider(body.Body, collider.Params);
 
     TowerBuildingHandler handler(WATO_REG_LOGGER(aRegistry));
-    phy.World()->testOverlap(rpb, handler);
-
-    phy.World()->destroyRigidBody(rpb);
+    phy.World()->testOverlap(body.Body, handler);
 
     if (!handler.CanBuildTower) {
+        phy.World()->destroyRigidBody(body.Body);
         aRegistry.destroy(tower);
         WATO_ERR(aRegistry, "tower {} at {} invalidated", tower, t.Position);
         return;
@@ -251,9 +187,8 @@ void ServerContextHandler::operator()(Registry& aRegistry, BuildTowerPayload& aP
             .FireRate = 1.0f,
         });
 
-    aRegistry.emplace<Owner>(tower, CurrentPlayerID, player.Slot);
+    aRegistry.emplace<Owner>(tower, aPlayerID, player.Slot);
 
-    // Broadcast tower creation to all clients
     aRegistry.ctx().get<ENetServer&>().BroadcastResponse(
         GetPlayerIDs(aRegistry),
         PacketType::Ack,
@@ -266,20 +201,20 @@ void ServerContextHandler::operator()(Registry& aRegistry, BuildTowerPayload& aP
                 TowerInitData{
                     .Type           = aPayload.Tower,
                     .Position       = aPayload.Position,
-                    .OwnerID        = CurrentPlayerID,
+                    .OwnerID        = aPlayerID,
                     .ColliderParams = collider.Params,
                 },
         });
 }
 
-void ServerContextHandler::operator()(Registry& aRegistry, SendCreepPayload& aPayload)
+void serverSendCreep(Registry& aRegistry, SendCreepPayload& aPayload, PlayerID aPlayerID)
 {
-    entt::entity nextSpawn = GetTargetSpawnFor(aRegistry, CurrentPlayerID);
+    entt::entity nextSpawn = GetTargetSpawnFor(aRegistry, aPlayerID);
     if (nextSpawn == entt::null) {
-        WATO_ERR(aRegistry, "cannot find target spawn for player {}", CurrentPlayerID);
+        WATO_ERR(aRegistry, "cannot find target spawn for player {}", aPlayerID);
         return;
     }
-    auto& player = aRegistry.get<Player>(FindPlayerEntity(aRegistry, CurrentPlayerID));
+    auto& player = aRegistry.get<Player>(FindPlayerEntity(aRegistry, aPlayerID));
 
     auto& spawnTransform = aRegistry.get<Transform3D>(nextSpawn);
     auto& spawnOwner     = aRegistry.get<Owner>(nextSpawn);
@@ -337,10 +272,9 @@ void ServerContextHandler::operator()(Registry& aRegistry, SendCreepPayload& aPa
                 },
         });
 
-    aRegistry.emplace<Owner>(creep, CurrentPlayerID, player.Slot);
+    aRegistry.emplace<Owner>(creep, aPlayerID, player.Slot);
     aRegistry.emplace<Target>(creep, spawnOwner.ID, spawnOwner.Slot);
 
-    // Broadcast creep creation to all clients
     auto& rigidBody = aRegistry.get<RigidBody>(creep);
     auto& transform = aRegistry.get<Transform3D>(creep);
     aRegistry.ctx().get<ENetServer&>().BroadcastResponse(
@@ -355,88 +289,61 @@ void ServerContextHandler::operator()(Registry& aRegistry, SendCreepPayload& aPa
                 CreepInitData{
                     .Type           = aPayload.Type,
                     .Position       = transform.Position,
-                    .OwnerID        = CurrentPlayerID,
+                    .OwnerID        = aPlayerID,
                     .ColliderParams = collider.Params,
                 },
         });
 }
 
-void ActionSystem::HandleAction(Registry& aRegistry, Action& aAction, const float aDeltaTime)
+void RealTimeActionSystem::Execute(Registry& aRegistry, float aDelta)
 {
-    WATO_TRACE(aRegistry, "handling {}", aAction);
-    auto&       contextStack = aRegistry.ctx().get<ActionContextStack&>();
-    const auto& currentCtx   = contextStack.front();
+    auto& buf   = aRegistry.ctx().get<FrameActionBuffer&>();
+    auto& stack = aRegistry.ctx().get<ActionContextStack&>();
 
-    switch (currentCtx.State) {
-        case ActionContext::State::Default: {
-            DefaultContextHandler handler;
-            HandleContext(aRegistry, aAction, handler, aDeltaTime);
-            break;
-        }
-        case ActionContext::State::Placement: {
-            PlacementModeContextHandler handler;
-            HandleContext(aRegistry, aAction, handler, aDeltaTime);
-            break;
-        }
-        case ActionContext::State::Server: {
-            ServerContextHandler handler;
-            HandleContext(aRegistry, aAction, handler, aDeltaTime);
-            break;
+    for (Action& action : buf) {
+        if (auto* move = std::get_if<MovePayload>(&action.Payload)) {
+            moveCamera(aRegistry, *move, aDelta);
+        } else if (auto* placement = std::get_if<PlacementModePayload>(&action.Payload)) {
+            stack.TogglePlacement(aRegistry, *placement);
+        } else {
+            WATO_TRACE(aRegistry, "unhandled frame-time action: {}", action);
         }
     }
+    buf.clear();
 }
 
-void ActionSystem::ProcessActions(Registry& aRegistry, ActionTag aFilterTag, const float aDeltaTime)
+void DeterministicActionSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t aTick)
 {
-    auto&        buf           = aRegistry.ctx().get<GameStateBuffer&>();
-    ActionsType& latestActions = buf.Latest().Actions;
+    auto& buf   = aRegistry.ctx().get<GameStateBuffer&>();
+    auto& stack = aRegistry.ctx().get<ActionContextStack&>();
 
-    if (!latestActions.empty()) {
-        WATO_TRACE(aRegistry, "processing {} actions", latestActions.size());
-    }
-
-    for (Action& action : latestActions) {
-        if (action.Tag != aFilterTag) {
-            continue;
+    for (Action& action : buf.Latest().Actions) {
+        if (auto* p = std::get_if<BuildTowerPayload>(&action.Payload)) {
+            if (stack.GetState<PlacementState>()) {
+                if (clientValidateTower(aRegistry, *p)) {
+                    stack.ExitPlacement(aRegistry);
+                }
+            }
+        } else if (std::get_if<SendCreepPayload>(&action.Payload)) {
+            // client no-op, server handles
+        } else {
+            WATO_TRACE(aRegistry, "unhandled fixed-time action: {}", action);
         }
-        HandleAction(aRegistry, action, aDeltaTime);
     }
-}
-
-struct ActionPayloadVisitor {
-    Registry*             Reg;
-    ActionContextHandler* Handler;
-    float                 DeltaTime;
-
-    void operator()(const PlacementModePayload& aPayload) const { (*Handler)(*Reg, aPayload); }
-    void operator()(const MovePayload& aPayload) const { (*Handler)(*Reg, aPayload, DeltaTime); }
-    void operator()(BuildTowerPayload& aPayload) const { (*Handler)(*Reg, aPayload); }
-    void operator()(SendCreepPayload& aPayload) const { (*Handler)(*Reg, aPayload); }
-};
-
-void ActionSystem::HandleContext(
-    Registry&             aRegistry,
-    Action&               aAction,
-    ActionContextHandler& aCtxHandler,
-    const float           aDeltaTime)
-{
-    std::visit(ActionPayloadVisitor{&aRegistry, &aCtxHandler, aDeltaTime}, aAction.Payload);
 }
 
 void ServerActionSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t aTick)
 {
-    constexpr float kTimeStep = 1.0f / 60.0f;
-
     auto& taggedActions = aRegistry.ctx().get<TaggedActionsType>();
 
-    ServerContextHandler handler;
-
     for (auto& [playerID, action] : taggedActions) {
-        if (action.Tag != ActionTag::FixedTime) {
-            continue;
+        if (auto* build = std::get_if<BuildTowerPayload>(&action.Payload)) {
+            serverBuildTower(aRegistry, *build, playerID);
+        } else if (auto* creep = std::get_if<SendCreepPayload>(&action.Payload)) {
+            serverSendCreep(aRegistry, *creep, playerID);
+        } else {
+            WATO_TRACE(aRegistry, "unhandled server action: {}", action);
         }
-        handler.CurrentPlayerID = playerID;
-        HandleContext(aRegistry, action, handler, kTimeStep);
     }
     taggedActions.clear();
 }

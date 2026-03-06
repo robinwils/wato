@@ -33,7 +33,6 @@ void Application::StartGameInstance(Registry& aRegistry, const GameInstanceID aG
 {
     WATO_INFO(aRegistry, "spawning game instance");
     auto& physics = aRegistry.ctx().emplace<Physics>(mLogger);
-    auto& stack   = aRegistry.ctx().emplace<ActionContextStack>();
 
     aRegistry.ctx().emplace<GameStateBuffer>();
     aRegistry.ctx().emplace<GameInstance>(aGameID, 0.0f, 0u);
@@ -41,11 +40,6 @@ void Application::StartGameInstance(Registry& aRegistry, const GameInstanceID aG
     aRegistry.ctx().emplace<FixedSystemExecutor>();
 
     physics.Init();
-
-    stack.push_back(ActionContext{
-        .State    = ActionContext::State::Default,
-        .Bindings = ActionBindings::Defaults(),
-        .Payload  = NormalPayload{}});
 
     auto& l = aRegistry.ctx().emplace<PhysicsEventListener>(mLogger);
     aRegistry.ctx().get<Physics>().World()->setEventListener(&l);

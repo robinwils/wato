@@ -3,7 +3,6 @@
 #include <entt/signal/dispatcher.hpp>
 
 #include "core/menu/menu_events.hpp"
-#include "core/net/pocketbase.hpp"
 #include "systems/system.hpp"
 
 /**

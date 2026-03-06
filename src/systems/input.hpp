@@ -18,4 +18,5 @@ class InputSystem : public FrameSystem
 
    private:
     void handleMouseMovement(Registry& aRegistry);
+    void createActions(Registry& aRegistry, float aDelta);
 };

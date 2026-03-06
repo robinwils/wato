@@ -22,13 +22,7 @@ void NetworkSyncSystem<ENetClient>::Execute(
     }
 
     const GameState& state         = buf.Latest();
-    GameState        filteredState = GameState{.Tick = state.Tick};
-
-    for (const Action& action : state.Actions) {
-        if (action.Tag == ActionTag::FixedTime) {
-            filteredState.Actions.push_back(action);
-        }
-    }
+    GameState        filteredState = GameState{.Tick = state.Tick, .Actions = buf.Latest().Actions};
 
     if (!filteredState.Actions.empty() || !filteredState.Snapshot.empty()) {
         net.EnqueueRequest(new NetworkRequest{
