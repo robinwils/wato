@@ -40,7 +40,7 @@ class ColliderCollectorCallback : public rp3d::OverlapCallback
 void TowerAttackSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t aTick)
 {
     constexpr float kTimeStep = 1.0f / 60.0f;
-    auto&           phy       = aRegistry.ctx().get<Physics>();
+    auto&           phy       = GetSingletonComponent<Physics>(aRegistry);
 
     for (auto&& [towerEntity, tower, owner, towerTransform, attack] :
          aRegistry.view<Tower, Owner, Transform3D, TowerAttack>().each()) {
@@ -87,7 +87,7 @@ void TowerAttackSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint3
             phy.World()->destroyRigidBody(queryBody);
             phy.Common().destroySphereShape(sphereShape);
 
-            auto&        colliderToEntity = aRegistry.ctx().get<ColliderEntityMap>();
+            auto&        colliderToEntity = GetSingletonComponent<ColliderEntityMap>(aRegistry);
             float        closestDistSq    = std::numeric_limits<float>::max();
             entt::entity closestTarget    = entt::null;
 
@@ -170,7 +170,7 @@ void TowerAttackSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint3
                 server->BroadcastResponse(
                     GetPlayerIDs(aRegistry),
                     PacketType::Ack,
-                    aRegistry.ctx().get<GameInstance&>().Tick,
+                    GetSingletonComponent<GameInstance&>(aRegistry).Tick,
                     RigidBodyUpdateResponse{
                         .Params = rigidBody.Params,
                         .Entity = projectile,

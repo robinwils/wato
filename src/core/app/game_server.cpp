@@ -91,7 +91,7 @@ GameServer::~GameServer()
     mLogger->trace("destroying game server");
     mLogger->trace("deleting {} worlds", mGameInstances.size());
     for (auto& i : mGameInstances) {
-        auto& p = i.second.ctx().get<Physics>();
+        auto& p = GetSingletonComponent<Physics>(i.second);
         mLogger->trace("got world {}", fmt::ptr(p.World()));
     }
 }
@@ -111,7 +111,7 @@ std::vector<PlayerInitData> GameServer::StartGameInstance(
 
     auto playerInitData = spawnPlayers(aRegistry, aPlayerIDs);
 
-    auto& fixedExec = aRegistry.ctx().get<FixedSystemExecutor>();
+    auto& fixedExec = GetSingletonComponent<FixedSystemExecutor>(aRegistry);
 
     fixedExec.Register<NetworkSyncSystem<ENetServer>>();
     fixedExec.Register<HealthSystem>();
@@ -148,7 +148,7 @@ void GameServer::ConsumeNetworkRequests()
             }
 
             const ActionsType& incoming      = aReq.State.Actions;
-            auto&              taggedActions = registry.ctx().get<TaggedActionsType>();
+            auto&              taggedActions = GetSingletonComponent<TaggedActionsType>(registry);
 
             Log->debug(
                 "got {} actions from player {}: {}",
@@ -277,7 +277,7 @@ std::vector<PlayerInitData> GameServer::spawnPlayers(
     Registry&                 aRegistry,
     std::span<const PlayerID> aPlayerIDs)
 {
-    auto&                       colliderToEntity = aRegistry.ctx().get<ColliderEntityMap>();
+    auto&                       colliderToEntity = GetSingletonComponent<ColliderEntityMap>(aRegistry);
     std::vector<PlayerInitData> result;
     glm::uvec2                  size{20, 20};
     glm::vec2                   offset{0, 0};
@@ -326,7 +326,7 @@ std::vector<PlayerInitData> GameServer::spawnPlayers(
 
         SpawnTerrain(aRegistry, player, size, offset);
 
-        auto [it, inserted] = aRegistry.ctx().get<PlayerGraphMap&>().try_emplace(
+        auto [it, inserted] = GetSingletonComponent<PlayerGraphMap&>(aRegistry).try_emplace(
             id,
             size.x * GraphCell::kCellsPerAxis,
             size.y * GraphCell::kCellsPerAxis,

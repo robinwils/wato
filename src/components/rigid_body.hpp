@@ -18,8 +18,8 @@ struct Collider {
         auto& collider = aRegistry.get<Collider>(aEntity);
 
         // Remove from collider map
-        if (collider.Handle) {
-            aRegistry.ctx().get<ColliderEntityMap>().erase(collider.Handle);
+        if (collider.Handle && aRegistry.ctx().contains<ColliderEntityMap>()) {
+            GetSingletonComponent<ColliderEntityMap>(aRegistry).erase(collider.Handle);
         }
         collider.Handle = nullptr;
     }
@@ -36,8 +36,8 @@ struct RigidBody {
         auto& body = aRegistry.get<RigidBody>(aEntity);
 
         // Destroy physics body
-        if (body.Body) {
-            aRegistry.ctx().get<Physics>().World()->destroyRigidBody(body.Body);
+        if (body.Body && aRegistry.ctx().contains<Physics>()) {
+            GetSingletonComponent<Physics>(aRegistry).World()->destroyRigidBody(body.Body);
         }
         body.Body = nullptr;
     }

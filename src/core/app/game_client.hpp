@@ -43,7 +43,7 @@ class GameClient : public Application
         WATO_TRACE(mRegistry, "Destroying GameClient");
 
         // Stop the network thread before destroying any resources it uses
-        auto& netClient = mRegistry.ctx().get<ENetClient&>();
+        auto& netClient = GetSingletonComponent<ENetClient&>(mRegistry);
         netClient.ForceDisconnect();
         if (mNetworkThread.joinable()) {
             mNetworkThread.join();

@@ -59,8 +59,8 @@ void moveCamera(Registry& aRegistry, const MovePayload& aPayload, float aDeltaTi
 
 bool clientValidateTower(Registry& aRegistry, const BuildTowerPayload& aPayload)
 {
-    auto&       phy   = aRegistry.ctx().get<Physics>();
-    const auto& graph = aRegistry.ctx().get<Graph>();
+    auto&       phy   = GetSingletonComponent<Physics>(aRegistry);
+    const auto& graph = GetSingletonComponent<Graph>(aRegistry);
 
 
     for (const auto&& [tower, pm, t] : aRegistry.view<PlacementMode, Transform3D>().each()) {
@@ -114,7 +114,7 @@ bool clientValidateTower(Registry& aRegistry, const BuildTowerPayload& aPayload)
 
 void serverBuildTower(Registry& aRegistry, BuildTowerPayload& aPayload, PlayerID aPlayerID)
 {
-    auto& graphMap = aRegistry.ctx().get<PlayerGraphMap>();
+    auto& graphMap = GetSingletonComponent<PlayerGraphMap>(aRegistry);
     auto  it       = graphMap.find(aPlayerID);
 
     if (it == graphMap.end()) {
@@ -129,7 +129,7 @@ void serverBuildTower(Registry& aRegistry, BuildTowerPayload& aPayload, PlayerID
 
     auto& player = aRegistry.get<Player>(FindPlayerEntity(aRegistry, aPlayerID));
     auto  tower  = aRegistry.create();
-    auto& phy    = aRegistry.ctx().get<Physics>();
+    auto& phy    = GetSingletonComponent<Physics>(aRegistry);
 
     auto& t = aRegistry.emplace<Transform3D>(tower, aPayload.Position);
 
@@ -182,10 +182,10 @@ void serverBuildTower(Registry& aRegistry, BuildTowerPayload& aPayload, PlayerID
 
     aRegistry.emplace<Owner>(tower, aPlayerID, player.Slot);
 
-    aRegistry.ctx().get<ENetServer&>().BroadcastResponse(
+    GetSingletonComponent<ENetServer&>(aRegistry).BroadcastResponse(
         GetPlayerIDs(aRegistry),
         PacketType::Ack,
-        aRegistry.ctx().get<GameInstance&>().Tick,
+        GetSingletonComponent<GameInstance&>(aRegistry).Tick,
         RigidBodyUpdateResponse{
             .Params = body.Params,
             .Entity = tower,
@@ -212,7 +212,7 @@ void serverSendCreep(Registry& aRegistry, SendCreepPayload& aPayload, PlayerID a
     auto& spawnTransform = aRegistry.get<Transform3D>(nextSpawn);
     auto& spawnOwner     = aRegistry.get<Owner>(nextSpawn);
 
-    auto& graphMap = aRegistry.ctx().get<PlayerGraphMap>();
+    auto& graphMap = GetSingletonComponent<PlayerGraphMap>(aRegistry);
     auto  it       = graphMap.find(spawnOwner.ID);
 
     if (it == graphMap.end()) {
@@ -270,10 +270,10 @@ void serverSendCreep(Registry& aRegistry, SendCreepPayload& aPayload, PlayerID a
 
     auto& rigidBody = aRegistry.get<RigidBody>(creep);
     auto& transform = aRegistry.get<Transform3D>(creep);
-    aRegistry.ctx().get<ENetServer&>().BroadcastResponse(
+    GetSingletonComponent<ENetServer&>(aRegistry).BroadcastResponse(
         GetPlayerIDs(aRegistry),
         PacketType::Ack,
-        aRegistry.ctx().get<GameInstance&>().Tick,
+        GetSingletonComponent<GameInstance&>(aRegistry).Tick,
         RigidBodyUpdateResponse{
             .Params = rigidBody.Params,
             .Entity = creep,
@@ -290,8 +290,8 @@ void serverSendCreep(Registry& aRegistry, SendCreepPayload& aPayload, PlayerID a
 
 void RealTimeActionSystem::Execute(Registry& aRegistry, float aDelta)
 {
-    auto& buf   = aRegistry.ctx().get<FrameActionBuffer&>();
-    auto& stack = aRegistry.ctx().get<ActionContextStack&>();
+    auto& buf   = GetSingletonComponent<FrameActionBuffer&>(aRegistry);
+    auto& stack = GetSingletonComponent<ActionContextStack&>(aRegistry);
 
     for (Action& action : buf) {
         if (auto* move = std::get_if<MovePayload>(&action.Payload)) {
@@ -307,8 +307,8 @@ void RealTimeActionSystem::Execute(Registry& aRegistry, float aDelta)
 
 void DeterministicActionSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t aTick)
 {
-    auto& buf   = aRegistry.ctx().get<GameStateBuffer&>();
-    auto& stack = aRegistry.ctx().get<ActionContextStack&>();
+    auto& buf   = GetSingletonComponent<GameStateBuffer&>(aRegistry);
+    auto& stack = GetSingletonComponent<ActionContextStack&>(aRegistry);
 
     for (Action& action : buf.Latest().Actions) {
         if (auto* p = std::get_if<BuildTowerPayload>(&action.Payload)) {
@@ -327,7 +327,7 @@ void DeterministicActionSystem::Execute(Registry& aRegistry, [[maybe_unused]] st
 
 void ServerActionSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t aTick)
 {
-    auto& taggedActions = aRegistry.ctx().get<TaggedActionsType>();
+    auto& taggedActions = GetSingletonComponent<TaggedActionsType>(aRegistry);
 
     for (auto& [playerID, action] : taggedActions) {
         if (auto* build = std::get_if<BuildTowerPayload>(&action.Payload)) {

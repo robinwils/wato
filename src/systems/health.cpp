@@ -27,7 +27,7 @@ void HealthSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t a
     auto* server  = aRegistry.ctx().find<ENetServer>();
     auto* pb      = aRegistry.ctx().find<PocketBaseClient>();
 
-    auto& instance = aRegistry.ctx().get<GameInstance&>();
+    auto& instance = GetSingletonComponent<GameInstance&>(aRegistry);
 
     for (auto [entity, player, health] : group.each()) {
         if (health.Health <= 0.0f) {

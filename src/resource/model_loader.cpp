@@ -82,7 +82,7 @@ std::vector<entt::hashed_string> ModelLoader::processMaterialTextures(
         }
 
         const auto& diffuse =
-            LoadResource(aRegistry.ctx().get<TextureCache>(), aPath->C_Str(), aPath->C_Str());
+            LoadResource(GetSingletonComponent<TextureCache>(aRegistry), aPath->C_Str(), aPath->C_Str());
 
         textures.emplace_back(aPath->C_Str());
     }
@@ -208,10 +208,10 @@ ModelLoader::mesh_type ModelLoader::processMesh(
             processMaterialTextures(material, aiTextureType_SPECULAR, &specularPath, aRegistry);
         entt::resource<Shader> shader;
         if constexpr (std::is_same_v<VL, PositionNormalUvBoneVertex>) {
-            shader  = aRegistry.ctx().get<ShaderCache>()["blinnphong_skinned"_hs];
+            shader  = GetSingletonComponent<ShaderCache>(aRegistry)["blinnphong_skinned"_hs];
             skinned = true;
         } else {
-            shader = aRegistry.ctx().get<ShaderCache>()["blinnphong_instanced"_hs];
+            shader = GetSingletonComponent<ShaderCache>(aRegistry)["blinnphong_instanced"_hs];
         }
 
         if (!bgfx::isValid(shader->Program())) {
@@ -226,7 +226,7 @@ ModelLoader::mesh_type ModelLoader::processMesh(
         m = std::make_unique<BlinnPhongMaterial>(shader);
 
         if (textures.size() > 0) {
-            m->SetDiffuseTexture(aRegistry.ctx().get<TextureCache>()[textures.front()]);
+            m->SetDiffuseTexture(GetSingletonComponent<TextureCache>(aRegistry)[textures.front()]);
         } else {
             // no material textures, get material info via properties
             aiColor3D diffuse;
@@ -237,7 +237,7 @@ ModelLoader::mesh_type ModelLoader::processMesh(
         }
 
         if (specTextures.size() > 0) {
-            m->SetSpecularTexture(aRegistry.ctx().get<TextureCache>()[specTextures.front()]);
+            m->SetSpecularTexture(GetSingletonComponent<TextureCache>(aRegistry)[specTextures.front()]);
         } else {
             aiColor3D specular;
             if (material->Get(AI_MATKEY_COLOR_SPECULAR, specular) != AI_SUCCESS) {

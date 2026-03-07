@@ -21,7 +21,7 @@ void CollisionSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_
         return;
     }
 
-    const auto& colliderMap = aRegistry.ctx().get<ColliderEntityMap>();
+    const auto& colliderMap = GetSingletonComponent<ColliderEntityMap>(aRegistry);
 
     // Track projectiles to destroy after processing all collisions
     std::unordered_set<entt::entity> entitiesToDestroy;
@@ -53,7 +53,7 @@ void CollisionSystem::projectileHits(
     const TriggerEvent&               aEvent,
     std::unordered_set<entt::entity>& aToDestroy)
 {
-    const auto&           colliderMap     = aRegistry.ctx().get<ColliderEntityMap>();
+    const auto&           colliderMap     = GetSingletonComponent<ColliderEntityMap>(aRegistry);
     const rp3d::Collider* projCollider    = nullptr;
     const rp3d::Collider* targetCollider  = nullptr;
     const rp3d::Collider* terrainCollider = nullptr;
@@ -102,7 +102,7 @@ void CollisionSystem::projectileHits(
                     server->BroadcastResponse(
                         GetPlayerIDs(aRegistry),
                         PacketType::Ack,
-                        aRegistry.ctx().get<GameInstance&>().Tick,
+                        GetSingletonComponent<GameInstance&>(aRegistry).Tick,
 
                         HealthUpdateResponse{
                             .Entity = targetEntity,
@@ -137,7 +137,7 @@ void CollisionSystem::projectileHits(
 
 void CollisionSystem::creepHitsPlayerBase(Registry& aRegistry, const TriggerEvent& aEvent)
 {
-    const auto& colliderMap = aRegistry.ctx().get<ColliderEntityMap>();
+    const auto& colliderMap = GetSingletonComponent<ColliderEntityMap>(aRegistry);
 
     auto [playerCollider, creepCollider] = aEvent.CreepCollision(Category::Base);
 
@@ -166,7 +166,7 @@ void CollisionSystem::creepHitsPlayerBase(Registry& aRegistry, const TriggerEven
             server->BroadcastResponse(
                 GetPlayerIDs(aRegistry),
                 PacketType::Ack,
-                aRegistry.ctx().get<GameInstance&>().Tick,
+                GetSingletonComponent<GameInstance&>(aRegistry).Tick,
                 HealthUpdateResponse{
                     .Entity = playerEntity,
                     .Health = health.Health,

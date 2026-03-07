@@ -19,7 +19,7 @@
 
 void AiSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t aTick)
 {
-    auto& graphMap = aRegistry.ctx().get<PlayerGraphMap>();
+    auto& graphMap = GetSingletonComponent<PlayerGraphMap>(aRegistry);
 
     for (auto&& [e, creep, target, t, rb, p] :
          aRegistry.view<Creep, Target, Transform3D, RigidBody, Path>().each()) {

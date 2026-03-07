@@ -16,7 +16,10 @@ void AnimationSystem::Execute(Registry& aRegistry, const float aDelta)
         if (auto model = aRegistry.ctx().get<ModelCache>()[obj.ModelHash]; model) {
             if (!animator.Animation
                 && !(animator.Animation = model->GetAnimation(animator.AnimationName))) {
-                WATO_WARN(aRegistry, "could not get animation {}, ignoring", animator.AnimationName);
+                WATO_WARN(
+                    aRegistry,
+                    "could not get animation {}, ignoring",
+                    animator.AnimationName);
                 continue;
             }
             const Skeleton& skeleton = model->Skeleton();
@@ -32,7 +35,10 @@ void AnimationSystem::Execute(Registry& aRegistry, const float aDelta)
             double animationTime     = std::fmod(animatonTimeTicks, animator.Animation->Duration());
 
             if (animator.FinalBonesMatrices.empty()) {
-                WATO_DBG(aRegistry, "empty final bone vertices, reserving {}", skeleton.Bones.size());
+                WATO_DBG(
+                    aRegistry,
+                    "empty final bone vertices, reserving {}",
+                    skeleton.Bones.size());
                 animator.FinalBonesMatrices.resize(skeleton.Bones.size());
             }
 

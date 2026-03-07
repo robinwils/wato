@@ -30,8 +30,8 @@ void ImGuiMenu::Render(Registry& aReg)
 
 void ImGuiMenu::renderMainMenu(Registry& aRegistry)
 {
-    auto& win        = aRegistry.ctx().get<WatoWindow>();
-    auto& menu       = aRegistry.ctx().get<MenuContext>();
+    auto& win        = GetSingletonComponent<WatoWindow>(aRegistry);
+    auto& menu       = GetSingletonComponent<MenuContext>(aRegistry);
     auto& dispatcher = menu.Dispatcher;
 
     auto  width  = win.Width<float>();
@@ -66,7 +66,7 @@ void ImGuiMenu::renderMainMenu(Registry& aRegistry)
 
 void ImGuiMenu::renderLogin(Registry& aRegistry)
 {
-    auto& menu       = aRegistry.ctx().get<MenuContext>();
+    auto& menu       = GetSingletonComponent<MenuContext>(aRegistry);
     auto& dispatcher = menu.Dispatcher;
 
     static char account[64]  = {0};
@@ -89,11 +89,10 @@ void ImGuiMenu::renderLogin(Registry& aRegistry)
     }
 
     if (ImGui::Button("Login")) {
-        dispatcher.enqueue(
-            LoginEvent{
-                .Reg      = &aRegistry,
-                .Account  = std::move(account),
-                .Password = std::move(password)});
+        dispatcher.enqueue(LoginEvent{
+            .Reg      = &aRegistry,
+            .Account  = std::move(account),
+            .Password = std::move(password)});
     }
 
     if (ImGui::Button("Register")) {
@@ -110,7 +109,7 @@ void ImGuiMenu::renderLogin(Registry& aRegistry)
 
 void ImGuiMenu::renderRegister(Registry& aRegistry)
 {
-    auto& menu       = aRegistry.ctx().get<MenuContext>();
+    auto& menu       = GetSingletonComponent<MenuContext>(aRegistry);
     auto& dispatcher = menu.Dispatcher;
 
     static char account[64]        = {0};
@@ -172,7 +171,7 @@ void ImGuiMenu::renderRegister(Registry& aRegistry)
 
 void ImGuiMenu::renderStatusMsg(Registry& aRegistry)
 {
-    auto& menu = aRegistry.ctx().get<MenuContext>();
+    auto& menu = GetSingletonComponent<MenuContext>(aRegistry);
 
     if (!menu.Message.empty()) {
         ImGui::Text("%s", menu.Message.c_str());
@@ -184,9 +183,9 @@ void ImGuiMenu::renderStatusMsg(Registry& aRegistry)
 
 void ImGuiMenu::renderLobby(Registry& aRegistry)
 {
-    auto& menu       = aRegistry.ctx().get<MenuContext>();
+    auto& menu       = GetSingletonComponent<MenuContext>(aRegistry);
     auto& dispatcher = menu.Dispatcher;
-    auto& pb         = aRegistry.ctx().get<PocketBaseClient>();
+    auto& pb         = GetSingletonComponent<PocketBaseClient>(aRegistry);
 
     ImGui::Text("Hello %s!", pb.LoggedUser.accountName.c_str());
     ImGui::Separator();
@@ -221,7 +220,7 @@ void ImGuiMenu::renderInGame(const Registry& aRegistry) {}
 void ImGuiMenu::renderEndGame(const Registry& aRegistry)
 {
     auto& ranking = aRegistry.ctx().get<std::vector<PlayerID>>("ranking"_hs);
-    auto& win     = aRegistry.ctx().get<WatoWindow>();
+    auto& win     = GetSingletonComponent<WatoWindow>(aRegistry);
 
     // TODO: have imgui window creation helpers
     auto  width  = win.Width<float>();
