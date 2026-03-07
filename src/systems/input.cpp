@@ -12,57 +12,74 @@
 #include "components/transform3d.hpp"
 #include "core/physics/physics.hpp"
 #include "core/state.hpp"
+#include "core/sys/log.hpp"
 #include "core/window.hpp"
 #include "input/action.hpp"
 #include "registry/registry.hpp"
 #include "systems/input.hpp"
 
-void InputSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDelta)
+void InputSystem::Execute(Registry& aRegistry, float aDelta)
 {
-    const Input& input       = aRegistry.ctx().get<WatoWindow&>().GetInput();
-    auto&        actionCtx   = aRegistry.ctx().get<ActionContextStack&>().front();
-    auto&        buf         = aRegistry.ctx().get<GameStateBuffer&>();
-    GameState&   latestState = buf.Latest();
-
     handleMouseMovement(aRegistry);
-
-    const ActionsType& curActions = actionCtx.Bindings.ActionsFromInput(input);
-
-    if (!curActions.empty()) {
-        WATO_TRACE(aRegistry, "inserting latest {} actions: {}", curActions.size(), curActions);
-        latestState.Actions.insert(latestState.Actions.end(), curActions.begin(), curActions.end());
-    }
+    createActions(aRegistry, aDelta);
 }
 
 void InputSystem::handleMouseMovement(Registry& aRegistry)
 {
-    auto&       contextStack = aRegistry.ctx().get<ActionContextStack&>();
-    const auto& currentCtx   = contextStack.front();
-    auto&       window       = aRegistry.ctx().get<WatoWindow&>();
-    auto&       phy          = aRegistry.ctx().get<Physics&>();
-    glm::vec3   origin, end;
+    auto& stack  = aRegistry.ctx().get<ActionContextStack&>();
+    auto& window = aRegistry.ctx().get<WatoWindow&>();
+    auto& phy    = aRegistry.ctx().get<Physics&>();
+
+    glm::vec3 origin, end;
 
     for (auto&& [_, camera, tcam] : aRegistry.view<Camera, Transform3D>().each()) {
         std::tie(origin, end) = window.MouseUnproject(camera, tcam.Position);
     }
 
-    switch (currentCtx.State) {
-        case ActionContext::State::Placement: {
-            if (std::optional<glm::vec3> intersect = phy.RayTerrainIntersection(origin, end);
-                intersect) {
-                window.SetMouseIntersect(*intersect);
-                auto placementModeView = aRegistry.view<PlacementMode>();
-                for (auto ghostTower : placementModeView) {
-                    aRegistry.patch<Transform3D>(ghostTower, [&](Transform3D& aT) {
-                        aT.Position.x = intersect->x;
-                        aT.Position.z = intersect->z;
-                    });
-                }
+    if (stack.GetState<PlacementState>()) {
+        if (std::optional<glm::vec3> intersect = phy.RayTerrainIntersection(origin, end);
+            intersect) {
+            window.SetMouseIntersect(*intersect);
+            auto placementModeView = aRegistry.view<PlacementMode>();
+            for (auto ghostTower : placementModeView) {
+                aRegistry.patch<Transform3D>(ghostTower, [&](Transform3D& aT) {
+                    aT.Position.x = intersect->x;
+                    aT.Position.z = intersect->z;
+                });
             }
-            break;
         }
-        default:
-            window.ResetMouseIntersect();
-            break;
+    } else {
+        window.ResetMouseIntersect();
+    }
+}
+
+void InputSystem::createActions(Registry& aRegistry, float aDelta)
+{
+    const Input& input = aRegistry.ctx().get<WatoWindow&>().GetInput();
+    auto&        stack = aRegistry.ctx().get<ActionContextStack&>();
+    auto&        frameBuf = aRegistry.ctx().get<FrameActionBuffer&>();
+    auto&        gameBuf  = aRegistry.ctx().get<GameStateBuffer&>();
+
+    stack.CurrentBindings().Visit([&](ActionBinding& aBinding) {
+        if (!aBinding.KeyState.IsTriggered(input)) return;
+
+        Action action = aBinding.Action;
+        action.AddExtraInputInfo(input);
+
+        WATO_TRACE(aRegistry, "got action triggered: {}", action);
+
+        if (action.IsFrameTime()) {
+            frameBuf.push_back(action);
+        } else {
+            gameBuf.Latest().Actions.push_back(action);
+        }
+    });
+
+    if (!input.UiWantsMouse) {
+        if (input.MouseState.Scroll.y > 0) {
+            frameBuf.push_back(Action{.Payload = MovePayload{.Direction = MoveDirection::Down}});
+        } else if (input.MouseState.Scroll.y < 0) {
+            frameBuf.push_back(Action{.Payload = MovePayload{.Direction = MoveDirection::Up}});
+        }
     }
 }

@@ -142,7 +142,8 @@ class Physics
         Terrain        = 0x0001,
         Base           = 0x0002,
         Projectiles    = 0x0004,
-        // bits 0x0008 - 0x0080 free for future use
+        Tower          = 0x0008,
+        // bits 0x0010 - 0x0080 free for future use
         // high bits for players: shift 0x0100 << playerIndex
         PlayerEntities = 0x0100,
     };

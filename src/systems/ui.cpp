@@ -43,25 +43,22 @@ void UISystem::onLogin(const LoginEvent& aEvent)
 
     menu.LoginState = LoginState::Pending;
 
-    pb.Login(
-        aEvent.Account,
-        aEvent.Password,
-        [reg](std::expected<LoginResult, PBError> aResult) {
-            auto& dispatcher = reg->ctx().get<MenuContext>().Dispatcher;
-            if (aResult) {
-                dispatcher.enqueue<LoginResultEvent>(LoginResultEvent{
-                    .Reg         = reg,
-                    .ID          = aResult->record.id,
-                    .Avatar      = aResult->record.avatar,
-                    .Email       = aResult->record.email,
-                    .AccountName = aResult->record.accountName,
-                    .Token       = aResult->token,
-                    .Error       = ""});
-            } else {
-                dispatcher.enqueue<LoginResultEvent>(
-                    LoginResultEvent{.Reg = reg, .Error = aResult.error().Message});
-            }
-        });
+    pb.Login(aEvent.Account, aEvent.Password, [reg](std::expected<LoginResult, PBError> aResult) {
+        auto& dispatcher = reg->ctx().get<MenuContext>().Dispatcher;
+        if (aResult) {
+            dispatcher.enqueue<LoginResultEvent>(LoginResultEvent{
+                .Reg         = reg,
+                .ID          = aResult->record.id,
+                .Avatar      = aResult->record.avatar,
+                .Email       = aResult->record.email,
+                .AccountName = aResult->record.accountName,
+                .Token       = aResult->token,
+                .Error       = ""});
+        } else {
+            dispatcher.enqueue<LoginResultEvent>(
+                LoginResultEvent{.Reg = reg, .Error = aResult.error().Message});
+        }
+    });
 
     WATO_INFO(*reg, "pb.Login() returned (not blocked)");
 }
@@ -166,27 +163,23 @@ void UISystem::onJoinMatchmaking(const JoinMatchmakingEvent& aEvent)
     menu.Matchmaking.State = MatchmakingState::Joining;
     menu.ClearMsgs();
 
-    pb.JoinQueue(
-        pb.LoggedUser.id,
-        1,
-        2,
-        [reg](std::expected<MatchmakingRecord, PBError> aResult) {
-            auto& dispatcher = reg->ctx().get<MenuContext>().Dispatcher;
-            if (aResult) {
-                dispatcher.enqueue(JoinResultEvent{
-                    .Reg         = reg,
-                    .ID          = aResult->id,
-                    .AccountName = aResult->accountName,
-                    .Status      = aResult->status,
-                    .ServerAddr  = aResult->serverAddr,
-                    .Created     = aResult->created,
-                    .Updated     = aResult->updated,
-                });
-            } else {
-                dispatcher.enqueue<MatchmakingErrorEvent>(
-                    MatchmakingErrorEvent{.Reg = reg, .Error = aResult.error().Message});
-            }
-        });
+    pb.JoinQueue(pb.LoggedUser.id, 1, 2, [reg](std::expected<MatchmakingRecord, PBError> aResult) {
+        auto& dispatcher = reg->ctx().get<MenuContext>().Dispatcher;
+        if (aResult) {
+            dispatcher.enqueue(JoinResultEvent{
+                .Reg         = reg,
+                .ID          = aResult->id,
+                .AccountName = aResult->accountName,
+                .Status      = aResult->status,
+                .ServerAddr  = aResult->serverAddr,
+                .Created     = aResult->created,
+                .Updated     = aResult->updated,
+            });
+        } else {
+            dispatcher.enqueue<MatchmakingErrorEvent>(
+                MatchmakingErrorEvent{.Reg = reg, .Error = aResult.error().Message});
+        }
+    });
 }
 
 void UISystem::onLeaveMatchmaking(const LeaveMatchmakingEvent& aEvent)

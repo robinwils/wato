@@ -291,7 +291,8 @@ void GameClient::StartGameInstance(
                 .Params =
                     ColliderParams{
                         .CollisionCategoryBits = Category::Base,
-                        .CollideWithMaskBits   = PlayerEntitiesCategory(sender),
+                        .CollideWithMaskBits   = CollidesWith(
+                            PlayerEntitiesCategory(sender), Category::Tower),
                         .IsTrigger             = true,
                         .ShapeParams =
                             BoxShapeParams{
@@ -326,6 +327,7 @@ void GameClient::StartGameInstance(
     spawnCamera(localPlayerPos);
 
     aRegistry.ctx().emplace<const Input*>(&mRegistry.ctx().get<WatoWindow>().GetInput());
+    aRegistry.ctx().emplace<ActionContextStack>();
 
     auto& fixedExec = aRegistry.ctx().get<FixedSystemExecutor>();
 

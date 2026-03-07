@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/queue/ring_buffer.hpp"
 #include "core/serialize.hpp"
 #include "input/action.hpp"
 

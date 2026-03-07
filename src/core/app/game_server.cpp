@@ -104,7 +104,7 @@ std::vector<PlayerInitData> GameServer::StartGameInstance(
     Application::StartGameInstance(aRegistry, aGameID);
 
     aRegistry.ctx().emplace<PlayerGraphMap>();
-    aRegistry.ctx().emplace<ActionContextStack>().back().State = ActionContext::State::Server;
+    // aRegistry.ctx().emplace<ActionContextStack>().back().State = ActionContext::State::Server;
     aRegistry.ctx().emplace<PocketBaseClient&>(mPBClient);
     // init groups when registry is empty to get the most performance
     aRegistry.group<Player>(entt::get<Health>, entt::exclude<Eliminated>);
@@ -312,8 +312,10 @@ std::vector<PlayerInitData> GameServer::spawnPlayers(
                 .Params =
                     ColliderParams{
                         .CollisionCategoryBits = Category::Base,
-                        .CollideWithMaskBits =
-                            CollidesWith(PlayerEntitiesCategory(sender), Category::Terrain),
+                        .CollideWithMaskBits = CollidesWith(
+                            PlayerEntitiesCategory(sender),
+                            Category::Terrain,
+                            Category::Tower),
                         .IsTrigger = true,
                         .ShapeParams =
                             BoxShapeParams{
