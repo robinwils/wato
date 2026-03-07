@@ -59,10 +59,9 @@ void moveCamera(Registry& aRegistry, const MovePayload& aPayload, float aDeltaTi
 
 bool clientValidateTower(Registry& aRegistry, const BuildTowerPayload& aPayload)
 {
-    auto&       phy    = aRegistry.ctx().get<Physics>();
-    auto&       player = aRegistry.ctx().get<Player>("player"_hs);
-    auto&       sender = aRegistry.get<Player>(GetSenderFor(aRegistry, player.ID));
-    const auto& graph  = aRegistry.ctx().get<Graph>();
+    auto&       phy   = aRegistry.ctx().get<Physics>();
+    const auto& graph = aRegistry.ctx().get<Graph>();
+
 
     for (const auto&& [tower, pm, t] : aRegistry.view<PlacementMode, Transform3D>().each()) {
         if (!graph.IsInside(t.Position)) {
@@ -84,20 +83,16 @@ bool clientValidateTower(Registry& aRegistry, const BuildTowerPayload& aPayload)
         Collider collider = Collider{
             .Params =
                 ColliderParams{
-                    .CollisionCategoryBits = PlayerEntitiesCategory(player.Slot),
-                    .CollideWithMaskBits =
-                        CollidesWith(PlayerEntitiesCategory(sender.Slot) | Category::Base),
-                    .IsTrigger = false,
-                    .Offset    = Transform3D{},
+                    .CollisionCategoryBits = Category::Tower,
+                    .CollideWithMaskBits   = CollidesWith(Category::Tower, Category::Base),
+                    .IsTrigger             = false,
+                    .Offset                = Transform3D{},
                     .ShapeParams =
                         BoxShapeParams{
                             .HalfExtents = glm::vec3(0.35f, 0.65f, 0.35f),
                         },
                 },
         };
-        // Include own category so we detect same-player tower collisions
-        ColliderParams testParams  = collider.Params;
-        testParams.CollideWithMaskBits |= PlayerEntitiesCategory(player.Slot);
 
         body.Body = phy.CreateRigidBody(body.Params, t);
         phy.AddCollider(body.Body, collider.Params);
@@ -135,7 +130,6 @@ void serverBuildTower(Registry& aRegistry, BuildTowerPayload& aPayload, PlayerID
     auto& player = aRegistry.get<Player>(FindPlayerEntity(aRegistry, aPlayerID));
     auto  tower  = aRegistry.create();
     auto& phy    = aRegistry.ctx().get<Physics>();
-    auto& sender = aRegistry.get<Player>(GetSenderFor(aRegistry, player.ID));
 
     auto& t = aRegistry.emplace<Transform3D>(tower, aPayload.Position);
 
@@ -151,11 +145,10 @@ void serverBuildTower(Registry& aRegistry, BuildTowerPayload& aPayload, PlayerID
     Collider collider = Collider{
         .Params =
             ColliderParams{
-                .CollisionCategoryBits = PlayerEntitiesCategory(player.Slot),
-                .CollideWithMaskBits =
-                    CollidesWith(PlayerEntitiesCategory(sender.Slot) | Category::Base),
-                .IsTrigger = false,
-                .Offset    = Transform3D{},
+                .CollisionCategoryBits = Category::Tower,
+                .CollideWithMaskBits   = CollidesWith(Category::Tower, Category::Base),
+                .IsTrigger             = false,
+                .Offset                = Transform3D{},
                 .ShapeParams =
                     BoxShapeParams{
                         .HalfExtents = glm::vec3(0.35f, 0.65f, 0.35f),

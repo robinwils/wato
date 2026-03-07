@@ -291,7 +291,8 @@ void GameClient::StartGameInstance(
                 .Params =
                     ColliderParams{
                         .CollisionCategoryBits = Category::Base,
-                        .CollideWithMaskBits   = PlayerEntitiesCategory(sender),
+                        .CollideWithMaskBits   = CollidesWith(
+                            PlayerEntitiesCategory(sender), Category::Tower),
                         .IsTrigger             = true,
                         .ShapeParams =
                             BoxShapeParams{

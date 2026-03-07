@@ -312,8 +312,10 @@ std::vector<PlayerInitData> GameServer::spawnPlayers(
                 .Params =
                     ColliderParams{
                         .CollisionCategoryBits = Category::Base,
-                        .CollideWithMaskBits =
-                            CollidesWith(PlayerEntitiesCategory(sender), Category::Terrain),
+                        .CollideWithMaskBits = CollidesWith(
+                            PlayerEntitiesCategory(sender),
+                            Category::Terrain,
+                            Category::Tower),
                         .IsTrigger = true,
                         .ShapeParams =
                             BoxShapeParams{
