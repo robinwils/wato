@@ -62,6 +62,13 @@ bool clientValidateTower(Registry& aRegistry, const BuildTowerPayload& aPayload)
     auto&       phy   = GetSingletonComponent<Physics>(aRegistry);
     const auto& graph = GetSingletonComponent<Graph>(aRegistry);
 
+    ColliderParams towerCollider{
+        .CollisionCategoryBits = Category::Tower,
+        .CollideWithMaskBits   = CollidesWith(Category::Tower, Category::Base),
+        .IsTrigger             = false,
+        .Offset                = Transform3D{},
+        .ShapeParams           = BoxShapeParams{.HalfExtents = glm::vec3(0.35f, 0.65f, 0.35f)},
+    };
 
     for (const auto&& [tower, pm, t] : aRegistry.view<PlacementMode, Transform3D>().each()) {
         if (!graph.IsInside(t.Position)) {
@@ -69,38 +76,7 @@ bool clientValidateTower(Registry& aRegistry, const BuildTowerPayload& aPayload)
             continue;
         }
 
-        TowerBuildingHandler handler(WATO_REG_LOGGER(aRegistry));
-
-        RigidBody body = RigidBody{
-            .Params =
-                RigidBodyParams{
-                    .Type           = rp3d::BodyType::STATIC,
-                    .Velocity       = 0.0f,
-                    .Direction      = glm::vec3(0.0f),
-                    .GravityEnabled = false,
-                },
-        };
-        Collider collider = Collider{
-            .Params =
-                ColliderParams{
-                    .CollisionCategoryBits = Category::Tower,
-                    .CollideWithMaskBits   = CollidesWith(Category::Tower, Category::Base),
-                    .IsTrigger             = false,
-                    .Offset                = Transform3D{},
-                    .ShapeParams =
-                        BoxShapeParams{
-                            .HalfExtents = glm::vec3(0.35f, 0.65f, 0.35f),
-                        },
-                },
-        };
-
-        body.Body = phy.CreateRigidBody(body.Params, t);
-        phy.AddCollider(body.Body, collider.Params);
-
-        phy.World()->testOverlap(body.Body, handler);
-        phy.World()->destroyRigidBody(body.Body);
-
-        if (!handler.CanBuildTower) {
+        if (!CanPlaceTower(phy, t.Position, towerCollider, WATO_REG_LOGGER(aRegistry))) {
             WATO_ERR(aRegistry, "Cannot build tower at {}", t.Position);
             return false;
         }
@@ -133,6 +109,20 @@ void serverBuildTower(Registry& aRegistry, BuildTowerPayload& aPayload, PlayerID
 
     auto& t = aRegistry.emplace<Transform3D>(tower, aPayload.Position);
 
+    ColliderParams colliderParams{
+        .CollisionCategoryBits = Category::Tower,
+        .CollideWithMaskBits   = CollidesWith(Category::Tower, Category::Base),
+        .IsTrigger             = false,
+        .Offset                = Transform3D{},
+        .ShapeParams           = BoxShapeParams{.HalfExtents = glm::vec3(0.35f, 0.65f, 0.35f)},
+    };
+
+    if (!CanPlaceTower(phy, t.Position, colliderParams, WATO_REG_LOGGER(aRegistry))) {
+        aRegistry.destroy(tower);
+        WATO_ERR(aRegistry, "tower {} at {} invalidated", tower, t.Position);
+        return;
+    }
+
     RigidBody body = RigidBody{
         .Params =
             RigidBodyParams{
@@ -142,32 +132,10 @@ void serverBuildTower(Registry& aRegistry, BuildTowerPayload& aPayload, PlayerID
                 .GravityEnabled = false,
             },
     };
-    Collider collider = Collider{
-        .Params =
-            ColliderParams{
-                .CollisionCategoryBits = Category::Tower,
-                .CollideWithMaskBits   = CollidesWith(Category::Tower, Category::Base),
-                .IsTrigger             = false,
-                .Offset                = Transform3D{},
-                .ShapeParams =
-                    BoxShapeParams{
-                        .HalfExtents = glm::vec3(0.35f, 0.65f, 0.35f),
-                    },
-            },
-    };
+    Collider collider = Collider{.Params = colliderParams};
 
     body.Body       = phy.CreateRigidBody(body.Params, t);
-    collider.Handle = phy.AddCollider(body.Body, collider.Params);
-
-    TowerBuildingHandler handler(WATO_REG_LOGGER(aRegistry));
-    phy.World()->testOverlap(body.Body, handler);
-
-    if (!handler.CanBuildTower) {
-        phy.World()->destroyRigidBody(body.Body);
-        aRegistry.destroy(tower);
-        WATO_ERR(aRegistry, "tower {} at {} invalidated", tower, t.Position);
-        return;
-    }
+    collider.Handle = phy.AddCollider(body.Body, colliderParams);
 
     WATO_INFO(aRegistry, "tower {} at {} validated", tower, t.Position);
     aRegistry.emplace<Tower>(tower, aPayload.Tower);

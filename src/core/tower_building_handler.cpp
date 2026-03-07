@@ -21,3 +21,26 @@ void TowerBuildingHandler::onOverlap(CallbackData& aCallbackData)
         }
     }
 }
+
+bool CanPlaceTower(
+    Physics&              aPhysics,
+    const glm::vec3&      aPosition,
+    const ColliderParams& aColliderParams,
+    const Logger&         aLogger)
+{
+    RigidBodyParams probeParams{
+        .Type           = rp3d::BodyType::STATIC,
+        .Velocity       = 0.0f,
+        .Direction      = glm::vec3(0.0f),
+        .GravityEnabled = false,
+    };
+
+    auto* body = aPhysics.CreateRigidBody(probeParams, Transform3D{aPosition});
+    aPhysics.AddCollider(body, aColliderParams);
+
+    TowerBuildingHandler handler(aLogger);
+    aPhysics.World()->testOverlap(body, handler);
+    aPhysics.World()->destroyRigidBody(body);
+
+    return handler.CanBuildTower;
+}

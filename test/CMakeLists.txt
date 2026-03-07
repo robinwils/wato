@@ -20,6 +20,7 @@ target_sources(wato_tests
   FILES
     ${CMAKE_SOURCE_DIR}/src/components/rigid_body.hpp
     ${CMAKE_SOURCE_DIR}/src/core/physics/physics.hpp
+    ${CMAKE_SOURCE_DIR}/src/core/tower_building_handler.hpp
     ${CMAKE_SOURCE_DIR}/src/core/snapshot.hpp
     ${CMAKE_SOURCE_DIR}/src/core/net/net.hpp
     ${CMAKE_SOURCE_DIR}/src/core/crypto/key.hpp
@@ -30,6 +31,7 @@ target_sources(wato_tests
     test.hpp
   PRIVATE
     ${CMAKE_SOURCE_DIR}/src/core/physics/physics.cpp
+    ${CMAKE_SOURCE_DIR}/src/core/tower_building_handler.cpp
     ${CMAKE_SOURCE_DIR}/src/core/crypto/key.cpp
     ${CMAKE_SOURCE_DIR}/src/core/crypto/session.cpp
     ${CMAKE_SOURCE_DIR}/src/core/crypto/aead.cpp
