@@ -277,7 +277,6 @@ std::vector<PlayerInitData> GameServer::spawnPlayers(
     Registry&                 aRegistry,
     std::span<const PlayerID> aPlayerIDs)
 {
-    auto&                       colliderToEntity = GetSingletonComponent<ColliderEntityMap>(aRegistry);
     std::vector<PlayerInitData> result;
     glm::uvec2                  size{20, 20};
     glm::vec2                   offset{0, 0};
@@ -312,7 +311,7 @@ std::vector<PlayerInitData> GameServer::spawnPlayers(
                 .Params =
                     ColliderParams{
                         .CollisionCategoryBits = Category::Base,
-                        .CollideWithMaskBits = CollidesWith(
+                        .CollideWithMaskBits   = CollidesWith(
                             PlayerEntitiesCategory(sender),
                             Category::Terrain,
                             Category::Tower),
