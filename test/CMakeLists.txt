@@ -18,8 +18,11 @@ target_sources(wato_tests
     .
   FILES
     test.hpp
+    test_fixtures.hpp
   PRIVATE
     main.cpp
+    ${CMAKE_SOURCE_DIR}/src/input/action.cpp
+    ${CMAKE_SOURCE_DIR}/src/systems/action.cpp
     test_action.cpp
     test_crypto.cpp
     test_net.cpp

@@ -150,22 +150,24 @@ void serverBuildTower(Registry& aRegistry, BuildTowerPayload& aPayload, PlayerID
 
     aRegistry.emplace<Owner>(tower, aPlayerID, player.Slot);
 
-    GetSingletonComponent<ENetServer&>(aRegistry).BroadcastResponse(
-        GetPlayerIDs(aRegistry),
-        PacketType::Ack,
-        GetSingletonComponent<GameInstance&>(aRegistry).Tick,
-        RigidBodyUpdateResponse{
-            .Params = body.Params,
-            .Entity = tower,
-            .Event  = RigidBodyEvent::Create,
-            .InitData =
-                TowerInitData{
-                    .Type           = aPayload.Tower,
-                    .Position       = aPayload.Position,
-                    .OwnerID        = aPlayerID,
-                    .ColliderParams = collider.Params,
-                },
-        });
+    if (auto* server = aRegistry.ctx().find<ENetServer>()) {
+        server->BroadcastResponse(
+            GetPlayerIDs(aRegistry),
+            PacketType::Ack,
+            GetSingletonComponent<GameInstance&>(aRegistry).Tick,
+            RigidBodyUpdateResponse{
+                .Params = body.Params,
+                .Entity = tower,
+                .Event  = RigidBodyEvent::Create,
+                .InitData =
+                    TowerInitData{
+                        .Type           = aPayload.Tower,
+                        .Position       = aPayload.Position,
+                        .OwnerID        = aPlayerID,
+                        .ColliderParams = collider.Params,
+                    },
+            });
+    }
 }
 
 void serverSendCreep(Registry& aRegistry, SendCreepPayload& aPayload, PlayerID aPlayerID)
@@ -238,22 +240,25 @@ void serverSendCreep(Registry& aRegistry, SendCreepPayload& aPayload, PlayerID a
 
     auto& rigidBody = aRegistry.get<RigidBody>(creep);
     auto& transform = aRegistry.get<Transform3D>(creep);
-    GetSingletonComponent<ENetServer&>(aRegistry).BroadcastResponse(
-        GetPlayerIDs(aRegistry),
-        PacketType::Ack,
-        GetSingletonComponent<GameInstance&>(aRegistry).Tick,
-        RigidBodyUpdateResponse{
-            .Params = rigidBody.Params,
-            .Entity = creep,
-            .Event  = RigidBodyEvent::Create,
-            .InitData =
-                CreepInitData{
-                    .Type           = aPayload.Type,
-                    .Position       = transform.Position,
-                    .OwnerID        = aPlayerID,
-                    .ColliderParams = collider.Params,
-                },
-        });
+
+    if (auto* server = aRegistry.ctx().find<ENetServer>()) {
+        server->BroadcastResponse(
+            GetPlayerIDs(aRegistry),
+            PacketType::Ack,
+            GetSingletonComponent<GameInstance&>(aRegistry).Tick,
+            RigidBodyUpdateResponse{
+                .Params = rigidBody.Params,
+                .Entity = creep,
+                .Event  = RigidBodyEvent::Create,
+                .InitData =
+                    CreepInitData{
+                        .Type           = aPayload.Type,
+                        .Position       = transform.Position,
+                        .OwnerID        = aPlayerID,
+                        .ColliderParams = collider.Params,
+                    },
+            });
+    }
 }
 
 void RealTimeActionSystem::Execute(Registry& aRegistry, float aDelta)
