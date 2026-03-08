@@ -317,7 +317,7 @@ target_compile_definitions(wato_common
     $<$<CONFIG:Debug>:SAFEINT_ASSERT_ON_EXCEPTION BX_CONFIG_DEBUG>
 )
 
-target_compile_definitions(watolib PUBLIC DOCTEST_CONFIG_DISABLE)
+target_compile_definitions(watolib PRIVATE DOCTEST_CONFIG_DISABLE)
 
 include(Coverage)
 

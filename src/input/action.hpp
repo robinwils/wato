@@ -293,25 +293,3 @@ struct ActionContextStack {
     void TogglePlacement(Registry& aRegistry, const PlacementModePayload& aPayload);
 };
 
-#ifndef DOCTEST_CONFIG_DISABLE
-#include "test.hpp"
-TEST_CASE("encode.action")
-{
-    StreamEncoder enc;
-    Action        ae1 = kBuildTowerAction;
-    Action        ae2 = kSendCreepAction;
-
-    ae1.Archive(enc);
-    ae2.Archive(enc);
-
-    StreamDecoder dec(enc.Data());
-    Action        ad1;
-    Action        ad2;
-
-    CHECK_EQ(ad1.Archive(dec), true);
-    CHECK_EQ(ad1, ae1);
-
-    CHECK_EQ(ad2.Archive(dec), true);
-    CHECK_EQ(ad2, ae2);
-}
-#endif

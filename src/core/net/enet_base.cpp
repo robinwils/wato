@@ -1,3 +1,6 @@
+#define ENET_IMPLEMENTATION
+#define ENET_FEATURE_ADDRESS_MAPPING
+
 #include "core/net/enet_base.hpp"
 
 #include <enet.h>

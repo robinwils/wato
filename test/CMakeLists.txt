@@ -16,36 +16,23 @@ target_sources(wato_tests
   PUBLIC FILE_SET HEADERS
   BASE_DIRS
     .
-    ${CMAKE_SOURCE_DIR}/src
   FILES
-    ${CMAKE_SOURCE_DIR}/src/components/rigid_body.hpp
-    ${CMAKE_SOURCE_DIR}/src/core/physics/physics.hpp
-    ${CMAKE_SOURCE_DIR}/src/core/tower_building_handler.hpp
-    ${CMAKE_SOURCE_DIR}/src/core/snapshot.hpp
-    ${CMAKE_SOURCE_DIR}/src/core/net/net.hpp
-    ${CMAKE_SOURCE_DIR}/src/core/crypto/key.hpp
-    ${CMAKE_SOURCE_DIR}/src/core/crypto/session.hpp
-    ${CMAKE_SOURCE_DIR}/src/core/crypto/aead.hpp
-    ${CMAKE_SOURCE_DIR}/src/core/queue/ring_buffer.hpp
-    ${CMAKE_SOURCE_DIR}/src/input/action.hpp
     test.hpp
   PRIVATE
-    ${CMAKE_SOURCE_DIR}/src/core/physics/physics.cpp
-    ${CMAKE_SOURCE_DIR}/src/core/tower_building_handler.cpp
-    ${CMAKE_SOURCE_DIR}/src/core/crypto/key.cpp
-    ${CMAKE_SOURCE_DIR}/src/core/crypto/session.cpp
-    ${CMAKE_SOURCE_DIR}/src/core/crypto/aead.cpp
     main.cpp
+    test_action.cpp
+    test_crypto.cpp
+    test_net.cpp
+    test_physics.cpp
+    test_ring_buffer.cpp
+    test_serialize.cpp
+    test_tower_building.cpp
 )
 
 target_link_libraries(wato_tests
   PUBLIC
-    wato_common
-    bgfx::bx
-    spdlog::spdlog
-    ReactPhysics3D::ReactPhysics3D
+    watolib
     doctest
-    sodium
 )
 
 if(ENABLE_FUZZING)
