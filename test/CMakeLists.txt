@@ -25,6 +25,7 @@ target_sources(wato_tests
     ${CMAKE_SOURCE_DIR}/src/systems/action.cpp
     test_action.cpp
     test_crypto.cpp
+    test_graph.cpp
     test_net.cpp
     test_physics.cpp
     test_ring_buffer.cpp

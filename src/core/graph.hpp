@@ -74,12 +74,12 @@ class Graph
     constexpr bool IsInside(const glm::vec3& aPos) const { return IsInside(aPos.x, aPos.z); }
 
     // Graph-space bounds check.
-    constexpr bool IsInside(GraphCell::size_type aX, GraphCell::size_type aY)
+    constexpr bool IsInside(GraphCell::size_type aX, GraphCell::size_type aY) const
     {
         return aX < mWidth && aY < mHeight;
     }
 
-    constexpr bool IsInside(const GraphCell& aCell)
+    constexpr bool IsInside(const GraphCell& aCell) const
     {
         return IsInside(aCell.Location.x, aCell.Location.y);
     }
