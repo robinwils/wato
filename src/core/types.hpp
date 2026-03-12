@@ -9,6 +9,7 @@
 #include <glm/ext/vector_float3.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/trigonometric.hpp>
+#include <iterator>
 #include <span>
 #include <string>
 #include <vector>
@@ -35,13 +36,13 @@ struct glz::meta<glm::quat> {
 
 using GameInstanceID = std::uint64_t;
 
-inline std::expected<GameInstanceID, std::errc> GameIDFromHexString(const std::string& aHexStr)
+inline std::expected<GameInstanceID, std::errc> GameIDFromHexString(std::string_view aHexStr)
 {
     if (aHexStr.empty()) {
         return std::unexpected(std::errc::invalid_argument);
     }
     GameInstanceID gameID{};
-    auto [ptr, ec] = std::from_chars(aHexStr.data(), aHexStr.data() + aHexStr.size(), gameID, 16);
+    auto [ptr, ec] = std::from_chars(aHexStr.begin(), aHexStr.end(), gameID, 16);
     if (ec == std::errc{}) {
         return gameID;
     }
@@ -50,9 +51,11 @@ inline std::expected<GameInstanceID, std::errc> GameIDFromHexString(const std::s
 
 inline std::expected<std::string, std::errc> GameIDToHexString(GameInstanceID aID)
 {
-    char buf[8]{};
+    static constexpr size_t kSize = sizeof(GameInstanceID);
 
-    auto [ptr, ec] = std::to_chars(buf, buf + 8, aID, 16);
+    std::array<char, kSize> buf{};
+
+    auto [ptr, ec] = std::to_chars(buf.begin(), buf.end(), aID, 2 * kSize);
     if (ec == std::errc{}) {
         return std::string(ptr);
     }
@@ -61,13 +64,13 @@ inline std::expected<std::string, std::errc> GameIDToHexString(GameInstanceID aI
 
 using PlayerID = uint32_t;
 
-inline std::expected<PlayerID, std::errc> PlayerIDFromHexString(const std::string& aHexStr)
+inline std::expected<PlayerID, std::errc> PlayerIDFromHexString(std::string_view aHexStr)
 {
     if (aHexStr.empty()) {
         return std::unexpected(std::errc::invalid_argument);
     }
     PlayerID id{};
-    auto [ptr, ec] = std::from_chars(aHexStr.data(), aHexStr.data() + aHexStr.size(), id, 16);
+    auto [ptr, ec] = std::from_chars(aHexStr.begin(), aHexStr.end(), id, 16);
     if (ec == std::errc{}) {
         return id;
     }
