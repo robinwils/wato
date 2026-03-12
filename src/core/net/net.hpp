@@ -6,6 +6,7 @@
 #include <variant>
 
 #include "components/player.hpp"
+#include "components/tower_attack.hpp"
 #include "core/crypto/key.hpp"
 #include "core/physics/physics.hpp"
 #include "core/serialize.hpp"
@@ -163,6 +164,8 @@ inline bool operator==(const ProjectileInitData& aLHS, const ProjectileInitData&
 struct TowerInitData {
     TowerType        Type;
     glm::vec3        Position;
+    float            Health{};
+    TowerAttack      Attack{};
     PlayerID         OwnerID;
     ::ColliderParams ColliderParams;
 
@@ -170,6 +173,8 @@ struct TowerInitData {
     {
         if (!ArchiveValue(aArchive, Type, 0u, uint32_t(TowerType::Count))) return false;
         if (!ArchiveVector(aArchive, Position, 0.0f, 500.0f)) return false;
+        if (!ArchiveValue(aArchive, Health, 0.0f, 1000.0f)) return false;
+        if (!Attack.Archive(aArchive)) return false;
         if (!ArchivePlayerID(aArchive, OwnerID)) return false;
         return ColliderParams.Archive(aArchive);
     }
@@ -183,6 +188,8 @@ inline bool operator==(const TowerInitData& aLHS, const TowerInitData& aRHS)
 struct CreepInitData {
     CreepType        Type;
     glm::vec3        Position;
+    float            Health;
+    float            Damage;
     PlayerID         OwnerID;
     ::ColliderParams ColliderParams;
 
@@ -190,6 +197,8 @@ struct CreepInitData {
     {
         if (!ArchiveValue(aArchive, Type, 0u, uint32_t(CreepType::Count))) return false;
         if (!ArchiveVector(aArchive, Position, 0.0f, 500.0f)) return false;
+        if (!ArchiveValue(aArchive, Health, 0.0f, 1000.0f)) return false;
+        if (!ArchiveValue(aArchive, Damage, 0.0f, 10.0f)) return false;
         if (!ArchivePlayerID(aArchive, OwnerID)) return false;
         return ColliderParams.Archive(aArchive);
     }
@@ -492,4 +501,3 @@ struct fmt::formatter<ENetPeer> : fmt::formatter<std::string> {
         return fmt::format_to(aCtx.out(), "peer {} @ {}", enet_peer_get_id(&aObj), aObj.address);
     }
 };
-

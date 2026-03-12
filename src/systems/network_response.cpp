@@ -203,18 +203,16 @@ void NetworkResponseSystem::createTower(
     const RigidBodyUpdateResponse& aUpdate,
     const TowerInitData&           aInit)
 {
-    auto& syncMap = GetSingletonComponent<EntitySyncMap>(aRegistry);
-    auto& phy     = GetSingletonComponent<Physics>(aRegistry);
-    auto& player  = aRegistry.get<Player>(FindPlayerEntity(aRegistry, aInit.OwnerID));
-    auto& sender  = aRegistry.get<Player>(GetSenderFor(aRegistry, aInit.OwnerID));
+    auto&       syncMap = GetSingletonComponent<EntitySyncMap>(aRegistry);
+    auto&       phy     = GetSingletonComponent<Physics>(aRegistry);
+    auto&       player  = aRegistry.get<Player>(FindPlayerEntity(aRegistry, aInit.OwnerID));
+    auto&       sender  = aRegistry.get<Player>(GetSenderFor(aRegistry, aInit.OwnerID));
+    const auto& def     = GetTowerDef(aRegistry, aInit.Type);
 
     auto tower = aRegistry.create();
 
-    auto& transform = aRegistry.emplace<Transform3D>(
-        tower,
-        aInit.Position,
-        glm::identity<glm::quat>(),
-        glm::vec3(0.1f));
+    auto& transform    = aRegistry.emplace<Transform3D>(tower, def.Transform.ToTransform3D());
+    transform.Position = aInit.Position;
 
     Collider collider{
         .Params = aInit.ColliderParams,
@@ -225,15 +223,10 @@ void NetworkResponseSystem::createTower(
     aRegistry.emplace<Tower>(tower, aInit.Type);
     aRegistry.emplace<RigidBody>(tower, aUpdate.Params, body);
     aRegistry.emplace<Collider>(tower, collider.Params, c);
-    aRegistry.emplace<Health>(tower, 100.0f);
-    aRegistry.emplace<SceneObject>(tower, "tower_model"_hs);
+    aRegistry.emplace<Health>(tower, aInit.Health);
+    aRegistry.emplace<SceneObject>(tower, def.Model.Object);
     aRegistry.emplace<Owner>(tower, aInit.OwnerID, player.Slot);
-    aRegistry.emplace<TowerAttack>(
-        tower,
-        TowerAttack{
-            .Range    = 30.0f,
-            .FireRate = 1.0f,
-        });
+    aRegistry.emplace<TowerAttack>(tower, aInit.Attack);
 
     syncMap.insert_or_assign(aUpdate.Entity, tower);
 
@@ -248,6 +241,8 @@ void NetworkResponseSystem::createCreep(
     auto& syncMap = GetSingletonComponent<EntitySyncMap>(aRegistry);
     auto& phy     = GetSingletonComponent<Physics>(aRegistry);
     auto& player  = aRegistry.get<Player>(FindPlayerEntity(aRegistry, aInit.OwnerID));
+
+    const auto& creepDef = GetCreepDef(aRegistry, aInit.Type);
 
     auto creep = aRegistry.create();
 
@@ -271,11 +266,11 @@ void NetworkResponseSystem::createCreep(
     aRegistry.emplace<Creep>(creep, aInit.Type);
     aRegistry.emplace<RigidBody>(creep, body);
     aRegistry.emplace<Collider>(creep, collider);
-    aRegistry.emplace<Health>(creep, 100.0f);
+    aRegistry.emplace<Health>(creep, aInit.Health);
     aRegistry.emplace<Owner>(creep, aInit.OwnerID, player.Slot);
-    aRegistry.emplace<SceneObject>(creep, "phoenix"_hs);
-    aRegistry.emplace<ImguiDrawable>(creep, "phoenix", true);
-    aRegistry.emplace<Animator>(creep, 0.0f, "Take 001");
+    aRegistry.emplace<SceneObject>(creep, creepDef.Model.Object);
+    aRegistry.emplace<ImguiDrawable>(creep, creepDef.Model.Object.Name, true);
+    aRegistry.emplace<Animator>(creep, creepDef.Model.Animation);
 
     syncMap.insert_or_assign(aUpdate.Entity, creep);
 

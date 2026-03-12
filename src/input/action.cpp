@@ -6,6 +6,7 @@
 #include "components/placement_mode.hpp"
 #include "components/scene_object.hpp"
 #include "components/transform3d.hpp"
+#include "core/gameplay_definitions.hpp"
 #include "core/sys/log.hpp"
 #include "registry/registry.hpp"
 
@@ -92,9 +93,11 @@ void ActionContextStack::EnterPlacement(Registry& aRegistry, TowerType aTower)
     WATO_TRACE(aRegistry, "entering placement mode");
     Stack.push_back({ActionBindings::PlacementDefaults(), PlacementState{.Tower = aTower}});
 
-    auto ghostTower = aRegistry.create();
+    const auto& def        = GetTowerDef(aRegistry, aTower);
+    auto        ghostTower = aRegistry.create();
+
     WATO_DBG(aRegistry, "created ghost tower {}", ghostTower);
-    aRegistry.emplace<SceneObject>(ghostTower, "tower_model"_hs);
+    aRegistry.emplace<SceneObject>(ghostTower, def.Model.Object);
     glm::vec3 startPos{0.0f};
     if (auto** ip = aRegistry.ctx().find<const Input*>()) {
         if (const auto& hit = (*ip)->MouseWorldIntersect()) {
@@ -120,9 +123,7 @@ void ActionContextStack::ExitPlacement(Registry& aRegistry)
     WATO_TRACE(aRegistry, "exited placement mode");
 }
 
-void ActionContextStack::TogglePlacement(
-    Registry&                    aRegistry,
-    const PlacementModePayload& aPayload)
+void ActionContextStack::TogglePlacement(Registry& aRegistry, const PlacementModePayload& aPayload)
 {
     if (GetState<PlacementState>()) {
         ExitPlacement(aRegistry);
