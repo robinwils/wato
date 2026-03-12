@@ -57,7 +57,7 @@ using ColliderShapeParams =
 
 struct RigidBodyParams {
     rp3d::BodyType Type{rp3d::BodyType::STATIC};
-    float          Velocity;
+    float          Velocity{};
     glm::vec3      Direction;
     bool           GravityEnabled{true};
     void*          Data{nullptr};
@@ -78,8 +78,8 @@ inline bool operator==(const RigidBodyParams& aLHS, const RigidBodyParams& aRHS)
 }
 
 struct ColliderParams {
-    unsigned short      CollisionCategoryBits;
-    unsigned short      CollideWithMaskBits;
+    unsigned short      CollisionCategoryBits{};
+    unsigned short      CollideWithMaskBits{};
     bool                IsTrigger{false};
     Transform3D         Offset{};
     ColliderShapeParams ShapeParams;

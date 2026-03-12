@@ -1,0 +1,45 @@
+{
+   "Towers": {
+      "Arrow": {
+         "Type": "Arrow",
+         "Cost": 50,
+         "Health": 100,
+         "Attack": { "Range": 20, "FireRate": 1, "Damage": 5 },
+         "Transform": {
+            "Scale": [0.1, 0.1, 0.1]
+         },
+         "Model": {
+            "Name": "tower_model",
+            "Animation": "attack"
+         }
+      }
+   },
+   "Creeps": {
+      "Simple": {
+         "Cost": 50,
+         "Health": 125,
+         "Speed": 0.4,
+         "Damage": 1,
+         "Transform": {
+            "Orientation": [0, 90, 0],
+            "Scale": [0.5, 0.5, 0.5]
+         },
+         "Model": {
+            "Name": "creep_model",
+            "Animation": "walk"
+         }
+      }
+   },
+   "Projectiles": {
+      "Arrow": {
+         "Transform": {
+            "Orientation": [0, 180, 0],
+            "Scale": [0.05, 0.05, 0.05]
+         },
+         "Model": {
+            "Name": "projectile_model",
+            "Animation": "idle"
+         }
+      }
+   }
+}

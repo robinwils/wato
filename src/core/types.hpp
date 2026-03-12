@@ -3,9 +3,35 @@
 #include <SafeInt.hpp>
 #include <charconv>
 #include <expected>
+#include <glaze/core/common.hpp>
+#include <glaze/core/meta.hpp>
+#include <glaze/core/wrappers.hpp>
+#include <glm/ext/vector_float3.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <glm/trigonometric.hpp>
 #include <span>
 #include <string>
 #include <vector>
+
+template <>
+struct glz::meta<glm::vec3> {
+    // NOLINTBEGIN(readability-identifier-naming)
+    static constexpr auto value = glz::array(&glm::vec3::x, &glm::vec3::y, &glm::vec3::z);
+    // NOLINTEND(readability-identifier-naming)
+};
+
+template <>
+struct glz::meta<glm::quat> {
+    // NOLINTBEGIN(readability-identifier-naming)
+    static constexpr auto ReadEuler = [](glm::quat& q, const glm::vec3& degrees) {
+        q = glm::quat(glm::radians(degrees));
+    };
+    static constexpr auto WriteEuler = [](const glm::quat& q) {
+        return glm::degrees(glm::eulerAngles(q));
+    };
+    static constexpr auto value = glz::custom<ReadEuler, WriteEuler>;
+    // NOLINTEND(readability-identifier-naming)
+};
 
 using GameInstanceID = std::uint64_t;
 
