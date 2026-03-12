@@ -91,3 +91,23 @@ entt::entity GetSenderFor(Registry& aRegistry, PlayerID aID)
 
     return entt::null;
 }
+
+const TowerDef& GetTowerDef(Registry& aRegistry, TowerType aType)
+{
+    const auto& defs  = aRegistry.ctx().get<const GameplayDef&>();
+    const auto  defIT = defs.Towers.find(aType);
+
+    BX_ASSERT(defIT != defs.Towers.end(), "unknown tower def %s", TowerTypeToString(aType));
+
+    return defIT->second;
+}
+
+const CreepDef& GetCreepDef(Registry& aRegistry, CreepType aType)
+{
+    const auto& defs  = aRegistry.ctx().get<const GameplayDef&>();
+    const auto  defIT = defs.Creeps.find(aType);
+
+    BX_ASSERT(defIT != defs.Creeps.end(), "unknown tower def %s", CreepTypeToString(aType));
+
+    return defIT->second;
+}

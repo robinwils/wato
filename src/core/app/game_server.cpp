@@ -5,6 +5,7 @@
 #include <sodium/runtime.h>
 #include <spdlog/spdlog.h>
 
+#include <glaze/glaze.hpp>
 #include <thread>
 
 #include "components/game.hpp"
@@ -363,6 +364,7 @@ std::vector<PlayerInitData> GameServer::createGameInstance(
 
     registry.ctx().emplace<Logger>(mLogger);
     registry.ctx().emplace<ENetServer&>(mServer);
+    registry.ctx().emplace<const GameplayDef&>(mGameplayDef);
     registry.ctx().emplace_as<std::vector<PlayerID>>("ranking"_hs);
     registry.ctx().emplace<TaggedActionsType>();
 
