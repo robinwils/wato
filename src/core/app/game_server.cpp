@@ -7,6 +7,7 @@
 
 #include <glaze/glaze.hpp>
 #include <thread>
+#include <utility>
 
 #include "components/game.hpp"
 #include "components/health.hpp"
@@ -368,5 +369,5 @@ std::vector<PlayerInitData> GameServer::createGameInstance(
     registry.ctx().emplace_as<std::vector<PlayerID>>("ranking"_hs);
     registry.ctx().emplace<TaggedActionsType>();
 
-    return StartGameInstance(registry, aGameID, aPlayerIDs);
+    return StartGameInstance(registry, aGameID, std::move(aPlayerIDs));
 }
