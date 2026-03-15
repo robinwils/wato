@@ -88,15 +88,7 @@ void GameServer::Init()
     }
 }
 
-GameServer::~GameServer()
-{
-    mLogger->trace("destroying game server");
-    mLogger->trace("deleting {} worlds", mGameInstances.size());
-    for (auto& i : mGameInstances) {
-        auto& p = GetSingletonComponent<Physics>(i.second);
-        mLogger->trace("got world {}", fmt::ptr(p.World()));
-    }
-}
+GameServer::~GameServer() { mLogger->trace("destroying game server"); }
 
 std::vector<PlayerInitData> GameServer::StartGameInstance(
     Registry&             aRegistry,
