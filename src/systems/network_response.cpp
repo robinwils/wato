@@ -14,6 +14,7 @@
 #include "components/tower.hpp"
 #include "components/tower_attack.hpp"
 #include "components/transform3d.hpp"
+#include "core/gameplay_definitions.hpp"
 #include "core/physics/physics.hpp"
 #include "core/snapshot.hpp"
 #include "core/sys/log.hpp"
@@ -246,15 +247,10 @@ void NetworkResponseSystem::createCreep(
 
     auto creep = aRegistry.create();
 
-    auto& transform = aRegistry.emplace<Transform3D>(
-        creep,
-        aInit.Position,
-        glm::identity<glm::quat>(),
-        glm::vec3(0.5f));
+    auto& transform    = aRegistry.emplace<Transform3D>(creep, creepDef.Transform.ToTransform3D());
+    transform.Position = aInit.Position;
 
-    aRegistry.emplace<ModelRotationOffset>(
-        creep,
-        glm::angleAxis(glm::radians(90.0f), glm::vec3(0, 1, 0)));
+    aRegistry.emplace<ModelRotationOffset>(creep, transform.Orientation);
 
     RigidBody body{.Params = aUpdate.Params};
     Collider  collider{
