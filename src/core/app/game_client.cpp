@@ -54,9 +54,9 @@ void GameClient::Init()
 
     spdlog::set_default_logger(mLogger);
 
-    auto& window    = mRegistry.ctx().get<WatoWindow>();
-    auto& renderer  = mRegistry.ctx().get<BgfxRenderer&>();
-    auto& netClient = mRegistry.ctx().get<ENetClient>();
+    auto& window    = GetSingletonComponent<WatoWindow>(mRegistry);
+    auto& renderer  = GetSingletonComponent<BgfxRenderer&>(mRegistry);
+    auto& netClient = GetSingletonComponent<ENetClient>(mRegistry);
 
     window.Init();
     renderer.Init(window);
@@ -97,9 +97,9 @@ void GameClient::Init()
 
 int GameClient::Run(tf::Executor& aExecutor)
 {
-    auto& window    = mRegistry.ctx().get<WatoWindow&>();
-    auto& renderer  = mRegistry.ctx().get<BgfxRenderer&>();
-    auto& netClient = mRegistry.ctx().get<ENetClient&>();
+    auto& window    = GetSingletonComponent<WatoWindow&>(mRegistry);
+    auto& renderer  = GetSingletonComponent<BgfxRenderer&>(mRegistry);
+    auto& netClient = GetSingletonComponent<ENetClient&>(mRegistry);
     auto  prevTime  = clock_type::now();
 
     mNetworkThread = std::thread([this]() { networkThread(); });
@@ -150,7 +150,7 @@ int GameClient::Run(tf::Executor& aExecutor)
 
 void GameClient::networkThread()
 {
-    auto& netClient = mRegistry.ctx().get<ENetClient&>();
+    auto& netClient = GetSingletonComponent<ENetClient&>(mRegistry);
     while (netClient.Running()) {
         if (mDiscTimerStart) {
             if (clock_type::now() - *mDiscTimerStart > 3s) {
@@ -195,7 +195,7 @@ void GameClient::spawnCamera(glm::vec3 aPlayerPosition)
 
 void GameClient::prepareGridPreview(const glm::vec2& aOffset)
 {
-    const auto& graph = mRegistry.ctx().get<Graph>();
+    const auto& graph = GetSingletonComponent<Graph>(mRegistry);
 
     GraphCell::size_type numVertsX = graph.Width() + 1;
     GraphCell::size_type numVertsY = graph.Height() + 1;
@@ -239,7 +239,7 @@ void GameClient::prepareGridPreview(const glm::vec2& aOffset)
     // Put texture in context variables because I am not sure entt:resource_cache can be updated
     // easily
     LoadResource(mRegistry.ctx().get<ModelCache>(), "grid", std::move(primitive));
-    auto& renderer = mRegistry.ctx().get<BgfxRenderer&>();
+    auto& renderer = GetSingletonComponent<BgfxRenderer&>(mRegistry);
     renderer.UpdateTexture2D(
         texture,
         0,
@@ -260,7 +260,7 @@ void GameClient::StartGameInstance(
     Application::StartGameInstance(aRegistry, aGameID);
     LoadResources(aRegistry);
 
-    auto&     syncMap = aRegistry.ctx().get<EntitySyncMap>();
+    auto&     syncMap = GetSingletonComponent<EntitySyncMap>(aRegistry);
     glm::vec3 localPlayerPos{2.0f, 0.004f, 2.0f};
 
     for (uint8_t idx = 0; idx < aPlayers.size(); ++idx) {
@@ -329,7 +329,7 @@ void GameClient::StartGameInstance(
     aRegistry.ctx().emplace<const Input*>(&mRegistry.ctx().get<WatoWindow>().GetInput());
     aRegistry.ctx().emplace<ActionContextStack>();
 
-    auto& fixedExec = aRegistry.ctx().get<FixedSystemExecutor>();
+    auto& fixedExec = GetSingletonComponent<FixedSystemExecutor>(aRegistry);
 
     fixedExec.Register<NetworkSyncSystem<ENetClient>>();
     fixedExec.Register<PhysicsSystem>();
@@ -417,7 +417,7 @@ void GameClient::consumeNetworkResponses()
         void operator()(std::monostate) const {}
     };
 
-    auto& netClient  = mRegistry.ctx().get<ENetClient>();
+    auto& netClient  = GetSingletonComponent<ENetClient>(mRegistry);
     auto& dispatcher = mRegistry.ctx().get<entt::dispatcher>("net_dispatcher"_hs);
 
     NetworkResponseVisitor visitor{&mRegistry, &dispatcher, this};

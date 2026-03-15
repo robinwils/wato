@@ -1,7 +1,5 @@
 
 #include <sodium/core.h>
-#define ENET_IMPLEMENTATION
-#define ENET_FEATURE_ADDRESS_MAPPING
 
 #include "core/app/game_server.hpp"
 #include "core/sys/signal.hpp"

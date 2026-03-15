@@ -59,9 +59,16 @@ void moveCamera(Registry& aRegistry, const MovePayload& aPayload, float aDeltaTi
 
 bool clientValidateTower(Registry& aRegistry, const BuildTowerPayload& aPayload)
 {
-    auto&       phy   = aRegistry.ctx().get<Physics>();
-    const auto& graph = aRegistry.ctx().get<Graph>();
+    auto&       phy   = GetSingletonComponent<Physics>(aRegistry);
+    const auto& graph = GetSingletonComponent<Graph>(aRegistry);
 
+    ColliderParams towerCollider{
+        .CollisionCategoryBits = Category::Tower,
+        .CollideWithMaskBits   = CollidesWith(Category::Tower, Category::Base),
+        .IsTrigger             = false,
+        .Offset                = Transform3D{},
+        .ShapeParams           = BoxShapeParams{.HalfExtents = glm::vec3(0.35f, 0.65f, 0.35f)},
+    };
 
     for (const auto&& [tower, pm, t] : aRegistry.view<PlacementMode, Transform3D>().each()) {
         if (!graph.IsInside(t.Position)) {
@@ -69,38 +76,7 @@ bool clientValidateTower(Registry& aRegistry, const BuildTowerPayload& aPayload)
             continue;
         }
 
-        TowerBuildingHandler handler(WATO_REG_LOGGER(aRegistry));
-
-        RigidBody body = RigidBody{
-            .Params =
-                RigidBodyParams{
-                    .Type           = rp3d::BodyType::STATIC,
-                    .Velocity       = 0.0f,
-                    .Direction      = glm::vec3(0.0f),
-                    .GravityEnabled = false,
-                },
-        };
-        Collider collider = Collider{
-            .Params =
-                ColliderParams{
-                    .CollisionCategoryBits = Category::Tower,
-                    .CollideWithMaskBits   = CollidesWith(Category::Tower, Category::Base),
-                    .IsTrigger             = false,
-                    .Offset                = Transform3D{},
-                    .ShapeParams =
-                        BoxShapeParams{
-                            .HalfExtents = glm::vec3(0.35f, 0.65f, 0.35f),
-                        },
-                },
-        };
-
-        body.Body = phy.CreateRigidBody(body.Params, t);
-        phy.AddCollider(body.Body, collider.Params);
-
-        phy.World()->testOverlap(body.Body, handler);
-        phy.World()->destroyRigidBody(body.Body);
-
-        if (!handler.CanBuildTower) {
+        if (!CanPlaceTower(phy, t.Position, towerCollider, WATO_REG_LOGGER(aRegistry))) {
             WATO_ERR(aRegistry, "Cannot build tower at {}", t.Position);
             return false;
         }
@@ -114,7 +90,7 @@ bool clientValidateTower(Registry& aRegistry, const BuildTowerPayload& aPayload)
 
 void serverBuildTower(Registry& aRegistry, BuildTowerPayload& aPayload, PlayerID aPlayerID)
 {
-    auto& graphMap = aRegistry.ctx().get<PlayerGraphMap>();
+    auto& graphMap = GetSingletonComponent<PlayerGraphMap>(aRegistry);
     auto  it       = graphMap.find(aPlayerID);
 
     if (it == graphMap.end()) {
@@ -129,9 +105,23 @@ void serverBuildTower(Registry& aRegistry, BuildTowerPayload& aPayload, PlayerID
 
     auto& player = aRegistry.get<Player>(FindPlayerEntity(aRegistry, aPlayerID));
     auto  tower  = aRegistry.create();
-    auto& phy    = aRegistry.ctx().get<Physics>();
+    auto& phy    = GetSingletonComponent<Physics>(aRegistry);
 
     auto& t = aRegistry.emplace<Transform3D>(tower, aPayload.Position);
+
+    ColliderParams colliderParams{
+        .CollisionCategoryBits = Category::Tower,
+        .CollideWithMaskBits   = CollidesWith(Category::Tower, Category::Base),
+        .IsTrigger             = false,
+        .Offset                = Transform3D{},
+        .ShapeParams           = BoxShapeParams{.HalfExtents = glm::vec3(0.35f, 0.65f, 0.35f)},
+    };
+
+    if (!CanPlaceTower(phy, t.Position, colliderParams, WATO_REG_LOGGER(aRegistry))) {
+        aRegistry.destroy(tower);
+        WATO_ERR(aRegistry, "tower {} at {} invalidated", tower, t.Position);
+        return;
+    }
 
     RigidBody body = RigidBody{
         .Params =
@@ -142,32 +132,10 @@ void serverBuildTower(Registry& aRegistry, BuildTowerPayload& aPayload, PlayerID
                 .GravityEnabled = false,
             },
     };
-    Collider collider = Collider{
-        .Params =
-            ColliderParams{
-                .CollisionCategoryBits = Category::Tower,
-                .CollideWithMaskBits   = CollidesWith(Category::Tower, Category::Base),
-                .IsTrigger             = false,
-                .Offset                = Transform3D{},
-                .ShapeParams =
-                    BoxShapeParams{
-                        .HalfExtents = glm::vec3(0.35f, 0.65f, 0.35f),
-                    },
-            },
-    };
+    Collider collider = Collider{.Params = colliderParams};
 
     body.Body       = phy.CreateRigidBody(body.Params, t);
-    collider.Handle = phy.AddCollider(body.Body, collider.Params);
-
-    TowerBuildingHandler handler(WATO_REG_LOGGER(aRegistry));
-    phy.World()->testOverlap(body.Body, handler);
-
-    if (!handler.CanBuildTower) {
-        phy.World()->destroyRigidBody(body.Body);
-        aRegistry.destroy(tower);
-        WATO_ERR(aRegistry, "tower {} at {} invalidated", tower, t.Position);
-        return;
-    }
+    collider.Handle = phy.AddCollider(body.Body, colliderParams);
 
     WATO_INFO(aRegistry, "tower {} at {} validated", tower, t.Position);
     aRegistry.emplace<Tower>(tower, aPayload.Tower);
@@ -182,22 +150,24 @@ void serverBuildTower(Registry& aRegistry, BuildTowerPayload& aPayload, PlayerID
 
     aRegistry.emplace<Owner>(tower, aPlayerID, player.Slot);
 
-    aRegistry.ctx().get<ENetServer&>().BroadcastResponse(
-        GetPlayerIDs(aRegistry),
-        PacketType::Ack,
-        aRegistry.ctx().get<GameInstance&>().Tick,
-        RigidBodyUpdateResponse{
-            .Params = body.Params,
-            .Entity = tower,
-            .Event  = RigidBodyEvent::Create,
-            .InitData =
-                TowerInitData{
-                    .Type           = aPayload.Tower,
-                    .Position       = aPayload.Position,
-                    .OwnerID        = aPlayerID,
-                    .ColliderParams = collider.Params,
-                },
-        });
+    if (auto* server = aRegistry.ctx().find<ENetServer>()) {
+        server->BroadcastResponse(
+            GetPlayerIDs(aRegistry),
+            PacketType::Ack,
+            GetSingletonComponent<GameInstance&>(aRegistry).Tick,
+            RigidBodyUpdateResponse{
+                .Params = body.Params,
+                .Entity = tower,
+                .Event  = RigidBodyEvent::Create,
+                .InitData =
+                    TowerInitData{
+                        .Type           = aPayload.Tower,
+                        .Position       = aPayload.Position,
+                        .OwnerID        = aPlayerID,
+                        .ColliderParams = collider.Params,
+                    },
+            });
+    }
 }
 
 void serverSendCreep(Registry& aRegistry, SendCreepPayload& aPayload, PlayerID aPlayerID)
@@ -212,7 +182,7 @@ void serverSendCreep(Registry& aRegistry, SendCreepPayload& aPayload, PlayerID a
     auto& spawnTransform = aRegistry.get<Transform3D>(nextSpawn);
     auto& spawnOwner     = aRegistry.get<Owner>(nextSpawn);
 
-    auto& graphMap = aRegistry.ctx().get<PlayerGraphMap>();
+    auto& graphMap = GetSingletonComponent<PlayerGraphMap>(aRegistry);
     auto  it       = graphMap.find(spawnOwner.ID);
 
     if (it == graphMap.end()) {
@@ -270,28 +240,31 @@ void serverSendCreep(Registry& aRegistry, SendCreepPayload& aPayload, PlayerID a
 
     auto& rigidBody = aRegistry.get<RigidBody>(creep);
     auto& transform = aRegistry.get<Transform3D>(creep);
-    aRegistry.ctx().get<ENetServer&>().BroadcastResponse(
-        GetPlayerIDs(aRegistry),
-        PacketType::Ack,
-        aRegistry.ctx().get<GameInstance&>().Tick,
-        RigidBodyUpdateResponse{
-            .Params = rigidBody.Params,
-            .Entity = creep,
-            .Event  = RigidBodyEvent::Create,
-            .InitData =
-                CreepInitData{
-                    .Type           = aPayload.Type,
-                    .Position       = transform.Position,
-                    .OwnerID        = aPlayerID,
-                    .ColliderParams = collider.Params,
-                },
-        });
+
+    if (auto* server = aRegistry.ctx().find<ENetServer>()) {
+        server->BroadcastResponse(
+            GetPlayerIDs(aRegistry),
+            PacketType::Ack,
+            GetSingletonComponent<GameInstance&>(aRegistry).Tick,
+            RigidBodyUpdateResponse{
+                .Params = rigidBody.Params,
+                .Entity = creep,
+                .Event  = RigidBodyEvent::Create,
+                .InitData =
+                    CreepInitData{
+                        .Type           = aPayload.Type,
+                        .Position       = transform.Position,
+                        .OwnerID        = aPlayerID,
+                        .ColliderParams = collider.Params,
+                    },
+            });
+    }
 }
 
 void RealTimeActionSystem::Execute(Registry& aRegistry, float aDelta)
 {
-    auto& buf   = aRegistry.ctx().get<FrameActionBuffer&>();
-    auto& stack = aRegistry.ctx().get<ActionContextStack&>();
+    auto& buf   = GetSingletonComponent<FrameActionBuffer&>(aRegistry);
+    auto& stack = GetSingletonComponent<ActionContextStack&>(aRegistry);
 
     for (Action& action : buf) {
         if (auto* move = std::get_if<MovePayload>(&action.Payload)) {
@@ -307,8 +280,8 @@ void RealTimeActionSystem::Execute(Registry& aRegistry, float aDelta)
 
 void DeterministicActionSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t aTick)
 {
-    auto& buf   = aRegistry.ctx().get<GameStateBuffer&>();
-    auto& stack = aRegistry.ctx().get<ActionContextStack&>();
+    auto& buf   = GetSingletonComponent<GameStateBuffer&>(aRegistry);
+    auto& stack = GetSingletonComponent<ActionContextStack&>(aRegistry);
 
     for (Action& action : buf.Latest().Actions) {
         if (auto* p = std::get_if<BuildTowerPayload>(&action.Payload)) {
@@ -327,7 +300,7 @@ void DeterministicActionSystem::Execute(Registry& aRegistry, [[maybe_unused]] st
 
 void ServerActionSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t aTick)
 {
-    auto& taggedActions = aRegistry.ctx().get<TaggedActionsType>();
+    auto& taggedActions = GetSingletonComponent<TaggedActionsType>(aRegistry);
 
     for (auto& [playerID, action] : taggedActions) {
         if (auto* build = std::get_if<BuildTowerPayload>(&action.Payload)) {

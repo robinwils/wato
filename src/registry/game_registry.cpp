@@ -24,7 +24,7 @@ void LoadResources(Registry& aRegistry)
 void LoadShaders(Registry& aRegistry)
 {
     LoadResource(
-        aRegistry.ctx().get<ShaderCache>(),
+        GetSingletonComponent<ShaderCache>(aRegistry),
         "blinnphong",
         "vs_blinnphong",
         "fs_blinnphong",
@@ -39,7 +39,7 @@ void LoadShaders(Registry& aRegistry)
             // clang-format on
         });
     LoadResource(
-        aRegistry.ctx().get<ShaderCache>(),
+        GetSingletonComponent<ShaderCache>(aRegistry),
         "blinnphong_skinned",
         "vs_blinnphong_skinned",
         "fs_blinnphong",
@@ -55,7 +55,7 @@ void LoadShaders(Registry& aRegistry)
             // clang-format on
         });
     LoadResource(
-        aRegistry.ctx().get<ShaderCache>(),
+        GetSingletonComponent<ShaderCache>(aRegistry),
         "blinnphong_instanced",
         "vs_blinnphong_instanced",
         "fs_blinnphong",
@@ -70,13 +70,13 @@ void LoadShaders(Registry& aRegistry)
             // clang-format on
         });
     LoadResource(
-        aRegistry.ctx().get<ShaderCache>(),
+        GetSingletonComponent<ShaderCache>(aRegistry),
         "simple",
         "vs_simple",
         "fs_simple",
         ShaderLoader::uniform_desc_map{});
     LoadResource(
-        aRegistry.ctx().get<ShaderCache>(),
+        GetSingletonComponent<ShaderCache>(aRegistry),
         "grid",
         "vs_grid",
         "fs_grid",
@@ -91,18 +91,18 @@ void LoadShaders(Registry& aRegistry)
 void LoadTextures(Registry& aRegistry)
 {
     const auto& diffuse = LoadResource(
-        aRegistry.ctx().get<TextureCache>(),
+        GetSingletonComponent<TextureCache>(aRegistry),
         "grass/diffuse",
         "assets/textures/TreeTop_COLOR.png");
     const auto& specular = LoadResource(
-        aRegistry.ctx().get<TextureCache>(),
+        GetSingletonComponent<TextureCache>(aRegistry),
         "grass/specular",
         "assets/textures/TreeTop_SPEC.png");
 
-    auto shader = aRegistry.ctx().get<ShaderCache>()["blinnphong_instanced"_hs];
+    auto shader = GetSingletonComponent<ShaderCache>(aRegistry)["blinnphong_instanced"_hs];
 
     LoadResource(
-        aRegistry.ctx().get<ModelCache>(),
+        GetSingletonComponent<ModelCache>(aRegistry),
         "grass_tile",
         std::make_unique<PlanePrimitive>(
             std::make_unique<BlinnPhongMaterial>(shader, diffuse, specular)));
@@ -118,28 +118,28 @@ void SpawnLight(Registry& aRegistry)
 void LoadModels(Registry& aRegistry)
 {
     LoadResource(
-        aRegistry.ctx().get<ModelCache>(),
+        GetSingletonComponent<ModelCache>(aRegistry),
         "tower_model",
         aRegistry,
         "assets/models/arrow_tower.fbx",
         aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_PreTransformVertices
             | aiProcess_GlobalScale);
     LoadResource(
-        aRegistry.ctx().get<ModelCache>(),
+        GetSingletonComponent<ModelCache>(aRegistry),
         "arrow",
         aRegistry,
         "assets/models/arrow.fbx",
         aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_PreTransformVertices
             | aiProcess_GlobalScale);
     LoadResource(
-        aRegistry.ctx().get<ModelCache>(),
+        GetSingletonComponent<ModelCache>(aRegistry),
         "phoenix",
         aRegistry,
         "assets/models/phoenix.fbx",
         aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_GlobalScale | aiProcess_FlipUVs
             | aiProcess_ConvertToLeftHanded);
     LoadResource(
-        aRegistry.ctx().get<ModelCache>(),
+        GetSingletonComponent<ModelCache>(aRegistry),
         "mutant",
         aRegistry,
         "assets/models/mutant.fbx",

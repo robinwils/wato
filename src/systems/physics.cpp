@@ -21,7 +21,7 @@ static constexpr float kTimeStep = 1.0f / 60.0f;
 
 void PhysicsSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t aTick)
 {
-    auto& phy = aRegistry.ctx().get<Physics&>();
+    auto& phy = GetSingletonComponent<Physics&>(aRegistry);
 
     // Update the Dynamics world with a constant time step (1/60s)
     phy.World()->update(kTimeStep);
@@ -72,10 +72,10 @@ void SimulationSystem::UpdateTransforms(Registry& aRegistry, const float aFactor
 
 void SimulationSystem::Execute(Registry& aRegistry, const float aDelta)
 {
-    auto& state     = aRegistry.ctx().get<GameStateBuffer&>();
-    auto& instance  = aRegistry.ctx().get<GameInstance&>();
-    auto& observers = aRegistry.ctx().get<Observers>();
-    auto& fixedExec = aRegistry.ctx().get<FixedSystemExecutor>();
+    auto& state     = GetSingletonComponent<GameStateBuffer&>(aRegistry);
+    auto& instance  = GetSingletonComponent<GameInstance&>(aRegistry);
+    auto& observers = GetSingletonComponent<Observers>(aRegistry);
+    auto& fixedExec = GetSingletonComponent<FixedSystemExecutor>(aRegistry);
 
     if (instance.IsOver) {
         return;

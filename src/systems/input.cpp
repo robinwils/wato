@@ -26,9 +26,9 @@ void InputSystem::Execute(Registry& aRegistry, float aDelta)
 
 void InputSystem::handleMouseMovement(Registry& aRegistry)
 {
-    auto& stack  = aRegistry.ctx().get<ActionContextStack&>();
-    auto& window = aRegistry.ctx().get<WatoWindow&>();
-    auto& phy    = aRegistry.ctx().get<Physics&>();
+    auto& stack  = GetSingletonComponent<ActionContextStack&>(aRegistry);
+    auto& window = GetSingletonComponent<WatoWindow&>(aRegistry);
+    auto& phy    = GetSingletonComponent<Physics&>(aRegistry);
 
     glm::vec3 origin, end;
 
@@ -55,10 +55,10 @@ void InputSystem::handleMouseMovement(Registry& aRegistry)
 
 void InputSystem::createActions(Registry& aRegistry, float aDelta)
 {
-    const Input& input = aRegistry.ctx().get<WatoWindow&>().GetInput();
-    auto&        stack = aRegistry.ctx().get<ActionContextStack&>();
-    auto&        frameBuf = aRegistry.ctx().get<FrameActionBuffer&>();
-    auto&        gameBuf  = aRegistry.ctx().get<GameStateBuffer&>();
+    const Input& input = GetSingletonComponent<WatoWindow&>(aRegistry).GetInput();
+    auto&        stack = GetSingletonComponent<ActionContextStack&>(aRegistry);
+    auto&        frameBuf = GetSingletonComponent<FrameActionBuffer&>(aRegistry);
+    auto&        gameBuf  = GetSingletonComponent<GameStateBuffer&>(aRegistry);
 
     stack.CurrentBindings().Visit([&](ActionBinding& aBinding) {
         if (!aBinding.KeyState.IsTriggered(input)) return;

@@ -29,7 +29,7 @@ void UISystem::ensureConnected(entt::dispatcher& aDispatcher)
 
 void UISystem::Execute(Registry& aRegistry, [[maybe_unused]] float aTick)
 {
-    auto& menu = aRegistry.ctx().get<MenuContext>();
+    auto& menu = GetSingletonComponent<MenuContext>(aRegistry);
 
     ensureConnected(menu.Dispatcher);
     menu.Dispatcher.update();
@@ -67,8 +67,8 @@ void UISystem::onLoginResult(const LoginResultEvent& aEvent)
 {
     Registry& registry = *aEvent.Reg;
 
-    auto& pb   = registry.ctx().get<PocketBaseClient>();
-    auto& menu = registry.ctx().get<MenuContext>();
+    auto& pb   = GetSingletonComponent<PocketBaseClient>(registry);
+    auto& menu = GetSingletonComponent<MenuContext>(registry);
 
     if (aEvent.Error.empty()) {
         auto playerID = PlayerIDFromHexString(aEvent.ID);
@@ -88,7 +88,7 @@ void UISystem::onLoginResult(const LoginResultEvent& aEvent)
         };
         menu.ClearMsgs();
 
-        auto& netClient = registry.ctx().get<ENetClient&>();
+        auto& netClient = GetSingletonComponent<ENetClient&>(registry);
         netClient.Connect();
 
         WATO_INFO(registry, "user {} logged in", aEvent.AccountName);
@@ -131,7 +131,7 @@ void UISystem::onRegisterResult(const RegisterResultEvent& aEvent)
 {
     Registry& registry = *aEvent.Reg;
 
-    auto& menu = registry.ctx().get<MenuContext>();
+    auto& menu = GetSingletonComponent<MenuContext>(registry);
 
     if (aEvent.Error.empty()) {
         menu.RegisterState = RegisterState::Success;
@@ -219,7 +219,7 @@ void UISystem::onJoinResult(const JoinResultEvent& aEvent)
 void UISystem::onMatchmakingError(const MatchmakingErrorEvent& aEvent)
 {
     Registry& registry = *aEvent.Reg;
-    auto&     menu     = registry.ctx().get<MenuContext>();
+    auto&     menu     = GetSingletonComponent<MenuContext>(registry);
 
     menu.Matchmaking.State = MatchmakingState::Failed;
     menu.Error             = aEvent.Error;

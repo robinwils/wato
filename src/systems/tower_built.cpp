@@ -18,7 +18,7 @@ using namespace entt::literals;
 
 void TowerBuiltSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t aTick)
 {
-    auto& phy     = aRegistry.ctx().get<Physics>();
+    auto& phy     = GetSingletonComponent<Physics>(aRegistry);
     auto* storage = aRegistry.storage("tower_built_observer"_hs);
 
     if (storage == nullptr) {
@@ -34,7 +34,7 @@ void TowerBuiltSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32
     std::set<PlayerID> dirtyPlayers;
 
     if (aRegistry.ctx().contains<PlayerGraphMap>()) {
-        auto& graphMap = aRegistry.ctx().get<PlayerGraphMap>();
+        auto& graphMap = GetSingletonComponent<PlayerGraphMap>(aRegistry);
 
         for (auto tower : *storage) {
             auto& rb    = aRegistry.get<RigidBody>(tower);
@@ -65,7 +65,7 @@ void TowerBuiltSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32
         }
     } else if (aRegistry.ctx().contains<Graph>()) {
         // Client path: single graph for local player only
-        auto&    graph    = aRegistry.ctx().get<Graph>();
+        auto&    graph    = GetSingletonComponent<Graph>(aRegistry);
         PlayerID localPID = aRegistry.ctx().get<Player>("player"_hs).ID;
         bool     dirty    = false;
 

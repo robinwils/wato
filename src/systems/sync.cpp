@@ -13,9 +13,9 @@ void NetworkSyncSystem<ENetClient>::Execute(
     Registry&                      aRegistry,
     [[maybe_unused]] std::uint32_t aTick)
 {
-    auto& buf      = aRegistry.ctx().get<GameStateBuffer&>();
-    auto& net      = aRegistry.ctx().get<ENetClient&>();
-    auto& instance = aRegistry.ctx().get<GameInstance&>();
+    auto& buf      = GetSingletonComponent<GameStateBuffer&>(aRegistry);
+    auto& net      = GetSingletonComponent<ENetClient&>(aRegistry);
+    auto& instance = GetSingletonComponent<GameInstance&>(aRegistry);
 
     if (!net.Running() || !net.Connected()) {
         return;
@@ -39,14 +39,14 @@ void NetworkSyncSystem<ENetServer>::Execute(
     Registry&                      aRegistry,
     [[maybe_unused]] std::uint32_t aTick)
 {
-    auto& net       = aRegistry.ctx().get<ENetServer&>();
-    auto& instance  = aRegistry.ctx().get<GameInstance&>();
+    auto& net       = GetSingletonComponent<ENetServer&>(aRegistry);
+    auto& instance  = GetSingletonComponent<GameInstance&>(aRegistry);
     auto& rbStorage = aRegistry.storage<entt::reactive>("rigid_bodies_observer"_hs);
     auto& rbDestroyedStorage =
         aRegistry.storage<entt::reactive>("rigid_bodies_destroy_observer"_hs);
 
     // TODO: snapshot every other frame
-    // auto& buf = aRegistry.ctx().get<GameStateBuffer&>();
+    // auto& buf = GetSingletonComponent<GameStateBuffer&>(aRegistry);
     // auto  snapshotView = entt::basic_view{rbStorage};
     // GameState        serverState = GameState{.Tick = buf.Latest().Tick};
     // BitOutputArchive outAr;

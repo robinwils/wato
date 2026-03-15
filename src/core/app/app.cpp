@@ -42,7 +42,7 @@ void Application::StartGameInstance(Registry& aRegistry, const GameInstanceID aG
     physics.Init();
 
     auto& l = aRegistry.ctx().emplace<PhysicsEventListener>(mLogger);
-    aRegistry.ctx().get<Physics>().World()->setEventListener(&l);
+    GetSingletonComponent<Physics>(aRegistry).World()->setEventListener(&l);
 
     SetupObservers(aRegistry);
 }

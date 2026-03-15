@@ -317,7 +317,9 @@ target_compile_definitions(wato_common
     $<$<CONFIG:Debug>:SAFEINT_ASSERT_ON_EXCEPTION BX_CONFIG_DEBUG>
 )
 
-target_compile_definitions(watolib PUBLIC DOCTEST_CONFIG_DISABLE)
+target_compile_definitions(watolib PRIVATE DOCTEST_CONFIG_DISABLE)
+
+include(Coverage)
 
 if(UNIX)
   target_link_options(wato_common INTERFACE -rdynamic)
@@ -339,16 +341,28 @@ if (MSVC)
       $<$<CONFIG:Debug>:/fsanitize=address>
   )
 else()
-  target_compile_options(wato_common
-    INTERFACE
-      $<$<CONFIG:Debug>:-O0 -ggdb -fsanitize=address,undefined>
-      -fdiagnostics-color=always
-  )
-  target_link_options(wato_common
-    INTERFACE
-      $<$<CONFIG:Debug>:-fsanitize=address,undefined>
-      -rdynamic
-  )
+  if(NOT ENABLE_COVERAGE)
+    target_compile_options(wato_common
+      INTERFACE
+        $<$<CONFIG:Debug>:-O0 -ggdb -fsanitize=address,undefined>
+        -fdiagnostics-color=always
+    )
+    target_link_options(wato_common
+      INTERFACE
+        $<$<CONFIG:Debug>:-fsanitize=address,undefined>
+        -rdynamic
+    )
+  else()
+    target_compile_options(wato_common
+      INTERFACE
+        $<$<CONFIG:Debug>:-O0 -ggdb>
+        -fdiagnostics-color=always
+    )
+    target_link_options(wato_common
+      INTERFACE
+        -rdynamic
+    )
+  endif()
 endif()
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")

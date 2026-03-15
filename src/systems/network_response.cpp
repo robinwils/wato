@@ -47,7 +47,7 @@ void NetworkResponseSystem::onRigidBodyUpdate(const RigidBodyUpdateEvent& aEvent
 {
     Registry&   registry = *aEvent.Reg;
     const auto& update   = aEvent.Response;
-    auto&       syncMap  = registry.ctx().get<EntitySyncMap>();
+    auto&       syncMap  = GetSingletonComponent<EntitySyncMap>(registry);
 
     struct EntityCreateVisitor {
         NetworkResponseSystem*         Self;
@@ -105,7 +105,7 @@ void NetworkResponseSystem::onHealthUpdate(const HealthUpdateEvent& aEvent)
 {
     Registry&   registry = *aEvent.Reg;
     const auto& update   = aEvent.Response;
-    auto&       syncMap  = registry.ctx().get<EntitySyncMap>();
+    auto&       syncMap  = GetSingletonComponent<EntitySyncMap>(registry);
 
     if (syncMap.contains(update.Entity)) {
         entt::entity e = syncMap[update.Entity];
@@ -152,7 +152,7 @@ void NetworkResponseSystem::createProjectile(
     const RigidBodyUpdateResponse& aUpdate,
     const ProjectileInitData&      aInit)
 {
-    auto& syncMap = aRegistry.ctx().get<EntitySyncMap>();
+    auto& syncMap = GetSingletonComponent<EntitySyncMap>(aRegistry);
 
     WATO_INFO(aRegistry, "got projectile init data");
 
@@ -203,8 +203,8 @@ void NetworkResponseSystem::createTower(
     const RigidBodyUpdateResponse& aUpdate,
     const TowerInitData&           aInit)
 {
-    auto& syncMap = aRegistry.ctx().get<EntitySyncMap>();
-    auto& phy     = aRegistry.ctx().get<Physics>();
+    auto& syncMap = GetSingletonComponent<EntitySyncMap>(aRegistry);
+    auto& phy     = GetSingletonComponent<Physics>(aRegistry);
     auto& player  = aRegistry.get<Player>(FindPlayerEntity(aRegistry, aInit.OwnerID));
     auto& sender  = aRegistry.get<Player>(GetSenderFor(aRegistry, aInit.OwnerID));
 
@@ -245,8 +245,8 @@ void NetworkResponseSystem::createCreep(
     const RigidBodyUpdateResponse& aUpdate,
     const CreepInitData&           aInit)
 {
-    auto& syncMap = aRegistry.ctx().get<EntitySyncMap>();
-    auto& phy     = aRegistry.ctx().get<Physics>();
+    auto& syncMap = GetSingletonComponent<EntitySyncMap>(aRegistry);
+    auto& phy     = GetSingletonComponent<Physics>(aRegistry);
     auto& player  = aRegistry.get<Player>(FindPlayerEntity(aRegistry, aInit.OwnerID));
 
     auto creep = aRegistry.create();

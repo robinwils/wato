@@ -149,7 +149,16 @@ class Physics
     };
 
     Physics(const Logger& aLogger) : mLogger(aLogger) {}
-    ~Physics() { mLogger->trace("destroying physics"); }
+    ~Physics()
+    {
+        mLogger->trace("destroying physics");
+        mCommon.destroyPhysicsWorld(mWorld);
+        if (Params.Logger) {
+            mCommon.destroyDefaultLogger(Params.Logger);
+            mCommon.setLogger(nullptr);
+            Params.Logger = nullptr;
+        }
+    }
 
     Physics(const Physics&)            = delete;
     Physics& operator=(const Physics&) = delete;
@@ -241,3 +250,4 @@ struct WorldRaycastCallback : public rp3d::RaycastCallback {
 
     std::vector<glm::vec3> Hits;
 };
+

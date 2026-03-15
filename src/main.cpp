@@ -1,7 +1,5 @@
 #include <sodium/core.h>
 #include <spdlog/spdlog.h>
-#define ENET_IMPLEMENTATION
-#define ENET_FEATURE_ADDRESS_MAPPING
 
 #include <memory>
 #include <taskflow/core/taskflow.hpp>

@@ -4,6 +4,7 @@
 
 #include <glm/vec3.hpp>
 
+#include "core/physics/physics.hpp"
 #include "core/sys/log.hpp"
 
 class TowerBuildingHandler : public rp3d::OverlapCallback
@@ -24,3 +25,13 @@ class TowerBuildingHandler : public rp3d::OverlapCallback
    private:
     Logger mLogger;
 };
+
+/// Creates a temporary rigid body at aPosition with aColliderParams,
+/// tests for overlaps against existing bodies, and returns true if
+/// no tower/base collision is detected.
+bool CanPlaceTower(
+    Physics&              aPhysics,
+    const glm::vec3&      aPosition,
+    const ColliderParams& aColliderParams,
+    const Logger&         aLogger);
+

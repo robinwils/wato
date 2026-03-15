@@ -11,8 +11,8 @@ using namespace entt::literals;
 
 void RigidBodiesUpdateSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t aTick)
 {
-    auto& physics          = aRegistry.ctx().get<Physics>();
-    auto& colliderToEntity = aRegistry.ctx().get<ColliderEntityMap>();
+    auto& physics          = GetSingletonComponent<Physics>(aRegistry);
+    auto& colliderToEntity = GetSingletonComponent<ColliderEntityMap>(aRegistry);
     auto& rbStorage        = aRegistry.storage<entt::reactive>("rigid_bodies_observer"_hs);
 
     for (auto& e : rbStorage) {
