@@ -142,7 +142,6 @@ int GameClient::Run(tf::Executor& aExecutor)
         input.MouseState.Scroll = glm::dvec2(0.0);
     }
 
-    StopGameInstance(mRegistry);
     netClient.Disconnect();
     mDiscTimerStart.emplace(clock_type::now());
 

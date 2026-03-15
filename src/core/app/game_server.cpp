@@ -266,9 +266,7 @@ int GameServer::Run(tf::Executor& aExecutor)
         }
     }
 
-    for (auto& [gameId, registry] : mGameInstances) {
-        StopGameInstance(registry);
-    }
+    mGameInstances.clear();
 
     return 0;
 }
