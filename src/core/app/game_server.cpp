@@ -225,7 +225,6 @@ int GameServer::Run(tf::Executor& aExecutor)
                 mLogger->trace("sending {}", *aEvent);
                 if (!mServer.Send(aEvent->PlayerID, archive.Bytes())) {
                     mLogger->error("player {} is not connected", aEvent->PlayerID);
-                    mRunning = false;
                 }
             });
             mServer.Poll();
