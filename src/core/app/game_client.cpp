@@ -164,9 +164,7 @@ void GameClient::networkThread()
             }
 
             BitOutputArchive archive;
-
             aEvent->Archive(archive);
-
             netClient.Send(archive.Bytes());
         });
         netClient.Poll();
@@ -294,9 +292,9 @@ void GameClient::StartGameInstance(
                 .Params =
                     ColliderParams{
                         .CollisionCategoryBits = Category::Base,
-                        .CollideWithMaskBits   = CollidesWith(
-                            PlayerEntitiesCategory(sender), Category::Tower),
-                        .IsTrigger             = true,
+                        .CollideWithMaskBits =
+                            CollidesWith(PlayerEntitiesCategory(sender), Category::Tower),
+                        .IsTrigger = true,
                         .ShapeParams =
                             BoxShapeParams{
                                 .HalfExtents = GraphCell(1, 1).ToWorld() * 0.5f,

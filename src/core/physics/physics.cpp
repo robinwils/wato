@@ -121,8 +121,8 @@ std::optional<glm::vec3> Physics::RayTerrainIntersection(glm::vec3 aOrigin, glm:
 void Physics::ToggleObstacle(const rp3d::Collider* aCollider, Graph& aGraph, bool aAdd)
 {
     const rp3d::AABB& box = aCollider->getWorldAABB();
-    const GraphCell min = aGraph.CellFromWorld(box.getMin().x, box.getMin().z);
-    const GraphCell max = aGraph.CellFromWorld(box.getMax().x, box.getMax().z);
+    const GraphCell   min = aGraph.CellFromWorld(box.getMin().x, box.getMin().z);
+    const GraphCell   max = aGraph.CellFromWorld(box.getMax().x, box.getMax().z);
     mLogger->trace(
         "toggling obstacle from min {}|{} to max {}|{}",
         box.getMin(),
