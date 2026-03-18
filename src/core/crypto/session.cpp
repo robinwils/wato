@@ -29,6 +29,9 @@ byte_view CryptoSession::Encrypt(byte_view aBytes)
 
 byte_view CryptoSession::Decrypt(byte_view aBytes)
 {
+    const auto minSize = mAEAD->NonceBytes + mAEAD->AuthTagBytes;
+    if (aBytes.size() < minSize + 1) return {};
+
     byte_view nonce      = aBytes.subspan(0, mAEAD->NonceBytes);
     byte_view cipherText = aBytes.subspan(mAEAD->NonceBytes, aBytes.size() - mAEAD->NonceBytes);
 

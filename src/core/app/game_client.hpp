@@ -91,6 +91,7 @@ class GameClient : public Application
 
     void Init() override;
     int  Run(tf::Executor& aExecutor) override;
+    void SendAuthRequest();
 
    protected:
     void StartGameInstance(
