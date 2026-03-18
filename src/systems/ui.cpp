@@ -71,7 +71,7 @@ void UISystem::onLoginResult(const LoginResultEvent& aEvent)
     auto& menu = GetSingletonComponent<MenuContext>(registry);
 
     if (aEvent.Error.empty()) {
-        auto playerID = PlayerIDFromHexString(aEvent.ID);
+        auto playerID = IDFromHexString<PlayerID>(aEvent.ID);
         if (!playerID) {
             WATO_ERR(registry, "invalid player ID: '{}'", aEvent.ID);
             return;

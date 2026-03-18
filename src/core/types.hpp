@@ -34,48 +34,42 @@ struct glz::meta<glm::quat> {
     // NOLINTEND(readability-identifier-naming)
 };
 
-using GameInstanceID = std::uint64_t;
+constexpr int kHexStringBase = 16;
 
-inline std::expected<GameInstanceID, std::errc> GameIDFromHexString(std::string_view aHexStr)
+template <typename ID>
+    requires(std::is_integral_v<ID> && std::is_unsigned_v<ID>)
+inline std::expected<ID, std::errc> IDFromHexString(std::string_view aHexStr)
 {
     if (aHexStr.empty()) {
         return std::unexpected(std::errc::invalid_argument);
     }
-    GameInstanceID gameID{};
-    auto [ptr, ec] = std::from_chars(aHexStr.begin(), aHexStr.end(), gameID, 16);
+    ID out{};
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+    auto [ptr, ec] = std::from_chars(aHexStr.data(), aHexStr.data() + aHexStr.size(), out, kHexStringBase);
     if (ec == std::errc{}) {
-        return gameID;
+        return out;
     }
     return std::unexpected(ec);
 }
 
-inline std::expected<std::string, std::errc> GameIDToHexString(GameInstanceID aID)
+template <typename ID>
+    requires(std::is_integral_v<ID> && std::is_unsigned_v<ID>)
+inline std::expected<std::string, std::errc> IDToHexString(ID aID)
 {
-    static constexpr size_t kSize = sizeof(GameInstanceID);
+    static constexpr size_t kSize = 2 * sizeof(ID);
 
     std::array<char, kSize> buf{};
 
-    auto [ptr, ec] = std::to_chars(buf.begin(), buf.end(), aID, 2 * kSize);
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+    auto [ptr, ec] = std::to_chars(buf.data(), buf.data() + buf.size(), aID, kHexStringBase);
     if (ec == std::errc{}) {
-        return std::string(ptr);
+        return std::string(buf.data(), ptr);
     }
     return std::unexpected(ec);
 }
 
-using PlayerID = uint32_t;
-
-inline std::expected<PlayerID, std::errc> PlayerIDFromHexString(std::string_view aHexStr)
-{
-    if (aHexStr.empty()) {
-        return std::unexpected(std::errc::invalid_argument);
-    }
-    PlayerID id{};
-    auto [ptr, ec] = std::from_chars(aHexStr.begin(), aHexStr.end(), id, 16);
-    if (ec == std::errc{}) {
-        return id;
-    }
-    return std::unexpected(ec);
-}
+using GameInstanceID = std::uint64_t;
+using PlayerID       = uint32_t;
 
 template <class... Ts>
 struct VariantVisitor : Ts... {

@@ -167,7 +167,7 @@ void GameServer::ConsumeNetworkRequests()
             mLastGameTimestamp = aEvent->record.created;
             mLogger->info("Created game {}", aEvent->record.id);
 
-            auto gameID = GameIDFromHexString(aEvent->record.id);
+            auto gameID = IDFromHexString<GameInstanceID>(aEvent->record.id);
 
             if (!gameID) {
                 mLogger->error("Invalid game ID from server: '{}'", aEvent->record.id);
@@ -176,7 +176,7 @@ void GameServer::ConsumeNetworkRequests()
 
             std::vector<PlayerID> playerIDs;
             for (const std::string& pHexID : aEvent->record.players) {
-                auto pID = PlayerIDFromHexString(pHexID);
+                auto pID = IDFromHexString<PlayerID>(pHexID);
                 if (!pID) {
                     mLogger->error("Invalid game ID from server: '{}'", aEvent->record.id);
                     return;

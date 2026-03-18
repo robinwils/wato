@@ -32,6 +32,7 @@ target_sources(wato_tests
     test_ring_buffer.cpp
     test_serialize.cpp
     test_tower_building.cpp
+    test_types.cpp
 )
 
 target_compile_definitions(wato_tests PRIVATE
