@@ -86,11 +86,12 @@ inline Logger CreateLogger(const std::string& aName, const std::string& aLevel)
 
 #define WATO_REG_LOGGER(reg) ((reg).ctx().get<const Logger&>())
 
-#define WATO_TRACE(reg, ...) WATO_REG_LOGGER(reg)->trace(__VA_ARGS__)
-#define WATO_DBG(reg, ...)   WATO_REG_LOGGER(reg)->debug(__VA_ARGS__)
-#define WATO_INFO(reg, ...)  WATO_REG_LOGGER(reg)->info(__VA_ARGS__)
-#define WATO_WARN(reg, ...)  WATO_REG_LOGGER(reg)->warn(__VA_ARGS__)
-#define WATO_ERR(reg, ...)   WATO_REG_LOGGER(reg)->error(__VA_ARGS__)
+#define WATO_TRACE(reg, ...)    WATO_REG_LOGGER(reg)->trace(__VA_ARGS__)
+#define WATO_DBG(reg, ...)      WATO_REG_LOGGER(reg)->debug(__VA_ARGS__)
+#define WATO_INFO(reg, ...)     WATO_REG_LOGGER(reg)->info(__VA_ARGS__)
+#define WATO_WARN(reg, ...)     WATO_REG_LOGGER(reg)->warn(__VA_ARGS__)
+#define WATO_ERR(reg, ...)      WATO_REG_LOGGER(reg)->error(__VA_ARGS__)
+#define WATO_CRITICAL(reg, ...) WATO_REG_LOGGER(reg)->critical(__VA_ARGS__)
 
 #define WATO_NAMED_LOGGER(name) \
     (spdlog::get(name) ? spdlog::get(name) : spdlog::stdout_color_mt(name))
