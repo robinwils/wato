@@ -68,6 +68,22 @@ void ENetServer::OnReceive(ENetEvent& aEvent, byte_view aData)
         byte_view decrypted = mKeys.Decrypt(aData);
         if (decrypted.empty()) {
             mLogger->error("Could not open sealed handshake");
+            BitOutputArchive out;
+            NetworkResponse  resp{
+                 .Type     = PacketType::Nack,
+                 .PlayerID = 0,
+                 .Tick     = 0,
+                 .Payload  = ErrorResponse{.Error = ServerError::HandshakeOpenSeal}};
+
+            if (!resp.Archive(out)) {
+                mLogger->error("Could not archive error response");
+                return;
+            }
+
+            if (!ENetBase::Send(aEvent.peer, out.Bytes(), false)) {
+                mLogger->error("Could send error response");
+                return;
+            }
             return;
         }
         aData = decrypted;
@@ -96,11 +112,11 @@ void ENetServer::OnReceive(ENetEvent& aEvent, byte_view aData)
                     auto playerID = PlayerIDFromHexString(aResult->record.id);
                     if (playerID) {
                         chan.Send(new AuthResult{
-                            peer,
-                            *playerID,
-                            aResult->record.accountName,
-                            hasAESNI,
-                            pub});
+                            .Peer        = peer,
+                            .ID          = *playerID,
+                            .AccountName = aResult->record.accountName,
+                            .HasAESNI    = hasAESNI,
+                            .PublicKey   = pub});
                         return;
                     }
                 }
@@ -128,15 +144,16 @@ void ENetServer::ProcessAuthResults()
             return;
         }
 
-        auto* state    = static_cast<PeerState*>(aResult->Peer->data);
-        state->ID      = aResult->ID;
-        bool  canAEGIS = aResult->HasAESNI && (sodium_runtime_has_aesni() != 0);
+        auto* state   = static_cast<PeerState*>(aResult->Peer->data);
+        state->ID     = aResult->ID;
+        bool canAEGIS = aResult->HasAESNI && (sodium_runtime_has_aesni() != 0);
 
         state->SecureSession.Init(mKeys, aResult->PublicKey, canAEGIS, true);
         if (!state->SecureSession.Valid()) {
             mLogger->error("cannot compute server session keys");
             return;
         }
+        state->AwaitingHandshake = true;
 
         mConnectedPeers[aResult->ID] = aResult->Peer;
         mAccountNames[aResult->ID]   = aResult->AccountName;
@@ -152,7 +169,7 @@ void ENetServer::ProcessAuthResults()
             .Payload  = AuthResponse{.ID = aResult->ID, .HasAESNI = canAEGIS, .Success = true}};
         BitOutputArchive archive;
         resp.Archive(archive);
-        ENetBase::Send(aResult->Peer, archive.Bytes());
+        Send(resp.PlayerID, archive.Bytes());
     });
 }
 

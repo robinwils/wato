@@ -14,6 +14,7 @@
 
 struct PeerState {
     PlayerID ID{0};
+    bool     AwaitingHandshake{false};
 
     CryptoSession SecureSession{};
     PublicKey     PeerPK{};
@@ -56,7 +57,7 @@ class ENetBase
     void EnqueueRequest(NetworkRequest* aEvent) { mReqChannel.Send(aEvent); }
 
    protected:
-    bool Send(ENetPeer* aPeer, const std::span<const uint8_t> aData);
+    bool Send(ENetPeer* aPeer, std::span<const uint8_t> aData, bool aEncrypt = true);
 
     virtual void OnConnect(ENetEvent& aEvent)                  = 0;
     virtual void OnReceive(ENetEvent& aEvent, byte_view aData) = 0;

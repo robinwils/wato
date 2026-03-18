@@ -97,6 +97,22 @@ struct ConnectedResponse {
 
 inline bool operator==(const ConnectedResponse&, const ConnectedResponse&) { return true; }
 
+enum class ServerError : std::uint8_t {
+    Success,
+    HandshakeOpenSeal,
+};
+
+struct ErrorResponse {
+    ServerError Error{};
+
+    bool Archive(auto& aArchive)
+    {
+        return ArchiveValue(aArchive, Error, ServerError::Success, ServerError::HandshakeOpenSeal);
+    }
+
+    auto operator<=>(const ErrorResponse&) const = default;
+};
+
 enum class RigidBodyEvent : std::uint16_t {
     Create,
     Update,
@@ -330,6 +346,7 @@ enum class PacketType : std::uint16_t {
     ClientSync,
     ServerSync,
     Ack,
+    Nack,
     NewGame,
     Connected,
     Auth,
@@ -341,6 +358,7 @@ using NetworkResponsePayload = std::variant<
     std::monostate,
     NewGameResponse,
     ConnectedResponse,
+    ErrorResponse,
     SyncPayload,
     RigidBodyUpdateResponse,
     HealthUpdateResponse,
@@ -388,6 +406,10 @@ struct fmt::formatter<NetworkResponsePayload> : fmt::formatter<std::string> {
             void operator()(const ConnectedResponse&) const
             {
                 fmt::format_to(Ctx->out(), "connected response");
+            }
+            void operator()(const ErrorResponse& aResp) const
+            {
+                fmt::format_to(Ctx->out(), "error response: {}", uint8_t(aResp.Error));
             }
             void operator()(const SyncPayload& aResp) const
             {

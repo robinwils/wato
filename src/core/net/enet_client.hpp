@@ -30,6 +30,17 @@ class ENetClient : public ENetBase
 
     void SetServerPK(const CryptoKeys::Public& aPubKey) { mServerPK = PublicKey(aPubKey); }
 
+    // Must be called from the network thread
+    void ResetSession()
+    {
+        if (mPeer != nullptr && mPeer->data != nullptr) {
+            auto* state = static_cast<PeerState*>(mPeer->data);
+            state->SecureSession.Reset();
+            state->PeerPK            = mServerPK;
+            state->AwaitingHandshake = false;
+        }
+    }
+
    protected:
     void OnConnect(ENetEvent& aEvent) override;
     /**

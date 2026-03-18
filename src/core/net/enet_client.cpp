@@ -86,6 +86,7 @@ void ENetClient::Send(std::span<const uint8_t> aData)
         // Init session keys for subsequent AEAD traffic
         bool hasAESNI = sodium_runtime_has_aesni() != 0;
         state->SecureSession.Init(mKeys, state->PeerPK.Raw(), hasAESNI, false);
+        state->AwaitingHandshake = true;
     } else {
         ENetBase::Send(mPeer, aData);
     }

@@ -32,26 +32,30 @@ void ENetBase::Init()
     }
 }
 
-bool ENetBase::Send(ENetPeer* aPeer, const std::span<const uint8_t> aData)
+bool ENetBase::Send(ENetPeer* aPeer, std::span<const uint8_t> aData, bool aEncrypt)
 {
     if (aPeer == nullptr) {
         mLogger->debug("client peer not initialized");
         return false;
     }
 
-    auto* state = static_cast<PeerState*>(aPeer->data);
-    if (!state || !state->SecureSession.Valid()) {
-        mLogger->error("Peer not initialized or session not established");
-        return false;
-    }
+    byte_buffer data;
+    if (aEncrypt) {
+        auto* state = static_cast<PeerState*>(aPeer->data);
+        if (!state || !state->SecureSession.Valid()) {
+            mLogger->error("Peer not initialized or session not established");
+            return false;
+        }
 
-    byte_view enc = state->SecureSession.Encrypt(aData);
-    if (enc.empty()) {
-        mLogger->error("Could not encrypt peer data");
-        return false;
+        byte_view enc = state->SecureSession.Encrypt(aData);
+        if (enc.empty()) {
+            mLogger->error("Could not encrypt peer data");
+            return false;
+        }
+        data = byte_buffer(enc.begin(), enc.end());
+    } else {
+        data = byte_buffer(aData.begin(), aData.end());
     }
-
-    auto data = byte_buffer(enc.begin(), enc.end());
 
     ENetPacket* packet = enet_packet_create(data.data(), data.size(), ENET_PACKET_FLAG_RELIABLE);
 
@@ -110,14 +114,23 @@ void ENetBase::Poll()
                 }
 
                 if (state->SecureSession.Valid()) {
-                    byte_view decrypted = state->SecureSession.Decrypt(
-                        {event.packet->data, event.packet->dataLength});
+                    byte_view raw{event.packet->data, event.packet->dataLength};
+                    byte_view decrypted = state->SecureSession.Decrypt(raw);
                     if (decrypted.empty()) {
-                        mLogger->error("Could not decrypt data");
+                        if (state->AwaitingHandshake) {
+                            // Handshake failed server-side — error sent unencrypted
+                            mLogger->warn("Decrypt failed during handshake, trying raw");
+                            OnReceive(event, raw);
+                        } else {
+                            mLogger->error("Could not decrypt data");
+                        }
                         enet_packet_destroy(event.packet);
                         break;
                     }
 
+                    if (state->AwaitingHandshake) {
+                        state->AwaitingHandshake = false;
+                    }
                     OnReceive(event, decrypted);
                 } else {
                     OnReceive(event, {event.packet->data, event.packet->dataLength});

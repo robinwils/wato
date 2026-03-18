@@ -159,7 +159,10 @@ void GameClient::networkThread()
         }
 
         netClient.ConsumeNetworkRequests([&](NetworkRequest* aEvent) {
-            // write header
+            if (aEvent->Type == PacketType::Auth) {
+                netClient.ResetSession();
+            }
+
             BitOutputArchive archive;
 
             aEvent->Archive(archive);
@@ -339,6 +342,24 @@ void GameClient::StartGameInstance(
     fixedExec.Register<NetworkResponseSystem>();
 }
 
+void GameClient::SendAuthRequest()
+{
+    auto& pbase     = mRegistry.ctx().get<PocketBaseClient>();
+    auto& netClient = mRegistry.ctx().get<ENetClient&>();
+
+    auto* req = new NetworkRequest{
+        .Type     = PacketType::Auth,
+        .PlayerID = 0,
+        .Tick     = 0,
+        .Payload =
+            AuthRequest{
+                .Token     = pbase.Token,
+                .HasAESNI  = sodium_runtime_has_aesni() != 0,
+                .PublicKey = netClient.RawPublicKey()},
+    };
+    netClient.EnqueueRequest(req);
+}
+
 void GameClient::consumeNetworkResponses()
 {
     struct NetworkResponseVisitor {
@@ -350,18 +371,23 @@ void GameClient::consumeNetworkResponses()
         {
             WATO_INFO(*Reg, "got connected response");
 
-            auto& pb        = Reg->ctx().get<PocketBaseClient>();
-            auto& netClient = Reg->ctx().get<ENetClient&>();
+            Client->SendAuthRequest();
+        }
 
-            auto* req     = new NetworkRequest;
-            req->Type     = PacketType::Auth;
-            req->PlayerID = 0;
-            req->Tick     = 0;
-            req->Payload  = AuthRequest{
-                 .Token     = pb.Token,
-                 .HasAESNI  = sodium_runtime_has_aesni() != 0,
-                 .PublicKey = netClient.RawPublicKey()};
-            netClient.EnqueueRequest(req);
+        void operator()(const ErrorResponse& aResp) const
+        {
+            if (aResp.Error == ServerError::HandshakeOpenSeal) {
+                WATO_ERR(*Reg, "got error response");
+                auto r = Reg->ctx().get<PocketBaseClient&>().GetGameServer("0.0.0.0", 7777);
+                if (!r) {
+                    WATO_ERR(*Reg, "cannot get game server");
+                    return;
+                }
+
+                WATO_DBG(*Reg, "got server public key = {}", r->publicKey);
+                Reg->ctx().get<ENetClient&>().SetServerPK(KeyFromB64<32>(r->publicKey));
+                Client->SendAuthRequest();
+            }
         }
 
         void operator()(const NewGameResponse& aResp) const
