@@ -5,6 +5,8 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
 
+#include <glaze/glaze.hpp>
+
 #include "components/game.hpp"
 #include "components/health.hpp"
 #include "components/player.hpp"
@@ -27,6 +29,13 @@ void Application::Init()
     // 250ms idle timeout, permanently preventing new thread creation.
     // Use a longer idle timeout to avoid triggering the underflow.
     cpr::async::startup(1, std::thread::hardware_concurrency(), std::chrono::minutes(5));
+
+    auto err = glz::read_file_json(mGameplayDef, "data/gameplay.json", std::string{});
+    if (err) {
+        mLogger->error("failed to load gameplay definitions: {}", glz::format_error(err));
+        return;
+    }
+    mLogger->info("loaded gameplay definitions");
 }
 
 void Application::StartGameInstance(Registry& aRegistry, const GameInstanceID aGameID)

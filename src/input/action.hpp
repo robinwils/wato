@@ -44,8 +44,7 @@ struct MovePayload {
 
     bool Archive(auto& aArchive)
     {
-        if (!ArchiveValue(aArchive, Direction, 0u, uint32_t(MoveDirection::Count))) return false;
-        return true;
+        return ArchiveValue(aArchive, Direction, 0u, uint32_t(MoveDirection::Count));
     }
 
     auto operator<=>(const MovePayload&) const = default;
@@ -56,8 +55,7 @@ struct SendCreepPayload {
 
     bool Archive(auto& aArchive)
     {
-        if (!ArchiveValue(aArchive, Type, 0u, uint32_t(CreepType::Count))) return false;
-        return true;
+        return ArchiveValue(aArchive, Type, 0u, uint32_t(CreepType::Count));
     }
 
     auto operator<=>(const SendCreepPayload&) const = default;
@@ -292,4 +290,3 @@ struct ActionContextStack {
     void ExitPlacement(Registry& aRegistry);
     void TogglePlacement(Registry& aRegistry, const PlacementModePayload& aPayload);
 };
-

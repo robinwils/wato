@@ -59,12 +59,7 @@ void SimulationSystem::UpdateTransforms(Registry& aRegistry, const float aFactor
 
                 glm::quat baseOrientation = glm::quatLookAt(forward, newUp);
 
-                // Apply model-specific rotation offset if present
-                if (auto* offset = aRegistry.try_get<ModelRotationOffset>(entity)) {
-                    aT.Orientation = baseOrientation * offset->Offset;
-                } else {
-                    aT.Orientation = baseOrientation;
-                }
+                aT.Orientation = baseOrientation;
             }
         });
     }

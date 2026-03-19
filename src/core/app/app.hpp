@@ -8,6 +8,7 @@
 #include <glm/vec2.hpp>
 #include <taskflow/core/executor.hpp>
 
+#include "core/gameplay_definitions.hpp"
 #include "core/options.hpp"
 #include "core/sys/log.hpp"
 #include "core/types.hpp"
@@ -56,7 +57,8 @@ class Application
 
     void SetupObservers(Registry& aRegistry);
 
-    Options mOptions;
+    Options     mOptions;
+    GameplayDef mGameplayDef;
 
     // Time-based (variable frame rate)
     FrameSystemExecutor mFrameExecutor;

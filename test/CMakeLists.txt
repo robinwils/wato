@@ -25,12 +25,18 @@ target_sources(wato_tests
     ${CMAKE_SOURCE_DIR}/src/systems/action.cpp
     test_action.cpp
     test_crypto.cpp
+    test_datadefs.cpp
     test_graph.cpp
     test_net.cpp
     test_physics.cpp
     test_ring_buffer.cpp
     test_serialize.cpp
     test_tower_building.cpp
+    test_types.cpp
+)
+
+target_compile_definitions(wato_tests PRIVATE
+  TESTDATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/testdata"
 )
 
 target_link_libraries(wato_tests
