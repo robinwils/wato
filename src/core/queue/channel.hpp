@@ -25,9 +25,9 @@ class Channel
     template <typename Func>
     void Drain(Func&& aHandler)
     {
-        while (_MsgT* ev = Recv()) {
-            aHandler(ev);
-            delete ev;
+        while (_MsgT* elt = Recv()) {
+            aHandler(elt);
+            delete elt;
         }
     }
 

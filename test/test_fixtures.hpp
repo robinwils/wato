@@ -2,9 +2,12 @@
 
 #include <doctest.h>
 
+#include <glaze/glaze.hpp>
+
 #include "components/player.hpp"
 #include "components/rigid_body.hpp"
 #include "components/tower.hpp"
+#include "core/gameplay_definitions.hpp"
 #include "core/graph.hpp"
 #include "core/physics/physics.hpp"
 #include "core/state.hpp"
@@ -19,19 +22,20 @@ struct RegistryFixture {
     Physics&             Phy       = Reg.ctx().emplace<Physics>(Log);
     GameStateBuffer&     Buf       = Reg.ctx().emplace<GameStateBuffer>();
     FixedSystemExecutor& FixedExec = Reg.ctx().emplace<FixedSystemExecutor>();
+    GameplayDef          Definitions;
 
     RegistryFixture()
     {
         Log->set_level(spdlog::level::trace);
         Reg.ctx().emplace<Logger>(Log);
+
+        auto err = glz::read_file_json(Definitions, TESTDATA_DIR "/gameplay.json", std::string{});
+        if (err) {
+            Log->critical(glz::format_error(err));
+        }
+        Reg.ctx().emplace<const GameplayDef&>(Definitions);
         Reg.group<Tower>(entt::get<Collider, RigidBody>);
         Phy.Init();
-    }
-
-    ~RegistryFixture()
-    {
-        Reg.ctx().erase<FrameActionBuffer>();
-        Reg.ctx().erase<Physics>();
     }
 
     entt::entity AddPlayer(PlayerID aID, uint8_t aSlot)

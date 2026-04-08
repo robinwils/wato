@@ -109,7 +109,7 @@ void ENetServer::OnReceive(ENetEvent& aEvent, byte_view aData)
              hasAESNI = auth.HasAESNI,
              pub      = auth.PublicKey](std::expected<LoginResult, PBError> aResult) {
                 if (aResult) {
-                    auto playerID = PlayerIDFromHexString(aResult->record.id);
+                    auto playerID = IDFromHexString<PlayerID>(aResult->record.id);
                     if (playerID) {
                         chan.Send(new AuthResult{
                             .Peer        = peer,

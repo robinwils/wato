@@ -1,7 +1,10 @@
 #pragma once
 
+#include <glaze/core/common.hpp>
+#include <glaze/core/meta.hpp>
 #include <string_view>
-enum class TowerType {
+
+enum class TowerType : std::uint8_t {
     Arrow,
     Count,
 };
@@ -15,6 +18,15 @@ enum class TowerType {
             return "Unknown";
     }
 }
+
+template <>
+struct glz::meta<TowerType> {
+    using enum TowerType;
+
+    // NOLINTBEGIN(readability-identifier-naming)
+    static constexpr auto value = glz::enumerate(Arrow);
+    // NOLINTEND(readability-identifier-naming)
+};
 
 struct Tower {
     TowerType Type;

@@ -5,8 +5,8 @@
 #include "core/serialize.hpp"
 
 struct Projectile {
-    float        Damage;
-    float        Speed;
+    float        Damage{};
+    float        Speed{};
     entt::entity Target{entt::null};
 
     bool Archive(auto& aArchive)

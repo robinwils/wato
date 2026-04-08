@@ -17,6 +17,7 @@
 #include "components/rigid_body.hpp"
 #include "components/transform3d.hpp"
 #include "core/crypto/key.hpp"
+#include "core/gameplay_definitions.hpp"
 #include "core/graph.hpp"
 #include "core/menu/menu.hpp"
 #include "core/net/enet_client.hpp"
@@ -141,7 +142,6 @@ int GameClient::Run(tf::Executor& aExecutor)
         input.MouseState.Scroll = glm::dvec2(0.0);
     }
 
-    StopGameInstance(mRegistry);
     netClient.Disconnect();
     mDiscTimerStart.emplace(clock_type::now());
 
@@ -164,9 +164,7 @@ void GameClient::networkThread()
             }
 
             BitOutputArchive archive;
-
             aEvent->Archive(archive);
-
             netClient.Send(archive.Bytes());
         });
         netClient.Poll();
@@ -294,9 +292,9 @@ void GameClient::StartGameInstance(
                 .Params =
                     ColliderParams{
                         .CollisionCategoryBits = Category::Base,
-                        .CollideWithMaskBits   = CollidesWith(
-                            PlayerEntitiesCategory(sender), Category::Tower),
-                        .IsTrigger             = true,
+                        .CollideWithMaskBits =
+                            CollidesWith(PlayerEntitiesCategory(sender), Category::Tower),
+                        .IsTrigger = true,
                         .ShapeParams =
                             BoxShapeParams{
                                 .HalfExtents = GraphCell(1, 1).ToWorld() * 0.5f,
@@ -330,6 +328,7 @@ void GameClient::StartGameInstance(
     spawnCamera(localPlayerPos);
 
     aRegistry.ctx().emplace<const Input*>(&mRegistry.ctx().get<WatoWindow>().GetInput());
+    aRegistry.ctx().emplace<const GameplayDef&>(mGameplayDef);
     aRegistry.ctx().emplace<ActionContextStack>();
 
     auto& fixedExec = GetSingletonComponent<FixedSystemExecutor>(aRegistry);

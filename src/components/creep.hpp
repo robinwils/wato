@@ -1,7 +1,11 @@
 #pragma once
 
+#include <cstdint>
+#include <glaze/core/common.hpp>
+#include <glaze/core/meta.hpp>
 #include <string_view>
-enum class CreepType {
+
+enum class CreepType : std::uint8_t {
     Simple,
     Count,
 };
@@ -15,6 +19,15 @@ enum class CreepType {
             return "Unknown";
     }
 }
+
+template <>
+struct glz::meta<CreepType> {
+    using enum CreepType;
+
+    // NOLINTBEGIN(readability-identifier-naming)
+    static constexpr auto value = glz::enumerate(Simple);
+    // NOLINTEND(readability-identifier-naming)
+};
 
 struct Creep {
     CreepType Type;

@@ -20,6 +20,7 @@
 #include "components/camera.hpp"
 #include "components/health.hpp"
 #include "components/imgui.hpp"
+#include "components/model_rotation_offset.hpp"
 #include "components/player.hpp"
 #include "components/scene_object.hpp"
 #include "core/menu/menu.hpp"
@@ -85,23 +86,25 @@ void RenderSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDelta)
             continue;
         }
 
+        auto modelMat = t.ModelMat();
+        if (auto* offset = aRegistry.try_get<ModelRotationOffset>(entity)) {
+            modelMat *= glm::mat4_cast(offset->Offset);
+        }
+
         // Animated entities are rendered individually
         if (const Animator* animator = aRegistry.try_get<Animator>(entity);
             animator && !animator->FinalBonesMatrices.empty()) {
-            uint16_t numBones = static_cast<uint16_t>(animator->FinalBonesMatrices.size());
-            if (numBones > 128) {
-                numBones = 128;
-            }
+            auto numBones = static_cast<uint16_t>(animator->FinalBonesMatrices.size());
             renderer.SetUniform(
                 bpSkinnedShader->Uniform("u_bones"),
                 animator->FinalBonesMatrices[0],
-                numBones);
-            model->Submit(t.ModelMat(), state);
+                std::min<uint16_t>(numBones, 128));
+            model->Submit(modelMat, state);
             continue;
         }
 
         // Static entities are batched for instancing
-        instanceBuffers[model.operator->()].Add(t.ModelMat());
+        instanceBuffers[model.operator->()].Add(modelMat);
     }
 
     // Submit instanced batches

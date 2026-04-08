@@ -1,19 +1,23 @@
 ---
 Checks: "
-        cppcoreguidelines-init-variables
-        cppcoreguidelines-init-variables
         -abseil-*,
         -altera-*,
         -android-*,
         -fuchsia-*,
         -google-*,
         -llvm*,
-        -modernize-use-trailing-return-type,
         -zircon-*,
-        -readability-*,
+        cppcoreguidelines-*,
         -cppcoreguidelines-non-private-member-variables-in-classes,
+        performance-*,
+        portability-*,
+        concurrency-*,
+        modernize-*,
+        -modernize-use-trailing-return-type,
+        misc-*,
         -misc-non-private-member-variables-in-classes,
-        readability-identifier-naming,
+        readability-*,
+        -readability-uppercase-literal-suffix,
 "
 WarningsAsErrors: ''
 HeaderFileExtensions:

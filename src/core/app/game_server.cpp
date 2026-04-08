@@ -5,7 +5,9 @@
 #include <sodium/runtime.h>
 #include <spdlog/spdlog.h>
 
+#include <glaze/glaze.hpp>
 #include <thread>
+#include <utility>
 
 #include "components/game.hpp"
 #include "components/health.hpp"
@@ -86,15 +88,7 @@ void GameServer::Init()
     }
 }
 
-GameServer::~GameServer()
-{
-    mLogger->trace("destroying game server");
-    mLogger->trace("deleting {} worlds", mGameInstances.size());
-    for (auto& i : mGameInstances) {
-        auto& p = GetSingletonComponent<Physics>(i.second);
-        mLogger->trace("got world {}", fmt::ptr(p.World()));
-    }
-}
+GameServer::~GameServer() { mLogger->trace("destroying game server"); }
 
 std::vector<PlayerInitData> GameServer::StartGameInstance(
     Registry&             aRegistry,
@@ -173,7 +167,7 @@ void GameServer::ConsumeNetworkRequests()
             mLastGameTimestamp = aEvent->record.created;
             mLogger->info("Created game {}", aEvent->record.id);
 
-            auto gameID = GameIDFromHexString(aEvent->record.id);
+            auto gameID = IDFromHexString<GameInstanceID>(aEvent->record.id);
 
             if (!gameID) {
                 mLogger->error("Invalid game ID from server: '{}'", aEvent->record.id);
@@ -182,7 +176,7 @@ void GameServer::ConsumeNetworkRequests()
 
             std::vector<PlayerID> playerIDs;
             for (const std::string& pHexID : aEvent->record.players) {
-                auto pID = PlayerIDFromHexString(pHexID);
+                auto pID = IDFromHexString<PlayerID>(pHexID);
                 if (!pID) {
                     mLogger->error("Invalid game ID from server: '{}'", aEvent->record.id);
                     return;
@@ -231,7 +225,6 @@ int GameServer::Run(tf::Executor& aExecutor)
                 mLogger->trace("sending {}", *aEvent);
                 if (!mServer.Send(aEvent->PlayerID, archive.Bytes())) {
                     mLogger->error("player {} is not connected", aEvent->PlayerID);
-                    mRunning = false;
                 }
             });
             mServer.Poll();
@@ -264,9 +257,7 @@ int GameServer::Run(tf::Executor& aExecutor)
         }
     }
 
-    for (auto& [gameId, registry] : mGameInstances) {
-        StopGameInstance(registry);
-    }
+    mGameInstances.clear();
 
     return 0;
 }
@@ -363,8 +354,9 @@ std::vector<PlayerInitData> GameServer::createGameInstance(
 
     registry.ctx().emplace<Logger>(mLogger);
     registry.ctx().emplace<ENetServer&>(mServer);
+    registry.ctx().emplace<const GameplayDef&>(mGameplayDef);
     registry.ctx().emplace_as<std::vector<PlayerID>>("ranking"_hs);
     registry.ctx().emplace<TaggedActionsType>();
 
-    return StartGameInstance(registry, aGameID, aPlayerIDs);
+    return StartGameInstance(registry, aGameID, std::move(aPlayerIDs));
 }

@@ -4,6 +4,8 @@
 
 #include <entt/core/type_info.hpp>
 
+#include "components/tower.hpp"
+#include "core/gameplay_definitions.hpp"
 #include "core/sys/log.hpp"
 #include "core/types.hpp"
 #include "entt/entity/registry.hpp"
@@ -57,3 +59,6 @@ template <typename Type>
 #endif
     return aRegistry.ctx().get<Type>(aId);
 }
+
+const TowerDef& GetTowerDef(Registry& aRegistry, TowerType aType);
+const CreepDef& GetCreepDef(Registry& aRegistry, CreepType aType);

@@ -11,8 +11,10 @@
 #include "components/placement_mode.hpp"
 #include "components/rigid_body.hpp"
 #include "components/spawner.hpp"
+#include "components/tower.hpp"
 #include "components/tower_attack.hpp"
 #include "components/transform3d.hpp"
+#include "core/gameplay_definitions.hpp"
 #include "core/graph.hpp"
 #include "core/net/enet_server.hpp"
 #include "core/physics/physics.hpp"
@@ -62,21 +64,17 @@ bool clientValidateTower(Registry& aRegistry, const BuildTowerPayload& aPayload)
     auto&       phy   = GetSingletonComponent<Physics>(aRegistry);
     const auto& graph = GetSingletonComponent<Graph>(aRegistry);
 
-    ColliderParams towerCollider{
-        .CollisionCategoryBits = Category::Tower,
-        .CollideWithMaskBits   = CollidesWith(Category::Tower, Category::Base),
-        .IsTrigger             = false,
-        .Offset                = Transform3D{},
-        .ShapeParams           = BoxShapeParams{.HalfExtents = glm::vec3(0.35f, 0.65f, 0.35f)},
-    };
-
     for (const auto&& [tower, pm, t] : aRegistry.view<PlacementMode, Transform3D>().each()) {
         if (!graph.IsInside(t.Position)) {
             WATO_ERR(aRegistry, "trying to place tower outside map bounds.");
             continue;
         }
 
-        if (!CanPlaceTower(phy, t.Position, towerCollider, WATO_REG_LOGGER(aRegistry))) {
+        if (!CanPlaceTower(
+                phy,
+                t.Position,
+                TowerDef::kColliderParams,
+                WATO_REG_LOGGER(aRegistry))) {
             WATO_ERR(aRegistry, "Cannot build tower at {}", t.Position);
             return false;
         }
@@ -93,6 +91,9 @@ void serverBuildTower(Registry& aRegistry, BuildTowerPayload& aPayload, PlayerID
     auto& graphMap = GetSingletonComponent<PlayerGraphMap>(aRegistry);
     auto  it       = graphMap.find(aPlayerID);
 
+    const auto& defs       = aRegistry.ctx().get<const GameplayDef&>();
+    const auto  towerDefIt = defs.Towers.find(aPayload.Tower);
+
     if (it == graphMap.end()) {
         WATO_ERR(aRegistry, "cannot find graph for target player {}", aPlayerID);
         return;
@@ -103,50 +104,41 @@ void serverBuildTower(Registry& aRegistry, BuildTowerPayload& aPayload, PlayerID
         return;
     }
 
+    if (towerDefIt == defs.Towers.end()) {
+        WATO_ERR(aRegistry, "unknown tower type {}", TowerTypeToString(aPayload.Tower));
+        return;
+    }
+    const auto& towerDef = towerDefIt->second;
+
     auto& player = aRegistry.get<Player>(FindPlayerEntity(aRegistry, aPlayerID));
     auto  tower  = aRegistry.create();
     auto& phy    = GetSingletonComponent<Physics>(aRegistry);
+    auto& t3D    = aRegistry.emplace<Transform3D>(tower, towerDef.Transform.ToTransform3D());
 
-    auto& t = aRegistry.emplace<Transform3D>(tower, aPayload.Position);
+    t3D.Position = aPayload.Position;
 
-    ColliderParams colliderParams{
-        .CollisionCategoryBits = Category::Tower,
-        .CollideWithMaskBits   = CollidesWith(Category::Tower, Category::Base),
-        .IsTrigger             = false,
-        .Offset                = Transform3D{},
-        .ShapeParams           = BoxShapeParams{.HalfExtents = glm::vec3(0.35f, 0.65f, 0.35f)},
-    };
+    ColliderParams colliderParams = TowerDef::kColliderParams;
 
-    if (!CanPlaceTower(phy, t.Position, colliderParams, WATO_REG_LOGGER(aRegistry))) {
+    if (!CanPlaceTower(phy, t3D.Position, colliderParams, WATO_REG_LOGGER(aRegistry))) {
         aRegistry.destroy(tower);
-        WATO_ERR(aRegistry, "tower {} at {} invalidated", tower, t.Position);
+        WATO_ERR(aRegistry, "tower {} at {} invalidated", tower, t3D.Position);
         return;
     }
 
-    RigidBody body = RigidBody{
-        .Params =
-            RigidBodyParams{
-                .Type           = rp3d::BodyType::STATIC,
-                .Velocity       = 0.0f,
-                .Direction      = glm::vec3(0.0f),
-                .GravityEnabled = false,
-            },
+    auto body = RigidBody{
+        .Params = TowerDef::kRigidBodyParams,
     };
-    Collider collider = Collider{.Params = colliderParams};
+    auto collider = Collider{.Params = colliderParams};
 
-    body.Body       = phy.CreateRigidBody(body.Params, t);
+    body.Body       = phy.CreateRigidBody(body.Params, t3D);
     collider.Handle = phy.AddCollider(body.Body, colliderParams);
 
-    WATO_INFO(aRegistry, "tower {} at {} validated", tower, t.Position);
+    WATO_INFO(aRegistry, "tower {} at {} validated", tower, t3D.Position);
     aRegistry.emplace<Tower>(tower, aPayload.Tower);
     aRegistry.emplace<RigidBody>(tower, body);
     aRegistry.emplace<Collider>(tower, collider);
-    aRegistry.emplace<TowerAttack>(
-        tower,
-        TowerAttack{
-            .Range    = 30.0f,
-            .FireRate = 1.0f,
-        });
+    aRegistry.emplace<TowerAttack>(tower, towerDef.Attack);
+    aRegistry.emplace<Health>(tower, towerDef.Health);
 
     aRegistry.emplace<Owner>(tower, aPlayerID, player.Slot);
 
@@ -163,6 +155,8 @@ void serverBuildTower(Registry& aRegistry, BuildTowerPayload& aPayload, PlayerID
                     TowerInitData{
                         .Type           = aPayload.Tower,
                         .Position       = aPayload.Position,
+                        .Health         = towerDef.Health,
+                        .Attack         = towerDef.Attack,
                         .OwnerID        = aPlayerID,
                         .ColliderParams = collider.Params,
                     },
@@ -177,6 +171,8 @@ void serverSendCreep(Registry& aRegistry, SendCreepPayload& aPayload, PlayerID a
         WATO_ERR(aRegistry, "cannot find target spawn for player {}", aPlayerID);
         return;
     }
+    const auto& creepDef = GetCreepDef(aRegistry, aPayload.Type);
+
     auto& player = aRegistry.get<Player>(FindPlayerEntity(aRegistry, aPlayerID));
 
     auto& spawnTransform = aRegistry.get<Transform3D>(nextSpawn);
@@ -191,55 +187,35 @@ void serverSendCreep(Registry& aRegistry, SendCreepPayload& aPayload, PlayerID a
     }
     const auto& graph = it->second;
 
-    auto creep = aRegistry.create();
-    aRegistry.emplace<Transform3D>(
-        creep,
-        spawnTransform.Position,
-        glm::identity<glm::quat>(),
-        glm::vec3(0.5f));
-    aRegistry.emplace<Health>(creep, 100.0f);
-    aRegistry.emplace<Creep>(creep, aPayload.Type, 1.0f);
+    auto  creep  = aRegistry.create();
+    auto& t3D    = aRegistry.emplace<Transform3D>(creep, creepDef.Transform.ToTransform3D());
+    t3D.Position = spawnTransform.Position;
+
+    aRegistry.emplace<Health>(creep, creepDef.Health);
+    aRegistry.emplace<Creep>(creep, aPayload.Type, creepDef.Damage);
     aRegistry.emplace<Path>(
         creep,
         graph.CellFromWorld(spawnTransform.Position),
         graph.GetNextCell(spawnTransform.Position));
 
-    aRegistry.emplace<RigidBody>(
+    auto& body = aRegistry.emplace<RigidBody>(
         creep,
         RigidBody{
-            .Params =
-                RigidBodyParams{
-                    .Type           = rp3d::BodyType::KINEMATIC,
-                    .Velocity       = 0.4f,
-                    .Direction      = glm::vec3(0.0f),
-                    .GravityEnabled = false,
-                },
+            .Params = CreepDef::kRigidBodyParams,
         });
+    body.Params.Velocity = creepDef.Speed;
+
     auto& collider = aRegistry.emplace<Collider>(
         creep,
         Collider{
-            .Params =
-                ColliderParams{
-                    .CollisionCategoryBits = PlayerEntitiesCategory(player.Slot),
-                    .CollideWithMaskBits   = CollidesWith(
-                        Category::Projectiles,
-                        PlayerEntitiesCategory(player.Slot),
-                        Category::Base),
-                    .IsTrigger = false,
-                    .Offset    = Transform3D{},
-                    .ShapeParams =
-                        CapsuleShapeParams{
-                            .Radius = 0.1f,
-                            .Height = 0.05f,
-                        },
-                },
+            .Params = CreepDef::kColliderParams,
         });
+    collider.Params.CollisionCategoryBits = PlayerEntitiesCategory(player.Slot);
+    collider.Params.CollideWithMaskBits =
+        CollidesWith(Category::Projectiles, PlayerEntitiesCategory(player.Slot), Category::Base);
 
     aRegistry.emplace<Owner>(creep, aPlayerID, player.Slot);
     aRegistry.emplace<Target>(creep, spawnOwner.ID, spawnOwner.Slot);
-
-    auto& rigidBody = aRegistry.get<RigidBody>(creep);
-    auto& transform = aRegistry.get<Transform3D>(creep);
 
     if (auto* server = aRegistry.ctx().find<ENetServer>()) {
         server->BroadcastResponse(
@@ -247,13 +223,15 @@ void serverSendCreep(Registry& aRegistry, SendCreepPayload& aPayload, PlayerID a
             PacketType::Ack,
             GetSingletonComponent<GameInstance&>(aRegistry).Tick,
             RigidBodyUpdateResponse{
-                .Params = rigidBody.Params,
+                .Params = body.Params,
                 .Entity = creep,
                 .Event  = RigidBodyEvent::Create,
                 .InitData =
                     CreepInitData{
                         .Type           = aPayload.Type,
-                        .Position       = transform.Position,
+                        .Position       = t3D.Position,
+                        .Health         = creepDef.Health,
+                        .Damage         = creepDef.Damage,
                         .OwnerID        = aPlayerID,
                         .ColliderParams = collider.Params,
                     },
