@@ -177,7 +177,7 @@ void ImGuiMenu::renderStatusMsg(Registry& aRegistry)
         ImGui::Text("%s", menu.Message.c_str());
     }
     if (!menu.Error.empty()) {
-        ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "%s", menu.Error.c_str());
+        ImGui::TextColored(ImGui::ColorU8(224, 102, 102), "%s", menu.Error.c_str());
     }
 }
 

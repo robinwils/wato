@@ -299,8 +299,6 @@ struct OcornutImguiContext {
 
     void SetupStyle(bool aDark)
     {
-        // Doug Binks' darl color scheme
-        // https://gist.github.com/dougbinks/8089b4bbaccaaf6fa204236978d165a9
         ImGuiStyle& style = ImGui::GetStyle();
         if (aDark) {
             ImGui::StyleColorsDark(&style);
@@ -308,8 +306,119 @@ struct OcornutImguiContext {
             ImGui::StyleColorsLight(&style);
         }
 
-        style.FrameRounding    = 4.0f;
+        // Sizing and spacing
+        style.WindowPadding = ImVec2(10.0f, 10.0f);
+        style.FramePadding  = ImVec2(8.0f, 4.0f);
+        style.ItemSpacing   = ImVec2(8.0f, 6.0f);
+        style.ScrollbarSize = 12.0f;
+        style.GrabMinSize   = 10.0f;
+
+        // Sharp, minimal rounding
+        style.WindowRounding    = 5.0f;
+        style.FrameRounding     = 3.0f;
+        style.PopupRounding     = 2.0f;
+        style.ScrollbarRounding = 2.0f;
+        style.GrabRounding      = 2.0f;
+        style.TabRounding       = 2.0f;
+
+        // Subtle borders
         style.WindowBorderSize = 0.0f;
+        style.FrameBorderSize  = 0.0f;
+        style.PopupBorderSize  = 0.0f;
+
+        // Warm dark base with sage-teal accent
+        // Base:   #24282E #2C3038 #363C46 #434A56
+        // Accent: #5B9EA6 (sage teal), bright: #7BB8C0
+        // Text:   #D8DDE3 / #808890 (disabled)
+        ImVec4* colors = style.Colors;
+
+        // Text
+        colors[ImGuiCol_Text]         = ImGui::ColorU8(216, 221, 227);
+        colors[ImGuiCol_TextDisabled] = ImGui::ColorU8(168, 140, 125);
+
+        // Backgrounds
+        colors[ImGuiCol_WindowBg] = ImGui::ColorU8(36, 40, 46);
+        colors[ImGuiCol_ChildBg]  = ImGui::ColorU8(36, 40, 46, 0);
+        colors[ImGuiCol_PopupBg]  = ImGui::ColorU8(40, 44, 52, 245);
+
+        // Borders
+        colors[ImGuiCol_Border]       = ImGui::ColorU8(60, 66, 76);
+        colors[ImGuiCol_BorderShadow] = ImGui::ColorU8(0, 0, 0, 0);
+
+        // Frames (input fields, checkboxes) — lifted from bg for contrast
+        colors[ImGuiCol_FrameBg]        = ImGui::ColorU8(46, 68, 71);
+        colors[ImGuiCol_FrameBgHovered] = ImGui::ColorU8(54, 60, 70);
+        colors[ImGuiCol_FrameBgActive]  = ImGui::ColorU8(67, 74, 86);
+
+        // Title bars
+        colors[ImGuiCol_TitleBg]          = ImGui::ColorU8(46, 68, 71);
+        colors[ImGuiCol_TitleBgActive]    = ImGui::ColorU8(72, 132, 140);
+        colors[ImGuiCol_TitleBgCollapsed] = ImGui::ColorU8(28, 32, 38);
+
+        // Menu
+        colors[ImGuiCol_MenuBarBg] = ImGui::ColorU8(32, 36, 42);
+
+        // Scrollbars
+        colors[ImGuiCol_ScrollbarBg]          = ImGui::ColorU8(36, 40, 46);
+        colors[ImGuiCol_ScrollbarGrab]        = ImGui::ColorU8(60, 66, 76);
+        colors[ImGuiCol_ScrollbarGrabHovered] = ImGui::ColorU8(76, 82, 94);
+        colors[ImGuiCol_ScrollbarGrabActive]  = ImGui::ColorU8(91, 158, 166);
+
+        // Buttons — clear contrast against background
+        colors[ImGuiCol_Button]        = ImGui::ColorU8(54, 60, 70);
+        colors[ImGuiCol_ButtonHovered] = ImGui::ColorU8(91, 158, 166);
+        colors[ImGuiCol_ButtonActive]  = ImGui::ColorU8(72, 132, 140);
+
+        // Headers (collapsing headers, selectable)
+        colors[ImGuiCol_Header]        = ImGui::ColorU8(44, 48, 56);
+        colors[ImGuiCol_HeaderHovered] = ImGui::ColorU8(60, 66, 76);
+        colors[ImGuiCol_HeaderActive]  = ImGui::ColorU8(72, 78, 90);
+
+        // Tabs (1.91.9 naming)
+        colors[ImGuiCol_Tab]                       = ImGui::ColorU8(36, 40, 46);
+        colors[ImGuiCol_TabHovered]                = ImGui::ColorU8(91, 158, 166);
+        colors[ImGuiCol_TabSelected]               = ImGui::ColorU8(50, 56, 64);
+        colors[ImGuiCol_TabSelectedOverline]       = ImGui::ColorU8(91, 158, 166);
+        colors[ImGuiCol_TabDimmed]                 = ImGui::ColorU8(32, 36, 42);
+        colors[ImGuiCol_TabDimmedSelected]         = ImGui::ColorU8(40, 44, 52);
+        colors[ImGuiCol_TabDimmedSelectedOverline] = ImGui::ColorU8(60, 66, 76);
+
+        // Interactive elements
+        colors[ImGuiCol_CheckMark]        = ImGui::ColorU8(123, 184, 192);
+        colors[ImGuiCol_SliderGrab]       = ImGui::ColorU8(91, 158, 166);
+        colors[ImGuiCol_SliderGrabActive] = ImGui::ColorU8(123, 184, 192);
+
+        // Separators
+        colors[ImGuiCol_Separator]        = ImGui::ColorU8(60, 66, 76);
+        colors[ImGuiCol_SeparatorHovered] = ImGui::ColorU8(91, 158, 166);
+        colors[ImGuiCol_SeparatorActive]  = ImGui::ColorU8(123, 184, 192);
+
+        // Resize grip
+        colors[ImGuiCol_ResizeGrip]        = ImGui::ColorU8(60, 66, 76, 80);
+        colors[ImGuiCol_ResizeGripHovered] = ImGui::ColorU8(91, 158, 166, 170);
+        colors[ImGuiCol_ResizeGripActive]  = ImGui::ColorU8(91, 158, 166, 240);
+
+        // Plots
+        colors[ImGuiCol_PlotLines]            = ImGui::ColorU8(91, 158, 166);
+        colors[ImGuiCol_PlotLinesHovered]     = ImGui::ColorU8(123, 184, 192);
+        colors[ImGuiCol_PlotHistogram]        = ImGui::ColorU8(91, 158, 166);
+        colors[ImGuiCol_PlotHistogramHovered] = ImGui::ColorU8(123, 184, 192);
+
+        // Tables
+        colors[ImGuiCol_TableHeaderBg]     = ImGui::ColorU8(40, 44, 52);
+        colors[ImGuiCol_TableBorderStrong] = ImGui::ColorU8(60, 66, 76);
+        colors[ImGuiCol_TableBorderLight]  = ImGui::ColorU8(50, 56, 64);
+        colors[ImGuiCol_TableRowBg]        = ImGui::ColorU8(0, 0, 0, 0);
+        colors[ImGuiCol_TableRowBgAlt]     = ImGui::ColorU8(255, 255, 255, 8);
+
+        // Misc
+        colors[ImGuiCol_TextLink]              = ImGui::ColorU8(123, 184, 192);
+        colors[ImGuiCol_TextSelectedBg]        = ImGui::ColorU8(91, 158, 166, 100);
+        colors[ImGuiCol_DragDropTarget]        = ImGui::ColorU8(91, 158, 166);
+        colors[ImGuiCol_NavCursor]             = ImGui::ColorU8(91, 158, 166);
+        colors[ImGuiCol_NavWindowingHighlight] = ImGui::ColorU8(255, 255, 255, 178);
+        colors[ImGuiCol_NavWindowingDimBg]     = ImGui::ColorU8(200, 200, 200, 50);
+        colors[ImGuiCol_ModalWindowDimBg]      = ImGui::ColorU8(0, 0, 0, 140);
     }
 
     void BeginFrame(const Input& aInput, int aWidth, int aHeight, bgfx::ViewId aViewId)
@@ -571,6 +680,7 @@ void showSettingsDialog(float aWidth, float aHeight)
     ImGui::SetNextWindowPos(ImVec2(aWidth - aWidth / 3.0f - 10.0f, 50.0f), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize(ImVec2(aWidth / 3.0f, aHeight / 3.5f), ImGuiCond_FirstUseEver);
     ImGui::Begin("Settings", NULL, 0);
+    // ImGui::ShowStyleEditor();
 }
 
 void showStatsDialog(const char* aErrorText)
