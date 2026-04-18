@@ -31,6 +31,7 @@ target_sources(wato_tests
     test_physics.cpp
     test_ring_buffer.cpp
     test_serialize.cpp
+    test_system.cpp
     test_tower_building.cpp
     test_types.cpp
 )
