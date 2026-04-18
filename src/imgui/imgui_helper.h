@@ -154,6 +154,28 @@ void PushEnabled(bool aEnabled);
 ///
 void PopEnabled();
 
+constexpr ImVec4 ColorU8(int r, int g, int b, int a = 255)
+{
+    return {
+        static_cast<float>(r) / 255.0f,
+        static_cast<float>(g) / 255.0f,
+        static_cast<float>(b) / 255.0f,
+        static_cast<float>(a) / 255.0f};
+}
+
+// NOLINTBEGIN(readability-identifier-naming)
+namespace Color
+{
+static constexpr ImVec4 Red   = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
+static constexpr ImVec4 Green = ImVec4(0.0f, 1.0f, 0.0f, 1.0f);
+static constexpr ImVec4 Blue  = ImVec4(0.0f, 0.0f, 1.0f, 1.0f);
+
+static constexpr ImVec4 Gold   = ColorU8(255, 215, 0);
+static constexpr ImVec4 Silver = ColorU8(192, 192, 192);
+static constexpr ImVec4 Bronze = ColorU8(205, 127, 50);
+}  // namespace Color
+// NOLINTEND(readability-identifier-naming)
+
 }  // namespace ImGui
 
 #endif  // IMGUI_H_HEADER_GUARD
