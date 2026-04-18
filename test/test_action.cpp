@@ -61,6 +61,36 @@ TEST_CASE_FIXTURE(ServerFixture, "action.server.build")
     CHECK_EQ(1, g.size());
 }
 
+TEST_CASE_FIXTURE(ServerFixture, "action.server.build_deducts_gold")
+{
+    ServerActionSystem sys;
+    auto               player = AddPlayer(0, 0);
+    AddPlayerGraph(0);
+
+    auto& gold      = Reg.get<Gold>(player);
+    int   initial   = gold.Balance;
+    int   towerCost = Definitions.Towers.at(TowerType::Arrow).Cost;
+
+    Tagged.push_back({0, kBuildTowerAction});
+    sys.update(0, &Reg);
+
+    CHECK_EQ(gold.Balance, initial - towerCost);
+}
+
+TEST_CASE_FIXTURE(ServerFixture, "action.server.build_insufficient_gold")
+{
+    ServerActionSystem sys;
+    auto               player = AddPlayer(0, 0, 10);  // only 10 gold
+    AddPlayerGraph(0);
+
+    Tagged.push_back({0, kBuildTowerAction});
+    sys.update(0, &Reg);
+
+    auto g = Reg.group<Tower>(entt::get<Collider, RigidBody>);
+    CHECK_EQ(g.size(), 0);
+    CHECK_EQ(Reg.get<Gold>(player).Balance, 10);
+}
+
 TEST_CASE_FIXTURE(ServerFixture, "action.server.build_same_pos")
 {
     ServerActionSystem sys;
@@ -75,4 +105,37 @@ TEST_CASE_FIXTURE(ServerFixture, "action.server.build_same_pos")
 
     // tower invalidated
     CHECK_EQ(1, g.size());
+}
+
+TEST_CASE_FIXTURE(ServerFixture, "action.server.send_deducts_gold")
+{
+    ServerActionSystem sys;
+    auto               sender = AddPlayer(0, 0);
+    AddPlayer(1, 1);
+    AddPlayerGraph(1);
+    AddSpawner(1, 1);
+
+    auto& gold    = Reg.get<Gold>(sender);
+    int   initial = gold.Balance;
+    int   cost    = Definitions.Creeps.at(CreepType::Simple).Cost;
+
+    Tagged.push_back({0, kSendCreepAction});
+    sys.update(0, &Reg);
+
+    CHECK_EQ(gold.Balance, initial - cost);
+}
+
+TEST_CASE_FIXTURE(ServerFixture, "action.server.send_insufficient_gold")
+{
+    ServerActionSystem sys;
+    auto               sender = AddPlayer(0, 0, 5);
+    AddPlayer(1, 1);
+    AddPlayerGraph(1);
+    AddSpawner(1, 1);
+
+    Tagged.push_back({0, kSendCreepAction});
+    sys.update(0, &Reg);
+
+    CHECK_EQ(Reg.get<Gold>(sender).Balance, 5);
+    CHECK_EQ(Reg.view<Creep>().size(), 0);
 }
