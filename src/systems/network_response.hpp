@@ -31,6 +31,7 @@ class NetworkResponseSystem : public FixedSystem
     // Event handlers (use mRegistry member set during Execute)
     void onRigidBodyUpdate(const RigidBodyUpdateEvent& aEvent);
     void onHealthUpdate(const HealthUpdateEvent& aEvent);
+    void onGoldUpdate(const GoldUpdateEvent& aEvent);
     void onSyncPayload(const SyncPayloadEvent& aEvent);
 
     void createProjectile(

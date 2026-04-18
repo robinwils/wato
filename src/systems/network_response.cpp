@@ -32,6 +32,7 @@ void NetworkResponseSystem::ensureConnected(entt::dispatcher& aDispatcher)
     aDispatcher.sink<RigidBodyUpdateEvent>().connect<&NetworkResponseSystem::onRigidBodyUpdate>(
         *this);
     aDispatcher.sink<HealthUpdateEvent>().connect<&NetworkResponseSystem::onHealthUpdate>(*this);
+    aDispatcher.sink<GoldUpdateEvent>().connect<&NetworkResponseSystem::onGoldUpdate>(*this);
     aDispatcher.sink<SyncPayloadEvent>().connect<&NetworkResponseSystem::onSyncPayload>(*this);
 
     mConnected = true;
@@ -123,6 +124,21 @@ void NetworkResponseSystem::onHealthUpdate(const HealthUpdateEvent& aEvent)
             "received health update for server {} with {}, but entity not synced",
             update.Entity,
             update.Health);
+    }
+}
+
+void NetworkResponseSystem::onGoldUpdate(const GoldUpdateEvent& aEvent)
+{
+    Registry&   registry = *aEvent.Reg;
+    const auto& update   = aEvent.Response;
+
+    auto  playerEntity = FindPlayerEntity(registry, update.Player);
+    auto* gold         = registry.try_get<Gold>(playerEntity);
+    if (gold) {
+        gold->Balance = update.Balance;
+        WATO_DBG(registry, "gold update for player {}: {}", update.Player, update.Balance);
+    } else {
+        WATO_WARN(registry, "gold update for player {} but no Gold component", update.Player);
     }
 }
 

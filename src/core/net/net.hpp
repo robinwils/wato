@@ -277,6 +277,27 @@ inline bool operator==(const HealthUpdateResponse& aLHS, const HealthUpdateRespo
     return aLHS.Entity == aRHS.Entity && aLHS.Health == aRHS.Health;
 }
 
+struct GoldUpdateResponse {
+    ::PlayerID Player;
+    int        Balance;
+
+    bool Archive(auto& aArchive)
+    {
+        if (!ArchivePlayerID(aArchive, Player)) return false;
+        return ArchiveValue(aArchive, Balance, -100000, 100000);
+    }
+
+    auto operator<=>(const GoldUpdateResponse&) const = default;
+};
+
+struct CommonIncomeUpdateResponse {
+    int Value;
+
+    bool Archive(auto& aArchive) { return ArchiveValue(aArchive, Value, -1000000, 1000000); }
+
+    auto operator<=>(const CommonIncomeUpdateResponse&) const = default;
+};
+
 struct PlayerEliminatedResponse {
     ::PlayerID              PlayerID;
     std::vector<::PlayerID> Ranking;
@@ -367,6 +388,8 @@ using NetworkResponsePayload = std::variant<
     SyncPayload,
     RigidBodyUpdateResponse,
     HealthUpdateResponse,
+    GoldUpdateResponse,
+    CommonIncomeUpdateResponse,
     PlayerEliminatedResponse,
     GameEndResponse,
     AuthResponse>;
@@ -431,6 +454,18 @@ struct fmt::formatter<NetworkResponsePayload> : fmt::formatter<std::string> {
             void operator()(const HealthUpdateResponse& aResp) const
             {
                 fmt::format_to(Ctx->out(), "health update for {}: {}", aResp.Entity, aResp.Health);
+            }
+            void operator()(const GoldUpdateResponse& aResp) const
+            {
+                fmt::format_to(
+                    Ctx->out(),
+                    "gold update for player {}: {}",
+                    aResp.Player,
+                    aResp.Balance);
+            }
+            void operator()(const CommonIncomeUpdateResponse& aResp) const
+            {
+                fmt::format_to(Ctx->out(), "common income update with {}", aResp.Value);
             }
             void operator()(const PlayerEliminatedResponse& aResp) const
             {

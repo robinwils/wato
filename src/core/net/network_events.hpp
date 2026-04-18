@@ -21,6 +21,11 @@ struct HealthUpdateEvent {
     HealthUpdateResponse Response;
 };
 
+struct GoldUpdateEvent {
+    Registry*          Reg;
+    GoldUpdateResponse Response;
+};
+
 struct SyncPayloadEvent {
     Registry*   Reg;
     SyncPayload Payload;

@@ -414,6 +414,17 @@ void GameClient::consumeNetworkResponses()
                 HealthUpdateEvent{.Reg = Reg, .Response = aUpdate});
         }
 
+        void operator()(const GoldUpdateResponse& aResp) const
+        {
+            Dispatcher->enqueue(GoldUpdateEvent{.Reg = Reg, .Response = aResp});
+        }
+
+        void operator()(const CommonIncomeUpdateResponse& aResp) const
+        {
+            // FIXME: Should it be enqueued for fixed time system ?
+            Reg->ctx().get<CommonIncome&>().Value = aResp.Value;
+        }
+
         void operator()(const PlayerEliminatedResponse& aResp) const
         {
             Reg->ctx().insert_or_assign("ranking"_hs, aResp.Ranking);
