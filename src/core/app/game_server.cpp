@@ -26,6 +26,7 @@
 #include "systems/action.hpp"
 #include "systems/ai.hpp"
 #include "systems/collision.hpp"
+#include "systems/economy.hpp"
 #include "systems/health.hpp"
 #include "systems/physics.hpp"
 #include "systems/projectile.hpp"
@@ -107,8 +108,10 @@ std::vector<PlayerInitData> GameServer::StartGameInstance(
 
     auto& fixedExec = GetSingletonComponent<FixedSystemExecutor>(aRegistry);
 
+    using namespace std::chrono_literals;
     fixedExec.Register<NetworkSyncSystem<ENetServer>>();
     fixedExec.Register<HealthSystem>();
+    fixedExec.Register<EconomySystem>(mGameplayDef.Economy.RedistributionInterval * 1s);
     fixedExec.Register<CollisionSystem>();
     fixedExec.Register<PhysicsSystem>();
     fixedExec.Register<TowerBuiltSystem>();

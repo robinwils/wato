@@ -513,6 +513,7 @@ target_sources(watolib
     src/registry/registry.cpp
     src/systems/ai.cpp
     src/systems/collision.cpp
+    src/systems/economy.cpp
     src/systems/health.cpp
     src/systems/physics.cpp
     src/systems/projectile.cpp
