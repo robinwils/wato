@@ -195,9 +195,10 @@ void GameServer::ConsumeNetworkRequests()
                     .PlayerID = p.ID,
                     .Tick     = 0,
                     .Payload  = NewGameResponse{
-                         .GameID       = *gameID,
-                         .YourPlayerID = p.ID,
-                         .Players      = playerInitData,
+                         .GameID         = *gameID,
+                         .YourPlayerID   = p.ID,
+                         .StartingIncome = mGameplayDef.Economy.StartingIncome,
+                         .Players        = playerInitData,
                     }});
             }
         }
@@ -280,6 +281,7 @@ std::vector<PlayerInitData> GameServer::spawnPlayers(
         aRegistry.emplace<Player>(player, id, idx);
         aRegistry.emplace<DisplayName>(player, mServer.GetAccountName(id));
         aRegistry.emplace<Health>(player, 10.0f);
+        aRegistry.emplace<Gold>(player, mGameplayDef.Economy.StartingGold);
         WATO_INFO(aRegistry, "server player {} created", player);
 
         auto& pTransform = aRegistry.emplace<Transform3D>(
@@ -329,6 +331,7 @@ std::vector<PlayerInitData> GameServer::spawnPlayers(
             .ID             = id,
             .ServerEntity   = player,
             .Health         = 10.0f,
+            .StartingGold   = mGameplayDef.Economy.StartingGold,
             .DisplayName    = mServer.GetAccountName(id),
             .Position       = pTransform.Position,
             .MapSize        = size,
@@ -355,6 +358,7 @@ std::vector<PlayerInitData> GameServer::createGameInstance(
     registry.ctx().emplace<Logger>(mLogger);
     registry.ctx().emplace<ENetServer&>(mServer);
     registry.ctx().emplace<const GameplayDef&>(mGameplayDef);
+    registry.ctx().emplace<CommonIncome>(mGameplayDef.Economy.StartingIncome);
     registry.ctx().emplace_as<std::vector<PlayerID>>("ranking"_hs);
     registry.ctx().emplace<TaggedActionsType>();
 

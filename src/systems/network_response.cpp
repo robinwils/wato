@@ -189,7 +189,8 @@ void NetworkResponseSystem::createProjectile(
         WATO_ERR(aRegistry, "projectile server target {} unknown", aInit.Target);
     }
 
-    aRegistry.emplace<Projectile>(projectile, aInit.Damage, aInit.Speed, clientTarget);
+    aRegistry
+        .emplace<Projectile>(projectile, aInit.Damage, aInit.Speed, clientTarget, aInit.OwnerID);
     aRegistry.emplace<RigidBody>(projectile, RigidBody{.Params = aUpdate.Params});
     aRegistry.emplace<Collider>(projectile, aInit.ColliderParams);
     aRegistry.emplace<SceneObject>(projectile, "arrow"_hs);

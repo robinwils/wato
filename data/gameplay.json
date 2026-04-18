@@ -1,4 +1,10 @@
 {
+   "Economy": {
+      "StartingGold": 200,
+      "StartingIncome": 10,
+      "RedistributionInterval": 30,
+      "DecayRate": 0.0
+   },
    "Towers": {
       "Arrow": {
          "Type": "Arrow",
@@ -15,7 +21,9 @@
    },
    "Creeps": {
       "Simple": {
-         "Cost": 50,
+         "Cost": 20,
+         "SendIncome": 2,
+         "KillReward": 2,
          "Health": 125,
          "Speed": 0.4,
          "Damage": 1,

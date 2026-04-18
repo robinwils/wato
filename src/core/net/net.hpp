@@ -46,6 +46,7 @@ struct PlayerInitData {
     PlayerID     ID;
     entt::entity ServerEntity;
     float        Health;
+    int          StartingGold{};
     std::string  DisplayName;
     glm::vec3    Position;
     glm::uvec2   MapSize;
@@ -56,25 +57,21 @@ struct PlayerInitData {
         if (!ArchivePlayerID(aArchive, ID)) return false;
         if (!ArchiveEntity(aArchive, ServerEntity)) return false;
         if (!ArchiveValue(aArchive, Health, -10.0f, 1000.0f)) return false;
+        if (!ArchiveValue(aArchive, StartingGold, 0, 100000)) return false;
         if (!ArchiveString(aArchive, DisplayName, 5000)) return false;
         if (!ArchiveVector(aArchive, Position, 0.0f, 500.0f)) return false;
         if (!ArchiveVector(aArchive, MapSize, 0u, 100u)) return false;
         if (!ArchiveVector(aArchive, MapWorldOffset, 0.0f, 500.0f)) return false;
         return true;
     }
-};
 
-inline bool operator==(const PlayerInitData& aLHS, const PlayerInitData& aRHS)
-{
-    return aLHS.ID == aRHS.ID && aLHS.ServerEntity == aRHS.ServerEntity
-           && aLHS.Health == aRHS.Health && aLHS.DisplayName == aRHS.DisplayName
-           && aLHS.Position == aRHS.Position && aLHS.MapSize == aRHS.MapSize
-           && aLHS.MapWorldOffset == aRHS.MapWorldOffset;
-}
+    bool operator==(const PlayerInitData&) const = default;
+};
 
 struct NewGameResponse {
     GameInstanceID              GameID;
     PlayerID                    YourPlayerID;
+    int                         StartingIncome;
     std::vector<PlayerInitData> Players;
 
     bool Archive(auto& aArchive)
@@ -82,15 +79,12 @@ struct NewGameResponse {
         if (!ArchiveValue(aArchive, GameID, uint64_t(0), std::numeric_limits<uint64_t>::max()))
             return false;
         if (!ArchivePlayerID(aArchive, YourPlayerID)) return false;
+        if (!ArchiveValue(aArchive, StartingIncome, 0, 500)) return false;
         return ArchiveVector(aArchive, Players, 8u);
     }
-};
 
-inline bool operator==(const NewGameResponse& aLHS, const NewGameResponse& aRHS)
-{
-    return aLHS.GameID == aRHS.GameID && aLHS.YourPlayerID == aRHS.YourPlayerID
-           && aLHS.Players == aRHS.Players;
-}
+    bool operator==(const NewGameResponse&) const = default;
+};
 
 struct ConnectedResponse {
     bool Archive(auto&) { return true; }
@@ -142,6 +136,7 @@ struct ProjectileInitData {
     float            Damage;
     float            Speed;
     entt::entity     Target;
+    PlayerID         OwnerID{};
     ::ColliderParams ColliderParams;
 
     bool Archive(auto& aArchive)
@@ -150,6 +145,7 @@ struct ProjectileInitData {
         if (!ArchiveValue(aArchive, Damage, 0.0f, 100.0f)) return false;
         if (!ArchiveValue(aArchive, Speed, 0.0f, 10.0f)) return false;
         if (!ArchiveEntity(aArchive, Target)) return false;
+        if (!ArchivePlayerID(aArchive, OwnerID)) return false;
         return ColliderParams.Archive(aArchive);
     }
 };
@@ -157,7 +153,7 @@ struct ProjectileInitData {
 inline bool operator==(const ProjectileInitData& aLHS, const ProjectileInitData& aRHS)
 {
     return aLHS.SourceTower == aRHS.SourceTower && aLHS.Damage == aRHS.Damage
-           && aLHS.Speed == aRHS.Speed && aLHS.Target == aRHS.Target
+           && aLHS.Speed == aRHS.Speed && aLHS.Target == aRHS.Target && aLHS.OwnerID == aRHS.OwnerID
            && aLHS.ColliderParams == aRHS.ColliderParams;
 }
 
