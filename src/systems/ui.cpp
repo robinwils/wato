@@ -88,6 +88,7 @@ void UISystem::onLoginResult(const LoginResultEvent& aEvent)
         };
         menu.ClearMsgs();
 
+        registry.ctx().emplace<PlayerID>(*playerID);
         auto& netClient = GetSingletonComponent<ENetClient&>(registry);
         netClient.Connect();
 
