@@ -21,6 +21,7 @@
 #include "core/state.hpp"
 #include "core/sys/log.hpp"
 #include "core/tower_building_handler.hpp"
+#include "core/types.hpp"
 #include "input/action.hpp"
 #include "registry/registry.hpp"
 
@@ -110,7 +111,20 @@ void serverBuildTower(Registry& aRegistry, BuildTowerPayload& aPayload, PlayerID
     }
     const auto& towerDef = towerDefIt->second;
 
-    auto& player = aRegistry.get<Player>(FindPlayerEntity(aRegistry, aPlayerID));
+    auto  playerEntity = FindPlayerEntity(aRegistry, aPlayerID);
+    auto& gold         = aRegistry.get<Gold>(playerEntity);
+    if (gold.Balance < towerDef.Cost) {
+        WATO_ERR(
+            aRegistry,
+            "player {} insufficient gold {} < {}",
+            aPlayerID,
+            gold.Balance,
+            towerDef.Cost);
+        return;
+    }
+    gold.Balance -= towerDef.Cost;
+
+    auto& player = aRegistry.get<Player>(playerEntity);
     auto  tower  = aRegistry.create();
     auto& phy    = GetSingletonComponent<Physics>(aRegistry);
     auto& t3D    = aRegistry.emplace<Transform3D>(tower, towerDef.Transform.ToTransform3D());
@@ -143,10 +157,11 @@ void serverBuildTower(Registry& aRegistry, BuildTowerPayload& aPayload, PlayerID
     aRegistry.emplace<Owner>(tower, aPlayerID, player.Slot);
 
     if (auto* server = aRegistry.ctx().find<ENetServer>()) {
+        auto tick = GetSingletonComponent<GameInstance&>(aRegistry).Tick;
         server->BroadcastResponse(
             GetPlayerIDs(aRegistry),
             PacketType::Ack,
-            GetSingletonComponent<GameInstance&>(aRegistry).Tick,
+            tick,
             RigidBodyUpdateResponse{
                 .Params = body.Params,
                 .Entity = tower,
@@ -161,6 +176,11 @@ void serverBuildTower(Registry& aRegistry, BuildTowerPayload& aPayload, PlayerID
                         .ColliderParams = collider.Params,
                     },
             });
+        server->BroadcastResponse(
+            GetPlayerIDs(aRegistry),
+            PacketType::Ack,
+            tick,
+            GoldUpdateResponse{.Player = aPlayerID, .Balance = gold.Balance});
     }
 }
 
@@ -172,8 +192,20 @@ void serverSendCreep(Registry& aRegistry, SendCreepPayload& aPayload, PlayerID a
         return;
     }
     const auto& creepDef = GetCreepDef(aRegistry, aPayload.Type);
+    auto*       server   = aRegistry.ctx().find<ENetServer>();
 
-    auto& player = aRegistry.get<Player>(FindPlayerEntity(aRegistry, aPlayerID));
+    auto  playerEntity = FindPlayerEntity(aRegistry, aPlayerID);
+    auto& gold         = aRegistry.get<Gold>(playerEntity);
+    if (gold.Balance < creepDef.Cost) {
+        WATO_ERR(
+            aRegistry,
+            "player {} insufficient gold {} < {}",
+            aPlayerID,
+            gold.Balance,
+            creepDef.Cost);
+        return;
+    }
+    auto& player = aRegistry.get<Player>(playerEntity);
 
     auto& spawnTransform = aRegistry.get<Transform3D>(nextSpawn);
     auto& spawnOwner     = aRegistry.get<Owner>(nextSpawn);
@@ -186,6 +218,9 @@ void serverSendCreep(Registry& aRegistry, SendCreepPayload& aPayload, PlayerID a
         return;
     }
     const auto& graph = it->second;
+
+    gold.Balance                               -= creepDef.Cost;
+    aRegistry.ctx().get<CommonIncome&>().Value += creepDef.SendIncome;
 
     auto  creep  = aRegistry.create();
     auto& t3D    = aRegistry.emplace<Transform3D>(creep, creepDef.Transform.ToTransform3D());
@@ -217,11 +252,14 @@ void serverSendCreep(Registry& aRegistry, SendCreepPayload& aPayload, PlayerID a
     aRegistry.emplace<Owner>(creep, aPlayerID, player.Slot);
     aRegistry.emplace<Target>(creep, spawnOwner.ID, spawnOwner.Slot);
 
-    if (auto* server = aRegistry.ctx().find<ENetServer>()) {
+    if (server != nullptr) {
+        auto                  tick      = GetSingletonComponent<GameInstance&>(aRegistry).Tick;
+        std::vector<PlayerID> playerIDs = GetPlayerIDs(aRegistry);
+
         server->BroadcastResponse(
-            GetPlayerIDs(aRegistry),
+            playerIDs,
             PacketType::Ack,
-            GetSingletonComponent<GameInstance&>(aRegistry).Tick,
+            tick,
             RigidBodyUpdateResponse{
                 .Params = body.Params,
                 .Entity = creep,
@@ -236,6 +274,16 @@ void serverSendCreep(Registry& aRegistry, SendCreepPayload& aPayload, PlayerID a
                         .ColliderParams = collider.Params,
                     },
             });
+        server->BroadcastResponse(
+            playerIDs,
+            PacketType::Ack,
+            tick,
+            GoldUpdateResponse{.Player = aPlayerID, .Balance = gold.Balance});
+        server->BroadcastResponse(
+            playerIDs,
+            PacketType::Ack,
+            tick,
+            CommonIncomeUpdateResponse{.Value = aRegistry.ctx().get<CommonIncome>().Value});
     }
 }
 
