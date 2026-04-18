@@ -160,7 +160,9 @@ void RenderImguiSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDel
     imguiBeginFrame(window.GetInput(), window.Width<int>(), window.Height<int>());
     showImguiDialogs(window.Width<float>(), window.Height<float>());
 
-    hud.Render(aRegistry, window);
+    if (menu.State == MenuState::InGame) {
+        hud.Render(aRegistry, window);
+    }
 
     menu.Backend->Render(aRegistry);
 
