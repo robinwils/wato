@@ -252,28 +252,25 @@ void GameClient::prepareGridPreview(const glm::vec2& aOffset)
         std::span<const uint8_t>(graph.GridLayout().data(), graph.Width() * graph.Height()));
 }
 
-void GameClient::StartGameInstance(
-    Registry&                          aRegistry,
-    const GameInstanceID               aGameID,
-    PlayerID                           aLocalPlayerID,
-    const std::vector<PlayerInitData>& aPlayers)
+void GameClient::StartGameInstance(Registry& aRegistry, const NewGameResponse& aGame)
 {
-    Application::StartGameInstance(aRegistry, aGameID);
+    Application::StartGameInstance(aRegistry, aGame.GameID);
     LoadResources(aRegistry);
 
     auto&     syncMap = GetSingletonComponent<EntitySyncMap>(aRegistry);
     glm::vec3 localPlayerPos{2.0f, 0.004f, 2.0f};
 
-    for (uint8_t idx = 0; idx < aPlayers.size(); ++idx) {
-        uint8_t sender = idx == 0 ? uint8_t(aPlayers.size()) - 1 : idx - 1;
+    for (uint8_t idx = 0; idx < aGame.Players.size(); ++idx) {
+        uint8_t sender = idx == 0 ? uint8_t(aGame.Players.size()) - 1 : idx - 1;
 
-        const PlayerInitData& p = aPlayers[idx];
+        const PlayerInitData& p = aGame.Players[idx];
 
         // Create player entity
         auto  player    = aRegistry.create();
         auto& playerCmp = aRegistry.emplace<Player>(player, p.ID, idx);
         aRegistry.emplace<DisplayName>(player, p.DisplayName);
         aRegistry.emplace<Health>(player, p.Health);
+        aRegistry.emplace<Gold>(player, p.StartingGold);
         aRegistry.emplace<Transform3D>(player, p.Position);
         aRegistry.emplace<RigidBody>(
             player,
@@ -311,7 +308,7 @@ void GameClient::StartGameInstance(
             p.ServerEntity,
             p.ID);
 
-        if (p.ID == aLocalPlayerID) {
+        if (p.ID == aGame.YourPlayerID) {
             localPlayerPos = p.Position;
             aRegistry.ctx().emplace_as<Player>("player"_hs, playerCmp);
 
@@ -330,6 +327,7 @@ void GameClient::StartGameInstance(
     aRegistry.ctx().emplace<const Input*>(&mRegistry.ctx().get<WatoWindow>().GetInput());
     aRegistry.ctx().emplace<const GameplayDef&>(mGameplayDef);
     aRegistry.ctx().emplace<ActionContextStack>();
+    aRegistry.ctx().emplace<CommonIncome>(aGame.StartingIncome);
 
     auto& fixedExec = GetSingletonComponent<FixedSystemExecutor>(aRegistry);
 
@@ -391,7 +389,7 @@ void GameClient::consumeNetworkResponses()
 
         void operator()(const NewGameResponse& aResp) const
         {
-            Client->StartGameInstance(*Reg, aResp.GameID, aResp.YourPlayerID, aResp.Players);
+            Client->StartGameInstance(*Reg, aResp);
             Reg->ctx().get<MenuContext&>().State = MenuState::InGame;
             WATO_INFO(*Reg, "game {} created with {} players", aResp.GameID, aResp.Players.size());
         }
