@@ -1,20 +1,24 @@
 # WaTo
 
-3D PvP Tower Defense game built with C++20. Features client-server architecture with deterministic lockstep networking, custom bit-level serialization, and an ECS using EnTT.
+3D PvP Tower Defense game built with C++23. Inspired by Warcraft 3 TDs this is a project to learn game engine development.
+
+Features client/server binaries (enet + libsodium) with pocketbase user backend.
+
+bgfx is used for rendering.
 
 ## Getting Started
 
 ```bash
-git clone --recurse-submodules -j8 git@github.com:robinwils/wato.git
+git clone --recurse-submodules -j8 https://github.com/robinwils/wato.git
 cd wato
-git lfs pull
+git lfs pull # pull assets
 ```
 
 ## Prerequisites
 
 - CMake 3.29+
-- Ninja
-- C++20 compiler (GCC 12+, Clang 16+, or MSVC 17+)
+- Ninja/Make
+- C++23 compiler
 - Git LFS
 - vcpkg (included as submodule)
 
@@ -31,7 +35,7 @@ sudo apt-get install -y \
 ```
 
 `autoconf`, `automake`, `libtool` are needed by vcpkg to build libsodium from source.
-The `libvulkan-dev`, X11 and Wayland packages are only needed when building the client (`ENABLE_CLIENT=ON`).
+The `libvulkan-dev`, X11/Wayland packages are only needed when building the client (`ENABLE_CLIENT=ON`).
 
 ### macOS
 
@@ -46,7 +50,7 @@ brew install cmake ninja autoconf automake libtool
 
 1. Install [Visual Studio 2022](https://visualstudio.microsoft.com/) (Community or Build Tools) with the **"Desktop development with C++"** workload
 2. Install [CMake 3.29+](https://cmake.org/download/) and [Ninja](https://ninja-build.org/) (or via `choco install cmake ninja`)
-3. Install the [Vulkan SDK](https://vulkan.lunarg.com/sdk/home)
+3. Install the [Vulkan SDK](https://vulkan.lunarg.com/sdk/home) (version 1.4.328.1 at least)
 
 Run builds from a **Developer Command Prompt** (or use `vcvarsall.bat`) so MSVC is on PATH.
 
@@ -56,15 +60,15 @@ CMake presets handle all configuration:
 
 ```bash
 # Configure
-cmake --preset unixlike-gcc-debug        # Linux GCC
-cmake --preset unixlike-clang-debug      # Linux/macOS Clang
+cmake --preset linux-gcc-debug        # Linux GCC
+cmake --preset linux-clang-debug      # Linux/macOS Clang
 cmake --preset windows-msvc-debug        # Windows MSVC
 
 # Build
 cmake --build --preset <preset-name>
 ```
 
-Append `-sccache` to any preset name to use sccache (e.g. `unixlike-clang-debug-sccache`).
+Append `-sccache` to any preset name to use sccache (e.g. `linux-clang-debug-sccache`).
 
 Replace `debug` with `release` for optimized builds.
 
