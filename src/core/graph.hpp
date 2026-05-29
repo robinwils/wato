@@ -22,6 +22,7 @@ struct GraphCell {
     GraphCell(const size_type aX, const size_type aY) : Location(aX, aY) {}
 
     constexpr static size_type kCellsPerAxis = 3;
+    constexpr static float     kCellSize     = 1.0f / GraphCell::kCellsPerAxis;
 
     constexpr glm::vec3 ToWorld(const glm::vec2& aOffset = {0, 0}) const
     {
