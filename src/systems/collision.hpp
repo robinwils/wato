@@ -16,6 +16,8 @@ class CollisionSystem : public FixedSystem
    public:
     using FixedSystem::FixedSystem;
 
+    const char* Name() const override { return "CollisionSystem"; }
+
    protected:
     void Execute(Registry& aRegistry, std::uint32_t aTick) override;
 
