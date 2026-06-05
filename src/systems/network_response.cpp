@@ -32,6 +32,7 @@ void NetworkResponseSystem::ensureConnected(entt::dispatcher& aDispatcher)
     aDispatcher.sink<RigidBodyUpdateEvent>().connect<&NetworkResponseSystem::onRigidBodyUpdate>(
         *this);
     aDispatcher.sink<HealthUpdateEvent>().connect<&NetworkResponseSystem::onHealthUpdate>(*this);
+    aDispatcher.sink<GoldUpdateEvent>().connect<&NetworkResponseSystem::onGoldUpdate>(*this);
     aDispatcher.sink<SyncPayloadEvent>().connect<&NetworkResponseSystem::onSyncPayload>(*this);
 
     mConnected = true;
@@ -126,6 +127,21 @@ void NetworkResponseSystem::onHealthUpdate(const HealthUpdateEvent& aEvent)
     }
 }
 
+void NetworkResponseSystem::onGoldUpdate(const GoldUpdateEvent& aEvent)
+{
+    Registry&   registry = *aEvent.Reg;
+    const auto& update   = aEvent.Response;
+
+    auto  playerEntity = FindPlayerEntity(registry, update.Player);
+    auto* gold         = registry.try_get<Gold>(playerEntity);
+    if (gold) {
+        gold->Balance = update.Balance;
+        WATO_DBG(registry, "gold update for player {}: {}", update.Player, update.Balance);
+    } else {
+        WATO_WARN(registry, "gold update for player {} but no Gold component", update.Player);
+    }
+}
+
 void NetworkResponseSystem::onSyncPayload(const SyncPayloadEvent& aEvent)
 {
     Registry&   registry = *aEvent.Reg;
@@ -189,7 +205,8 @@ void NetworkResponseSystem::createProjectile(
         WATO_ERR(aRegistry, "projectile server target {} unknown", aInit.Target);
     }
 
-    aRegistry.emplace<Projectile>(projectile, aInit.Damage, aInit.Speed, clientTarget);
+    aRegistry
+        .emplace<Projectile>(projectile, aInit.Damage, aInit.Speed, clientTarget, aInit.OwnerID);
     aRegistry.emplace<RigidBody>(projectile, RigidBody{.Params = aUpdate.Params});
     aRegistry.emplace<Collider>(projectile, aInit.ColliderParams);
     aRegistry.emplace<SceneObject>(projectile, "arrow"_hs);

@@ -90,6 +90,7 @@ void CollisionSystem::projectileHits(
             if (health && creep) {
                 aRegistry.patch<Health>(targetEntity, [&projectile](Health& aHealth) {
                     aHealth.Health -= projectile->Damage;
+                    aHealth.LastHitBy = projectile->OwnerID;
                 });
                 WATO_INFO(
                     aRegistry,

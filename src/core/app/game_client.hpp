@@ -94,11 +94,7 @@ class GameClient : public Application
     void SendAuthRequest();
 
    protected:
-    void StartGameInstance(
-        Registry&                          aRegistry,
-        const GameInstanceID               aGameID,
-        PlayerID                           aLocalPlayerID,
-        const std::vector<PlayerInitData>& aPlayers);
+    void StartGameInstance(Registry& aRegistry, const NewGameResponse& aGame);
 
    private:
     inline void initContext(int aWidth, int aHeight)

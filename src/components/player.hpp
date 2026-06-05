@@ -39,5 +39,13 @@ struct Target {
     uint8_t  Slot;
 };
 
+struct Gold {
+    int Balance{0};
+};
+
+struct CommonIncome {
+    int Value{0};
+};
+
 struct Eliminated {
 };

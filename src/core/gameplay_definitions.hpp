@@ -77,6 +77,8 @@ struct CreepDef {
     };
 
     int          Cost{};
+    int          SendIncome{};
+    int          KillReward{};
     float        Health{};
     float        Speed{};
     float        Damage{};
@@ -89,7 +91,15 @@ struct ProjectileDef {
     ModelDef     Model{};
 };
 
+struct EconomyDef {
+    int   StartingGold{200};
+    int   StartingIncome{10};
+    int   RedistributionInterval{30};  // seconds
+    float DecayRate{0.0f};
+};
+
 struct GameplayDef {
+    EconomyDef                           Economy;
     std::map<TowerType, TowerDef>        Towers;
     std::map<CreepType, CreepDef>        Creeps;
     std::map<std::string, ProjectileDef> Projectiles;

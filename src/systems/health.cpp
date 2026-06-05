@@ -7,6 +7,7 @@
 #include "components/game.hpp"
 #include "components/health.hpp"
 #include "components/player.hpp"
+#include "core/gameplay_definitions.hpp"
 #include "core/net/enet_server.hpp"
 #include "core/net/net.hpp"
 #include "core/net/pocketbase.hpp"
@@ -18,6 +19,19 @@ void HealthSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t a
     for (auto [entity, health, creep] : aRegistry.view<Health, Creep>().each()) {
         if (health.Health <= 0.0f) {
             WATO_INFO(aRegistry, "creep {} died (health: {})", entity, health.Health);
+
+            if (health.LastHitBy != PlayerID{}) {
+                auto  killerEntity = FindPlayerEntity(aRegistry, health.LastHitBy);
+                auto* killerGold   = aRegistry.try_get<Gold>(killerEntity);
+                if (killerGold) {
+                    const auto& defs = aRegistry.ctx().get<const GameplayDef&>();
+                    auto        it   = defs.Creeps.find(creep.Type);
+                    if (it != defs.Creeps.end()) {
+                        killerGold->Balance += it->second.KillReward;
+                    }
+                }
+            }
+
             aRegistry.destroy(entity);
         }
     }

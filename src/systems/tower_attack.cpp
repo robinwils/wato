@@ -131,7 +131,7 @@ void TowerAttackSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint3
                 glm::identity<glm::quat>(),
                 glm::vec3(0.1f));
 
-            aRegistry.emplace<Projectile>(projectile, attack.Damage, 1.0f, attack.CurrentTarget);
+            aRegistry.emplace<Projectile>(projectile, attack.Damage, 1.0f, attack.CurrentTarget, owner.ID);
 
             glm::vec3 direction = glm::normalize(targetTransform->Position - pT.Position);
 
@@ -181,6 +181,7 @@ void TowerAttackSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint3
                                 .Damage         = 10.0f,
                                 .Speed          = 5.0f,
                                 .Target         = attack.CurrentTarget,
+                                .OwnerID        = owner.ID,
                                 .ColliderParams = collider.Params,
                             },
                     });

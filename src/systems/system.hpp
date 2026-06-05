@@ -1,114 +1,116 @@
 #pragma once
 
+#include <chrono>
 #include <cstdint>
 #include <entt/process/process.hpp>
-#include <memory>
+#include <type_traits>
 #include <typeinfo>
 
 #include "registry/registry.hpp"
 
+// Tick rate — matches Application::kTimeStep (60 FPS)
+using GameTick = std::chrono::duration<std::uint32_t, std::ratio<1, 60>>;
+
 /**
- * @brief Base class for fixed timestep systems (tick-based)
+ * @brief Base class for ECS systems
  *
- * Fixed timestep systems run at a constant rate (60 FPS).
- * They receive the absolute tick number (0, 1, 2, 3...).
- *
- * Use for deterministic gameplay logic:
- * - Physics
- * - AI
- * - Networking
- * - Game logic
- *
+ * Delta = std::uint32_t → fixed timestep (absolute tick number)
+ * Delta = float         → frame time (seconds)
  */
-class FixedSystem : public entt::basic_process<std::uint32_t>
+template <typename Delta>
+class System : public entt::basic_process<Delta>
 {
    public:
-    // Constructor accepting allocator (required by entt::scheduler)
     template <typename Allocator>
-    explicit FixedSystem(const Allocator&)
+    explicit System(const Allocator& /*unused*/)
     {
     }
 
-    // Default constructor
-    FixedSystem() = default;
+    System() = default;
 
-    /**
-     * @brief Called by entt::basic_process every fixed tick
-     * @param tick Absolute tick number (0, 1, 2, 3...)
-     * @param data Opaque pointer (Registry*)
-     */
-    void update(std::uint32_t tick, void* data) override
+    void update(Delta aDelta, void* aData) override
     {
-        auto* registry = static_cast<Registry*>(data);
-        Execute(*registry, tick);
+        auto* registry = static_cast<Registry*>(aData);
+        Execute(*registry, aDelta);
     }
 
-    /**
-     * @brief Get the name of this system
-     *
-     * Default implementation uses typeid (mangled name).
-     * Override for cleaner debug output.
-     */
-    virtual const char* Name() const { return typeid(*this).name(); }
+    [[nodiscard]] virtual const char* Name() const { return typeid(*this).name(); }
 
    protected:
-    /**
-     * @brief Main execution function for fixed timestep
-     * @param registry ECS registry
-     * @param tick Absolute tick number (deterministic)
-     */
-    virtual void Execute(Registry& registry, std::uint32_t tick) = 0;
+    virtual void Execute(Registry& aRegistry, Delta aDelta) = 0;
 };
 
 /**
- * @brief Base class for frame time systems (time-based)
+ * @brief System that fires at a fixed interval
  *
- * Frame time systems run at variable rate based on actual frame time.
- * They receive the delta time in seconds (or interpolation factor).
+ * For integral Delta (ticks): uses modulo on absolute tick number.
+ * For floating Delta (seconds): uses accumulator on relative delta.
  *
- * Use for non-deterministic, cosmetic systems:
- * - Rendering
- * - Input
- * - UI
- * - Animation
- * - Audio/VFX
+ * Interval is specified via std::chrono::duration and converted at construction.
+ * FireImmediately controls whether the first execution happens at tick 0 / time 0
+ * or waits for the first full interval.
  */
-class FrameSystem : public entt::basic_process<float>
+template <typename Delta>
+class PeriodicSystem : public System<Delta>
 {
    public:
-    // Constructor accepting allocator (required by entt::scheduler)
-    template <typename Allocator>
-    explicit FrameSystem(const Allocator&)
+    template <typename Allocator, typename Rep, typename Period>
+    PeriodicSystem(
+        const Allocator&                   aAlloc,
+        std::chrono::duration<Rep, Period> aInterval,
+        bool                               aFireImmediately = false)
+        : System<Delta>(aAlloc), mInterval(toDelta(aInterval)), mFireImmediately(aFireImmediately)
     {
     }
 
-    // Default constructor
-    FrameSystem() = default;
-
-    /**
-     * @brief Called by entt::basic_process every frame
-     * @param delta Time delta in seconds (or interpolation factor)
-     * @param data Opaque pointer (Registry*)
-     */
-    void update(float delta, void* data) override
+    template <typename Rep, typename Period>
+    explicit PeriodicSystem(
+        std::chrono::duration<Rep, Period> aInterval,
+        bool                               aFireImmediately = false)
+        : mInterval(toDelta(aInterval)), mFireImmediately(aFireImmediately)
     {
-        auto* registry = static_cast<Registry*>(data);
-        Execute(*registry, delta);
     }
-
-    /**
-     * @brief Get the name of this system
-     *
-     * Default implementation uses typeid (mangled name).
-     * Override for cleaner debug output.
-     */
-    virtual const char* Name() const { return typeid(*this).name(); }
 
    protected:
-    /**
-     * @brief Main execution function for frame time
-     * @param registry ECS registry
-     * @param delta Time delta in seconds
-     */
-    virtual void Execute(Registry& registry, float delta) = 0;
+    void Execute(Registry& aRegistry, Delta aDelta) final
+    {
+        if constexpr (std::is_integral_v<Delta>) {
+            if (mInterval > 0 && aDelta % mInterval == 0 && (aDelta > 0 || mFireImmediately)) {
+                PeriodicExecute(aRegistry, aDelta);
+            }
+        } else {
+            if (mFirst && mFireImmediately) {
+                mFirst = false;
+                PeriodicExecute(aRegistry, aDelta);
+            }
+            mAccumulated += aDelta;
+            if (mAccumulated >= mInterval) {
+                mAccumulated -= mInterval;
+                PeriodicExecute(aRegistry, aDelta);
+            }
+        }
+    }
+
+    virtual void PeriodicExecute(Registry& aRegistry, Delta aDelta) = 0;
+
+   private:
+    template <typename Rep, typename Period>
+    static Delta toDelta(std::chrono::duration<Rep, Period> aDelta)
+    {
+        if constexpr (std::is_integral_v<Delta>) {
+            return std::chrono::duration_cast<GameTick>(aDelta).count();
+        } else {
+            return std::chrono::duration<float>(aDelta).count();
+        }
+    }
+
+    Delta mInterval;
+    bool  mFireImmediately;
+    bool  mFirst{true};
+    Delta mAccumulated{};
 };
+
+using FixedSystem         = System<std::uint32_t>;
+using FrameSystem         = System<float>;
+using PeriodicFixedSystem = PeriodicSystem<std::uint32_t>;
+using PeriodicFrameSystem = PeriodicSystem<float>;
