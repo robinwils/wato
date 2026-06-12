@@ -77,7 +77,7 @@ void CollisionSystem::projectileHits(
     if (targetCollider) {
         entt::entity targetEntity = colliderMap.at(targetCollider);
 
-        WATO_DBG(aRegistry, "projectile {} hits target {}", projectileEntity, targetEntity);
+        mLogger->debug("projectile {} hits target {}", projectileEntity, targetEntity);
         auto* projectile = aRegistry.try_get<Projectile>(projectileEntity);
         if (!projectile) {
             return;
@@ -92,8 +92,7 @@ void CollisionSystem::projectileHits(
                     aHealth.Health -= projectile->Damage;
                     aHealth.LastHitBy = projectile->OwnerID;
                 });
-                WATO_INFO(
-                    aRegistry,
+                mLogger->info(
                     "projectile {} hit creep {}, health now {}",
                     projectileEntity,
                     targetEntity,
@@ -112,8 +111,7 @@ void CollisionSystem::projectileHits(
                 }
             }
         }
-        WATO_INFO(
-            aRegistry,
+        mLogger->info(
             "marking projectile {} for destruction (target hit)",
             projectileEntity);
         aToDestroy.insert(projectileEntity);
@@ -122,14 +120,12 @@ void CollisionSystem::projectileHits(
         // can get destroy without damaging creep
         auto* projectile = aRegistry.try_get<Projectile>(projectileEntity);
         if (projectile && !aRegistry.valid(projectile->Target)) {
-            WATO_INFO(
-                aRegistry,
+            mLogger->info(
                 "marking projectile {} for destruction (terrain, target invalid)",
                 projectileEntity);
             aToDestroy.insert(projectileEntity);
         } else {
-            WATO_DBG(
-                aRegistry,
+            mLogger->debug(
                 "projectile {} hit terrain but target still valid, ignoring",
                 projectileEntity);
         }
@@ -155,8 +151,7 @@ void CollisionSystem::creepHitsPlayerBase(Registry& aRegistry, const TriggerEven
             aHealth.Health -= creep.Damage;
         });
 
-        WATO_DBG(
-            aRegistry,
+        mLogger->debug(
             "creep hits base, player {} looses {} health, {} left",
             playerEntity,
             creep.Damage,

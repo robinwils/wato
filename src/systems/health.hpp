@@ -13,6 +13,8 @@ class HealthSystem : public FixedSystem
    public:
     using FixedSystem::FixedSystem;
 
+    const char* Name() const override { return "HealthSystem"; }
+
    protected:
     void Execute(Registry& aRegistry, std::uint32_t aTick) override;
 };

@@ -207,7 +207,7 @@ void PocketBaseClient::Update()
 
     auto now = std::chrono::steady_clock::now();
 
-    std::vector<std::function<void()>> toReconnect;
+    std::vector<const SSEState::reconnect_func*> toReconnect;
 
     for (auto& [name, state] : mSubscriptions) {
         if (!state.ShouldReconnect && state.SSEResponse.valid()
@@ -243,11 +243,15 @@ void PocketBaseClient::Update()
             state.StopSource      = std::make_shared<std::atomic<bool>>(false);
             state.SSEResponse     = state.Factory(state.StopSource);
             state.ShouldReconnect = false;
-            if (state.OnReconnect) toReconnect.push_back(state.OnReconnect);
+            if (state.OnReconnect) {
+                toReconnect.emplace_back(&state.OnReconnect);
+            }
         }
     }
 
-    for (auto& cb : toReconnect) cb();
+    for (auto& cb : toReconnect) {
+        (*cb)();
+    }
 }
 
 cpr::Header PocketBaseClient::AuthHeader(const std::string& aToken) const

@@ -31,6 +31,9 @@ class System : public entt::basic_process<Delta>
     void update(Delta aDelta, void* aData) override
     {
         auto* registry = static_cast<Registry*>(aData);
+        if (!mLogger) {
+            initLogger(*registry);
+        }
         Execute(*registry, aDelta);
     }
 
@@ -38,6 +41,28 @@ class System : public entt::basic_process<Delta>
 
    protected:
     virtual void Execute(Registry& aRegistry, Delta aDelta) = 0;
+
+    Logger mLogger;
+
+   private:
+    void initLogger(const Registry& aRegistry)
+    {
+        const auto& sideLogger = WATO_REG_LOGGER(aRegistry);
+
+        auto name = fmt::format("{}.{}", sideLogger->name(), Name());
+
+        if (auto existing = spdlog::get(name)) {
+            mLogger = existing;
+            return;
+        }
+
+        mLogger = std::make_shared<spdlog::logger>(
+            name,
+            sideLogger->sinks().begin(),
+            sideLogger->sinks().end());
+        mLogger->set_level(sideLogger->level());
+        spdlog::register_logger(mLogger);
+    }
 };
 
 /**

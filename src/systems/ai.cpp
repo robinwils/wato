@@ -19,6 +19,7 @@
 
 void AiSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t aTick)
 {
+    // only run on server
     auto& graphMap = GetSingletonComponent<PlayerGraphMap>(aRegistry);
 
     for (auto&& [e, creep, target, t, rb, p] :
@@ -26,7 +27,7 @@ void AiSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t aTick
         auto it = graphMap.find(target.ID);
 
         if (it == graphMap.end()) {
-            WATO_ERR(aRegistry, "cannot find player graph");
+            mLogger->error("cannot find player graph");
             continue;
         }
         const auto& graph = it->second;
@@ -36,22 +37,19 @@ void AiSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t aTick
         if (!p.NextCell || c == p.NextCell) {
             p.NextCell = graph.GetNextCell(c);
             p.LastFrom = c;
-            WATO_TRACE(aRegistry, "set next cell = {} and last from = {}", p.NextCell, p.LastFrom);
+            mLogger->trace("set next cell = {} and last from = {}", p.NextCell, p.LastFrom);
         } else if (p.NextCell != graph.GetNextCell(p.LastFrom)) {
             // the path has probably been updated (tower built)
-            WATO_TRACE(
-                aRegistry,
-                "path updated, setting next cell = ",
-                graph.GetNextCell(p.LastFrom));
+            mLogger->trace("path updated, setting next cell = ", graph.GetNextCell(p.LastFrom));
             p.NextCell = graph.GetNextCell(p.LastFrom);
         }
 
         aRegistry.patch<RigidBody>(e, [&p, &c](RigidBody& aBody) {
             if (p.NextCell) {
                 aBody.Params.Direction = glm::normalize(p.NextCell->ToWorld() - c.ToWorld());
-            } else {
-                aBody.Params.Velocity = 0.0f;
             }
+            // No next cell means the creep reached the last waypoint before the base.
+            // Keep the last direction so the physics body continues into the base collider.
         });
     }
 }

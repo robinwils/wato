@@ -66,7 +66,7 @@ void InputSystem::createActions(Registry& aRegistry, float aDelta)
         Action action = aBinding.Action;
         action.AddExtraInputInfo(input);
 
-        WATO_TRACE(aRegistry, "got action triggered: {}", action);
+        mLogger->trace("got action triggered: {}", action);
 
         if (action.IsFrameTime()) {
             frameBuf.push_back(action);

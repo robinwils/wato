@@ -89,7 +89,7 @@ void NetworkSyncSystem<ENetServer>::Execute(
     }
 
     for (auto& e : rbDestroyedStorage) {
-        WATO_DBG(aRegistry, "rigid body destroyed for {}", e);
+        mLogger->debug("rigid body destroyed for {}", e);
 
         net.BroadcastResponse(
             GetPlayerIDs(aRegistry),

@@ -294,7 +294,11 @@ void GameClient::StartGameInstance(Registry& aRegistry, const NewGameResponse& a
                         .IsTrigger = true,
                         .ShapeParams =
                             BoxShapeParams{
-                                .HalfExtents = GraphCell(1, 1).ToWorld() * 0.5f,
+                                // Must match the server base trigger (see game_server.cpp).
+                                .HalfExtents = glm::vec3(
+                                    GraphCell::kCellSize * 0.75f,
+                                    GraphCell::kCellSize * 0.5f,
+                                    GraphCell::kCellSize * 0.75f),
                             },
                     },
             });
