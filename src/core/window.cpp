@@ -1,6 +1,7 @@
 #include "core/window.hpp"
 
 #include <GLFW/glfw3.h>
+#include <bgfx/bgfx.h>
 #include <bx/bx.h>
 #include <spdlog/spdlog.h>
 
@@ -19,6 +20,19 @@
 #include <GLFW/glfw3native.h>
 
 #include <stdexcept>
+
+namespace
+{
+glm::vec3 unproject(
+    const glm::vec3& aWin,
+    const glm::mat4& aView,
+    const glm::mat4& aProj,
+    const glm::vec4& aViewport)
+{
+    return bgfx::getCaps()->homogeneousDepth ? glm::unProjectNO(aWin, aView, aProj, aViewport)
+                                             : glm::unProjectZO(aWin, aView, aProj, aViewport);
+}
+};  // namespace
 
 Button::Action to_action(int32_t aAction)
 {
@@ -365,19 +379,24 @@ void* WatoWindow::GetNativeWindow()
 }
 
 std::pair<glm::vec3, glm::vec3> WatoWindow::MouseUnproject(
-    const Camera&    aCam,
-    const glm::vec3& aCamPos) const
+    const glm::mat4& aView,
+    const glm::mat4& aProj) const
 {
     const MouseState& mouseState = mInput.MouseState;
     const double      x          = mouseState.Pos.x;
     const double      y          = Height<double>() - mouseState.Pos.y;
-    const glm::mat4&  view       = aCam.View(aCamPos);
-    const glm::mat4&  proj       = aCam.Projection(Width<float>(), Height<float>());
     const auto        viewport   = glm::vec4(0, 0, Width<float>(), Height<float>());
-    const glm::vec3   nearP      = glm::unProject(glm::vec3(x, y, 0.0f), view, proj, viewport);
-    const glm::vec3   farP       = glm::unProject(glm::vec3(x, y, 1.0f), view, proj, viewport);
+    const glm::vec3   nearP      = unproject(glm::vec3(x, y, 0.0f), aView, aProj, viewport);
+    const glm::vec3   farP       = unproject(glm::vec3(x, y, 1.0f), aView, aProj, viewport);
 
     return std::make_pair(nearP, farP);
+}
+
+std::pair<glm::vec3, glm::vec3> WatoWindow::MouseUnproject(
+    const Camera&    aCam,
+    const glm::vec3& aCamPos) const
+{
+    return MouseUnproject(aCam.View(aCamPos), aCam.Projection(Width<float>() / Height<float>()));
 }
 
 glm::vec3
@@ -388,7 +407,7 @@ WatoWindow::ProjectPosition(const glm::vec3& aPos, const Camera& aCam, const glm
     return glm::project(
         aPos,
         aCam.View(aCamPos),
-        aCam.Projection(Width<float>(), Height<float>()),
+        aCam.Projection(Width<float>() / Height<float>()),
         viewport);
 }
 

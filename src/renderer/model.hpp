@@ -36,10 +36,24 @@ class Model final
     ~Model() { spdlog::trace("Model destructor called"); }
 
     void Submit(
-        glm::mat4 aModelMatrix = glm::identity<glm::mat4>(),
-        uint64_t  aState       = BGFX_STATE_DEFAULT);
+        wato::ViewId aView,
+        glm::mat4    aModelMatrix = glm::identity<glm::mat4>(),
+        uint64_t     aState       = BGFX_STATE_DEFAULT);
 
-    void Submit(const InstanceBuffer& aBuffer, uint64_t aState = BGFX_STATE_DEFAULT);
+    void
+    Submit(wato::ViewId aView, const InstanceBuffer& aBuffer, uint64_t aState = BGFX_STATE_DEFAULT);
+
+    void Submit(
+        wato::ViewId        aView,
+        bgfx::ProgramHandle aProgram,
+        glm::mat4           aModelMatrix,
+        uint64_t            aState);
+
+    void Submit(
+        wato::ViewId          aView,
+        bgfx::ProgramHandle   aProgram,
+        const InstanceBuffer& aBuffer,
+        uint64_t              aState);
 
     const ::Skeleton&              Skeleton() const { return mSkeleton; }
     const std::optional<Animation> GetAnimation(const std::string& aName) const

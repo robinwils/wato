@@ -43,7 +43,7 @@ class BlinnPhongMaterial : public Material
     {
     }
 
-    void Submit() const
+    void Submit() const override
     {
         if (mUseDiffuseTexture) {
             bgfx::setTexture(0, mShader->Uniform("s_diffuseTex"), mDiffuseTexture);

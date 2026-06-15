@@ -60,6 +60,9 @@ class WatoWindow
     ProjectPosition(const glm::vec3& aPos, const Camera& aCam, const glm::vec3& aCamPos);
 
     [[nodiscard]] std::pair<glm::vec3, glm::vec3> MouseUnproject(
+        const glm::mat4& aView,
+        const glm::mat4& aProj) const;
+    [[nodiscard]] std::pair<glm::vec3, glm::vec3> MouseUnproject(
         const Camera&    aCam,
         const glm::vec3& aCamPos) const;
 
