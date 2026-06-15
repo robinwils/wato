@@ -1,6 +1,10 @@
 #include "renderer/renderer.hpp"
 
+#include <bgfx/bgfx.h>
+#include <bgfx/platform.h>
 #include <bx/bx.h>
+
+#include <memory>
 
 #include "core/window.hpp"
 #include "imgui_helper.h"
@@ -40,10 +44,16 @@ void BgfxRenderer::Init(WatoWindow& aWin)
     bgfx::setDebug(BGFX_DEBUG_TEXT);
 #endif
 
-    // Set view 0 clear state.
-    bgfx::setViewClear(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x0090cfff, 1.0f, 0);
+    bgfx::setViewClear(wato::kRenderPass, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x0090cfff, 1.0f, 0);
+    bgfx::setViewClear(
+        wato::kPickingPass,
+        BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH,
+        Picker::kBackground,
+        1.0f,
+        0);
 
     imguiCreate();
+    mPicker = std::make_unique<Picker>();
     mIsInit = true;
 }
 
@@ -88,14 +98,16 @@ void BgfxRenderer::Resize(WatoWindow& aWin)
 
 void BgfxRenderer::Clear()
 {
-    bgfx::touch(kClearView);
+    bgfx::touch(wato::kRenderPass);
     bgfx::dbgTextClear();
 }
+
+void BgfxRenderer::SetupPickingPass() { mPicker->Setup(); }
 
 void BgfxRenderer::Render()
 {
     // Advance to next frame. Process submitted rendering primitives.
-    bgfx::frame();
+    mCurrentFrame = bgfx::frame();
 }
 
 void BgfxRenderer::SubmitDebugGeometry(
@@ -119,5 +131,5 @@ void BgfxRenderer::SubmitDebugGeometry(
 
     bgfx::setState(aState);
     bgfx::setVertexBuffer(0, &vb);
-    bgfx::submit(0, aProgram, bgfx::ViewMode::Default);
+    bgfx::submit(wato::kRenderPass, aProgram, bgfx::ViewMode::Default);
 }

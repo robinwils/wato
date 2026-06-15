@@ -12,6 +12,7 @@
 
 #include "core/sys/log.hpp"
 #include "core/types.hpp"
+#include "renderer/render_types.hpp"
 #include "renderer/vertex_layout.hpp"
 
 template <typename VL>
@@ -35,7 +36,7 @@ class Primitive
 
     virtual ~Primitive() { destroyPrimitive(); }
 
-    virtual void Submit(uint8_t aDiscardStates = BGFX_DISCARD_ALL) const
+    virtual void Submit(wato::ViewId aViewId, uint8_t aDiscardStates = BGFX_DISCARD_ALL) const
     {
         mMaterial->Submit();
         assert(mIsInitialized);
@@ -43,7 +44,19 @@ class Primitive
         bgfx::setVertexBuffer(0, mVertexBufferHandle);
         bgfx::setIndexBuffer(mIndexBufferHandle);
 
-        bgfx::submit(0, mMaterial->Program(), bgfx::ViewMode::Default, aDiscardStates);
+        bgfx::submit(aViewId, mMaterial->Program(), bgfx::ViewMode::Default, aDiscardStates);
+    }
+
+    virtual void Submit(
+        wato::ViewId        aViewId,
+        bgfx::ProgramHandle aProgram,
+        uint8_t             aDiscardStates = BGFX_DISCARD_ALL) const
+    {
+        assert(mIsInitialized);
+
+        bgfx::setVertexBuffer(0, mVertexBufferHandle);
+        bgfx::setIndexBuffer(mIndexBufferHandle);
+        bgfx::submit(aViewId, aProgram, bgfx::ViewMode::Default, aDiscardStates);
     }
 
     virtual void InitializePrimitive()
@@ -76,7 +89,7 @@ class Primitive
     std::vector<indice_type>  mIndices;
     std::unique_ptr<Material> mMaterial;
 
-    bool mIsInitialized;
+    bool mIsInitialized{};
 
     bgfx::VertexBufferHandle mVertexBufferHandle;
     bgfx::IndexBufferHandle  mIndexBufferHandle;

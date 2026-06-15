@@ -10,6 +10,7 @@
 
 struct InstanceData {
     glm::mat4 Transform;
+    glm::vec4 Entity;
 };
 
 class InstanceBuffer
@@ -17,7 +18,10 @@ class InstanceBuffer
    public:
     void Clear() { mInstances.clear(); }
 
-    void Add(const glm::mat4& aTransform) { mInstances.push_back({aTransform}); }
+    void Add(const glm::mat4& aTransform, const glm::vec4 aEntity)
+    {
+        mInstances.push_back({aTransform, aEntity});
+    }
 
     [[nodiscard]] uint32_t Count() const { return SafeU32(mInstances.size()); }
 

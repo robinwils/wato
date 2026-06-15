@@ -2,6 +2,7 @@
 
 #include <bgfx/bgfx.h>
 #include <bgfx/defines.h>
+#include <bx/math.h>
 #include <imgui.h>
 #include <spdlog/spdlog.h>
 
@@ -38,16 +39,23 @@ void RenderSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDelta)
     auto& renderer = aRegistry.ctx().get<BgfxRenderer&>();
     auto& window   = aRegistry.ctx().get<WatoWindow&>();
 
-    renderer.SetViewRect(0, 0, 0, window.Width<uint16_t>(), window.Height<uint16_t>());
+    renderer
+        .SetViewRect(wato::kRenderPass, 0, 0, window.Width<uint16_t>(), window.Height<uint16_t>());
+    renderer.SetupPickingPass();
+
     // This dummy draw call is here to make sure that view 0 is cleared
     // if no other draw calls are submitted to view 0.
     renderer.Touch(0);
 
     uint64_t state = BGFX_STATE_DEFAULT;
 
-    auto  bpSkinnedShader   = aRegistry.ctx().get<ShaderCache>()["blinnphong_skinned"_hs];
-    auto  bpInstancedShader = aRegistry.ctx().get<ShaderCache>()["blinnphong_instanced"_hs];
-    auto& modelCache        = aRegistry.ctx().get<ModelCache>();
+    auto bpSkinnedShader   = aRegistry.ctx().get<ShaderCache>()["blinnphong_skinned"_hs];
+    auto bpInstancedShader = aRegistry.ctx().get<ShaderCache>()["blinnphong_instanced"_hs];
+
+    auto pickingSkinnedShader   = aRegistry.ctx().get<ShaderCache>()["picking_skinned"_hs];
+    auto pickingInstancedShader = aRegistry.ctx().get<ShaderCache>()["picking_instanced"_hs];
+
+    auto& modelCache = aRegistry.ctx().get<ModelCache>();
 
     // light
     for (auto&& [light, source] : aRegistry.view<const LightSource>().each()) {
@@ -86,6 +94,8 @@ void RenderSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDelta)
             modelMat *= glm::mat4_cast(offset->Offset);
         }
 
+        glm::vec4 aEncodedEntity = EncodeEntity(ENTT_ID_TYPE(entity));
+
         // Animated entities are rendered individually
         if (const Animator* animator = aRegistry.try_get<Animator>(entity);
             animator && !animator->FinalBonesMatrices.empty()) {
@@ -94,12 +104,16 @@ void RenderSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDelta)
                 bpSkinnedShader->Uniform("u_bones"),
                 animator->FinalBonesMatrices[0],
                 std::min<uint16_t>(numBones, 128));
-            model->Submit(modelMat, state);
+
+            model->Submit(wato::kRenderPass, modelMat, state);
+
+            renderer.SetUniform(pickingSkinnedShader->Uniform("u_id"), aEncodedEntity);
+            model->Submit(wato::kPickingPass, pickingSkinnedShader->Program(), modelMat, state);
             continue;
         }
 
         // Static entities are batched for instancing
-        instanceBuffers[model.operator->()].Add(modelMat);
+        instanceBuffers[model.operator->()].Add(modelMat, aEncodedEntity);
     }
 
     // Submit instanced batches
@@ -111,7 +125,8 @@ void RenderSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDelta)
         if (!buffer.Allocate()) {
             continue;
         }
-        modelPtr->Submit(buffer, state);
+        modelPtr->Submit(wato::kRenderPass, buffer, state);
+        modelPtr->Submit(wato::kPickingPass, pickingInstancedShader->Program(), buffer, state);
     }
 }
 
@@ -142,7 +157,10 @@ void RenderSystem::renderGrid(Registry& aRegistry)
     if (auto grid = aRegistry.ctx().get<ModelCache>()["grid"_hs]; grid) {
         // WATO_DBG(aRegistry, "grid is {}", *grid);
         // WATO_DBG(aRegistry, "{}", aRegistry.ctx().get<Graph>());
-        grid->Submit(glm::identity<glm::mat4>(), BGFX_STATE_DEFAULT | BGFX_STATE_PT_LINES);
+        grid->Submit(
+            wato::kRenderPass,
+            glm::identity<glm::mat4>(),
+            BGFX_STATE_DEFAULT | BGFX_STATE_PT_LINES);
     }
 }
 
@@ -288,9 +306,17 @@ void CameraSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDelta)
     auto& window   = aRegistry.ctx().get<WatoWindow&>();
     auto& renderer = aRegistry.ctx().get<BgfxRenderer&>();
     for (auto&& [entity, camera, transform] : aRegistry.view<Camera, Transform3D>().each()) {
+        // classic rendering matrices
         const auto& viewMat = camera.View(transform.Position);
-        const auto& proj    = camera.Projection(window.Width<float>(), window.Height<float>());
-        renderer.SetViewTransform(0, viewMat, proj);
+        const auto& projMat = camera.Projection(window.Width<float>() / window.Height<float>());
+
+        // picking pass matrices
+        const auto& [pickEye, pickAt] = window.MouseUnproject(viewMat, projMat);
+        const auto& pickView          = glm::lookAt(pickEye, pickAt, camera.Up);
+        const auto& pickProj          = camera.Projection(Picker::kFov, 1.0f);
+
+        renderer.SetViewTransform(wato::kRenderPass, viewMat, projMat);
+        renderer.SetViewTransform(wato::kPickingPass, pickView, pickProj);
 
         // just because I know there is only 1 camera (for now)
         // TODO: put in registry context var as singleton ?

@@ -86,6 +86,22 @@ void LoadShaders(Registry& aRegistry)
             {"u_gridInfo", {bgfx::UniformType::Vec4}   },
             // clang-format on
         });
+    LoadResource(
+        GetSingletonComponent<ShaderCache>(aRegistry),
+        "picking_instanced",
+        "vs_picking_instanced",
+        "fs_picking");
+    LoadResource(
+        GetSingletonComponent<ShaderCache>(aRegistry),
+        "picking_skinned",
+        "vs_picking_skinned",
+        "fs_picking",
+        ShaderLoader::uniform_desc_map{
+            // clang-format off
+            {"u_id",    {bgfx::UniformType::Vec4}},
+            {"u_bones", {bgfx::UniformType::Mat4, 128}},
+            // clang-format on
+        });
 }
 
 void LoadTextures(Registry& aRegistry)
