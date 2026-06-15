@@ -8,6 +8,7 @@
 
 #include "core/window.hpp"
 #include "render_types.hpp"
+#include "renderer/picker.hpp"
 
 class BgfxRenderer
 {
@@ -17,6 +18,7 @@ class BgfxRenderer
     void Init(WatoWindow& aWin);
     void Resize(WatoWindow& aWin);
     void Clear();
+    void SetupPickingPass();
     void Render();
 
     void Touch(wato::ViewId aViewId) { bgfx::touch(aViewId); }
@@ -72,9 +74,9 @@ class BgfxRenderer
    private:
     bgfx::RendererType::Enum detectRenderer(const std::string& aRenderer) const;
 
-    static constexpr bgfx::ViewId kClearView = 0;
-
     bgfx::Init               mInitParams;
     bool                     mIsInit;
     bgfx::RendererType::Enum mRenderer;
+    std::unique_ptr<Picker>  mPicker;
+    uint32_t                 mCurrentFrame;
 };

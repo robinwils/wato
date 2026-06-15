@@ -7,27 +7,39 @@
 #include <bx/file.h>
 #include <essl/fs_blinnphong.sc.bin.h>
 #include <essl/fs_grid.sc.bin.h>
+#include <essl/fs_picking.sc.bin.h>
 #include <essl/fs_simple.sc.bin.h>
 #include <essl/vs_blinnphong.sc.bin.h>
 #include <essl/vs_blinnphong_instanced.sc.bin.h>
 #include <essl/vs_blinnphong_skinned.sc.bin.h>
 #include <essl/vs_grid.sc.bin.h>
+#include <essl/vs_picking.sc.bin.h>
+#include <essl/vs_picking_instanced.sc.bin.h>
+#include <essl/vs_picking_skinned.sc.bin.h>
 #include <essl/vs_simple.sc.bin.h>
 #include <glsl/fs_blinnphong.sc.bin.h>
 #include <glsl/fs_grid.sc.bin.h>
+#include <glsl/fs_picking.sc.bin.h>
 #include <glsl/fs_simple.sc.bin.h>
 #include <glsl/vs_blinnphong.sc.bin.h>
 #include <glsl/vs_blinnphong_instanced.sc.bin.h>
 #include <glsl/vs_blinnphong_skinned.sc.bin.h>
 #include <glsl/vs_grid.sc.bin.h>
+#include <glsl/vs_picking.sc.bin.h>
+#include <glsl/vs_picking_instanced.sc.bin.h>
+#include <glsl/vs_picking_skinned.sc.bin.h>
 #include <glsl/vs_simple.sc.bin.h>
 #include <spirv/fs_blinnphong.sc.bin.h>
 #include <spirv/fs_grid.sc.bin.h>
+#include <spirv/fs_picking.sc.bin.h>
 #include <spirv/fs_simple.sc.bin.h>
 #include <spirv/vs_blinnphong.sc.bin.h>
 #include <spirv/vs_blinnphong_instanced.sc.bin.h>
 #include <spirv/vs_blinnphong_skinned.sc.bin.h>
 #include <spirv/vs_grid.sc.bin.h>
+#include <spirv/vs_picking.sc.bin.h>
+#include <spirv/vs_picking_instanced.sc.bin.h>
+#include <spirv/vs_picking_skinned.sc.bin.h>
 #include <spirv/vs_simple.sc.bin.h>
 
 #include <memory>
@@ -37,19 +49,27 @@
 #if defined(_WIN32)
 #include <dxbc/fs_blinnphong.sc.bin.h>
 #include <dxbc/fs_grid.sc.bin.h>
+#include <dxbc/fs_picking.sc.bin.h>
 #include <dxbc/fs_simple.sc.bin.h>
 #include <dxbc/vs_blinnphong.sc.bin.h>
 #include <dxbc/vs_blinnphong_instanced.sc.bin.h>
 #include <dxbc/vs_blinnphong_skinned.sc.bin.h>
 #include <dxbc/vs_grid.sc.bin.h>
+#include <dxbc/vs_picking.sc.bin.h>
+#include <dxbc/vs_picking_instanced.sc.bin.h>
+#include <dxbc/vs_picking_skinned.sc.bin.h>
 #include <dxbc/vs_simple.sc.bin.h>
 #include <dxil/fs_blinnphong.sc.bin.h>
 #include <dxil/fs_grid.sc.bin.h>
+#include <dxil/fs_picking.sc.bin.h>
 #include <dxil/fs_simple.sc.bin.h>
 #include <dxil/vs_blinnphong.sc.bin.h>
 #include <dxil/vs_blinnphong_instanced.sc.bin.h>
 #include <dxil/vs_blinnphong_skinned.sc.bin.h>
 #include <dxil/vs_grid.sc.bin.h>
+#include <dxil/vs_picking.sc.bin.h>
+#include <dxil/vs_picking_instanced.sc.bin.h>
+#include <dxil/vs_picking_skinned.sc.bin.h>
 #include <dxil/vs_simple.sc.bin.h>
 #else
 // BX marks linux as a supported platform for Direct3D shaders but shaderc CMake wrapper does not
@@ -60,11 +80,15 @@
 #if __APPLE__
 #include <metal/fs_blinnphong.sc.bin.h>
 #include <metal/fs_grid.sc.bin.h>
+#include <metal/fs_picking.sc.bin.h>
 #include <metal/fs_simple.sc.bin.h>
 #include <metal/vs_blinnphong.sc.bin.h>
 #include <metal/vs_blinnphong_instanced.sc.bin.h>
 #include <metal/vs_blinnphong_skinned.sc.bin.h>
 #include <metal/vs_grid.sc.bin.h>
+#include <metal/vs_picking.sc.bin.h>
+#include <metal/vs_picking_instanced.sc.bin.h>
+#include <metal/vs_picking_skinned.sc.bin.h>
 #include <metal/vs_simple.sc.bin.h>
 #endif  // __APPLE__
         //
@@ -78,6 +102,10 @@ static const bgfx::EmbeddedShader kEmbeddedShaders[] = {
     BGFX_EMBEDDED_SHADER(vs_blinnphong_skinned),
     BGFX_EMBEDDED_SHADER(vs_blinnphong_instanced),
     BGFX_EMBEDDED_SHADER(fs_blinnphong),
+    BGFX_EMBEDDED_SHADER(vs_picking),
+    BGFX_EMBEDDED_SHADER(vs_picking_skinned),
+    BGFX_EMBEDDED_SHADER(vs_picking_instanced),
+    BGFX_EMBEDDED_SHADER(fs_picking),
     BGFX_EMBEDDED_SHADER_END()};
 
 struct ShaderLoader final {

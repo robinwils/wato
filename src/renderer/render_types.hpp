@@ -1,8 +1,11 @@
 #pragma once
 
+#include <bgfx/bgfx.h>
+
 #include <cstdint>
 
-namespace wato {
+namespace wato
+{
 
 using ViewId = uint16_t;
 
@@ -16,5 +19,8 @@ enum class TextureFormat : uint8_t {
     R8,
     BGRA8,
 };
+
+static constexpr ViewId kRenderPass  = 0;
+static constexpr ViewId kPickingPass = 1;
 
 }  // namespace wato

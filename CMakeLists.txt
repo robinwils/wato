@@ -207,9 +207,11 @@ if (ENABLE_CLIENT)
     src/renderer/animation.hpp
     src/renderer/bgfx_utils.hpp
     src/renderer/blinn_phong_material.hpp
+    src/renderer/framebuffer.hpp
     src/renderer/grid_preview_material.hpp
     src/renderer/material.hpp
     src/renderer/model.hpp
+    src/renderer/picker.hpp
     src/renderer/plane_primitive.hpp
     src/renderer/primitive.hpp
     src/renderer/renderer.hpp
@@ -242,6 +244,7 @@ if (ENABLE_CLIENT)
     src/registry/game_registry.cpp
     src/renderer/bgfx_utils.cpp
     src/renderer/model.cpp
+    src/renderer/picker.cpp
     src/renderer/renderer.cpp
     src/renderer/skeleton.cpp
     src/resource/asset.cpp
@@ -258,6 +261,7 @@ if (ENABLE_CLIENT)
 
     shaders/fs_blinnphong.sc
     shaders/fs_grid.sc
+    shaders/fs_picking.sc
     shaders/fs_simple.sc
     shaders/vs_blinnphong.sc
     shaders/vs_blinnphong_skinned.sc
@@ -269,6 +273,9 @@ if (ENABLE_CLIENT)
     src/imgui/fs_ocornut_imgui.sc
     src/imgui/vs_imgui_image.sc
     src/imgui/vs_ocornut_imgui.sc
+    shaders/vs_picking.sc
+    shaders/vs_picking_skinned.sc
+    shaders/vs_picking_instanced.sc
   )
   target_include_directories(wato PRIVATE ${CMAKE_BINARY_DIR}/include/generated/shaders)
   target_link_libraries(wato
@@ -433,6 +440,9 @@ bgfx_compile_shaders(
     shaders/vs_blinnphong.sc
     shaders/vs_blinnphong_skinned.sc
     shaders/vs_blinnphong_instanced.sc
+    shaders/vs_picking.sc
+    shaders/vs_picking_skinned.sc
+    shaders/vs_picking_instanced.sc
   VARYING_DEF ${CMAKE_SOURCE_DIR}/shaders/varying.def.sc
   OUTPUT_DIR ${CMAKE_BINARY_DIR}/include/generated/shaders
   AS_HEADERS
@@ -444,6 +454,7 @@ bgfx_compile_shaders(
     shaders/fs_simple.sc
     shaders/fs_grid.sc
     shaders/fs_blinnphong.sc
+    shaders/fs_picking.sc
   VARYING_DEF ${CMAKE_SOURCE_DIR}/shaders/varying.def.sc
   OUTPUT_DIR ${CMAKE_BINARY_DIR}/include/generated/shaders
   AS_HEADERS
