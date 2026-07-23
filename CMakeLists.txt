@@ -59,7 +59,7 @@ FetchContent_Declare(
 FetchContent_Declare(
   enet
   GIT_REPOSITORY https://github.com/zpl-c/enet
-  GIT_TAG v2.6.2
+  GIT_TAG v2.7.0
   FIND_PACKAGE_ARGS NAMES enet
 )
 
@@ -81,7 +81,7 @@ if (ENABLE_TESTS)
   FetchContent_Declare(
     doctest
     GIT_REPOSITORY https://github.com/doctest/doctest
-    GIT_TAG v2.4.11
+    GIT_TAG v2.5.3
     FIND_PACKAGE_ARGS NAMES doctest
   )
 endif()
