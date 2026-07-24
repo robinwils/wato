@@ -13,6 +13,7 @@
 #include "core/net/net.hpp"
 #include "core/net/pocketbase.hpp"
 #include "core/physics/physics_event_listener.hpp"
+#include "core/pick_state.hpp"
 #include "imgui_hud.hpp"
 #include "input/action.hpp"
 #include "registry/registry.hpp"
@@ -112,6 +113,7 @@ class GameClient : public Application
         mRegistry.ctx().emplace<ModelCache>();
         mRegistry.ctx().emplace<EntitySyncMap>();
         mRegistry.ctx().emplace<PocketBaseClient>(mOptions.BackendAddr(), mLogger);
+        mRegistry.ctx().emplace<PickState>();
 
         // Create dispatcher for network events
         mRegistry.ctx().emplace_as<entt::dispatcher>("net_dispatcher"_hs);

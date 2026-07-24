@@ -243,8 +243,6 @@ class Input
 
     void Init();
 
-    const std::optional<glm::vec3>& MouseWorldIntersect() const { return mMouseWorldIntersect; }
-
     void AddInputChar(uint32_t aCodepoint) { mInputChars.push_back(aCodepoint); }
     void ClearInputChars() { mInputChars.clear(); }
 
@@ -257,8 +255,7 @@ class Input
     struct KeyboardState KeyboardState, PrevKeyboardState;
 
    private:
-    std::optional<glm::vec3> mMouseWorldIntersect;
-    std::vector<uint32_t>    mInputChars;  // Unicode codepoints typed this frame
+    std::vector<uint32_t> mInputChars;  // Unicode codepoints typed this frame
 
     friend class WatoWindow;
 };
