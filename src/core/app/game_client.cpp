@@ -3,6 +3,7 @@
 #include <bx/bx.h>
 #include <sodium/runtime.h>
 #include <spdlog/spdlog.h>
+#include <taskflow/taskflow.hpp>
 
 #include <chrono>
 #include <entt/core/fwd.hpp>
@@ -103,7 +104,7 @@ int GameClient::Run(tf::Executor& aExecutor)
     auto& netClient = GetSingletonComponent<ENetClient&>(mRegistry);
     auto  prevTime  = clock_type::now();
 
-    mNetworkThread = std::thread([this]() { networkThread(); });
+    mNetworkFuture = aExecutor.async([this]() { networkThread(); });
 
     while (!window.ShouldClose()) {
         window.PollEvents();
