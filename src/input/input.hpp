@@ -148,8 +148,9 @@ struct Button {
     };
 
     struct State {
-        State() : Action(Action::Unknown), Modifiers(0) {}
-        std::string String() const;
+        State() = default;
+
+        [[nodiscard]] std::string String() const;
 
         enum Action Action { Action::Unknown };
         uint8_t     Modifiers{0};
@@ -225,11 +226,11 @@ struct KeyboardState : public InputState<Keyboard::Count> {
 };
 
 struct MouseState : public InputState<Mouse::Count> {
-    MouseState() : InputState(), Pos(), Scroll() {}
-    ~MouseState() = default;
+    MouseState() : Pos(), Scroll() {}
 
-    std::string String() const;
-    glm::dvec2  Pos, Scroll;
+    [[nodiscard]] std::string String() const;
+
+    glm::dvec2 Pos, Scroll;
 };
 
 std::string key_string(const Keyboard::Key& aK);
@@ -238,7 +239,7 @@ std::string mouse_button_string(const Mouse::Button& aButton);
 class Input
 {
    public:
-    Input() : MouseState() {}
+    Input() = default;
 
     void Init();
 
@@ -246,7 +247,8 @@ class Input
 
     void AddInputChar(uint32_t aCodepoint) { mInputChars.push_back(aCodepoint); }
     void ClearInputChars() { mInputChars.clear(); }
-    const std::vector<uint32_t>& InputChars() const { return mInputChars; }
+
+    [[nodiscard]] const std::vector<uint32_t>& InputChars() const { return mInputChars; }
 
     bool UiWantsMouse    = false;
     bool UiWantsKeyboard = false;
