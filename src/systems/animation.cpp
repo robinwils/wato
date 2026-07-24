@@ -4,6 +4,8 @@
 
 #include <glm/gtx/string_cast.hpp>
 #include <stdexcept>
+#include <taskflow/algorithm/for_each.hpp>
+#include <taskflow/core/executor.hpp>
 
 #include "components/scene_object.hpp"
 #include "components/transform3d.hpp"
@@ -12,45 +14,52 @@
 
 void AnimationSystem::Execute(Registry& aRegistry, const float aDelta)
 {
-    for (auto&& [entity, obj, animator] : aRegistry.view<SceneObject, Animator>().each()) {
-        if (auto model = aRegistry.ctx().get<ModelCache>()[obj.ModelHash]; model) {
-            if (!animator.Animation
-                && !(animator.Animation = model->GetAnimation(animator.AnimationName))) {
-                mLogger->warn(
-                    "could not get animation {}, ignoring",
-                    animator.AnimationName);
-                continue;
+    tf::Executor executor;
+    tf::Taskflow taskflow;
+
+    auto objView = aRegistry.view<SceneObject, Animator>();
+    taskflow.for_each(
+        objView.begin(),
+        objView.end(),
+        [&objView, &aRegistry, this, aDelta](const auto aEntity) {
+            auto [obj, animator] = objView.get<SceneObject, Animator>(aEntity);
+            if (auto model = aRegistry.ctx().get<ModelCache>()[obj.ModelHash]; model) {
+                if (!animator.Animation
+                    && !(animator.Animation = model->GetAnimation(animator.AnimationName))) {
+                    mLogger->warn("could not get animation {}, ignoring", animator.AnimationName);
+                    return;
+                }
+                const Skeleton& skeleton = model->Skeleton();
+
+                if (skeleton.Bones.empty()) {
+                    mLogger->warn("got empty skeleton for {}", obj.ModelHash.data());
+                    return;
+                }
+
+                animator.Time += static_cast<double>(aDelta);
+
+                double animatonTimeTicks = animator.Time * animator.Animation->TicksPerSecond();
+                double animationTime = std::fmod(animatonTimeTicks, animator.Animation->Duration());
+
+                if (animator.FinalBonesMatrices.empty()) {
+                    mLogger->debug(
+                        "empty final bone vertices, reserving {}",
+                        skeleton.Bones.size());
+                    animator.FinalBonesMatrices.resize(skeleton.Bones.size());
+                }
+
+                animateBone(
+                    AnimationContext{
+                        .Skeleton      = &skeleton,
+                        .Animator      = &animator,
+                        .Time          = animationTime,
+                        .GlobalInverse = model->GlobalInverse(),
+                    },
+                    0,
+                    glm::identity<glm::mat4>());
             }
-            const Skeleton& skeleton = model->Skeleton();
-
-            if (skeleton.Bones.empty()) {
-                mLogger->warn("got empty skeleton for {}", obj.ModelHash.data());
-                continue;
-            }
-
-            animator.Time += static_cast<double>(aDelta);
-
-            double animatonTimeTicks = animator.Time * animator.Animation->TicksPerSecond();
-            double animationTime     = std::fmod(animatonTimeTicks, animator.Animation->Duration());
-
-            if (animator.FinalBonesMatrices.empty()) {
-                mLogger->debug(
-                    "empty final bone vertices, reserving {}",
-                    skeleton.Bones.size());
-                animator.FinalBonesMatrices.resize(skeleton.Bones.size());
-            }
-
-            animateBone(
-                AnimationContext{
-                    .Skeleton      = &skeleton,
-                    .Animator      = &animator,
-                    .Time          = animationTime,
-                    .GlobalInverse = model->GlobalInverse(),
-                },
-                0,
-                glm::identity<glm::mat4>());
-        }
-    }
+        });
+    executor.run(taskflow).wait();
 }
 
 template <typename KT>
@@ -65,6 +74,7 @@ KT AnimationSystem::interpolateKey(std::vector<AnimationKeyFrame<KT>> aKeys, con
     if (aTime >= aKeys.back().Time) {
         return aKeys.back().Key;
     }
+
     for (unsigned int posIdx = 0; posIdx < aKeys.size() - 1; ++posIdx) {
         if (aTime < aKeys[posIdx + 1].Time) {
             return aKeys[posIdx].Interpolate(aKeys[posIdx + 1], aTime);
