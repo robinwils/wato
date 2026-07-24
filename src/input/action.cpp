@@ -3,6 +3,7 @@
 #include <spdlog/spdlog.h>
 
 #include "components/imgui.hpp"
+#include "core/pick_state.hpp"
 #include "components/placement_mode.hpp"
 #include "components/scene_object.hpp"
 #include "components/transform3d.hpp"
@@ -99,10 +100,8 @@ void ActionContextStack::EnterPlacement(Registry& aRegistry, TowerType aTower)
     WATO_DBG(aRegistry, "created ghost tower {}", ghostTower);
     aRegistry.emplace<SceneObject>(ghostTower, def.Model.Object);
     glm::vec3 startPos{0.0f};
-    if (auto** ip = aRegistry.ctx().find<const Input*>()) {
-        if (const auto& hit = (*ip)->MouseWorldIntersect()) {
-            startPos = *hit;
-        }
+    if (auto hit = GetSingletonComponent<PickState>(aRegistry).MouseWorldIntersect; hit) {
+        startPos = *hit;
     }
     aRegistry
         .emplace<Transform3D>(ghostTower, startPos, glm::identity<glm::quat>(), glm::vec3(0.1f));

@@ -7,6 +7,8 @@
 #include <string>
 #include <vector>
 
+#include "core/math.hpp"
+
 struct Keyboard {
     enum Key {
         Space,
@@ -243,12 +245,12 @@ class Input
 
     void Init();
 
-    const std::optional<glm::vec3>& MouseWorldIntersect() const { return mMouseWorldIntersect; }
-
     void AddInputChar(uint32_t aCodepoint) { mInputChars.push_back(aCodepoint); }
     void ClearInputChars() { mInputChars.clear(); }
 
     [[nodiscard]] const std::vector<uint32_t>& InputChars() const { return mInputChars; }
+
+    void UpdatePicker(const glm::mat4& aMat, bool aHomogeneousDepth);
 
     bool UiWantsMouse    = false;
     bool UiWantsKeyboard = false;
@@ -257,8 +259,8 @@ class Input
     struct KeyboardState KeyboardState, PrevKeyboardState;
 
    private:
-    std::optional<glm::vec3> mMouseWorldIntersect;
-    std::vector<uint32_t>    mInputChars;  // Unicode codepoints typed this frame
+    std::vector<uint32_t>  mInputChars;  // Unicode codepoints typed this frame
+    std::optional<Frustum> mPicker;
 
     friend class WatoWindow;
 };

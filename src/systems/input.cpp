@@ -11,6 +11,7 @@
 #include "components/tile.hpp"
 #include "components/transform3d.hpp"
 #include "core/physics/physics.hpp"
+#include "core/pick_state.hpp"
 #include "core/state.hpp"
 #include "core/sys/log.hpp"
 #include "core/window.hpp"
@@ -30,17 +31,18 @@ void InputSystem::handleMouseMovement(Registry& aRegistry)
     auto& window = GetSingletonComponent<WatoWindow&>(aRegistry);
     auto& phy    = GetSingletonComponent<Physics&>(aRegistry);
 
-    glm::vec3 origin, end;
+    if (stack.GetState<PlacementState>() != nullptr) {
+        glm::vec3 origin;
+        glm::vec3 end;
 
-    for (auto&& [_, camera, tcam] : aRegistry.view<Camera, Transform3D>().each()) {
-        std::tie(origin, end) = window.MouseUnproject(camera, tcam.Position);
-    }
+        for (auto&& [_, camera, tcam] : aRegistry.view<Camera, Transform3D>().each()) {
+            std::tie(origin, end) = window.MouseUnproject(camera, tcam.Position);
+        }
 
-    if (stack.GetState<PlacementState>()) {
         if (std::optional<glm::vec3> intersect = phy.RayTerrainIntersection(origin, end);
             intersect) {
-            window.SetMouseIntersect(*intersect);
-            auto placementModeView = aRegistry.view<PlacementMode>();
+            aRegistry.ctx().get<PickState>().MouseWorldIntersect = *intersect;
+            auto placementModeView                               = aRegistry.view<PlacementMode>();
             for (auto ghostTower : placementModeView) {
                 aRegistry.patch<Transform3D>(ghostTower, [&](Transform3D& aT) {
                     aT.Position.x = intersect->x;
@@ -49,14 +51,14 @@ void InputSystem::handleMouseMovement(Registry& aRegistry)
             }
         }
     } else {
-        window.ResetMouseIntersect();
+        GetSingletonComponent<PickState&>(aRegistry).MouseWorldIntersect.reset();
     }
 }
 
 void InputSystem::createActions(Registry& aRegistry, float aDelta)
 {
-    const Input& input = GetSingletonComponent<WatoWindow&>(aRegistry).GetInput();
-    auto&        stack = GetSingletonComponent<ActionContextStack&>(aRegistry);
+    const Input& input    = GetSingletonComponent<WatoWindow&>(aRegistry).GetInput();
+    auto&        stack    = GetSingletonComponent<ActionContextStack&>(aRegistry);
     auto&        frameBuf = GetSingletonComponent<FrameActionBuffer&>(aRegistry);
     auto&        gameBuf  = GetSingletonComponent<GameStateBuffer&>(aRegistry);
 
@@ -64,7 +66,7 @@ void InputSystem::createActions(Registry& aRegistry, float aDelta)
         if (!aBinding.KeyState.IsTriggered(input)) return;
 
         Action action = aBinding.Action;
-        action.AddExtraInputInfo(input);
+        action.AddExtraInputInfo(GetSingletonComponent<PickState>(aRegistry).MouseWorldIntersect);
 
         mLogger->trace("got action triggered: {}", action);
 

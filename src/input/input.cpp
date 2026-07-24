@@ -335,8 +335,8 @@ std::string KeyboardState::String() const
 {
     std::string str;
 
-    for (uint32_t i = 0; i < Keyboard::Count; ++i) {
-        auto& state = Inputs[i];
+    for (std::size_t i = 0; i < Keyboard::Count; ++i) {
+        const Button::State& state = Inputs.at(i);
         if (state.Action != Button::Unknown) {
             str = fmt::format(
                 "{}\n {} {}",
@@ -346,4 +346,14 @@ std::string KeyboardState::String() const
         }
     }
     return str;
+}
+
+void Input::UpdatePicker(const glm::mat4& aMat, bool aHomogeneousDepth)
+{
+    if (MouseState.IsKeyRepeat(Mouse::Left)) {
+    }
+
+    if (!mPicker) {
+        mPicker = Frustum::MakeFrustum(aMat, aHomogeneousDepth);
+    }
 }

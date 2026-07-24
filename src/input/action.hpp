@@ -97,23 +97,23 @@ struct Action {
         std::variant<MovePayload, SendCreepPayload, BuildTowerPayload, PlacementModePayload>;
     payload_type Payload;
 
-    void AddExtraInputInfo(const Input& aInput)
+    void AddExtraInputInfo(const std::optional<glm::vec3> aPos)
     {
         struct Visitor {
-            const Input* In;
+            std::optional<glm::vec3> Pos;
 
             void operator()(MovePayload&) const {}
             void operator()(SendCreepPayload&) const {}
             void operator()(BuildTowerPayload& aPayload) const
             {
-                if (In->MouseWorldIntersect().has_value()) {
-                    aPayload.Position = *In->MouseWorldIntersect();
+                if (Pos.has_value()) {
+                    aPayload.Position = *Pos;
                 }
             }
             void operator()(PlacementModePayload&) const {}
         };
 
-        std::visit(Visitor{&aInput}, Payload);
+        std::visit(Visitor{aPos}, Payload);
     }
 
     bool Archive(auto& aArchive) { return ArchiveVariant(aArchive, Payload); }
