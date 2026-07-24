@@ -9,6 +9,7 @@ Checks: "
         -zircon-*,
         cppcoreguidelines-*,
         -cppcoreguidelines-non-private-member-variables-in-classes,
+        -cppcoreguidelines-pro-type-union-access,
         performance-*,
         portability-*,
         concurrency-*,
