@@ -3,8 +3,8 @@
 #include <bgfx/bgfx.h>
 
 #include <entt/entity/fwd.hpp>
+#include <future>
 #include <memory>
-#include <thread>
 
 #include "core/app/app.hpp"
 #include "core/menu/imgui_menu.hpp"
@@ -46,8 +46,8 @@ class GameClient : public Application
         // Stop the network thread before destroying any resources it uses
         auto& netClient = GetSingletonComponent<ENetClient&>(mRegistry);
         netClient.ForceDisconnect();
-        if (mNetworkThread.joinable()) {
-            mNetworkThread.join();
+        if (mNetworkFuture.valid()) {
+            mNetworkFuture.wait();
         }
 
         std::vector<entt::id_type> ids;
@@ -125,6 +125,6 @@ class GameClient : public Application
 
     Registry mRegistry;
 
-    std::thread                           mNetworkThread;
+    std::future<void>                     mNetworkFuture;
     std::optional<clock_type::time_point> mDiscTimerStart;
 };
