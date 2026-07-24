@@ -203,10 +203,8 @@ constexpr unsigned short CollidesWith(auto... aCategories)
     return static_cast<unsigned short>((aCategories | ...));
 }
 
-inline rp3d::Vector3 ToRP3D(const glm::vec3 aVector)
-{
-    return rp3d::Vector3(aVector.x, aVector.y, aVector.z);
-}
+inline rp3d::Vector3 ToRP3D(const glm::vec3& aVec) { return {aVec.x, aVec.y, aVec.z}; }
+inline glm::vec3     FromRP3D(const rp3d::Vector3& aVec) { return {aVec.x, aVec.y, aVec.z}; }
 
 /// Matches a collision pair against expected categories.
 /// Returns colliders ordered as {aFirstCategory, aSecondCategory}.
@@ -230,16 +228,18 @@ inline std::pair<const rp3d::Collider*, const rp3d::Collider*> MatchColliderPair
 }
 
 struct WorldRaycastCallback : public rp3d::RaycastCallback {
-    virtual rp3d::decimal notifyRaycastHit(const rp3d::RaycastInfo& aInfo) override
+    rp3d::decimal notifyRaycastHit(const rp3d::RaycastInfo& aInfo) override
     {
-        if (aInfo.hitFraction == 0.0f) return -1.0f;
-        Hits.push_back(glm::vec3(aInfo.worldPoint.x, aInfo.worldPoint.y, aInfo.worldPoint.z));
+        if (aInfo.hitFraction == 0.0f) {
+            return -1.0f;
+        }
+        Hits.emplace_back(aInfo.worldPoint.x, aInfo.worldPoint.y, aInfo.worldPoint.z);
 
         // Return a fraction of 1.0 to gather all hits
         return aInfo.hitFraction;
     }
 
-    std::string String() const
+    [[nodiscard]] std::string String() const
     {
         std::string res;
         for (const auto& hit : Hits) {
@@ -250,4 +250,3 @@ struct WorldRaycastCallback : public rp3d::RaycastCallback {
 
     std::vector<glm::vec3> Hits;
 };
-
