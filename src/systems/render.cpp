@@ -14,22 +14,17 @@
 #include <memory>
 #include <span>
 #include <unordered_map>
-#include <variant>
 
 #include "components/animator.hpp"
 #include "components/camera.hpp"
 #include "components/health.hpp"
 #include "components/imgui.hpp"
+#include "components/light_source.hpp"
 #include "components/model_rotation_offset.hpp"
-#include "components/player.hpp"
+#include "components/placement_mode.hpp"
 #include "components/scene_object.hpp"
 #include "core/menu/menu.hpp"
-#include "core/menu/menu_events.hpp"
-#include "core/net/pocketbase.hpp"
 #include "core/physics/physics.hpp"
-#include "core/sys/log.hpp"
-#include "core/tile.hpp"
-#include "core/types.hpp"
 #include "core/window.hpp"
 #include "imgui_helper.h"
 #include "imgui_hud.hpp"

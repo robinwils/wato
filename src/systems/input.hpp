@@ -13,6 +13,8 @@ class InputSystem : public FrameSystem
    public:
     using FrameSystem::FrameSystem;
 
+    const char* Name() const override { return "InputSystem"; }
+
    protected:
     void Execute(Registry& aRegistry, float aDelta) override;
 

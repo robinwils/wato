@@ -287,9 +287,11 @@ std::vector<PlayerInitData> GameServer::spawnPlayers(
         aRegistry.emplace<Gold>(player, mGameplayDef.Economy.StartingGold);
         WATO_INFO(aRegistry, "server player {} created", player);
 
-        auto& pTransform = aRegistry.emplace<Transform3D>(
+        // Offset by half a cell so the cell-aligned base trigger is centered on the dest cell.
+        constexpr float kHalfCell  = GraphCell::kCellSize * 0.5f;
+        auto&           pTransform = aRegistry.emplace<Transform3D>(
             player,
-            glm::vec3(2.0f + offset.x, 0.004f, 2.0f + offset.y));
+            glm::vec3(2.0f + kHalfCell + offset.x, 0.004f, 2.0f + kHalfCell + offset.y));
         aRegistry.emplace<RigidBody>(
             player,
             RigidBody{
@@ -314,7 +316,11 @@ std::vector<PlayerInitData> GameServer::spawnPlayers(
                         .IsTrigger = true,
                         .ShapeParams =
                             BoxShapeParams{
-                                .HalfExtents = GraphCell(1, 1).ToWorld() * 0.5f,
+                                // ~1.5 cells wide so a creep reaching the dest cell overlaps it.
+                                .HalfExtents = glm::vec3(
+                                    GraphCell::kCellSize * 0.75f,
+                                    GraphCell::kCellSize * 0.5f,
+                                    GraphCell::kCellSize * 0.75f),
                             },
                     },
             });

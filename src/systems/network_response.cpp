@@ -70,7 +70,7 @@ void NetworkResponseSystem::onRigidBodyUpdate(const RigidBodyUpdateEvent& aEvent
         }
         void operator()(const std::monostate&) const
         {
-            WATO_INFO(*Reg, "created entity {} (no specific init data)", Update->Entity);
+            Self->mLogger->info("created entity {} (no specific init data)", Update->Entity);
         }
     };
 
@@ -92,8 +92,7 @@ void NetworkResponseSystem::onRigidBodyUpdate(const RigidBodyUpdateEvent& aEvent
                 entt::entity clientEntity = syncMap[update.Entity];
                 registry.destroy(clientEntity);
                 syncMap.erase(update.Entity);
-                WATO_INFO(
-                    registry,
+                mLogger->info(
                     "destroyed entity {} (server entity {})",
                     clientEntity,
                     update.Entity);
@@ -111,16 +110,14 @@ void NetworkResponseSystem::onHealthUpdate(const HealthUpdateEvent& aEvent)
 
     if (syncMap.contains(update.Entity)) {
         entt::entity e = syncMap[update.Entity];
-        WATO_INFO(
-            registry,
+        mLogger->info(
             "received health update for server {}, updating local {} => {}",
             update.Entity,
             e,
             update.Health);
         registry.patch<Health>(e, [&update](Health& aHealth) { aHealth.Health = update.Health; });
     } else {
-        WATO_WARN(
-            registry,
+        mLogger->warn(
             "received health update for server {} with {}, but entity not synced",
             update.Entity,
             update.Health);
@@ -136,16 +133,15 @@ void NetworkResponseSystem::onGoldUpdate(const GoldUpdateEvent& aEvent)
     auto* gold         = registry.try_get<Gold>(playerEntity);
     if (gold) {
         gold->Balance = update.Balance;
-        WATO_DBG(registry, "gold update for player {}: {}", update.Player, update.Balance);
+        mLogger->debug("gold update for player {}: {}", update.Player, update.Balance);
     } else {
-        WATO_WARN(registry, "gold update for player {} but no Gold component", update.Player);
+        mLogger->warn("gold update for player {} but no Gold component", update.Player);
     }
 }
 
 void NetworkResponseSystem::onSyncPayload(const SyncPayloadEvent& aEvent)
 {
-    Registry&   registry = *aEvent.Reg;
-    const auto& payload  = aEvent.Payload;
+    const auto& payload = aEvent.Payload;
 
     if (payload.State.Snapshot.empty()) {
         return;
@@ -155,8 +151,7 @@ void NetworkResponseSystem::onSyncPayload(const SyncPayloadEvent& aEvent)
     Registry              tmp;
     entt::snapshot_loader loader{tmp};
 
-    WATO_TRACE(
-        registry,
+    mLogger->trace(
         "loading state snapshot {} of size {}",
         payload.State.Tick,
         payload.State.Snapshot.size());
@@ -171,18 +166,18 @@ void NetworkResponseSystem::createProjectile(
 {
     auto& syncMap = GetSingletonComponent<EntitySyncMap>(aRegistry);
 
-    WATO_INFO(aRegistry, "got projectile init data");
+    mLogger->info("got projectile init data");
 
     auto sourceTowerIt = syncMap.find(aInit.SourceTower);
     if (sourceTowerIt == syncMap.end()) {
-        WATO_WARN(aRegistry, "source tower {} not found in sync map", aInit.SourceTower);
+        mLogger->warn("source tower {} not found in sync map", aInit.SourceTower);
         return;
     }
 
     entt::entity clientTower    = sourceTowerIt->second;
     auto*        towerTransform = aRegistry.try_get<Transform3D>(clientTower);
     if (!towerTransform) {
-        WATO_WARN(aRegistry, "source tower {} has no transform", clientTower);
+        mLogger->warn("source tower {} has no transform", clientTower);
         return;
     }
 
@@ -202,7 +197,7 @@ void NetworkResponseSystem::createProjectile(
     if (targetIt != syncMap.end()) {
         clientTarget = targetIt->second;
     } else {
-        WATO_ERR(aRegistry, "projectile server target {} unknown", aInit.Target);
+        mLogger->error("projectile server target {} unknown", aInit.Target);
     }
 
     aRegistry
@@ -213,7 +208,7 @@ void NetworkResponseSystem::createProjectile(
 
     syncMap.insert_or_assign(aUpdate.Entity, projectile);
 
-    WATO_INFO(aRegistry, "created projectile {} from server entity {}", projectile, aUpdate.Entity);
+    mLogger->info("created projectile {} from server entity {}", projectile, aUpdate.Entity);
 }
 
 void NetworkResponseSystem::createTower(
@@ -248,7 +243,7 @@ void NetworkResponseSystem::createTower(
 
     syncMap.insert_or_assign(aUpdate.Entity, tower);
 
-    WATO_INFO(aRegistry, "created tower {} from server entity {}", tower, aUpdate.Entity);
+    mLogger->info("created tower {} from server entity {}", tower, aUpdate.Entity);
 }
 
 void NetworkResponseSystem::createCreep(
@@ -287,5 +282,5 @@ void NetworkResponseSystem::createCreep(
 
     syncMap.insert_or_assign(aUpdate.Entity, creep);
 
-    WATO_INFO(aRegistry, "created creep {} from server entity {}", creep, aUpdate.Entity);
+    mLogger->info("created creep {} from server entity {}", creep, aUpdate.Entity);
 }

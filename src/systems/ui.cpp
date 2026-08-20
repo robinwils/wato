@@ -60,7 +60,7 @@ void UISystem::onLogin(const LoginEvent& aEvent)
         }
     });
 
-    WATO_INFO(*reg, "pb.Login() returned (not blocked)");
+    mLogger->info("pb.Login() returned (not blocked)");
 }
 
 void UISystem::onLoginResult(const LoginResultEvent& aEvent)
@@ -73,7 +73,7 @@ void UISystem::onLoginResult(const LoginResultEvent& aEvent)
     if (aEvent.Error.empty()) {
         auto playerID = IDFromHexString<PlayerID>(aEvent.ID);
         if (!playerID) {
-            WATO_ERR(registry, "invalid player ID: '{}'", aEvent.ID);
+            mLogger->error("invalid player ID: '{}'", aEvent.ID);
             return;
         }
 
@@ -92,13 +92,13 @@ void UISystem::onLoginResult(const LoginResultEvent& aEvent)
         auto& netClient = GetSingletonComponent<ENetClient&>(registry);
         netClient.Connect();
 
-        WATO_INFO(registry, "user {} logged in", aEvent.AccountName);
+        mLogger->info("user {} logged in", aEvent.AccountName);
     } else {
         menu.LoginState = LoginState::Failed;
         menu.Error      = aEvent.Error;
         menu.Message.clear();
 
-        WATO_ERR(registry, "login failed: {}", aEvent.Error);
+        mLogger->error("login failed: {}", aEvent.Error);
     }
 }
 
@@ -140,13 +140,13 @@ void UISystem::onRegisterResult(const RegisterResultEvent& aEvent)
         menu.Error.clear();
         menu.State = MenuState::Login;
 
-        WATO_INFO(registry, "user {} registered", aEvent.AccountName);
+        mLogger->info("user {} registered", aEvent.AccountName);
     } else {
         menu.RegisterState = RegisterState::Failed;
         menu.Error         = aEvent.Error;
         menu.Message.clear();
 
-        WATO_ERR(registry, "register failed: {}", aEvent.Error);
+        mLogger->error("register failed: {}", aEvent.Error);
     }
 }
 
@@ -214,7 +214,7 @@ void UISystem::onJoinResult(const JoinResultEvent& aEvent)
     menu.Matchmaking.State    = MatchmakingState::Waiting;
     menu.Matchmaking.RecordId = aEvent.ID;
 
-    WATO_INFO(*reg, "joined matchmaking queue, record id: {}", aEvent.ID);
+    mLogger->info("joined matchmaking queue, record id: {}", aEvent.ID);
 }
 
 void UISystem::onMatchmakingError(const MatchmakingErrorEvent& aEvent)
@@ -226,5 +226,5 @@ void UISystem::onMatchmakingError(const MatchmakingErrorEvent& aEvent)
     menu.Error             = aEvent.Error;
     menu.Message.clear();
 
-    WATO_ERR(registry, "matchmaking error: {}", aEvent.Error);
+    mLogger->error("matchmaking error: {}", aEvent.Error);
 }

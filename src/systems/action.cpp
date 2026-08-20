@@ -25,9 +25,12 @@
 #include "input/action.hpp"
 #include "registry/registry.hpp"
 
-void moveCamera(Registry& aRegistry, const MovePayload& aPayload, float aDeltaTime)
+void RealTimeActionSystem::moveCamera(
+    Registry&          aRegistry,
+    const MovePayload& aPayload,
+    float              aDeltaTime)
 {
-    WATO_TRACE(aRegistry, "moving camera {}", aDeltaTime);
+    mLogger->trace("moving camera {}", aDeltaTime);
     for (auto&& [entity, camera, transform] : aRegistry.view<Camera, Transform3D>().each()) {
         float const speed = camera.Speed * aDeltaTime;
 
@@ -60,23 +63,21 @@ void moveCamera(Registry& aRegistry, const MovePayload& aPayload, float aDeltaTi
     }
 }
 
-bool clientValidateTower(Registry& aRegistry, const BuildTowerPayload& aPayload)
+bool DeterministicActionSystem::clientValidateTower(
+    Registry&                aRegistry,
+    const BuildTowerPayload& aPayload)
 {
     auto&       phy   = GetSingletonComponent<Physics>(aRegistry);
     const auto& graph = GetSingletonComponent<Graph>(aRegistry);
 
     for (const auto&& [tower, pm, t] : aRegistry.view<PlacementMode, Transform3D>().each()) {
         if (!graph.IsInside(t.Position)) {
-            WATO_ERR(aRegistry, "trying to place tower outside map bounds.");
+            mLogger->error("trying to place tower outside map bounds.");
             continue;
         }
 
-        if (!CanPlaceTower(
-                phy,
-                t.Position,
-                TowerDef::kColliderParams,
-                WATO_REG_LOGGER(aRegistry))) {
-            WATO_ERR(aRegistry, "Cannot build tower at {}", t.Position);
+        if (!CanPlaceTower(phy, t.Position, TowerDef::kColliderParams, mLogger)) {
+            mLogger->error("Cannot build tower at {}", t.Position);
             return false;
         }
 
@@ -87,7 +88,10 @@ bool clientValidateTower(Registry& aRegistry, const BuildTowerPayload& aPayload)
     return true;
 }
 
-void serverBuildTower(Registry& aRegistry, BuildTowerPayload& aPayload, PlayerID aPlayerID)
+void ServerActionSystem::serverBuildTower(
+    Registry&          aRegistry,
+    BuildTowerPayload& aPayload,
+    PlayerID           aPlayerID)
 {
     auto& graphMap = GetSingletonComponent<PlayerGraphMap>(aRegistry);
     auto  it       = graphMap.find(aPlayerID);
@@ -96,17 +100,17 @@ void serverBuildTower(Registry& aRegistry, BuildTowerPayload& aPayload, PlayerID
     const auto  towerDefIt = defs.Towers.find(aPayload.Tower);
 
     if (it == graphMap.end()) {
-        WATO_ERR(aRegistry, "cannot find graph for target player {}", aPlayerID);
+        mLogger->error("cannot find graph for target player {}", aPlayerID);
         return;
     }
     const auto& graph = it->second;
     if (!graph.IsInside(aPayload.Position)) {
-        WATO_ERR(aRegistry, "trying to place tower outside map bounds.");
+        mLogger->error("trying to place tower outside map bounds.");
         return;
     }
 
     if (towerDefIt == defs.Towers.end()) {
-        WATO_ERR(aRegistry, "unknown tower type {}", TowerTypeToString(aPayload.Tower));
+        mLogger->error("unknown tower type {}", TowerTypeToString(aPayload.Tower));
         return;
     }
     const auto& towerDef = towerDefIt->second;
@@ -114,8 +118,7 @@ void serverBuildTower(Registry& aRegistry, BuildTowerPayload& aPayload, PlayerID
     auto  playerEntity = FindPlayerEntity(aRegistry, aPlayerID);
     auto& gold         = aRegistry.get<Gold>(playerEntity);
     if (gold.Balance < towerDef.Cost) {
-        WATO_ERR(
-            aRegistry,
+        mLogger->error(
             "player {} insufficient gold {} < {}",
             aPlayerID,
             gold.Balance,
@@ -133,9 +136,9 @@ void serverBuildTower(Registry& aRegistry, BuildTowerPayload& aPayload, PlayerID
 
     ColliderParams colliderParams = TowerDef::kColliderParams;
 
-    if (!CanPlaceTower(phy, t3D.Position, colliderParams, WATO_REG_LOGGER(aRegistry))) {
+    if (!CanPlaceTower(phy, t3D.Position, colliderParams, mLogger)) {
         aRegistry.destroy(tower);
-        WATO_ERR(aRegistry, "tower {} at {} invalidated", tower, t3D.Position);
+        mLogger->error("tower {} at {} invalidated", tower, t3D.Position);
         return;
     }
 
@@ -147,7 +150,7 @@ void serverBuildTower(Registry& aRegistry, BuildTowerPayload& aPayload, PlayerID
     body.Body       = phy.CreateRigidBody(body.Params, t3D);
     collider.Handle = phy.AddCollider(body.Body, colliderParams);
 
-    WATO_INFO(aRegistry, "tower {} at {} validated", tower, t3D.Position);
+    mLogger->info("tower {} at {} validated", tower, t3D.Position);
     aRegistry.emplace<Tower>(tower, aPayload.Tower);
     aRegistry.emplace<RigidBody>(tower, body);
     aRegistry.emplace<Collider>(tower, collider);
@@ -184,11 +187,14 @@ void serverBuildTower(Registry& aRegistry, BuildTowerPayload& aPayload, PlayerID
     }
 }
 
-void serverSendCreep(Registry& aRegistry, SendCreepPayload& aPayload, PlayerID aPlayerID)
+void ServerActionSystem::serverSendCreep(
+    Registry&         aRegistry,
+    SendCreepPayload& aPayload,
+    PlayerID          aPlayerID)
 {
     entt::entity nextSpawn = GetTargetSpawnFor(aRegistry, aPlayerID);
     if (nextSpawn == entt::null) {
-        WATO_ERR(aRegistry, "cannot find target spawn for player {}", aPlayerID);
+        mLogger->error("cannot find target spawn for player {}", aPlayerID);
         return;
     }
     const auto& creepDef = GetCreepDef(aRegistry, aPayload.Type);
@@ -197,8 +203,7 @@ void serverSendCreep(Registry& aRegistry, SendCreepPayload& aPayload, PlayerID a
     auto  playerEntity = FindPlayerEntity(aRegistry, aPlayerID);
     auto& gold         = aRegistry.get<Gold>(playerEntity);
     if (gold.Balance < creepDef.Cost) {
-        WATO_ERR(
-            aRegistry,
+        mLogger->error(
             "player {} insufficient gold {} < {}",
             aPlayerID,
             gold.Balance,
@@ -214,7 +219,7 @@ void serverSendCreep(Registry& aRegistry, SendCreepPayload& aPayload, PlayerID a
     auto  it       = graphMap.find(spawnOwner.ID);
 
     if (it == graphMap.end()) {
-        WATO_ERR(aRegistry, "cannot find graph for target player {}", spawnOwner.ID);
+        mLogger->error("cannot find graph for target player {}", spawnOwner.ID);
         return;
     }
     const auto& graph = it->second;
@@ -298,7 +303,7 @@ void RealTimeActionSystem::Execute(Registry& aRegistry, float aDelta)
         } else if (auto* placement = std::get_if<PlacementModePayload>(&action.Payload)) {
             stack.TogglePlacement(aRegistry, *placement);
         } else {
-            WATO_TRACE(aRegistry, "unhandled frame-time action: {}", action);
+            mLogger->trace("unhandled frame-time action: {}", action);
         }
     }
     buf.clear();
@@ -319,7 +324,7 @@ void DeterministicActionSystem::Execute(Registry& aRegistry, [[maybe_unused]] st
         } else if (std::get_if<SendCreepPayload>(&action.Payload)) {
             // client no-op, server handles
         } else {
-            WATO_TRACE(aRegistry, "unhandled fixed-time action: {}", action);
+            mLogger->trace("unhandled fixed-time action: {}", action);
         }
     }
 }
@@ -334,7 +339,7 @@ void ServerActionSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint
         } else if (auto* creep = std::get_if<SendCreepPayload>(&action.Payload)) {
             serverSendCreep(aRegistry, *creep, playerID);
         } else {
-            WATO_TRACE(aRegistry, "unhandled server action: {}", action);
+            mLogger->trace("unhandled server action: {}", action);
         }
     }
     taggedActions.clear();

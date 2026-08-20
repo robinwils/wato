@@ -3,11 +3,6 @@
 #include "input/action.hpp"
 #include "systems/system.hpp"
 
-void moveCamera(Registry& aRegistry, const MovePayload& aPayload, float aDeltaTime);
-bool clientValidateTower(Registry& aRegistry, const BuildTowerPayload& aPayload);
-void serverBuildTower(Registry& aRegistry, BuildTowerPayload& aPayload, PlayerID aPlayerID);
-void serverSendCreep(Registry& aRegistry, SendCreepPayload& aPayload, PlayerID aPlayerID);
-
 /**
  * @brief Real-time action system (frame time)
  *
@@ -23,6 +18,9 @@ class RealTimeActionSystem : public FrameSystem
 
    protected:
     void Execute(Registry& aRegistry, float aDelta) override;
+
+   private:
+    void moveCamera(Registry& aRegistry, const MovePayload& aPayload, float aDeltaTime);
 };
 
 /**
@@ -36,8 +34,13 @@ class DeterministicActionSystem : public FixedSystem
    public:
     using FixedSystem::FixedSystem;
 
+    const char* Name() const override { return "DeterministicActionSystem"; }
+
    protected:
     void Execute(Registry& aRegistry, std::uint32_t aTick) override;
+
+   private:
+    bool clientValidateTower(Registry& aRegistry, const BuildTowerPayload& aPayload);
 };
 
 /**
@@ -51,6 +54,12 @@ class ServerActionSystem : public FixedSystem
    public:
     using FixedSystem::FixedSystem;
 
+    const char* Name() const override { return "ServerActionSystem"; }
+
    protected:
     void Execute(Registry& aRegistry, std::uint32_t aTick) override;
+
+   private:
+    void serverBuildTower(Registry& aRegistry, BuildTowerPayload& aPayload, PlayerID aPlayerID);
+    void serverSendCreep(Registry& aRegistry, SendCreepPayload& aPayload, PlayerID aPlayerID);
 };

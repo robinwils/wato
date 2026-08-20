@@ -13,7 +13,7 @@ void EconomySystem::PeriodicExecute(Registry& aRegistry, [[maybe_unused]] std::u
 
     for (auto [entity, player, gold] : aRegistry.view<Player, Gold>().each()) {
         gold.Balance += income.Value;
-        WATO_DBG(aRegistry, "player {} income +{}, balance {}", player.ID, income.Value, gold.Balance);
+        mLogger->debug("player {} income +{}, balance {}", player.ID, income.Value, gold.Balance);
 
         if (auto* server = aRegistry.ctx().find<ENetServer>()) {
             server->BroadcastResponse(

@@ -18,7 +18,7 @@ void HealthSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t a
 {
     for (auto [entity, health, creep] : aRegistry.view<Health, Creep>().each()) {
         if (health.Health <= 0.0f) {
-            WATO_INFO(aRegistry, "creep {} died (health: {})", entity, health.Health);
+            mLogger->info("creep {} died (health: {})", entity, health.Health);
 
             if (health.LastHitBy != PlayerID{}) {
                 auto  killerEntity = FindPlayerEntity(aRegistry, health.LastHitBy);
@@ -45,7 +45,7 @@ void HealthSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint32_t a
 
     for (auto [entity, player, health] : group.each()) {
         if (health.Health <= 0.0f) {
-            WATO_INFO(aRegistry, "player {} lost (health: {})", entity, health.Health);
+            mLogger->info("player {} lost (health: {})", entity, health.Health);
 
             // capture before emplace invalidates the reference
             const PlayerID pid = player.ID;
