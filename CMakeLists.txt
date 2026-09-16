@@ -65,8 +65,8 @@ FetchContent_Declare(
 
 FetchContent_Declare(
   argh
-  GIT_REPOSITORY https://github.com/adishavit/argh.git
-  GIT_TAG v1.3.2
+  GIT_REPOSITORY https://github.com/robinwils/argh.git
+  GIT_TAG master
   FIND_PACKAGE_ARGS NAMES argh
 )
 
