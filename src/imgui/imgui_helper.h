@@ -55,6 +55,14 @@ namespace ImGui
 #define IMGUI_FLAGS_NONE        UINT8_C(0x00)
 #define IMGUI_FLAGS_ALPHA_BLEND UINT8_C(0x01)
 
+	struct TextureBgfx
+	{
+		bgfx::TextureHandle handle;
+		uint8_t  flags;
+		uint8_t  mip;
+		uint32_t unused;
+	};
+
 ///
 inline ImTextureID toId(bgfx::TextureHandle aHandle, uint8_t aFlags, uint8_t aMip)
 {
