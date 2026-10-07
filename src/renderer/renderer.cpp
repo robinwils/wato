@@ -1,6 +1,5 @@
 #include "renderer/renderer.hpp"
 
-#include <bgfx/platform.h>
 #include <bx/bx.h>
 
 #include "core/window.hpp"
@@ -12,13 +11,13 @@ void BgfxRenderer::Init(WatoWindow& aWin)
         throw std::runtime_error("window not initialized");
     }
 
-    mInitParams.platformData.ndt = aWin.GetNativeDisplay();
-    mInitParams.platformData.nwh = aWin.GetNativeWindow();
+    mInitParams.swapChain.ndt = aWin.GetNativeDisplay();
+    mInitParams.swapChain.nwh = aWin.GetNativeWindow();
     if (aWin.UseWayland()) {
         mInitParams.platformData.type = bgfx::NativeWindowHandleType::Wayland;
     }
 
-    if (mInitParams.platformData.ndt == nullptr && mInitParams.platformData.nwh == nullptr) {
+    if (mInitParams.swapChain.ndt == nullptr && mInitParams.swapChain.nwh == nullptr) {
         throw std::runtime_error("cannot get native window and display");
     }
 
@@ -28,9 +27,9 @@ void BgfxRenderer::Init(WatoWindow& aWin)
     mInitParams.debug = true;
 #endif
 
-    mInitParams.resolution.width  = aWin.Width<uint32_t>();
-    mInitParams.resolution.height = aWin.Height<uint32_t>();
-    mInitParams.resolution.reset  = BGFX_RESET_VSYNC;
+    mInitParams.swapChain.width  = aWin.Width<uint32_t>();
+    mInitParams.swapChain.height = aWin.Height<uint32_t>();
+    mInitParams.reset  = BGFX_RESET_VSYNC;
 
     if (!bgfx::init(mInitParams)) {
         throw std::runtime_error("cannot init graphics");
@@ -71,7 +70,23 @@ bgfx::RendererType::Enum BgfxRenderer::detectRenderer(const std::string& aRender
 
 void BgfxRenderer::Resize(WatoWindow& aWin)
 {
-    bgfx::reset(aWin.Width<uint32_t>(), aWin.Height<uint32_t>(), BGFX_RESET_VSYNC);
+    bgfx::SwapChain swapChain;
+    constexpr uint32_t kSwapChainFlags = 0
+			| BGFX_SWAP_CHAIN_FULLSCREEN_MASK
+			| BGFX_SWAP_CHAIN_MSAA_MASK
+			| BGFX_SWAP_CHAIN_SRGB_BACKBUFFER
+			| BGFX_SWAP_CHAIN_HDR10
+			| BGFX_SWAP_CHAIN_HIDPI
+			| BGFX_SWAP_CHAIN_TRANSPARENT_BACKBUFFER
+			;
+    swapChain.width = aWin.Width<uint32_t>();
+    swapChain.height = aWin.Height<uint32_t>();
+
+    // TODO: configurable VSYNC/MSAA etc...
+    swapChain.flags  = BGFX_RESET_VSYNC &  kSwapChainFlags;
+
+    bgfx::reset(BGFX_RESET_VSYNC & ~kSwapChainFlags, &swapChain);
+    bgfx::reset(kSwapChainFlags, &swapChain);
     bgfx::setViewRect(kClearView, 0, 0, bgfx::BackbufferRatio::Equal);
 }
 
