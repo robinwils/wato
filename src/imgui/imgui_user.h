@@ -14,7 +14,7 @@ struct Font {
     };
 };
 
-void PushFont(Font::Enum aFont);
+void PushFont(Font::Enum aFont, float aFontSizeBaseUnscaled = 0.0f);
 
 // BK - simple string class for convenience.
 class ImString
