@@ -187,7 +187,7 @@ struct fmt::formatter<Action::payload_type> : fmt::formatter<std::string> {
 
 template <>
 struct fmt::formatter<Action> : fmt::formatter<std::string> {
-    auto format(Action aObj, format_context& aCtx) const -> decltype(aCtx.out())
+    static auto format(Action aObj, format_context& aCtx)  -> decltype(aCtx.out())
     {
         return fmt::format_to(aCtx.out(), "Action <{}>", aObj.Payload);
     }

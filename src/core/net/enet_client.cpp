@@ -1,7 +1,7 @@
 #include "core/net/enet_client.hpp"
 
 #include <enet.h>
-#include <fmt/core.h>
+#include <fmt/format.h>
 #include <sodium/runtime.h>
 #include <spdlog/spdlog.h>
 
