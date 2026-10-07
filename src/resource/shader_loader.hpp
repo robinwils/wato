@@ -1,5 +1,7 @@
 #pragma once
 
+#define BGFX_PLATFORM_SUPPORTS_WGSL 0
+
 #include <bgfx/embedded_shader.h>
 #include <bx/bx.h>
 #include <bx/file.h>
