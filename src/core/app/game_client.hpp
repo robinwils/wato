@@ -91,7 +91,9 @@ class GameClient : public Application
 
     void Init() override;
     int  Run(tf::Executor& aExecutor) override;
+
     void SendAuthRequest();
+    void Disconnect() { mRegistry.ctx().get<ENetClient&>().Disconnect(); }
 
    protected:
     void StartGameInstance(Registry& aRegistry, const NewGameResponse& aGame);

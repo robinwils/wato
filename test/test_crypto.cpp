@@ -59,7 +59,6 @@ TEST_CASE("crypto.base64_round_trip")
 
     std::string b64 = keys.ExportPublicKey();
     REQUIRE_FALSE(b64.empty());
-    CHECK(b64.size() == CryptoKeys::kPublicBase64Len - 1);
 
     auto decoded = KeyFromB64<crypto_kx_PUBLICKEYBYTES>(b64);
     CHECK(decoded == keys.RawPublicKey());

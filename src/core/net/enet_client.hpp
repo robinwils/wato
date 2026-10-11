@@ -29,6 +29,7 @@ class ENetClient : public ENetBase
     const CryptoKeys::Public RawPublicKey() const { return mKeys.RawPublicKey(); }
 
     void SetServerPK(const CryptoKeys::Public& aPubKey) { mServerPK = PublicKey(aPubKey); }
+    const PublicKey& GetServerPK() { return mServerPK; }
 
     // Must be called from the network thread
     void ResetSession()

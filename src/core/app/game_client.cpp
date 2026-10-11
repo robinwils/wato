@@ -86,14 +86,14 @@ void GameClient::Init()
     mEndGameExecutor.Register<AnimationSystem>();
 
     // fetch ENet server public key from pocketbase which is a secure channel if TLS enabled
-    auto r = mRegistry.ctx().get<PocketBaseClient&>().GetGameServer("0.0.0.0", 7777);
-    if (!r) {
+    auto rec = mRegistry.ctx().get<PocketBaseClient&>().GetGameServer("0.0.0.0", 7777);
+    if (!rec) {
         mLogger->error("cannot get game server");
         return;
     }
 
-    mLogger->debug("got server public key = {}", r->publicKey);
-    mRegistry.ctx().get<ENetClient&>().SetServerPK(KeyFromB64<32>(r->publicKey));
+    mLogger->debug("got server public key = {}", rec->publicKey);
+    mRegistry.ctx().get<ENetClient&>().SetServerPK(KeyFromB64<32>(rec->publicKey));
 }
 
 int GameClient::Run(tf::Executor& aExecutor)
@@ -379,15 +379,33 @@ void GameClient::consumeNetworkResponses()
         {
             if (aResp.Error == ServerError::HandshakeOpenSeal) {
                 WATO_ERR(*Reg, "got error response");
-                auto r = Reg->ctx().get<PocketBaseClient&>().GetGameServer("0.0.0.0", 7777);
-                if (!r) {
+                auto& cli   = Reg->ctx().get<ENetClient&>();
+                auto& pbase = Reg->ctx().get<PocketBaseClient>();
+
+                GameServerRecord rec = pbase.GetGameServer("0.0.0.0", 7777);
+                if (!rec) {
                     WATO_ERR(*Reg, "cannot get game server");
                     return;
                 }
 
-                WATO_DBG(*Reg, "got server public key = {}", r->publicKey);
-                Reg->ctx().get<ENetClient&>().SetServerPK(KeyFromB64<32>(r->publicKey));
-                Client->SendAuthRequest();
+                const std::string prevPK = KeyToB64(cli.GetServerPK().Raw());
+                if (rec->publicKey != prevPK) {
+                    WATO_DBG(
+                        *Reg,
+                        "got new server public key = {} (old = {})",
+                        rec->publicKey,
+                        prevPK);
+                    cli.SetServerPK(KeyFromB64<32>(rec->publicKey));
+                    Client->SendAuthRequest();
+                } else {
+                    WATO_ERR(
+                        *Reg,
+                        "server cannot decrypt handshake, probably wrong public key ({})",
+                        rec->publicKey);
+                    // TODO: client is disconnected from watod but still connected to backend
+                    pbase.Login();
+                    Client->Disconnect();
+                }
             }
         }
 
