@@ -6,6 +6,8 @@ services:
       - AUTOMIGRATE=${AUTOMIGRATE}
       - ADMIN_EMAIL=${ADMIN_EMAIL}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+    ports:
+      - "8090:8090"
     volumes:
       - pb_data:/app/pb_data
 
