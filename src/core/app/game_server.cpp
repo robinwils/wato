@@ -86,6 +86,9 @@ void GameServer::Init()
     auto r = mPBClient.RegisterGameServerSync(ip, port, pubKey, sodium_runtime_has_aesni());
     if (!r) {
         mLogger->error("could not register game server: {}", r.error().Message);
+    } else {
+        mLogger->info("game server {}:{} registered.", ip, port);
+        mLogger->info("  pubkey: '{}' aesni: {}", pubKey, sodium_runtime_has_aesni());
     }
 }
 
