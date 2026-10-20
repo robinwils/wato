@@ -22,13 +22,16 @@ struct GraphCell {
     GraphCell(const size_type aX, const size_type aY) : Location(aX, aY) {}
 
     constexpr static size_type kCellsPerAxis = 3;
+    constexpr static float     kCellSize     = 1.0f / GraphCell::kCellsPerAxis;
+    constexpr static float     kCellHeight   = 0.001f;
 
-    constexpr glm::vec3 ToWorld(const glm::vec2& aOffset = {0, 0}) const
+    /// World position of the cell's min corner (used for grid-line geometry).
+    [[nodiscard]] constexpr glm::vec3 ToWorld(const glm::vec2& aOffset = {0, 0}) const
     {
-        return glm::vec3(
-            Location.x / static_cast<float>(GraphCell::kCellsPerAxis) + aOffset.x,
-            0.001f,
-            Location.y / static_cast<float>(GraphCell::kCellsPerAxis) + aOffset.y);
+        return {
+            (static_cast<float>(Location.x) * kCellSize) + aOffset.x,
+            kCellHeight,
+            (static_cast<float>(Location.y) * kCellSize) + aOffset.y};
     }
 
     bool operator==(const GraphCell&) const = default;

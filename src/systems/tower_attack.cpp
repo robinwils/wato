@@ -131,7 +131,12 @@ void TowerAttackSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint3
                 glm::identity<glm::quat>(),
                 glm::vec3(0.1f));
 
-            aRegistry.emplace<Projectile>(projectile, attack.Damage, 1.0f, attack.CurrentTarget, owner.ID);
+            aRegistry.emplace<Projectile>(
+                projectile,
+                attack.Damage,
+                1.0f,
+                attack.CurrentTarget,
+                owner.ID);
 
             glm::vec3 direction = glm::normalize(targetTransform->Position - pT.Position);
 
@@ -186,11 +191,10 @@ void TowerAttackSystem::Execute(Registry& aRegistry, [[maybe_unused]] std::uint3
                             },
                     });
             } else {
-                WATO_WARN(aRegistry, "enet server not instanciated");
+                mLogger->warn("enet server not instanciated");
             }
 
-            WATO_DBG(
-                aRegistry,
+            mLogger->debug(
                 "tower {} fired projectile {} at target {}",
                 towerEntity,
                 projectile,

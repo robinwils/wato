@@ -13,6 +13,8 @@ class ProjectileSystem : public FixedSystem
    public:
     using FixedSystem::FixedSystem;
 
+    const char* Name() const override { return "ProjectileSystem"; }
+
    protected:
     void Execute(Registry& aRegistry, std::uint32_t aTick) override;
 };

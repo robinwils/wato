@@ -71,7 +71,7 @@ inline Logger CreateLogger(const std::string& aName, const std::string& aLevel)
     // FIXME: weird segfault when using %s and %# instead of %@
     // or puting the thread info in separate []
     //
-    std::string loggerFormat = "[%H:%M:%S %z T %t] [%n] [%^%L%$] %v %@";
+    std::string loggerFormat = "[%H:%M:%S %z T %t] [%^%L%$] [%n] %v %@";
 
     consoleSink->set_pattern(loggerFormat);
     fileSink->set_pattern(loggerFormat);

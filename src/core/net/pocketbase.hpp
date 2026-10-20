@@ -148,6 +148,27 @@ struct PBError {
 template <typename T>
 using PBCallback = std::function<void(std::expected<T, PBError>)>;
 
+using StopFlag = std::shared_ptr<std::atomic<bool>>;
+
+struct SSEState {
+#if defined(__glibcxx_want_move_only_function)
+    using reconnect_func = std::move_only_function<void() const>;
+    using factory_func   = std::move_only_function<cpr::AsyncResponse(StopFlag) const>;
+#else
+    using reconnect_func = std::function<void()>;
+    using factory_func   = std::function<cpr::AsyncResponse(StopFlag)>;
+#endif
+
+    StopFlag           StopSource{std::make_shared<std::atomic<bool>>(false)};
+    cpr::AsyncResponse SSEResponse{};
+
+    bool                                  ShouldReconnect{false};
+    std::chrono::steady_clock::time_point NextReconnect{};
+    std::chrono::milliseconds             BackoffMs{1000};
+    reconnect_func                        OnReconnect;
+    factory_func                          Factory;
+};
+
 /**
  * @brief Unified client for all PocketBase/backend operations
  *
@@ -190,10 +211,10 @@ class PocketBaseClient
 
     template <typename T>
     void Subscribe(
-        const std::string&    aSubscription,
-        Channel<PBSSE<T>>&    aChan,
-        const std::string&    aFields      = "",
-        std::function<void()> aOnReconnect = nullptr)
+        const std::string&       aSubscription,
+        Channel<PBSSE<T>>&       aChan,
+        const std::string&       aFields      = "",
+        SSEState::reconnect_func aOnReconnect = nullptr)
     {
         Unsubscribe(aSubscription);
 
@@ -320,19 +341,6 @@ class PocketBaseClient
         std::lock_guard lock(mAsyncMutex);
         mAsyncResponses.emplace_back(std::move(future));
     }
-
-    using StopFlag = std::shared_ptr<std::atomic<bool>>;
-
-    struct SSEState {
-        StopFlag           StopSource{std::make_shared<std::atomic<bool>>(false)};
-        cpr::AsyncResponse SSEResponse{};
-
-        bool                                              ShouldReconnect{false};
-        std::chrono::steady_clock::time_point             NextReconnect{};
-        std::chrono::milliseconds                         BackoffMs{1000};
-        std::function<void()>                             OnReconnect;
-        std::function<cpr::AsyncResponse(StopFlag)>       Factory;
-    };
 
     template <typename T>
     bool handleSSEEvent(

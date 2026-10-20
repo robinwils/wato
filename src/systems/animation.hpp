@@ -16,6 +16,8 @@ class AnimationSystem : public FrameSystem
    public:
     using FrameSystem::FrameSystem;
 
+    const char* Name() const override { return "AnimationSystem"; }
+
    protected:
     void Execute(Registry& aRegistry, float aDelta) override;
 

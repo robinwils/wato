@@ -2,11 +2,6 @@
 
 #include <entt/entity/organizer.hpp>
 
-#include "components/light_source.hpp"
-#include "components/placement_mode.hpp"
-#include "components/scene_object.hpp"
-#include "components/transform3d.hpp"
-#include "core/physics/physics.hpp"
 #include "registry/registry.hpp"
 #include "systems/system.hpp"
 
@@ -24,6 +19,8 @@ class RenderSystem : public FrameSystem
    protected:
     void Execute(Registry& aRegistry, float aDelta) override;
 
+    const char* Name() const override { return "RenderSystem"; }
+
    private:
     void updateGridTexture(Registry& aRegistry);
     void renderGrid(Registry& aRegistry);
@@ -40,6 +37,8 @@ class RenderImguiSystem : public FrameSystem
    public:
     using FrameSystem::FrameSystem;
 
+    const char* Name() const override { return "RenderImguiSystem"; }
+
    protected:
     void Execute(Registry& aRegistry, float aDelta) override;
 };
@@ -54,6 +53,8 @@ class CameraSystem : public FrameSystem
 {
    public:
     using FrameSystem::FrameSystem;
+
+    const char* Name() const override { return "CameraSystem"; }
 
    protected:
     void Execute(Registry& aRegistry, float aDelta) override;
@@ -70,6 +71,8 @@ class PhysicsDebugSystem : public FrameSystem
 {
    public:
     using FrameSystem::FrameSystem;
+
+    const char* Name() const override { return "PhysicsDebugSystem"; }
 
    protected:
     void Execute(Registry& aRegistry, float aDelta) override;

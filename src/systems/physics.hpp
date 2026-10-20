@@ -13,6 +13,8 @@ class PhysicsSystem : public FixedSystem
    public:
     using FixedSystem::FixedSystem;
 
+    const char* Name() const override { return "PhysicsSystem"; }
+
    protected:
     void Execute(Registry& aRegistry, std::uint32_t aTick) override;
 };
@@ -29,6 +31,8 @@ class UpdateTransformsSytem : public FrameSystem
    public:
     using FrameSystem::FrameSystem;
 
+    const char* Name() const override { return "UpdateTransformsSystem"; }
+
    protected:
     void Execute(Registry& aRegistry, float aFactor) override;
 };
@@ -43,6 +47,8 @@ class SimulationSystem : public FrameSystem
 {
    public:
     using FrameSystem::FrameSystem;
+
+    const char* Name() const override { return "SimulationSystem"; }
 
    protected:
     void Execute(Registry& aRegistry, float aTick) override;
