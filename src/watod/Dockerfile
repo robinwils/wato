@@ -6,7 +6,7 @@ FROM ubuntu:24.04 AS deps
 RUN apt-get update && apt-get install -y \
         zip unzip git curl \
         build-essential ninja-build \
-        autoconf libtool pkg-config \
+        autoconf libtool pkg-config autoconf-archive automake \
         libgl1-mesa-dev ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
