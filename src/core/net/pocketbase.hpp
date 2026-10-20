@@ -151,8 +151,13 @@ using PBCallback = std::function<void(std::expected<T, PBError>)>;
 using StopFlag = std::shared_ptr<std::atomic<bool>>;
 
 struct SSEState {
+#if defined(__glibcxx_want_move_only_function)
     using reconnect_func = std::move_only_function<void() const>;
     using factory_func   = std::move_only_function<cpr::AsyncResponse(StopFlag) const>;
+#else
+    using reconnect_func = std::function<void()>;
+    using factory_func   = std::function<cpr::AsyncResponse(StopFlag)>;
+#endif
 
     StopFlag           StopSource{std::make_shared<std::atomic<bool>>(false)};
     cpr::AsyncResponse SSEResponse{};
