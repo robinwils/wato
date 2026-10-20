@@ -4,6 +4,10 @@
 
 #include "registry/registry.hpp"
 
+struct ReconnectGameServerEvent {
+    Registry* Reg;
+};
+
 struct LoginEvent {
     Registry*   Reg;
     std::string Account;

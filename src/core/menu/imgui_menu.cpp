@@ -6,6 +6,7 @@
 #include "components/player.hpp"
 #include "core/menu/menu.hpp"
 #include "core/menu/menu_events.hpp"
+#include "core/net/enet_client.hpp"
 #include "core/net/pocketbase.hpp"
 #include "core/window.hpp"
 #include "imgui/imgui_helper.h"
@@ -88,11 +89,9 @@ void ImGuiMenu::renderLogin(Registry& aRegistry)
         ImGui::BeginDisabled();
     }
 
+    // TODO: disable when not connected
     if (ImGui::Button("Login")) {
-        dispatcher.enqueue(LoginEvent{
-            .Reg      = &aRegistry,
-            .Account  = std::move(account),
-            .Password = std::move(password)});
+        dispatcher.enqueue(LoginEvent{.Reg = &aRegistry, .Account = account, .Password = password});
     }
 
     if (ImGui::Button("Register")) {
@@ -185,18 +184,25 @@ void ImGuiMenu::renderLobby(Registry& aRegistry)
 {
     auto& menu       = GetSingletonComponent<MenuContext>(aRegistry);
     auto& dispatcher = menu.Dispatcher;
+    auto& netClient  = GetSingletonComponent<ENetClient&>(aRegistry);
     auto& pb         = GetSingletonComponent<PocketBaseClient>(aRegistry);
 
-    ImGui::Text("Hello %s!", pb.LoggedUser.accountName.c_str());
+    if (!pb.LoggedUser) {
+        menu.State = MenuState::Login;
+        return;
+    }
+
+    ImGui::Text("Hello %s!", pb.LoggedUser->accountName.c_str());
     ImGui::Separator();
 
     switch (menu.Matchmaking.State) {
         case MatchmakingState::Failed:
         case MatchmakingState::Idle:
-            if (ImGui::Button("Find Match")) {
-                dispatcher.enqueue(JoinMatchmakingEvent{
-                    .Reg = &aRegistry,
-                });
+            if (netClient.Connected() && ImGui::Button("Find Match")) {
+                dispatcher.enqueue(
+                    JoinMatchmakingEvent{
+                        .Reg = &aRegistry,
+                    });
             }
             break;
         case MatchmakingState::Joining:

@@ -10,7 +10,7 @@
 class ENetClient : public ENetBase
 {
    public:
-    ENetClient(Logger& aLogger) : ENetBase(aLogger), mConnected(false), mPeer(nullptr) {}
+    ENetClient(Logger& aLogger) : ENetBase(aLogger), mConnected(false) {}
     ENetClient(ENetClient&&)                 = delete;
     ENetClient(const ENetClient&)            = delete;
     ENetClient& operator=(ENetClient&&)      = delete;
@@ -19,14 +19,13 @@ class ENetClient : public ENetBase
 
     void Init() override;
     bool Connect();
-    void Disconnect();
-    void ForceDisconnect();
+    void Disconnect(bool aForce = false);
 
     void Send(std::span<const uint8_t> aData);
 
     [[nodiscard]] bool Connected() const noexcept { return mConnected; }
 
-    const CryptoKeys::Public RawPublicKey() const { return mKeys.RawPublicKey(); }
+    [[nodiscard]] CryptoKeys::Public RawPublicKey() const { return mKeys.RawPublicKey(); }
 
     void SetServerPK(const CryptoKeys::Public& aPubKey) { mServerPK = PublicKey(aPubKey); }
     const PublicKey& GetServerPK() { return mServerPK; }
@@ -57,7 +56,7 @@ class ENetClient : public ENetBase
     std::atomic_bool mConnected;
 
    private:
-    ENetPeer* mPeer;
+    ENetPeer* mPeer{};
 
-    ::PublicKey mServerPK{};
+    ::PublicKey mServerPK;
 };

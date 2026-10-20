@@ -30,36 +30,40 @@ void ENetClient::Init()
 bool ENetClient::Connect()
 {
     ENetAddress address{};
+    const char* ip = "127.0.0.1";
 
-    enet_address_set_host(&address, "127.0.0.1");
+    if (0 != enet_address_set_host(&address, ip)) {
+        mLogger->warn("could not set host addr");
+    }
     address.port = 7777;
 
     /* Initiate the connection, allocating the two channels 0 and 1. */
     mPeer = enet_host_connect(mHost.get(), &address, 2, 0);
 
-    if (mPeer == nullptr) return false;
+    if (mPeer == nullptr) {
+        mLogger->error("could not connect to {}:{}", ip, address.port);
+        return false;
+    }
 
     auto* state = new PeerState{.ID = 0, .PeerPK = std::move(mServerPK)};
     mPeer->data = state;
 
-    return mPeer;
+    return mPeer != nullptr;
 }
 
-void ENetClient::Disconnect()
+void ENetClient::Disconnect(bool aForce)
 {
-    if (mPeer != nullptr) {
+    if (mPeer == nullptr) {
+        return;
+    }
+
+    if (mConnected && aForce) {
+        mLogger->info("forcing disconnect");
+        enet_peer_disconnect_now(mPeer, 0);
+        mConnected = false;
+    } else {
         enet_peer_disconnect(mPeer, 0);
     }
-}
-
-void ENetClient::ForceDisconnect()
-{
-    if (mPeer != nullptr) {
-        mLogger->info("forcing disconnect");
-        enet_peer_reset(mPeer);
-    }
-    mConnected = false;
-    mRunning   = false;
 }
 
 void ENetClient::Send(std::span<const uint8_t> aData)
@@ -132,7 +136,6 @@ void ENetClient::OnDisconnect(ENetEvent& aEvent)
         aEvent.peer->data = nullptr;
     }
     mConnected = false;
-    mRunning   = false;
 }
 
 void ENetClient::OnDisconnectTimeout(ENetEvent& aEvent)
@@ -142,7 +145,6 @@ void ENetClient::OnDisconnectTimeout(ENetEvent& aEvent)
         aEvent.peer->data = nullptr;
     }
     mConnected = false;
-    mRunning   = false;
 }
 
 void ENetClient::OnNone(ENetEvent& aEvent) { BX_UNUSED(aEvent); }

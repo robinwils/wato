@@ -5,6 +5,7 @@
 #include <entt/entity/fwd.hpp>
 #include <memory>
 #include <thread>
+#include <utility>
 
 #include "core/app/app.hpp"
 #include "core/menu/imgui_menu.hpp"
@@ -44,7 +45,7 @@ class GameClient : public Application
 
         // Stop the network thread before destroying any resources it uses
         auto& netClient = GetSingletonComponent<ENetClient&>(mRegistry);
-        netClient.ForceDisconnect();
+        netClient.Disconnect(true);
         if (mNetworkThread.joinable()) {
             mNetworkThread.join();
         }
@@ -93,7 +94,14 @@ class GameClient : public Application
     int  Run(tf::Executor& aExecutor) override;
 
     void SendAuthRequest();
-    void Disconnect() { mRegistry.ctx().get<ENetClient&>().Disconnect(); }
+    void Disconnect(bool aForce = false, std::string aReason = "")
+    {
+        mRegistry.ctx().get<ENetClient&>().Disconnect(aForce);
+        mRegistry.ctx().get<PocketBaseClient&>().Logout();
+
+        mLogger->error(aReason);
+        mRegistry.ctx().get<MenuContext&>().Error = std::move(aReason);
+    }
 
    protected:
     void StartGameInstance(Registry& aRegistry, const NewGameResponse& aGame);

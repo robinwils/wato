@@ -164,7 +164,7 @@ void UISystem::onJoinMatchmaking(const JoinMatchmakingEvent& aEvent)
     menu.Matchmaking.State = MatchmakingState::Joining;
     menu.ClearMsgs();
 
-    pb.JoinQueue(pb.LoggedUser.id, 1, 2, [reg](std::expected<MatchmakingRecord, PBError> aResult) {
+    pb.JoinQueue(pb.LoggedUser->id, 1, 2, [reg](std::expected<MatchmakingRecord, PBError> aResult) {
         auto& dispatcher = reg->ctx().get<MenuContext>().Dispatcher;
         if (aResult) {
             dispatcher.enqueue(JoinResultEvent{
@@ -199,7 +199,7 @@ void UISystem::onLeaveMatchmaking(const LeaveMatchmakingEvent& aEvent)
         return;
     }
 
-    pb.LeaveQueue(pb.LoggedUser.id, [](std::expected<std::string, PBError>) {
+    pb.LeaveQueue(pb.LoggedUser->id, [](std::expected<std::string, PBError>) {
         // Fire and forget
     });
 

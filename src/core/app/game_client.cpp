@@ -1,6 +1,7 @@
 #include "core/app/game_client.hpp"
 
 #include <bx/bx.h>
+#include <fmt/format.h>
 #include <sodium/runtime.h>
 #include <spdlog/spdlog.h>
 
@@ -103,6 +104,8 @@ int GameClient::Run(tf::Executor& aExecutor)
     auto& netClient = GetSingletonComponent<ENetClient&>(mRegistry);
     auto  prevTime  = clock_type::now();
 
+    mRunning = true;
+
     mNetworkThread = std::thread([this]() { networkThread(); });
 
     while (!window.ShouldClose()) {
@@ -142,6 +145,7 @@ int GameClient::Run(tf::Executor& aExecutor)
         input.MouseState.Scroll = glm::dvec2(0.0);
     }
 
+    mRunning = false;
     netClient.Disconnect();
     mDiscTimerStart.emplace(clock_type::now());
 
@@ -151,10 +155,11 @@ int GameClient::Run(tf::Executor& aExecutor)
 void GameClient::networkThread()
 {
     auto& netClient = GetSingletonComponent<ENetClient&>(mRegistry);
-    while (netClient.Running()) {
+    while (mRunning || netClient.Connected()) {
         if (mDiscTimerStart) {
             if (clock_type::now() - *mDiscTimerStart > 3s) {
-                netClient.ForceDisconnect();
+                mLogger->debug("disconnection ack timeout, forcing");
+                netClient.Disconnect(true);
             }
         }
 
@@ -381,8 +386,7 @@ void GameClient::consumeNetworkResponses()
                 WATO_ERR(*Reg, "got error response");
                 auto& cli   = Reg->ctx().get<ENetClient&>();
                 auto& pbase = Reg->ctx().get<PocketBaseClient>();
-
-                GameServerRecord rec = pbase.GetGameServer("0.0.0.0", 7777);
+                auto  rec   = pbase.GetGameServer("0.0.0.0", 7777);
                 if (!rec) {
                     WATO_ERR(*Reg, "cannot get game server");
                     return;
@@ -398,13 +402,11 @@ void GameClient::consumeNetworkResponses()
                     cli.SetServerPK(KeyFromB64<32>(rec->publicKey));
                     Client->SendAuthRequest();
                 } else {
-                    WATO_ERR(
-                        *Reg,
-                        "server cannot decrypt handshake, probably wrong public key ({})",
-                        rec->publicKey);
-                    // TODO: client is disconnected from watod but still connected to backend
-                    pbase.Login();
-                    Client->Disconnect();
+                    Client->Disconnect(
+                        false,
+                        fmt::format(
+                            "server cannot decrypt handshake, probably wrong public key ({})",
+                            rec->publicKey));
                 }
             }
         }
@@ -476,7 +478,7 @@ void GameClient::consumeNetworkResponses()
     auto& netClient  = GetSingletonComponent<ENetClient>(mRegistry);
     auto& dispatcher = mRegistry.ctx().get<entt::dispatcher>("net_dispatcher"_hs);
 
-    NetworkResponseVisitor visitor{&mRegistry, &dispatcher, this};
+    NetworkResponseVisitor visitor{.Reg = &mRegistry, .Dispatcher = &dispatcher, .Client = this};
 
     netClient.ConsumeNetworkResponses(
         [&](NetworkResponse* aEvent) { std::visit(visitor, aEvent->Payload); });

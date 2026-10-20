@@ -249,9 +249,12 @@ class PocketBaseClient
 
     cpr::Header AuthHeader(const std::string& aToken = "") const;
 
+    void Logout() { LoggedUser.reset(); };
+
     HTTPClient  Client;
     std::string Token;
-    LoginRecord LoggedUser;
+
+    std::optional<LoginRecord> LoggedUser;
 
    private:
     template <typename T>
