@@ -22,15 +22,15 @@ class GameServer : public Application
     {
     }
     explicit GameServer(
-        const Options&     aOptions,
-        const std::string& aAdminEmail,
-        const std::string& aAdminPassword)
+        const Options& aOptions,
+        std::string    aAdminEmail,
+        std::string    aAdminPassword)
         : Application("server", aOptions),
           mPBClient(mOptions.BackendAddr(), mLogger),
-          mServer(mOptions.ServerAddr, mLogger, mPBClient)
+          mServer(mOptions.ServerAddr, mLogger, mPBClient),
+          mAdminEmail(std::move(aAdminEmail)),
+          mAdminPassword(std::move(aAdminPassword))
     {
-        mAdminEmail    = aAdminEmail;
-        mAdminPassword = aAdminPassword;
     }
     virtual ~GameServer();
 
@@ -60,8 +60,8 @@ class GameServer : public Application
 
    private:
     std::vector<PlayerInitData> spawnPlayers(
-        Registry&                    aRegistry,
-        std::span<const PlayerID>    aPlayerIDs);
+        Registry&                 aRegistry,
+        std::span<const PlayerID> aPlayerIDs);
     std::vector<PlayerInitData> createGameInstance(
         GameInstanceID        aGameID,
         std::vector<PlayerID> aPlayerIDs);

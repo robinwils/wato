@@ -4,7 +4,7 @@
 #include "core/app/game_server.hpp"
 #include "core/sys/signal.hpp"
 
-int main(int, char** argv)
+int main(int /*unused*/, char** argv)
 {
     installSignalHandlers();
 
@@ -22,10 +22,10 @@ int main(int, char** argv)
 
     char*       emailEnv = getenv("ADMIN_EMAIL");
     char*       passEnv  = getenv("ADMIN_PASSWORD");
-    std::string email    = emailEnv ? emailEnv : "";
-    std::string password = passEnv ? passEnv : "";
+    std::string email    = (emailEnv != nullptr) ? emailEnv : "";
+    std::string password = (passEnv != nullptr) ? passEnv : "";
 
-    GameServer s(opts, email, password);
-    s.Init();
-    return s.Run(exec);
+    GameServer srv(opts, email, password);
+    srv.Init();
+    return srv.Run(exec);
 }

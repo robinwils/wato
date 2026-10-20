@@ -41,7 +41,7 @@ class CryptoSession
         }
     }
 
-    bool Valid() const { return mValid; }
+    [[nodiscard]] bool Valid() const { return mValid; }
     void Reset() { mValid = false; }
 
     byte_view Encrypt(byte_view aBytes);

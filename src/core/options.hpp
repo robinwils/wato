@@ -3,7 +3,7 @@
 #include <argh.h>
 
 struct Options {
-    explicit Options() {}
+    explicit Options() = default;
     explicit Options(char** aArgv)
         : mParser({"--loglevel", "--renderer", "--server-addr", "--backend-addr"})
     {
