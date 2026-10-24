@@ -56,10 +56,10 @@ diff --git a/bgfx/examples/common/imgui/imgui.h b/bgfx/examples/common/imgui/img
 index 865879e..c6a3d84 100644
 --- a/bgfx/examples/common/imgui/imgui.h
 +++ b/bgfx/examples/common/imgui/imgui.h
-@@ -7,7 +7,7 @@
- #define IMGUI_H_HEADER_GUARD
- 
+@@ -8,7 +8,7 @@
+
  #include <bgfx/bgfx.h>
+ #include <bx/bx.h>
 -#include <dear-imgui/imgui.h>
 +#include <imgui.h>
  #include <iconfontheaders/icons_kenney.h>
@@ -96,18 +96,33 @@ index d79a80e..7740272 100644
  
  #define BGFX_GEOMETRYC_VERSION_MAJOR 1
  #define BGFX_GEOMETRYC_VERSION_MINOR 0
+diff --git a/bgfx/tools/shaderc/shaderc_glsl.cpp b/bgfx/tools/shaderc/shaderc_glsl.cpp
+--- a/bgfx/tools/shaderc/shaderc_glsl.cpp
++++ b/bgfx/tools/shaderc/shaderc_glsl.cpp
+@@ -19,9 +19,9 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wshadow")
+ #include <spirv_glsl.hpp>
+
+ #define ENABLE_OPT 1
+-#include <ShaderLang.h>
+-#include <ResourceLimits.h>
+-#include <SPIRV/GlslangToSpv.h>
++#include <glslang/Public/ShaderLang.h>
++#include <glslang/Public/ResourceLimits.h>
++#include <glslang/SPIRV/GlslangToSpv.h>
+ #include <spirv-tools/optimizer.hpp>
+ BX_PRAGMA_DIAGNOSTIC_POP()
+
 diff --git a/bgfx/tools/shaderc/shaderc_metal.cpp b/bgfx/tools/shaderc/shaderc_metal.cpp
 index 9f073b9..e8fd208 100644
 --- a/bgfx/tools/shaderc/shaderc_metal.cpp
 +++ b/bgfx/tools/shaderc/shaderc_metal.cpp
-@@ -20,11 +20,10 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wshadow") // warning: declaration of 'u
+@@ -22,10 +22,10 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wshadow") // warning: declaration of 'u
  #include <spirv_reflect.hpp>
  
  #define ENABLE_OPT 1
 -#include <ShaderLang.h>
 -#include <ResourceLimits.h>
 -#include <SPIRV/GlslangToSpv.h>
--#include <SPIRV/SPVRemapper.h>
 -#include <SPIRV/SpvTools.h>
 +#include <glslang/Public/ShaderLang.h>
 +#include <glslang/Include/ResourceLimits.h>
@@ -115,18 +130,28 @@ index 9f073b9..e8fd208 100644
 +#include <glslang/SPIRV/SpvTools.h>
  #include <spirv-tools/optimizer.hpp>
  BX_PRAGMA_DIAGNOSTIC_POP()
- 
+
+@@ -768,7 +768,9 @@ namespace bgfx
+ 					// insert struct member which declares point size, defaulted to 1
+ 					if ('v' == _options.shaderType)
+ 					{
+-						if (msl.get_writes_to_point_size())
++						// upstream spirv-cross has no writes_to_point_size, an
++						// active output builtin is the closest it offers
++						if (msl.has_active_builtin(spv::BuiltInPointSize, spv::StorageClassOutput) )
+ 						{
+ 							if (source.find("[[point_size]]") == std::string::npos)
+ 							{
 diff --git a/bgfx/tools/shaderc/shaderc_spirv.cpp b/bgfx/tools/shaderc/shaderc_spirv.cpp
 index f7910de..a844cc0 100644
 --- a/bgfx/tools/shaderc/shaderc_spirv.cpp
 +++ b/bgfx/tools/shaderc/shaderc_spirv.cpp
-@@ -20,11 +20,10 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wshadow") // warning: declaration of 'u
+@@ -22,10 +22,10 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wshadow") // warning: declaration of 'u
  #include <spirv_reflect.hpp>
  
  #define ENABLE_OPT 1
 -#include <ShaderLang.h>
 -#include <ResourceLimits.h>
--#include <SPIRV/SPVRemapper.h>
 -#include <SPIRV/GlslangToSpv.h>
 -#include <SPIRV/SpvTools.h>
 +#include <glslang/Public/ShaderLang.h>
@@ -136,22 +161,80 @@ index f7910de..a844cc0 100644
  #include <spirv-tools/optimizer.hpp>
  BX_PRAGMA_DIAGNOSTIC_POP()
  
+diff --git a/bgfx/tools/shaderc/shaderc_wgsl.cpp b/bgfx/tools/shaderc/shaderc_wgsl.cpp
+--- a/bgfx/tools/shaderc/shaderc_wgsl.cpp
++++ b/bgfx/tools/shaderc/shaderc_wgsl.cpp
+@@ -22,12 +22,10 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wshadow")
+ #include <spirv_reflect.hpp>
+
+ #define ENABLE_OPT 1
+-#include <BaseTypes.h>
+-#include <Types.h>
+-#include <ShaderLang.h>
+-#include <ResourceLimits.h>
+-#include <SPIRV/GlslangToSpv.h>
+-#include <SPIRV/SpvTools.h>
++#include <glslang/Public/ShaderLang.h>
++#include <glslang/Include/ResourceLimits.h>
++#include <glslang/SPIRV/GlslangToSpv.h>
++#include <glslang/SPIRV/SpvTools.h>
+ #include <spirv-tools/optimizer.hpp>
+
+ #include <tint/api/tint.h>
+@@ -554,7 +552,9 @@ namespace bgfx
+ 			}
+ 			else
+ 			{
+-				program->buildReflection();
++				// reflect the buffer blocks separately, so that the uniform
++				// block list holds uniform blocks only
++				program->buildReflection(EShReflectionSeparateBuffers);
+
+ 				if (_firstPass)
+ 				{
+@@ -657,18 +657,9 @@ namespace bgfx
+ 					return compile(_options, _version, output.c_str(), _shaderWriter, _messageWriter, false);
+ 				}
+
+-				uint32_t blockIndex = 0;
+-				for (uint32_t ii = 0, num = program->getNumUniformVariables(); ii < num; ++ii)
+-				{
+-					const glslang::TType* type = program->getUniformBlockTType(ii);
+-					if (NULL != type
+-					&&  glslang::EbtBlock   == type->getBasicType()
+-					&&  glslang::EvqUniform == type->getQualifier().storage)
+-					{
+-						blockIndex = ii;
+-						break;
+-					}
+-				}
++				// buffer blocks are reflected separately, so the first uniform
++				// block is the one holding the uniforms
++				const uint32_t blockIndex = 0;
+
+ 				UniformArray uniforms;
+ 				const uint16_t blockSize = bx::narrowCast<uint16_t>(bx::max<int32_t>(0, program->getUniformBlockSize(blockIndex) ) );
 diff --git a/bimg/src/image_decode.cpp b/bimg/src/image_decode.cpp
 index 798eaba..a4cd3ef 100644
 --- a/bimg/src/image_decode.cpp
 +++ b/bimg/src/image_decode.cpp
-@@ -16,22 +16,14 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4018) // warning C4018:  '<': signed/unsigned
- BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4100) // error C4100: '' : unreferenced formal parameter
+@@ -19,13 +19,8 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4245) // warning C4245: 'return': conversion f
  BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4389) // warning C4389 : '==' : signed / unsigned mismatch
  BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4505) // warning C4505: 'tinyexr::miniz::def_realloc_func': unreferenced local function has been removed
+ BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4702) // warning C4702: unreachable code
 -#define MINIZ_NO_ARCHIVE_APIS
+-#define MINIZ_NO_ARCHIVE_WRITING_APIS
 -#define MINIZ_NO_STDIO
+-#define MINIZ_NO_ZLIB_COMPATIBLE_NAMES
 -#define TINYEXR_IMPLEMENTATION
+-#include <miniz/miniz.c>
 -#include <tinyexr/tinyexr.h>
++#include <miniz.h>
 +#include <tinyexr.h>
  BX_PRAGMA_DIAGNOSTIC_POP()
+ #endif // BIMG_CONFIG_PARSE_EXR
  
- BX_PRAGMA_DIAGNOSTIC_PUSH();
+@@ -34,12 +29,7 @@ BX_PRAGMA_DIAGNOSTIC_PUSH();
  BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4127) // warning C4127: conditional expression is constant
  BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4267) // warning C4267: '=' : conversion from 'size_t' to 'unsigned short', possible loss of data
  BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4334) // warning C4334: '<<' : result of 32 - bit shift implicitly converted to 64 bits(was 64 - bit shift intended ? )
@@ -164,25 +247,16 @@ index 798eaba..a4cd3ef 100644
 +#include <lodepng.h>
  BX_PRAGMA_DIAGNOSTIC_POP();
  
- #if BIMG_DECODE_HEIF
-@@ -72,7 +64,7 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_GCC("-Wimplicit-fallthrough");
- #define STBI_FREE(_ptr)           lodepng_free(_ptr)
- #define STB_IMAGE_IMPLEMENTATION
- #define STB_IMAGE_STATIC
+ void* lodepng_malloc(size_t _size)
+@@ -155,7 +145,7 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4505); // unreferenced function with internal
+ #	define STBI_NO_PNM
+ #endif // !BIMG_CONFIG_PARSE_PNM
+ 
 -#include <stb/stb_image.h>
 +#include <stb_image.h>
  BX_PRAGMA_DIAGNOSTIC_POP();
- 
- namespace bimg
-@@ -453,7 +445,7 @@ namespace bimg
- 		case TINYEXR_ERROR_INVALID_HEADER:       BX_ERROR_SET(_err, BIMG_ERROR, "EXR: Failed to parse image. Invalid header.");       break;
- 		case TINYEXR_ERROR_UNSUPPORTED_FEATURE:  BX_ERROR_SET(_err, BIMG_ERROR, "EXR: Failed to parse image. Unsupported feature.");  break;
- 		case TINYEXR_ERROR_CANT_WRITE_FILE:      BX_ERROR_SET(_err, BIMG_ERROR, "EXR: Failed to parse image. Can't write file.");     break;
--		case TINYEXR_ERROR_SERIALZATION_FAILED:  BX_ERROR_SET(_err, BIMG_ERROR, "EXR: Failed to parse image. Serialization failed."); break;
-+		case TINYEXR_ERROR_SERIALIZATION_FAILED: BX_ERROR_SET(_err, BIMG_ERROR, "EXR: Failed to parse image. Serialization failed."); break;
- 		default:                                 BX_ERROR_SET(_err, BIMG_ERROR, "EXR: Failed to parse image.");                       break;
- 		}
- 	}
+ #endif // BIMG_USE_STB_IMAGE
+
 diff --git a/bimg/src/image_encode.cpp b/bimg/src/image_encode.cpp
 index 7c0cd76..530578f 100644
 --- a/bimg/src/image_encode.cpp
@@ -194,64 +268,17 @@ index 7c0cd76..530578f 100644
 -#include <libsquish/squish.h>
 +#include <squish.h>
  #include <etc1/etc1.h>
- #include <etc2/ProcessRGB.hpp>
+ #include <etcpak/ProcessRGB.hpp>
  #include <nvtt/nvtt.h>
 @@ -19,7 +19,7 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4100) // warning C4100: 'alloc_context': unref
  BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4702) // warning C4702: unreachable code
  BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wunused-parameter") // warning: unused parameter ‘alloc_context’ [-Wunused-parameter]
  #define STB_IMAGE_RESIZE_IMPLEMENTATION
--#include <stb/stb_image_resize.h>
+-#include <stb/stb_image_resize2.h>
 +#include <stb_image_resize2.h>
  BX_PRAGMA_DIAGNOSTIC_POP();
  
  extern "C" {
-@@ -564,18 +564,16 @@ namespace bimg
- 				const uint32_t srcDataStep = uint32_t(bx::floor(zz * _src->m_depth / float(_dst->m_depth) ) );
- 				const uint8_t* srcData = &srcMip.m_data[srcDataStep*srcSlice];
- 
--				int result = stbir_resize_float_generic(
--					  (const float*)srcData, _src->m_width, _src->m_height, srcPitch
--					, (      float*)dstData, _dst->m_width, _dst->m_height, dstPitch
--					, 4, 3
--					, STBIR_FLAG_ALPHA_PREMULTIPLIED
-+				void* result = stbir_resize(
-+					  (const void *)srcData, _src->m_width,  _src->m_height, srcPitch
-+					, (      void *)dstData, _dst->m_width,  _dst->m_height, dstPitch
-+					, STBIR_RGBA_PM
-+					, STBIR_TYPE_FLOAT
- 					, STBIR_EDGE_CLAMP
- 					, STBIR_FILTER_BOX
--					, STBIR_COLORSPACE_LINEAR
--					, NULL
- 					);
- 
--				if (1 != result)
-+				if (0 == result)
- 				{
- 					return false;
- 				}
-diff --git a/bx/src/settings.cpp b/bx/src/settings.cpp
-index 907c74c..ffcc442 100644
---- a/bx/src/settings.cpp
-+++ b/bx/src/settings.cpp
-@@ -19,7 +19,7 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wunused-function");
- 
- BX_PRAGMA_DIAGNOSTIC_PUSH();
- BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wsign-compare");
--#include <ini/ini.h>
-+#include <mgnlibs/ini.h>
- BX_PRAGMA_DIAGNOSTIC_POP();
- }
- 
-@@ -58,7 +58,7 @@ void Settings::load(const void* _data, uint32_t _len)
- 	}
- 	else
- 	{
--		m_ini = ini_load( (const char*)_data, _len, m_allocator);
-+		m_ini = ini_load( (const char*)_data, m_allocator);
- 	}
- }
- 
 diff --git a/cmake/Config.cmake.in b/cmake/Config.cmake.in
 index 33a3943..8eddd3f 100644
 --- a/cmake/Config.cmake.in
@@ -279,11 +306,50 @@ index 33a3943..8eddd3f 100644
  if(@BGFX_CMAKE_USER_SCRIPT_PRESENT@)
  	include("${CMAKE_CURRENT_LIST_DIR}/@BGFX_CMAKE_USER_SCRIPT_INSTALL_NAME@")
  endif()
+diff --git a/cmake/bgfx/3rdparty/tint.cmake b/cmake/bgfx/3rdparty/tint.cmake
+index eb86f57..349039d 100644
+--- a/cmake/bgfx/3rdparty/tint.cmake
++++ b/cmake/bgfx/3rdparty/tint.cmake
+@@ -18,8 +18,14 @@ if(NOT IS_DIRECTORY ${BGFX_DIR})
+ endif()
+
+ set(TINT_DIR ${BGFX_DIR}/3rdparty/dawn)
+-set(SPIRV_HEADERS ${BGFX_DIR}/3rdparty/spirv-headers)
+-set(SPIRV_TOOLS ${BGFX_DIR}/3rdparty/spirv-tools)
++find_package(SPIRV-Headers CONFIG REQUIRED)
++find_package(SPIRV-Tools-opt CONFIG REQUIRED)
++
++# tint's SPIR-V reader uses the private headers of spirv-tools, so they have to
++# come from the same build as the library it links against
++if(NOT IS_DIRECTORY "${BGFX_SPIRV_TOOLS_INTERNAL_DIR}")
++	message(SEND_ERROR "tint needs BGFX_SPIRV_TOOLS_INTERNAL_DIR to point at the private headers of spirv-tools")
++endif()
+
+ file(
+ 	GLOB_RECURSE
+@@ -46,14 +52,13 @@ add_library(tint STATIC ${TINT_SOURCES})
+ 	tint
+ 	PUBLIC ${TINT_DIR}
+ 		   ${TINT_DIR}/src/tint
+ 	PRIVATE ${TINT_DIR}/third_party/protobuf/src
+ 			${TINT_DIR}/third_party/abseil-cpp
+-			${SPIRV_TOOLS}
+-			${SPIRV_TOOLS}/include
+-			${SPIRV_TOOLS}/include/generated
+-			${SPIRV_HEADERS}/include
++			${BGFX_SPIRV_TOOLS_INTERNAL_DIR}
+ )
+
++target_link_libraries(tint PRIVATE SPIRV-Headers::SPIRV-Headers SPIRV-Tools-opt)
++
+ target_compile_definitions(
+ 	tint
+ 	PRIVATE TINT_BUILD_GLSL_WRITER=0
 diff --git a/cmake/bgfx/CMakeLists.txt b/cmake/bgfx/CMakeLists.txt
 index 0125da3..9b10d09 100644
 --- a/cmake/bgfx/CMakeLists.txt
 +++ b/cmake/bgfx/CMakeLists.txt
-@@ -9,20 +9,22 @@
+@@ -9,21 +9,23 @@
  # this software. If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
  
  include(bgfx.cmake)
@@ -291,6 +357,7 @@ index 0125da3..9b10d09 100644
 -include(3rdparty/dear-imgui.cmake)
  
  if(BGFX_BUILD_TOOLS_TEXTURE)
+ 	include(3rdparty/l-smash.cmake)
 -	include(texturev.cmake)
  endif()
  if(BGFX_BUILD_TOOLS_GEOMETRY)
@@ -310,37 +377,31 @@ index 0125da3..9b10d09 100644
 +	find_package(spirv_cross_msl CONFIG REQUIRED)
 +	find_package(glslang CONFIG REQUIRED)
 +
- 	include(3rdparty/glsl-optimizer.cmake)
- 	include(3rdparty/fcpp.cmake)
  	include(3rdparty/webgpu.cmake)
+ 	include(3rdparty/tint.cmake)
+ 	include(shaderc.cmake)
 diff --git a/cmake/bgfx/shaderc.cmake b/cmake/bgfx/shaderc.cmake
 index 0f50eab..8b13b28 100644
 --- a/cmake/bgfx/shaderc.cmake
 +++ b/cmake/bgfx/shaderc.cmake
-@@ -24,21 +24,10 @@ target_link_libraries(
+@@ -24,11 +24,14 @@ target_link_libraries(
  	PRIVATE bx
- 			bgfx-vertexlayout
- 			fcpp
--			glslang
--			glsl-optimizer
--			spirv-opt
--			spirv-cross
--)
--target_link_libraries(
--	shaderc
--	PRIVATE bx
  			bimg
--			bgfx-vertexlayout
--			fcpp
+ 			bgfx-vertexlayout
 -			glslang
-+			glslang::glslang glslang::glslang-default-resource-limits glslang::SPIRV
- 			glsl-optimizer
 -			spirv-opt
 -			spirv-cross
++			glslang::glslang glslang::glslang-default-resource-limits glslang::SPIRV
 +			spirv-cross-core spirv-cross-reflect spirv-cross-glsl spirv-cross-hlsl spirv-cross-msl
  			webgpu
+ 			tint
  )
- if(BGFX_AMALGAMATED)
+
++# shaderc detects glslang by probing for its vendored header layout, which does
++# not match the one vcpkg installs
++target_compile_definitions(shaderc PRIVATE SHADERC_CONFIG_HAS_GLSLANG=1)
++
+ target_include_directories(
 diff --git a/cmake/bimg/CMakeLists.txt b/cmake/bimg/CMakeLists.txt
 index 200b29b..1c857c0 100644
 --- a/cmake/bimg/CMakeLists.txt
@@ -378,14 +439,20 @@ diff --git a/cmake/bimg/bimg_decode.cmake b/cmake/bimg/bimg_decode.cmake
 index a511e8f..da98152 100644
 --- a/cmake/bimg/bimg_decode.cmake
 +++ b/cmake/bimg/bimg_decode.cmake
-@@ -34,6 +34,7 @@ target_include_directories(
+@@ -48,11 +48,13 @@ target_include_directories(
  	PRIVATE ${LOADPNG_INCLUDE_DIR} #
  			${MINIZ_INCLUDE_DIR} #
  			${TINYEXR_INCLUDE_DIR} #
 +			${Stb_INCLUDE_DIR}
+ 			${BIMG_DIR}/3rdparty/libavif #
+ 			${BIMG_DIR}/3rdparty/libavif/include #
+ 			${BIMG_DIR}/3rdparty/libavif/third_party/libyuv/include #
+ 			${BIMG_DIR}/3rdparty/dav1d #
+ 			${BIMG_DIR}/3rdparty/dav1d/include #
++			${BIMG_DIR}/3rdparty
+ 			$<$<C_COMPILER_ID:MSVC>:${BIMG_DIR}/3rdparty/dav1d/include/compat/msvc> #
  )
  
- target_link_libraries(
 diff --git a/cmake/bimg/bimg_encode.cmake b/cmake/bimg/bimg_encode.cmake
 index 82d9fe0..a0ba5df 100644
 --- a/cmake/bimg/bimg_encode.cmake

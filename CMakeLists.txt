@@ -65,8 +65,8 @@ FetchContent_Declare(
 
 FetchContent_Declare(
   argh
-  GIT_REPOSITORY https://github.com/adishavit/argh.git
-  GIT_TAG v1.3.2
+  GIT_REPOSITORY https://github.com/robinwils/argh.git
+  GIT_TAG master
   FIND_PACKAGE_ARGS NAMES argh
 )
 
@@ -264,6 +264,11 @@ if (ENABLE_CLIENT)
     shaders/vs_blinnphong_instanced.sc
     shaders/vs_grid.sc
     shaders/vs_simple.sc
+
+    src/imgui/fs_imgui_image.sc
+    src/imgui/fs_ocornut_imgui.sc
+    src/imgui/vs_imgui_image.sc
+    src/imgui/vs_ocornut_imgui.sc
   )
   target_include_directories(wato PRIVATE ${CMAKE_BINARY_DIR}/include/generated/shaders)
   target_link_libraries(wato
@@ -439,6 +444,26 @@ bgfx_compile_shaders(
     shaders/fs_simple.sc
     shaders/fs_grid.sc
     shaders/fs_blinnphong.sc
+  VARYING_DEF ${CMAKE_SOURCE_DIR}/shaders/varying.def.sc
+  OUTPUT_DIR ${CMAKE_BINARY_DIR}/include/generated/shaders
+  AS_HEADERS
+)
+
+bgfx_compile_shaders(
+  TYPE VERTEX
+  SHADERS
+    src/imgui/vs_ocornut_imgui.sc
+    src/imgui/vs_imgui_image.sc
+  VARYING_DEF ${CMAKE_SOURCE_DIR}/src/imgui/varying.def.sc
+  OUTPUT_DIR ${CMAKE_BINARY_DIR}/include/generated/shaders
+  AS_HEADERS
+)
+
+bgfx_compile_shaders(
+  TYPE FRAGMENT
+  SHADERS
+    src/imgui/fs_ocornut_imgui.sc
+    src/imgui/fs_imgui_image.sc
   VARYING_DEF ${CMAKE_SOURCE_DIR}/shaders/varying.def.sc
   OUTPUT_DIR ${CMAKE_BINARY_DIR}/include/generated/shaders
   AS_HEADERS
