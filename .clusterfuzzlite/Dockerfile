@@ -6,6 +6,8 @@ RUN apt-get update && apt-get install -y \
         build-essential \
         ninja-build \
         autoconf \
+        autoconf-archive \
+        automake \
         libtool \
         pkg-config \
         libgl1-mesa-dev \
