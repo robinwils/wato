@@ -1,7 +1,6 @@
 #include "renderer/renderer.hpp"
 
 #include <bgfx/bgfx.h>
-#include <bgfx/platform.h>
 #include <bx/bx.h>
 
 #include <memory>
@@ -93,7 +92,7 @@ void BgfxRenderer::Resize(WatoWindow& aWin)
 
     bgfx::reset(BGFX_RESET_VSYNC & ~kSwapChainFlags, &swapChain);
     bgfx::reset(kSwapChainFlags, &swapChain);
-    bgfx::setViewRect(kClearView, 0, 0, bgfx::BackbufferRatio::Equal);
+    bgfx::setViewRect(wato::kRenderPass, 0, 0, bgfx::BackbufferRatio::Equal);
 }
 
 void BgfxRenderer::Clear()
