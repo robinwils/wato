@@ -54,8 +54,8 @@ std::optional<uint32_t> Picker::Read(uint32_t aCurrentFrame)
 
     if (mRequested && mReadingFrame == 0u) {
         bgfx::TextureHandle pickingTex = bgfx::getTexture(mFB.Handle(), 0);
-        bgfx::blit(wato::kPickingPass, mBlitTex, 0, 0, pickingTex);
-        mReadingFrame = bgfx::readTexture(mBlitTex, mBlitData.data());
+        bgfx::blit(wato::kPickingPass, {.handle = mBlitTex}, {.handle = pickingTex});
+        mReadingFrame = bgfx::read({.handle = mBlitTex}, mBlitData.data());
         mRequested    = false;
     }
 
