@@ -62,8 +62,15 @@ vcpkg_cmake_install()
 vcpkg_cmake_config_fixup(CONFIG_PATH "lib/cmake/${PORT}")
 vcpkg_copy_pdbs()
 
-if ("tools" IN_LIST FEATURES)
+if("tools" IN_LIST FEATURES)
   vcpkg_copy_tools(TOOL_NAMES bin2c shaderc geometryc texturec AUTO_CLEAN)
+  if(VCPKG_TARGET_IS_WINDOWS)
+    file(INSTALL "${SOURCE_PATH}/bgfx/tools/bin/windows/dxcompiler.dll"
+      DESTINATION "${CURRENT_PACKAGES_DIR}/tools/bgfx")
+  elseif(VCPKG_TARGET_IS_LINUX)
+    file(INSTALL "${SOURCE_PATH}/bgfx/tools/bin/linux/libdxcompiler.so"
+      DESTINATION "${CURRENT_PACKAGES_DIR}/tools/bgfx")
+  endif()
 endif ()
 
 vcpkg_install_copyright(
