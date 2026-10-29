@@ -20,5 +20,6 @@ class InputSystem : public FrameSystem
 
    private:
     void handleMouseMovement(Registry& aRegistry);
+    void handleMouseSelection(Registry& aRegistry, const rp3d::Ray& aMouseRay);
     void createActions(Registry& aRegistry, float aDelta);
 };

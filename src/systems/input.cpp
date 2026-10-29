@@ -21,8 +21,13 @@
 
 void InputSystem::Execute(Registry& aRegistry, float aDelta)
 {
-    handleMouseMovement(aRegistry);
-    createActions(aRegistry, aDelta);
+    auto& window = GetSingletonComponent<WatoWindow&>(aRegistry);
+    if (!window.GetInput().UiWantsMouse) {
+        handleMouseMovement(aRegistry);
+    }
+    if (!window.GetInput().UiWantsKeyboard) {
+        createActions(aRegistry, aDelta);
+    }
 }
 
 void InputSystem::handleMouseMovement(Registry& aRegistry)
@@ -31,18 +36,20 @@ void InputSystem::handleMouseMovement(Registry& aRegistry)
     auto& window = GetSingletonComponent<WatoWindow&>(aRegistry);
     auto& phy    = GetSingletonComponent<Physics&>(aRegistry);
 
+    glm::vec3 origin;
+    glm::vec3 end;
+
+    for (auto&& [_, camera, tcam] : aRegistry.view<Camera, Transform3D>().each()) {
+        std::tie(origin, end) = window.MouseUnproject(camera, tcam.Position);
+    }
+
+    rp3d::Ray ray(ToRP3D(origin), ToRP3D(end));
     if (stack.GetState<PlacementState>() != nullptr) {
-        glm::vec3 origin;
-        glm::vec3 end;
-
-        for (auto&& [_, camera, tcam] : aRegistry.view<Camera, Transform3D>().each()) {
-            std::tie(origin, end) = window.MouseUnproject(camera, tcam.Position);
-        }
-
-        if (std::optional<glm::vec3> intersect = phy.RayTerrainIntersection(origin, end);
+        if (std::optional<glm::vec3> intersect = phy.RayTerrainIntersection(ray);
             intersect) {
+            auto placementModeView = aRegistry.view<PlacementMode>();
+
             aRegistry.ctx().get<PickState>().MouseWorldIntersect = *intersect;
-            auto placementModeView                               = aRegistry.view<PlacementMode>();
             for (auto ghostTower : placementModeView) {
                 aRegistry.patch<Transform3D>(ghostTower, [&](Transform3D& aT) {
                     aT.Position.x = intersect->x;
@@ -51,7 +58,45 @@ void InputSystem::handleMouseMovement(Registry& aRegistry)
             }
         }
     } else {
-        GetSingletonComponent<PickState&>(aRegistry).MouseWorldIntersect.reset();
+        auto& state = GetSingletonComponent<PickState&>(aRegistry);
+
+        if (state.MouseWorldIntersect.has_value()) {
+            state.MouseWorldIntersect.reset();
+        }
+
+        handleMouseSelection(aRegistry, ray);
+    }
+}
+
+void InputSystem::handleMouseSelection(Registry& aRegistry, const rp3d::Ray& aMouseRay)
+{
+    const Input& input = GetSingletonComponent<WatoWindow&>(aRegistry).GetInput();
+    auto&        phy   = GetSingletonComponent<Physics&>(aRegistry);
+    auto&        state = GetSingletonComponent<PickState&>(aRegistry);
+
+     if (!input.PrevMouseState.IsKeyPressed(Mouse::Left)
+        && input.MouseState.IsKeyPressed(Mouse::Left)) {
+        state.SelectEndPos.reset();
+        state.WorldStartPos.reset();
+
+        if (std::optional<glm::vec3> intersect = phy.RayTerrainIntersection(aMouseRay); intersect) {
+            state.WorldStartPos = intersect;
+        }
+    } else if (
+        input.PrevMouseState.IsKeyPressed(Mouse::Left)
+        && input.MouseState.IsKeyPressed(Mouse::Left)) {
+        if (input.KeyboardState.IsKeyPressed(Keyboard::Escape)) {
+            state.WorldStartPos.reset();
+            state.SelectCurPos.reset();
+            state.SelectEndPos.reset();
+        } else {
+            state.SelectCurPos = input.MouseState.Pos;
+        }
+    } else if (
+        input.PrevMouseState.IsKeyPressed(Mouse::Left)
+        && input.MouseState.IsKeyReleased(Mouse::Left)) {
+        state.SelectCurPos.reset();
+        state.SelectEndPos = input.MouseState.Pos;
     }
 }
 
