@@ -51,7 +51,25 @@ void InputSystem::handleMouseMovement(Registry& aRegistry)
             }
         }
     } else {
-        GetSingletonComponent<PickState&>(aRegistry).MouseWorldIntersect.reset();
+        const Input& input = GetSingletonComponent<WatoWindow&>(aRegistry).GetInput();
+        auto         state = GetSingletonComponent<PickState&>(aRegistry);
+        if (state.MouseWorldIntersect.has_value()) {
+            state.MouseWorldIntersect.reset();
+        }
+
+        if (!state.SelectStartPos) {
+            if (input.MouseState.IsKeyPressed(Mouse::Left)) {
+                state.SelectStartPos = input.MouseState.Pos;
+            }
+        } else {
+            if (input.PrevMouseState.IsKeyPressed(Mouse::Left)
+                && input.MouseState.IsKeyPressed(Mouse::Left)) {
+                state.SelectCurPos = input.MouseState.Pos;
+            } else if (input.MouseState.IsKeyReleased(Mouse::Left) {
+                state.SelectCurPos.reset();
+                state.SelectStartPos.reset();
+            }
+        }
     }
 }
 
