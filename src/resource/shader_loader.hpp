@@ -9,24 +9,24 @@
 #include <essl/fs_grid.sc.bin.h>
 #include <essl/fs_simple.sc.bin.h>
 #include <essl/vs_blinnphong.sc.bin.h>
-#include <essl/vs_blinnphong_skinned.sc.bin.h>
 #include <essl/vs_blinnphong_instanced.sc.bin.h>
+#include <essl/vs_blinnphong_skinned.sc.bin.h>
 #include <essl/vs_grid.sc.bin.h>
 #include <essl/vs_simple.sc.bin.h>
 #include <glsl/fs_blinnphong.sc.bin.h>
 #include <glsl/fs_grid.sc.bin.h>
 #include <glsl/fs_simple.sc.bin.h>
 #include <glsl/vs_blinnphong.sc.bin.h>
-#include <glsl/vs_blinnphong_skinned.sc.bin.h>
 #include <glsl/vs_blinnphong_instanced.sc.bin.h>
+#include <glsl/vs_blinnphong_skinned.sc.bin.h>
 #include <glsl/vs_grid.sc.bin.h>
 #include <glsl/vs_simple.sc.bin.h>
 #include <spirv/fs_blinnphong.sc.bin.h>
 #include <spirv/fs_grid.sc.bin.h>
 #include <spirv/fs_simple.sc.bin.h>
 #include <spirv/vs_blinnphong.sc.bin.h>
-#include <spirv/vs_blinnphong_skinned.sc.bin.h>
 #include <spirv/vs_blinnphong_instanced.sc.bin.h>
+#include <spirv/vs_blinnphong_skinned.sc.bin.h>
 #include <spirv/vs_grid.sc.bin.h>
 #include <spirv/vs_simple.sc.bin.h>
 
@@ -35,14 +35,22 @@
 
 #include "renderer/shader.hpp"
 #if defined(_WIN32)
-#include <dx11/fs_blinnphong.sc.bin.h>
-#include <dx11/fs_grid.sc.bin.h>
-#include <dx11/fs_simple.sc.bin.h>
-#include <dx11/vs_blinnphong.sc.bin.h>
-#include <dx11/vs_blinnphong_skinned.sc.bin.h>
-#include <dx11/vs_blinnphong_instanced.sc.bin.h>
-#include <dx11/vs_grid.sc.bin.h>
-#include <dx11/vs_simple.sc.bin.h>
+#include <dxbc/fs_blinnphong.sc.bin.h>
+#include <dxbc/fs_grid.sc.bin.h>
+#include <dxbc/fs_simple.sc.bin.h>
+#include <dxbc/vs_blinnphong.sc.bin.h>
+#include <dxbc/vs_blinnphong_instanced.sc.bin.h>
+#include <dxbc/vs_blinnphong_skinned.sc.bin.h>
+#include <dxbc/vs_grid.sc.bin.h>
+#include <dxbc/vs_simple.sc.bin.h>
+#include <dxil/fs_blinnphong.sc.bin.h>
+#include <dxil/fs_grid.sc.bin.h>
+#include <dxil/fs_simple.sc.bin.h>
+#include <dxil/vs_blinnphong.sc.bin.h>
+#include <dxil/vs_blinnphong_instanced.sc.bin.h>
+#include <dxil/vs_blinnphong_skinned.sc.bin.h>
+#include <dxil/vs_grid.sc.bin.h>
+#include <dxil/vs_simple.sc.bin.h>
 #else
 // BX marks linux as a supported platform for Direct3D shaders but shaderc CMake wrapper does not
 // generate shader headers for Direct3D on Linux so we need to override the following macro
@@ -54,8 +62,8 @@
 #include <metal/fs_grid.sc.bin.h>
 #include <metal/fs_simple.sc.bin.h>
 #include <metal/vs_blinnphong.sc.bin.h>
-#include <metal/vs_blinnphong_skinned.sc.bin.h>
 #include <metal/vs_blinnphong_instanced.sc.bin.h>
+#include <metal/vs_blinnphong_skinned.sc.bin.h>
 #include <metal/vs_grid.sc.bin.h>
 #include <metal/vs_simple.sc.bin.h>
 #endif  // __APPLE__

@@ -43,10 +43,14 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wconversion")
 #endif
 
 #if BX_PLATFORM_WINDOWS
-#include <dx11/fs_imgui_image.sc.bin.h>
-#include <dx11/fs_ocornut_imgui.sc.bin.h>
-#include <dx11/vs_imgui_image.sc.bin.h>
-#include <dx11/vs_ocornut_imgui.sc.bin.h>
+#include <dxbc/fs_imgui_image.sc.bin.h>
+#include <dxbc/fs_ocornut_imgui.sc.bin.h>
+#include <dxbc/vs_imgui_image.sc.bin.h>
+#include <dxbc/vs_ocornut_imgui.sc.bin.h>
+#include <dxil/fs_imgui_image.sc.bin.h>
+#include <dxil/fs_ocornut_imgui.sc.bin.h>
+#include <dxil/vs_imgui_image.sc.bin.h>
+#include <dxil/vs_ocornut_imgui.sc.bin.h>
 #else
 // BX marks linux as a supported platform for Direct3D shaders but shaderc CMake wrapper does not
 // generate shader headers for Direct3D on Linux so we need to override the following macro
