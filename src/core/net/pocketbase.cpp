@@ -163,22 +163,24 @@ std::expected<GameServerRecord, PBError> PocketBaseClient::RegisterGameServerSyn
     cpr::Header headers     = AuthHeader();
     headers["Content-Type"] = "application/json";
 
-    if (r && !r->items.empty()) {
+    if (!r) {
+        return std::unexpected{r.error()};
+    }
+
+    if (!r->items.empty()) {
         mLogger->debug("server already registered, patching.");
         return decodePBResponse<GameServerRecord>(Client.Patch(
             "/api/collections/game_servers/records/" + r->items[0].id,
             headers,
             body,
             cpr::Parameters{fields}));
-    } else if (r->items.empty()) {
+    } else {
         mLogger->debug("server unregistered, adding.");
         return decodePBResponse<GameServerRecord>(Client.Post(
             "/api/collections/game_servers/records",
             headers,
             body,
             cpr::Parameters{fields}));
-    } else {
-        return std::unexpected{r.error()};
     }
 }
 
