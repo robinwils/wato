@@ -1,6 +1,6 @@
 #include "core/crypto/session.hpp"
 
-byte_view CryptoSession::Encrypt(byte_view aBytes)
+byte_buffer CryptoSession::Encrypt(byte_view aBytes)
 {
     unsigned char      nonce[MAX_NONCE_BYTES]{};
     unsigned long long cipherTextLen{};
@@ -9,12 +9,12 @@ byte_view CryptoSession::Encrypt(byte_view aBytes)
     randombytes_buf(nonce, mAEAD->NonceBytes);
 
     // [nonce | ciphertext + tag]
-    mBuffer.resize(mAEAD->NonceBytes + aBytes.size() + mAEAD->AuthTagBytes);
+    std::vector<uint8_t> buffer(mAEAD->NonceBytes + aBytes.size() + mAEAD->AuthTagBytes);
 
-    std::memcpy(mBuffer.data(), nonce, mAEAD->NonceBytes);
+    std::memcpy(buffer.data(), nonce, mAEAD->NonceBytes);
 
     int ret = mAEAD->Encrypt(
-        mBuffer.data() + mAEAD->NonceBytes,
+        buffer.data() + mAEAD->NonceBytes,
         &cipherTextLen,
         aBytes.data(),
         aBytes.size(),
@@ -24,10 +24,10 @@ byte_view CryptoSession::Encrypt(byte_view aBytes)
         nonce,
         mTX);
 
-    return ret == 0 ? mBuffer : byte_view{};
+    return ret == 0 ? std::move(buffer) : byte_buffer{};
 }
 
-byte_view CryptoSession::Decrypt(byte_view aBytes)
+byte_buffer CryptoSession::Decrypt(byte_view aBytes)
 {
     const auto minSize = mAEAD->NonceBytes + mAEAD->AuthTagBytes;
     if (aBytes.size() < minSize + 1) return {};
@@ -37,10 +37,10 @@ byte_view CryptoSession::Decrypt(byte_view aBytes)
 
     unsigned long long decryptedLen{};
 
-    mBuffer.resize(cipherText.size() - mAEAD->AuthTagBytes);
+    std::vector<uint8_t> buffer(cipherText.size() - mAEAD->AuthTagBytes);
 
     int ret = mAEAD->Decrypt(
-        mBuffer.data(),
+        buffer.data(),
         &decryptedLen,
         nullptr,
         cipherText.data(),
@@ -49,5 +49,5 @@ byte_view CryptoSession::Decrypt(byte_view aBytes)
         0,
         nonce.data(),
         mRX);
-    return ret == 0 ? mBuffer : byte_view{};
+    return ret == 0 ? std::move(buffer) : byte_buffer{};
 }
