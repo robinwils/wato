@@ -44,15 +44,12 @@ class CryptoSession
     bool Valid() const { return mValid; }
     void Reset() { mValid = false; }
 
-    byte_view Encrypt(byte_view aBytes);
-    byte_view Decrypt(byte_view aBytes);
+    byte_buffer Encrypt(byte_view aBytes);
+    byte_buffer Decrypt(byte_view aBytes);
 
    private:
     unsigned char mRX[crypto_kx_SESSIONKEYBYTES]{}, mTX[crypto_kx_SESSIONKEYBYTES]{};
     AEADHandle    mAEAD;
     bool          mValid{false};
     bool          mAEGIS{false};
-
-    std::vector<uint8_t> mBuffer{};
 };
-
