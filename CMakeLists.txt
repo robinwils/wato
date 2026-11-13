@@ -496,6 +496,7 @@ target_sources(watolib
     src/components/placement_mode.hpp
     src/components/rigid_body.hpp
     src/components/scene_object.hpp
+    src/components/selectable.hpp
     src/components/tile.hpp
     src/components/transform3d.hpp
     src/components/velocity.hpp
@@ -525,6 +526,7 @@ target_sources(watolib
     src/systems/physics.hpp
     src/systems/projectile.hpp
     src/systems/rigid_bodies_update.hpp
+    src/systems/selection.hpp
     src/systems/system.hpp
     src/systems/system_executor.hpp
     src/systems/tower_attack.hpp
@@ -554,6 +556,7 @@ target_sources(watolib
     src/systems/physics.cpp
     src/systems/projectile.cpp
     src/systems/rigid_bodies_update.cpp
+    src/systems/selection.cpp
     src/systems/tower_attack.cpp
     src/systems/tower_built.cpp
 )
