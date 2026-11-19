@@ -19,3 +19,4 @@ RUN chmod +x entrypoint.sh
 EXPOSE 8090
 
 ENTRYPOINT ["./entrypoint.sh"]
+CMD [ "/app/watohttpd", "serve", "--dev", "--http=0.0.0.0:8090" ]

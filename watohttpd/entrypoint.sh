@@ -7,4 +7,5 @@ if [ -n "${ADMIN_EMAIL:-}" ] && [ -n "${ADMIN_PASSWORD:-}" ]; then
 fi
 
 ./watohttpd migrate history-sync
-exec ./watohttpd serve --dev --http=0.0.0.0:8090
+
+exec "$@"
