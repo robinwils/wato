@@ -53,7 +53,7 @@ FetchContent_Declare(
 FetchContent_Declare(
   glm
   GIT_REPOSITORY https://github.com/g-truc/glm
-  GIT_TAG 0.9.9.8
+  GIT_TAG 1.0.3
   FIND_PACKAGE_ARGS NAMES glm
 )
 FetchContent_Declare(
@@ -342,11 +342,11 @@ endif()
 if (MSVC)
   target_compile_options(wato_common
     INTERFACE
-      $<$<CONFIG:Debug>:/fsanitize=address>
+      $<$<CONFIG:Debug>:/Od /fsanitize=address /FS>
   )
   target_compile_definitions(wato_common
     INTERFACE
-      $<$<CONFIG:Debug>:_DISABLE_STRING_ANNOTATION _DISABLE_VECTOR_ANNOTATION>)
+      $<$<CONFIG:Debug>:_DISABLE_STRING_ANNOTATION _DISABLE_VECTOR_ANNOTATION _DISABLE_OPTIONAL_ANNOTATION>)
 
   target_link_options(wato_common
     INTERFACE
