@@ -21,6 +21,7 @@
 #include "core/gameplay_definitions.hpp"
 #include "core/graph.hpp"
 #include "core/menu/menu.hpp"
+#include "core/menu/menu_events.hpp"
 #include "core/net/enet_client.hpp"
 #include "core/net/net.hpp"
 #include "core/net/network_events.hpp"
@@ -95,6 +96,19 @@ void GameClient::Init()
 
     mLogger->debug("got server public key = {}", r->publicKey);
     mRegistry.ctx().get<ENetClient&>().SetServerPK(KeyFromB64<32>(r->publicKey));
+
+    if (!mOptions.User().empty()) {
+        auto& menu = GetSingletonComponent<MenuContext>(mRegistry);
+
+        mLogger->debug("got user {} on CLI, dispatching login", mOptions.User());
+        menu.Dispatcher.enqueue(LoginEvent{
+            .Reg=&mRegistry,
+            .Account=mOptions.User(),
+            .Password=mOptions.Password(),
+        });
+    } else {
+        mLogger->debug("no user on CLI.");
+    }
 }
 
 int GameClient::Run(tf::Executor& aExecutor)
