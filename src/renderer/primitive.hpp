@@ -112,7 +112,7 @@ class Primitive
 using PrimitiveVariant = std::variant<
     std::unique_ptr<Primitive<PositionNormalUvVertex>>,
     std::unique_ptr<Primitive<PositionNormalUvBoneVertex>>,
-    std::unique_ptr<Primitive<PositionVertex>>>;
+    std::unique_ptr<Primitive<PositionColorUvVertex>>>;
 
 template <typename VL>
 struct fmt::formatter<Primitive<VL>> : fmt::formatter<std::string> {

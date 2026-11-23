@@ -43,6 +43,7 @@
 #include "systems/render.hpp"
 #include "systems/rigid_bodies_update.hpp"
 #include "systems/sync.hpp"
+#include "systems/selection.hpp"
 #include "systems/system.hpp"
 #include "systems/tower_built.hpp"
 #include "systems/ui.hpp"
@@ -75,6 +76,7 @@ void GameClient::Init()
     mFrameExecutor.Register<CameraSystem>();
     mFrameExecutor.Register<AnimationSystem>();
     mFrameExecutor.Register<RealTimeActionSystem>();
+    mFrameExecutor.Register<SelectionSystem>();
     mFrameExecutor.Register<InputSystem>();
 
     mMenuExecutor.Register<RenderSystem>();
@@ -202,7 +204,7 @@ void GameClient::prepareGridPreview(const glm::vec2& aOffset)
     GraphCell::size_type numVertsX = graph.Width() + 1;
     GraphCell::size_type numVertsY = graph.Height() + 1;
 
-    std::vector<PositionVertex> vertices;
+    std::vector<PositionColorUvVertex> vertices;
     std::vector<uint16_t>       indices;
 
     for (GraphCell::size_type i = 0; i < numVertsY; ++i) {
@@ -236,7 +238,7 @@ void GameClient::prepareGridPreview(const glm::vec2& aOffset)
         shader,
         glm::vec4(graph.Width(), graph.Height(), GraphCell::kCellsPerAxis, 0),
         texture);
-    auto primitive = std::make_unique<Primitive<PositionVertex>>(vertices, indices, std::move(mat));
+    auto primitive = std::make_unique<Primitive<PositionColorUvVertex>>(vertices, indices, std::move(mat));
 
     // Put texture in context variables because I am not sure entt:resource_cache can be updated
     // easily
