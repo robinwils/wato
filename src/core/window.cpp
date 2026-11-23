@@ -6,6 +6,7 @@
 #include <spdlog/spdlog.h>
 
 #include <glm/ext/matrix_projection.hpp>
+#include "registry/registry.hpp"
 
 #if BX_PLATFORM_LINUX
 #define GLFW_EXPOSE_NATIVE_X11
@@ -400,15 +401,17 @@ std::pair<glm::vec3, glm::vec3> WatoWindow::MouseUnproject(
 }
 
 glm::vec3
-WatoWindow::ProjectPosition(const glm::vec3& aPos, const Camera& aCam, const glm::vec3& aCamPos)
+WatoWindow::ProjectPosition(const glm::vec3& aPos, const Camera& aCam, const glm::vec3& aCamPos) const
 {
     const auto viewport = glm::vec4(0, 0, Width<float>(), Height<float>());
 
-    return glm::project(
+    glm::vec3 pos = glm::project(
         aPos,
         aCam.View(aCamPos),
         aCam.Projection(Width<float>() / Height<float>()),
         viewport);
+
+        return {pos.x, Height<float>() - pos.y, pos.z};
 }
 
 void WatoWindow::keyCallback(
