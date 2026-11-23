@@ -19,13 +19,12 @@ class PublicKey
     PublicKey() = default;
     explicit PublicKey(const Key& aKey) : mKey(aKey) {}
 
-    byte_view Encrypt(byte_view aBytes);
+    byte_buffer Encrypt(byte_view aBytes);
 
     const Key& Raw() const { return mKey; }
 
    private:
-    Key                  mKey{};
-    std::vector<uint8_t> mBuffer{};
+    Key mKey{};
 };
 
 // Full keypair (public + secret). Used for key exchange (crypto_kx) and sealed box decryption.
@@ -59,13 +58,11 @@ class CryptoKeys
     const Public RawPublicKey() const { return mPublic; }
     const Secret RawSecretKey() const { return mSecret; }
 
-    byte_view Decrypt(byte_view aBytes);
+    byte_buffer Decrypt(byte_view aBytes);
 
    private:
     Public mPublic{};
     Secret mSecret{};
-
-    std::vector<uint8_t> mBuffer{};
 };
 
 template <size_t N>
@@ -89,4 +86,3 @@ std::array<unsigned char, N> KeyFromB64(const std::string& aB64Key)
 
     return key;
 }
-

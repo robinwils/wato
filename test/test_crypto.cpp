@@ -10,11 +10,11 @@ TEST_CASE("crypto.sealed_box_round_trip")
 
     std::vector<uint8_t> plaintext = {0x48, 0x65, 0x6C, 0x6C, 0x6F};  // "Hello"
 
-    byte_view encrypted = pub.Encrypt(plaintext);
+    byte_buffer encrypted = pub.Encrypt(plaintext);
     REQUIRE_FALSE(encrypted.empty());
     CHECK(encrypted.size() > plaintext.size());
 
-    byte_view decrypted = keys.Decrypt(encrypted);
+    byte_buffer decrypted = keys.Decrypt(encrypted);
     REQUIRE_FALSE(decrypted.empty());
     CHECK(std::vector<uint8_t>(decrypted.begin(), decrypted.end()) == plaintext);
 }
@@ -27,11 +27,11 @@ TEST_CASE("crypto.sealed_box_wrong_key")
 
     std::vector<uint8_t> plaintext = {1, 2, 3, 4};
 
-    byte_view encrypted = pub.Encrypt(plaintext);
+    byte_buffer encrypted = pub.Encrypt(plaintext);
     REQUIRE_FALSE(encrypted.empty());
 
     // Decrypt with wrong keypair should fail
-    byte_view decrypted = keysB.Decrypt(encrypted);
+    byte_buffer decrypted = keysB.Decrypt(encrypted);
     CHECK(decrypted.empty());
 }
 
@@ -42,14 +42,14 @@ TEST_CASE("crypto.sealed_box_tampered")
 
     std::vector<uint8_t> plaintext = {10, 20, 30};
 
-    byte_view encrypted = pub.Encrypt(plaintext);
+    byte_buffer encrypted = pub.Encrypt(plaintext);
     REQUIRE_FALSE(encrypted.empty());
 
     // Tamper with ciphertext
     std::vector<uint8_t> tampered(encrypted.begin(), encrypted.end());
     tampered[tampered.size() / 2] ^= 0xFF;
 
-    byte_view decrypted = keys.Decrypt(tampered);
+    byte_buffer decrypted = keys.Decrypt(tampered);
     CHECK(decrypted.empty());
 }
 
@@ -92,10 +92,10 @@ TEST_CASE("crypto.base64_sealed_box_integration")
 
     std::vector<uint8_t> plaintext = {0xAB, 0xCD, 0xEF};
 
-    byte_view encrypted = serverPK.Encrypt(plaintext);
+    byte_buffer encrypted = serverPK.Encrypt(plaintext);
     REQUIRE_FALSE(encrypted.empty());
 
-    byte_view decrypted = serverKeys.Decrypt(encrypted);
+    byte_buffer decrypted = serverKeys.Decrypt(encrypted);
     REQUIRE_FALSE(decrypted.empty());
     CHECK(std::vector<uint8_t>(decrypted.begin(), decrypted.end()) == plaintext);
 }
@@ -118,11 +118,11 @@ TEST_CASE("crypto.session_aead_round_trip")
     {
         std::vector<uint8_t> plaintext = {0xDE, 0xAD, 0xBE, 0xEF};
 
-        byte_view encrypted = clientSession.Encrypt(plaintext);
+        byte_buffer encrypted = clientSession.Encrypt(plaintext);
         REQUIRE_FALSE(encrypted.empty());
         CHECK(encrypted.size() > plaintext.size());
 
-        byte_view decrypted = serverSession.Decrypt(encrypted);
+        byte_buffer decrypted = serverSession.Decrypt(encrypted);
         REQUIRE_FALSE(decrypted.empty());
         CHECK(std::vector<uint8_t>(decrypted.begin(), decrypted.end()) == plaintext);
     }
@@ -131,10 +131,10 @@ TEST_CASE("crypto.session_aead_round_trip")
     {
         std::vector<uint8_t> plaintext = {0xCA, 0xFE, 0xBA, 0xBE};
 
-        byte_view encrypted = serverSession.Encrypt(plaintext);
+        byte_buffer encrypted = serverSession.Encrypt(plaintext);
         REQUIRE_FALSE(encrypted.empty());
 
-        byte_view decrypted = clientSession.Decrypt(encrypted);
+        byte_buffer decrypted = clientSession.Decrypt(encrypted);
         REQUIRE_FALSE(decrypted.empty());
         CHECK(std::vector<uint8_t>(decrypted.begin(), decrypted.end()) == plaintext);
     }
@@ -153,13 +153,13 @@ TEST_CASE("crypto.session_aead_tampered")
 
     std::vector<uint8_t> plaintext = {1, 2, 3, 4, 5};
 
-    byte_view encrypted = clientSession.Encrypt(plaintext);
+    byte_buffer encrypted = clientSession.Encrypt(plaintext);
     REQUIRE_FALSE(encrypted.empty());
 
     std::vector<uint8_t> tampered(encrypted.begin(), encrypted.end());
     tampered[tampered.size() / 2] ^= 0xFF;
 
-    byte_view decrypted = serverSession.Decrypt(tampered);
+    byte_buffer decrypted = serverSession.Decrypt(tampered);
     CHECK(decrypted.empty());
 }
 
@@ -177,10 +177,10 @@ TEST_CASE("crypto.session_aead_wrong_session")
 
     std::vector<uint8_t> plaintext = {42};
 
-    byte_view encrypted = clientSession.Encrypt(plaintext);
+    byte_buffer encrypted = clientSession.Encrypt(plaintext);
     REQUIRE_FALSE(encrypted.empty());
 
     // Wrong session keys should fail
-    byte_view decrypted = rogueSession.Decrypt(encrypted);
+    byte_buffer decrypted = rogueSession.Decrypt(encrypted);
     CHECK(decrypted.empty());
 }
