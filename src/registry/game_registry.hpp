@@ -14,3 +14,5 @@ void LoadShaders(Registry& aRegistry);
 void SpawnLight(Registry& aRegistry);
 void LoadTextures(Registry& aRegistry);
 void LoadModels(Registry& aRegistry);
+
+glm::vec3 GetScreenPosition(Registry& aRegistry, glm::vec3 aWorldPos);

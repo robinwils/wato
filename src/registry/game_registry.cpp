@@ -1,6 +1,7 @@
 #include "registry/game_registry.hpp"
 
 #include <bgfx/bgfx.h>
+#include <bgfx/defines.h>
 
 #include <glm/ext/vector_float3.hpp>
 #include <glm/fwd.hpp>
@@ -8,6 +9,7 @@
 
 #include "components/imgui.hpp"
 #include "components/light_source.hpp"
+#include "core/window.hpp"
 #include "registry/registry.hpp"
 #include "renderer/blinn_phong_material.hpp"
 #include "renderer/plane_primitive.hpp"
@@ -161,4 +163,15 @@ void LoadModels(Registry& aRegistry)
         "assets/models/mutant.fbx",
         aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_GlobalScale | aiProcess_FlipUVs
             | aiProcess_ConvertToLeftHanded);
+}
+
+glm::vec3 GetScreenPosition(Registry& aRegistry, glm::vec3 aWorldPos)
+{
+    const auto& window = aRegistry.ctx().get<WatoWindow&>();
+    glm::vec3   screenPos;
+    for (auto&& [_, camera, tcam] : aRegistry.view<Camera, Transform3D>().each()) {
+        screenPos = window.ProjectPosition(aWorldPos, camera, tcam.Position);
+    }
+
+    return screenPos;
 }
