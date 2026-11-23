@@ -11,6 +11,7 @@
 #include "components/projectile.hpp"
 #include "components/rigid_body.hpp"
 #include "components/scene_object.hpp"
+#include "components/selectable.hpp"
 #include "components/tower.hpp"
 #include "components/tower_attack.hpp"
 #include "components/transform3d.hpp"
@@ -240,6 +241,7 @@ void NetworkResponseSystem::createTower(
     aRegistry.emplace<SceneObject>(tower, def.Model.Object);
     aRegistry.emplace<Owner>(tower, aInit.OwnerID, player.Slot);
     aRegistry.emplace<TowerAttack>(tower, aInit.Attack);
+    aRegistry.emplace<Selectable>(tower);
 
     syncMap.insert_or_assign(aUpdate.Entity, tower);
 
