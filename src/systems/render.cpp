@@ -246,6 +246,27 @@ void RenderImguiSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDel
     }
 #endif
 
+    if (!window.GetInput().UiWantsMouse) {
+        const auto& state = GetSingletonComponent<PickState&>(aRegistry);
+
+        if (state.WorldStartPos && state.SelectCurPos) {
+            glm::vec3 screenStart = GetScreenPosition(aRegistry, *state.WorldStartPos);
+            WATO_DBG(
+                aRegistry,
+                "cur pick state: ({} <=> {}) => {} ({})",
+                state.WorldStartPos,
+                screenStart,
+                state.SelectCurPos,
+                state.SelectEndPos);
+            ImDrawList* drawList = ImGui::GetBackgroundDrawList();
+            ImVec2      start(screenStart.x, screenStart.y);
+            ImVec2      cur(state.SelectCurPos->x, state.SelectCurPos->y);
+
+            drawList->AddRectFilled(start, cur, ImColor(0, 255, 0, 20));
+            drawList->AddRect(start, cur, ImColor(0, 255, 0));
+        }
+    }
+
     ImGui::End();
 
 #if WATO_DEBUG
@@ -271,18 +292,14 @@ void RenderImguiSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDel
                     s = fmt::format("{} {}", c.Location.x, c.Location.y);
                 }
 
-                text(
-                    screen.x,
-                    window.Height<float>() - screen.y,
-                    fmt::format("graph_pos_{}", entt::id_type(entity)),
-                    s);
+                text(screen.x, screen.y, fmt::format("graph_pos_{}", entt::id_type(entity)), s);
 
                 if (auto next = graph->GetNextCell(t.Position)) {
                     screen = window.ProjectPosition(next->ToWorld(), cam, camT.Position);
 
                     text(
                         screen.x,
-                        window.Height<float>() - screen.y - 20.0f,
+                        screen.y - 20.0f,
                         fmt::format("next_graph_pos_{}", entt::id_type(entity)),
                         fmt::format("{} {}", next->Location.x, next->Location.y),
                         imguiRGBA(255, 0, 0));

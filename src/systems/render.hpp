@@ -2,7 +2,7 @@
 
 #include <entt/entity/organizer.hpp>
 
-#include "registry/registry.hpp"
+#include "registry/game_registry.hpp"
 #include "systems/system.hpp"
 
 /**
@@ -24,6 +24,7 @@ class RenderSystem : public FrameSystem
    private:
     void updateGridTexture(Registry& aRegistry);
     void renderGrid(Registry& aRegistry);
+    void renderSelected(Registry& aRegistry);
 };
 
 /**
