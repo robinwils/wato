@@ -179,7 +179,8 @@ class Physics
     rp3d::Collider*       AddCollider(rp3d::RigidBody* aBody, const ColliderParams& aParams);
     rp3d::RigidBody* CreateRigidBody(const RigidBodyParams& aParams, const Transform3D& aTransform);
 
-    std::optional<glm::vec3> RayTerrainIntersection(glm::vec3 aOrigin, glm::vec3 aEnd);
+    std::optional<glm::vec3> RayTerrainIntersection(const glm::vec3& aOrigin, const glm::vec3& aEnd);
+    std::optional<glm::vec3> RayTerrainIntersection(const rp3d::Ray& aRay);
 
     void ToggleObstacle(const rp3d::Collider* aCollider, Graph& aGraph, bool aAdd);
 
