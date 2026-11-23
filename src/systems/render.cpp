@@ -263,7 +263,7 @@ void RenderImguiSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDel
             if (imgui.PosOnUnit && graph->IsInside(t.Position)) {
                 GraphCell   c      = graph->CellFromWorld(t.Position);
                 glm::vec3   screen = window.ProjectPosition(t.Position, cam, camT.Position);
-                std::string s      = "";
+                std::string s;
 
                 if (auto* health = aRegistry.try_get<Health>(entity); health) {
                     s = fmt::format("{} {}, {} health", c.Location.x, c.Location.y, health->Health);

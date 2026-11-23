@@ -27,7 +27,7 @@ class Application
     {
     }
     explicit Application(const std::string& aName, const Options& aOptions)
-        : mOptions(std::move(aOptions)),
+        : mOptions(aOptions),
           mRunning(false),
           mLogger(CreateLogger(aName, mOptions.LogLevel()))
     {
