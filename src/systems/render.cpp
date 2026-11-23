@@ -24,8 +24,11 @@
 #include "components/model_rotation_offset.hpp"
 #include "components/placement_mode.hpp"
 #include "components/scene_object.hpp"
+#include "components/selectable.hpp"
 #include "core/menu/menu.hpp"
 #include "core/physics/physics.hpp"
+#include "core/pick_state.hpp"
+#include "core/sys/log.hpp"
 #include "core/window.hpp"
 #include "imgui_helper.h"
 #include "imgui_hud.hpp"
@@ -77,6 +80,8 @@ void RenderSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDelta)
 
     if (!aRegistry.view<const PlacementMode>()->empty()) {
         renderGrid(aRegistry);
+    } else {
+        renderSelected(aRegistry);
     }
 
     // Collect static meshes for instancing (group by model)
@@ -161,6 +166,18 @@ void RenderSystem::renderGrid(Registry& aRegistry)
             wato::kRenderPass,
             glm::identity<glm::mat4>(),
             BGFX_STATE_DEFAULT | BGFX_STATE_PT_LINES);
+    }
+}
+
+void RenderSystem::renderSelected(Registry& aRegistry)
+{
+    if (auto ring = aRegistry.ctx().get<ModelCache>()["selection_ring"_hs]; ring) {
+        for (auto&& [sel, t3d]: aRegistry.view<Transform3D, Selected>().each()) {
+            ring->Submit(
+                wato::kRenderPass,
+                t3d.ModelMat(),
+                BGFX_STATE_DEFAULT | BGFX_STATE_PT_LINES);
+        }
     }
 }
 
