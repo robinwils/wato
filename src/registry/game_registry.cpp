@@ -13,6 +13,7 @@
 #include "registry/registry.hpp"
 #include "renderer/blinn_phong_material.hpp"
 #include "renderer/plane_primitive.hpp"
+#include "renderer/ui_material.hpp"
 #include "resource/cache.hpp"
 
 void LoadResources(Registry& aRegistry)
@@ -124,6 +125,18 @@ void LoadTextures(Registry& aRegistry)
         "grass_tile",
         std::make_unique<PlanePrimitive>(
             std::make_unique<BlinnPhongMaterial>(shader, diffuse, specular)));
+
+    const auto& selectionTex = LoadResource(
+        GetSingletonComponent<TextureCache>(aRegistry),
+        "selection_ring_tex",
+        "assets/textures/selection_ring.png",
+        BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
+
+    auto shaderUI = GetSingletonComponent<ShaderCache>(aRegistry)["simple"_hs];
+    LoadResource(
+        GetSingletonComponent<ModelCache>(aRegistry),
+        "selection_ring",
+        std::make_unique<PlanePrimitive>(std::make_unique<UIMaterial>(shaderUI, selectionTex)));
 }
 
 void SpawnLight(Registry& aRegistry)
