@@ -3,6 +3,8 @@
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
+#define BGFX_PLATFORM_SUPPORTS_WGSL 0
+
 #include <bgfx/bgfx.h>
 #include <bgfx/embedded_shader.h>
 #include <bx/allocator.h>
@@ -19,12 +21,52 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wimplicit-int-float-conversion")
 BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wsign-conversion")
 BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wconversion")
 
-#include <imgui/fs_imgui_image.bin.h>
-#include <imgui/fs_ocornut_imgui.bin.h>
+#if BGFX_PLATFORM_SUPPORTS_GLSL
+#include <glsl/fs_imgui_image.sc.bin.h>
+#include <glsl/fs_ocornut_imgui.sc.bin.h>
+#include <glsl/vs_imgui_image.sc.bin.h>
+#include <glsl/vs_ocornut_imgui.sc.bin.h>
+#endif
+
+#if BGFX_PLATFORM_SUPPORTS_ESSL
+#include <essl/fs_imgui_image.sc.bin.h>
+#include <essl/fs_ocornut_imgui.sc.bin.h>
+#include <essl/vs_imgui_image.sc.bin.h>
+#include <essl/vs_ocornut_imgui.sc.bin.h>
+#endif
+
+#if BGFX_PLATFORM_SUPPORTS_SPIRV
+#include <spirv/fs_imgui_image.sc.bin.h>
+#include <spirv/fs_ocornut_imgui.sc.bin.h>
+#include <spirv/vs_imgui_image.sc.bin.h>
+#include <spirv/vs_ocornut_imgui.sc.bin.h>
+#endif
+
+#if BX_PLATFORM_WINDOWS
+#include <dxbc/fs_imgui_image.sc.bin.h>
+#include <dxbc/fs_ocornut_imgui.sc.bin.h>
+#include <dxbc/vs_imgui_image.sc.bin.h>
+#include <dxbc/vs_ocornut_imgui.sc.bin.h>
+#include <dxil/fs_imgui_image.sc.bin.h>
+#include <dxil/fs_ocornut_imgui.sc.bin.h>
+#include <dxil/vs_imgui_image.sc.bin.h>
+#include <dxil/vs_ocornut_imgui.sc.bin.h>
+#else
+// BX marks linux as a supported platform for Direct3D shaders but shaderc CMake wrapper does not
+// generate shader headers for Direct3D on Linux so we need to override the following macro
+#undef BGFX_EMBEDDED_SHADER_DXBC
+#define BGFX_EMBEDDED_SHADER_DXBC(...)
+#endif
+
+#if BGFX_PLATFORM_SUPPORTS_METAL
+#include <metal/fs_imgui_image.sc.bin.h>
+#include <metal/fs_ocornut_imgui.sc.bin.h>
+#include <metal/vs_imgui_image.sc.bin.h>
+#include <metal/vs_ocornut_imgui.sc.bin.h>
+#endif
+
 #include <imgui/roboto_regular.ttf.h>
 #include <imgui/robotomono_regular.ttf.h>
-#include <imgui/vs_imgui_image.bin.h>
-#include <imgui/vs_ocornut_imgui.bin.h>
 
 #include "iconfonts/IconsFontAwesome4.h_fontawesome-webfont.ttf.h"
 #include "iconfonts/IconsKenney.h_kenney-icon-font.ttf.h"
@@ -54,11 +96,84 @@ static void  memFree(void* aPtr, void* aUserData);
 struct OcornutImguiContext {
     void Render(ImDrawData* aDrawData)
     {
+        if (NULL != aDrawData->Textures) {
+            for (ImTextureData* texData : *aDrawData->Textures) {
+                switch (texData->Status) {
+                    case ImTextureStatus_WantCreate: {
+                        ImGui::TextureBgfx tex = {
+                            .handle = bgfx::createTexture2D(
+                                (uint16_t)texData->Width,
+                                (uint16_t)texData->Height,
+                                false,
+                                1,
+                                bgfx::TextureFormat::BGRA8,
+                                0),
+                            .flags  = IMGUI_FLAGS_ALPHA_BLEND,
+                            .mip    = 0,
+                            .unused = 0,
+                        };
+
+                        bgfx::setName(tex.handle, "ImGui Font Atlas");
+                        bgfx::updateTexture2D(
+                            tex.handle,
+                            0,
+                            0,
+                            0,
+                            0,
+                            bx::narrowCast<uint16_t>(texData->Width),
+                            bx::narrowCast<uint16_t>(texData->Height),
+                            bgfx::copy(texData->GetPixels(), texData->GetSizeInBytes()));
+
+                        texData->SetTexID(bx::bitCast<ImTextureID>(tex));
+                        texData->SetStatus(ImTextureStatus_OK);
+                    } break;
+
+                    case ImTextureStatus_WantDestroy: {
+                        ImGui::TextureBgfx tex =
+                            bx::bitCast<ImGui::TextureBgfx>(texData->GetTexID());
+                        bgfx::destroy(tex.handle);
+                        texData->SetTexID(ImTextureID_Invalid);
+                        texData->SetStatus(ImTextureStatus_Destroyed);
+                    } break;
+
+                    case ImTextureStatus_WantUpdates: {
+                        ImGui::TextureBgfx tex =
+                            bx::bitCast<ImGui::TextureBgfx>(texData->GetTexID());
+
+                        for (ImTextureRect& rect : texData->Updates) {
+                            const uint32_t      bpp = texData->BytesPerPixel;
+                            const bgfx::Memory* pix = bgfx::alloc(rect.h * rect.w * bpp);
+                            bx::gather(
+                                pix->data,
+                                texData->GetPixelsAt(rect.x, rect.y),
+                                texData->GetPitch(),
+                                rect.w * bpp,
+                                rect.h);
+                            bgfx::updateTexture2D(
+                                tex.handle,
+                                0,
+                                0,
+                                rect.x,
+                                rect.y,
+                                rect.w,
+                                rect.h,
+                                pix);
+                        }
+                    } break;
+
+                    default:
+                        break;
+                }
+            }
+        }
+
         // Avoid rendering when minimized, scale coordinates for retina displays (screen coordinates
         // != framebuffer coordinates)
-        int fbWidth  = (int)(aDrawData->DisplaySize.x * aDrawData->FramebufferScale.x);
-        int fbHeight = (int)(aDrawData->DisplaySize.y * aDrawData->FramebufferScale.y);
-        if (fbWidth <= 0 || fbHeight <= 0) return;
+        int32_t dispWidth  = int32_t(aDrawData->DisplaySize.x * aDrawData->FramebufferScale.x);
+        int32_t dispHeight = int32_t(aDrawData->DisplaySize.y * aDrawData->FramebufferScale.y);
+        if (dispWidth <= 0 || dispHeight <= 0) {
+            return;
+        }
 
         bgfx::setViewName(ViewID, "ImGui");
         bgfx::setViewMode(ViewID, bgfx::ViewMode::Sequential);
@@ -124,30 +239,23 @@ struct OcornutImguiContext {
                     uint64_t state =
                         0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_MSAA;
 
-                    bgfx::TextureHandle th      = Texture;
+                    bgfx::TextureHandle th      = BGFX_INVALID_HANDLE;
                     bgfx::ProgramHandle program = Program;
 
-                    if (0 != cmd->TextureId) {
-                        union {
-                            ImTextureID Ptr;
-                            struct {
-                                bgfx::TextureHandle Handle;
-                                uint8_t             Flags;
-                                uint8_t             Mip;
-                            } State;
-                        } texture  = {cmd->TextureId};
-                        state     |= 0 != (IMGUI_FLAGS_ALPHA_BLEND & texture.State.Flags)
-                                         ? BGFX_STATE_BLEND_FUNC(
+                    const ImTextureID texId = cmd->GetTexID();
+
+                    if (ImTextureID_Invalid != texId) {
+                        ImGui::TextureBgfx tex = bx::bitCast<ImGui::TextureBgfx>(texId);
+
+                        state |= 0 != (IMGUI_FLAGS_ALPHA_BLEND & tex.flags)
+                                     ? BGFX_STATE_BLEND_FUNC(
                                            BGFX_STATE_BLEND_SRC_ALPHA,
                                            BGFX_STATE_BLEND_INV_SRC_ALPHA)
-                                         : BGFX_STATE_NONE;
-                        th         = texture.State.Handle;
-                        if (0 != texture.State.Mip) {
-                            const float lodEnabled[4] = {
-                                float(texture.State.Mip),
-                                1.0f,
-                                0.0f,
-                                0.0f};
+                                     : BGFX_STATE_NONE;
+                        th     = tex.handle;
+
+                        if (0 != tex.mip) {
+                            const float lodEnabled[4] = {float(tex.mip), 1.0f, 0.0f, 0.0f};
                             bgfx::setUniform(UniformImageLodEnabled, lodEnabled);
                             program = ImageProgram;
                         }
@@ -164,7 +272,7 @@ struct OcornutImguiContext {
                     clipRect.z = (cmd->ClipRect.z - clipPos.x) * clipScale.x;
                     clipRect.w = (cmd->ClipRect.w - clipPos.y) * clipScale.y;
 
-                    if (clipRect.x < fbWidth && clipRect.y < fbHeight && clipRect.z >= 0.0f
+                    if (clipRect.x < dispWidth && clipRect.y < dispHeight && clipRect.z >= 0.0f
                         && clipRect.w >= 0.0f) {
                         const uint16_t xx = uint16_t(bx::max(clipRect.x, 0.0f));
                         const uint16_t yy = uint16_t(bx::max(clipRect.y, 0.0f));
@@ -211,7 +319,9 @@ struct OcornutImguiContext {
 
         SetupStyle(true);
 
-        io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;
+        io.BackendFlags |=
+            0 | ImGuiBackendFlags_RendererHasVtxOffset | ImGuiBackendFlags_RendererHasTextures;
+        io.ConfigDebugHighlightIdConflicts = !!BX_CONFIG_DEBUG;
 
         bgfx::RendererType::Enum type = bgfx::getRendererType();
         Program                       = bgfx::createProgram(
@@ -233,16 +343,13 @@ struct OcornutImguiContext {
 
         UniformTex = bgfx::createUniform("s_tex", bgfx::UniformType::Sampler);
 
-        uint8_t* data;
-        int32_t  width;
-        int32_t  height;
         {
             ImFontConfig config;
             config.FontDataOwnedByAtlas = false;
             config.MergeMode            = false;
             //			config.MergeGlyphCenterV = true;
 
-            const ImWchar* ranges       = io.Fonts->GetGlyphRangesCyrillic();
+            const ImWchar* ranges       = io.Fonts->GetGlyphRangesDefault();
             Fonts[ImGui::Font::Regular] = io.Fonts->AddFontFromMemoryTTF(
                 (void*)s_robotoRegularTtf,
                 sizeof(s_robotoRegularTtf),
@@ -270,17 +377,6 @@ struct OcornutImguiContext {
                     frm.Ranges);
             }
         }
-
-        io.Fonts->GetTexDataAsRGBA32(&data, &width, &height);
-
-        Texture = bgfx::createTexture2D(
-            (uint16_t)width,
-            (uint16_t)height,
-            false,
-            1,
-            bgfx::TextureFormat::BGRA8,
-            0,
-            bgfx::copy(data, width * height * 4));
     }
 
     void Destroy()
@@ -288,7 +384,6 @@ struct OcornutImguiContext {
         ImGui::DestroyContext(ImguiCtx);
 
         bgfx::destroy(UniformTex);
-        bgfx::destroy(Texture);
 
         bgfx::destroy(UniformImageLodEnabled);
         bgfx::destroy(ImageProgram);
@@ -511,7 +606,6 @@ struct OcornutImguiContext {
     bgfx::VertexLayout  Layout;
     bgfx::ProgramHandle Program;
     bgfx::ProgramHandle ImageProgram;
-    bgfx::TextureHandle Texture;
     bgfx::UniformHandle UniformTex;
     bgfx::UniformHandle UniformImageLodEnabled;
     ImFont*             Fonts[ImGui::Font::Count];
@@ -974,7 +1068,10 @@ void showStatsDialog(const char* aErrorText)
 
 namespace ImGui
 {
-void PushFont(Font::Enum aFont) { PushFont(sCtx.Fonts[aFont]); }
+void PushFont(Font::Enum aFont, float aFontSizeBaseUnscaled)
+{
+    PushFont(sCtx.Fonts[aFont], aFontSizeBaseUnscaled);
+}
 
 void PushEnabled(bool aEnabled)
 {

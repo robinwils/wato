@@ -55,12 +55,12 @@ void RenderSystem::Execute(Registry& aRegistry, [[maybe_unused]] float aDelta)
             bpSkinnedShader->Uniform("u_lightDir"),
             glm::vec4(source.direction, 0.0f));
         renderer.SetUniform(bpSkinnedShader->Uniform("u_lightCol"), glm::vec4(source.color, 0.0f));
-        renderer.SetUniform(
-            bpInstancedShader->Uniform("u_lightDir"),
-            glm::vec4(source.direction, 0.0f));
-        renderer.SetUniform(
-            bpInstancedShader->Uniform("u_lightCol"),
-            glm::vec4(source.color, 0.0f));
+        // renderer.SetUniform(
+        //     bpInstancedShader->Uniform("u_lightDir"),
+        //     glm::vec4(source.direction, 0.0f));
+        // renderer.SetUniform(
+        //     bpInstancedShader->Uniform("u_lightCol"),
+        //     glm::vec4(source.color, 0.0f));
     }
 
     if (auto* graph = aRegistry.ctx().find<Graph>(); graph && graph->GridDirty) {

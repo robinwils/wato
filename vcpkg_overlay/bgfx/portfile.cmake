@@ -6,7 +6,7 @@ vcpkg_download_distfile(
   ARCHIVE_FILE
   URLS https://github.com/bkaradzic/bgfx.cmake/releases/download/v${VERSION}/bgfx.cmake.v${VERSION}.tar.gz
   FILENAME bgfx.cmake.v${VERSION}.tar.gz
-  SHA512 520c542b65e76e92eae818e32eeb62bb2347ac89a1e10fc07cd5059a3b8a9a543cadca87d451a3bc157c415f6183b1f0e5031248e38fae704b8efd54679d482b
+  SHA512 c8fb2a02671c2c557b3f552a86aa370c8d42baad42eaa0caf0914b5ccb8ad8a34f85ecc4680732a7f420af5db3d66ac3f6d79910fa888fbe3c927cbc4cd748d3
 )
 
 vcpkg_extract_source_archive(
@@ -21,7 +21,7 @@ file(REMOVE_RECURSE
   "${SOURCE_PATH}/bgfx/3rdparty/meshoptimizer"
   "${SOURCE_PATH}/bgfx/3rdparty/spirv-cross"
   "${SOURCE_PATH}/bgfx/3rdparty/spirv-headers"
-  "${SOURCE_PATH}/bgfx/3rdparty/spirv-opt"
+  "${SOURCE_PATH}/bgfx/3rdparty/spirv-tools"
   "${SOURCE_PATH}/bgfx/3rdparty/stb"
   "${SOURCE_PATH}/bimg/3rdparty/libsquish"
   "${SOURCE_PATH}/bimg/3rdparty/lodepng"
@@ -50,17 +50,27 @@ vcpkg_cmake_configure(
     -DBGFX_BUILD_EXAMPLES=OFF
     -DBGFX_OPENGLES_VERSION=30
     "-DBGFX_ADDITIONAL_TOOL_PATHS=${CURRENT_INSTALLED_DIR}/../${HOST_TRIPLET}/tools/bgfx"
+    "-DBGFX_SPIRV_TOOLS_INTERNAL_DIR=${CURRENT_INSTALLED_DIR}/include/spirv-tools-internal"
     ${FEATURE_OPTIONS}
   OPTIONS_DEBUG
     -DBGFX_BUILD_TOOLS=OFF
+  MAYBE_UNUSED_VARIABLES
+    BGFX_SPIRV_TOOLS_INTERNAL_DIR # only read by tint, which is part of the tools
 )
 
 vcpkg_cmake_install()
 vcpkg_cmake_config_fixup(CONFIG_PATH "lib/cmake/${PORT}")
 vcpkg_copy_pdbs()
 
-if ("tools" IN_LIST FEATURES)
+if("tools" IN_LIST FEATURES)
   vcpkg_copy_tools(TOOL_NAMES bin2c shaderc geometryc texturec AUTO_CLEAN)
+  if(VCPKG_TARGET_IS_WINDOWS)
+    file(INSTALL "${SOURCE_PATH}/bgfx/tools/bin/windows/dxcompiler.dll"
+      DESTINATION "${CURRENT_PACKAGES_DIR}/tools/bgfx")
+  elseif(VCPKG_TARGET_IS_LINUX)
+    file(INSTALL "${SOURCE_PATH}/bgfx/tools/bin/linux/libdxcompiler.so"
+      DESTINATION "${CURRENT_PACKAGES_DIR}/tools/bgfx")
+  endif()
 endif ()
 
 vcpkg_install_copyright(
